@@ -139,7 +139,7 @@ class VideoCardH extends StatelessWidget {
                           children: [
                             NetworkImgLayer(
                               src:
-                                  "https://good-snail-89.deno.dev/?aid=${videoItem.aid}",
+                                  "http://127.0.0.1:8080/?aid=${videoItem.aid}",
                               width: maxWidth,
                               height: maxHeight,
                             ),

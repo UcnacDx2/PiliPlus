@@ -52,6 +52,9 @@ dependencies:
   cached_network_image: ^3.4.1
   # extended_image: ^9.0.7
   saver_gallery: ^4.0.1
+  shelf: ^1.4.1
+  shelf_router: ^1.1.4
+  image: ^4.1.7
 
   # QRCode
   # qr_flutter: ^4.1.0

@@ -27,10 +27,12 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
+import 'package:PiliPlus/common/local_server.dart';
 import 'package:media_kit/media_kit.dart'; // Provides [Player], [Media], [Playlist] etc.
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  LocalServer().start();
   MediaKit.ensureInitialized();
   await GStorage.init();
   Get.put(AccountService());
