@@ -92,7 +92,8 @@ class VideoCardV extends StatelessWidget {
                         clipBehavior: Clip.none,
                         children: [
                           NetworkImgLayer(
-                            src: videoItem.cover,
+                            src:
+                                "https://good-snail-89.deno.dev/?aid=${videoItem.aid}",
                             width: maxWidth,
                             height: maxHeight,
                             radius: 0,
