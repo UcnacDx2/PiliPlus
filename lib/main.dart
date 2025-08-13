@@ -32,7 +32,7 @@ import 'package:media_kit/media_kit.dart'; // Provides [Player], [Media], [Playl
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  LocalServer().start();
+  await LocalServer().start();
   MediaKit.ensureInitialized();
   await GStorage.init();
   Get.put(AccountService());

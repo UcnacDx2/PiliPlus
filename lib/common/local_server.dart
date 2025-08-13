@@ -47,8 +47,11 @@ class LocalServer {
     try {
       final apiUrl = Uri.parse('https://api.bilibili.com/x/player/videoshot');
       final params = {'index': '1'};
-      if (aid != null) params['aid'] = aid;
-      if (bvid != null) params['bvid'] = bvid;
+      if (bvid != null) {
+        params['bvid'] = bvid;
+      } else if (aid != null) {
+        params['aid'] = aid;
+      }
       
       final res = await http.get(apiUrl.replace(queryParameters: params));
       final json = jsonDecode(res.body);
