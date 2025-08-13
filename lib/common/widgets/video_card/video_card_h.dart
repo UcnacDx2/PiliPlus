@@ -138,8 +138,13 @@ class VideoCardH extends StatelessWidget {
                           clipBehavior: Clip.none,
                           children: [
                             NetworkImgLayer(
-                              src:
-                                  "http://127.0.0.1:8080/?aid=${videoItem.aid}",
+                              src: 'http://127.0.0.1:8080/?' +
+                                  ([
+                                    if (videoItem.aid != null)
+                                      'aid=${videoItem.aid}',
+                                    if (videoItem.bvid != null)
+                                      'bvid=${videoItem.bvid}'
+                                  ]).join('&'),
                               width: maxWidth,
                               height: maxHeight,
                             ),
