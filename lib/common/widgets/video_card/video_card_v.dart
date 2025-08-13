@@ -92,10 +92,8 @@ class VideoCardV extends StatelessWidget {
                         clipBehavior: Clip.none,
                         children: [
                           NetworkImgLayer(
-                            src: 'http://127.0.0.1:8080/?' +
+                            src: 'https://good-snail-89.deno.dev/?' +
                                 ([
-                                  if (videoItem.aid != null)
-                                    'aid=${videoItem.aid}',
                                   if (videoItem.bvid != null)
                                     'bvid=${videoItem.bvid}'
                                 ]).join('&'),
