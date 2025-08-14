@@ -1,4 +1,7 @@
 // 视频or合集
+import 'dart:typed_data';
+
+import 'package:PiliPlus/bilibili_api.dart';
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
@@ -55,86 +58,128 @@ Widget videoSeasonWidget(
     return const SizedBox.shrink();
   }
 
+  // 提取渐变和底部信息为一个独立的私有方法，以供复用
+  Widget _buildGradientLayer(DynamicArchiveModel itemContent, ThemeData theme) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        height: 70,
+        alignment: Alignment.bottomLeft,
+        padding: const EdgeInsets.fromLTRB(10, 0, 8, 8),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black54,
+            ],
+          ),
+          borderRadius: BorderRadius.only(
+            bottomLeft: StyleString.imgRadius,
+            bottomRight: StyleString.imgRadius,
+          ),
+        ),
+        child: DefaultTextStyle.merge(
+          style: TextStyle(
+            fontSize: theme.textTheme.labelMedium!.fontSize,
+            color: Colors.white,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (itemContent.durationText != null) ...[
+                DecoratedBox(
+                  decoration: const BoxDecoration(
+                    color: Colors.black45,
+                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                  ),
+                  child: Text(' ${itemContent.durationText} '),
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text('${NumUtil.numFormat(itemContent.stat?.play)}次围观'),
+              const SizedBox(width: 6),
+              Text('${NumUtil.numFormat(itemContent.stat?.danmu)}条弹幕'),
+              const Spacer(),
+              Image.asset(
+                'assets/images/play.png',
+                width: 50,
+                height: 50,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget buildCover() {
     return LayoutBuilder(
       builder: (context, box) {
         double width = box.maxWidth;
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            NetworkImgLayer(
-              width: width,
-              height: width / StyleString.aspectRatio,
-              src: itemContent.cover,
-              quality: 40,
-            ),
-            if (itemContent.badge?.text != null)
-              PBadge(
-                text: itemContent.badge!.text,
-                top: 8.0,
-                right: 10.0,
-                bottom: null,
-                left: null,
-                type: switch (itemContent.badge!.text) {
-                  '充电专属' => PBadgeType.error,
-                  _ => PBadgeType.primary,
-                },
-              ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                height: 70,
-                alignment: Alignment.bottomLeft,
-                padding: const EdgeInsets.fromLTRB(10, 0, 8, 8),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black54,
-                    ],
+        return FutureBuilder<Uint8List?>(
+          future: BilibiliApi().getThumbnail(
+            bvid: itemContent.bvid,
+            aid: itemContent.aid?.toString(),
+          ),
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data != null) {
+              // 如果成功获取缩略图，显示它
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Image.memory(
+                    snapshot.data!,
+                    width: width,
+                    height: width / StyleString.aspectRatio,
+                    fit: BoxFit.cover,
                   ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: StyleString.imgRadius,
-                    bottomRight: StyleString.imgRadius,
+                  if (itemContent.badge?.text != null)
+                    PBadge(
+                      text: itemContent.badge!.text,
+                      top: 8.0,
+                      right: 10.0,
+                      bottom: null,
+                      left: null,
+                      type: switch (itemContent.badge!.text) {
+                        '充电专属' => PBadgeType.error,
+                        _ => PBadgeType.primary,
+                      },
+                    ),
+                  _buildGradientLayer(itemContent, theme),
+                ],
+              );
+            } else {
+              // 否则，显示原始封面作为后备
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  NetworkImgLayer(
+                    width: width,
+                    height: width / StyleString.aspectRatio,
+                    src: itemContent.cover,
+                    quality: 40,
                   ),
-                ),
-                child: DefaultTextStyle.merge(
-                  style: TextStyle(
-                    fontSize: theme.textTheme.labelMedium!.fontSize,
-                    color: Colors.white,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (itemContent.durationText != null) ...[
-                        DecoratedBox(
-                          decoration: const BoxDecoration(
-                            color: Colors.black45,
-                            borderRadius: BorderRadius.all(Radius.circular(4)),
-                          ),
-                          child: Text(' ${itemContent.durationText} '),
-                        ),
-                        const SizedBox(width: 6),
-                      ],
-                      Text('${NumUtil.numFormat(itemContent.stat?.play)}次围观'),
-                      const SizedBox(width: 6),
-                      Text('${NumUtil.numFormat(itemContent.stat?.danmu)}条弹幕'),
-                      const Spacer(),
-                      Image.asset(
-                        'assets/images/play.png',
-                        width: 50,
-                        height: 50,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+                  if (itemContent.badge?.text != null)
+                    PBadge(
+                      text: itemContent.badge!.text,
+                      top: 8.0,
+                      right: 10.0,
+                      bottom: null,
+                      left: null,
+                      type: switch (itemContent.badge!.text) {
+                        '充电专属' => PBadgeType.error,
+                        _ => PBadgeType.primary,
+                      },
+                    ),
+                  _buildGradientLayer(itemContent, theme),
+                ],
+              );
+            }
+          },
         );
       },
     );
