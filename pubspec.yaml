@@ -48,6 +48,7 @@ dependencies:
   connectivity_plus: ^6.1.1
   dio_http2_adapter: ^2.5.3
 
+  mini_server: ^1.0.7
   # 图片
   cached_network_image: ^3.4.1
   # extended_image: ^9.0.7
