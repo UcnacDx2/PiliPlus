@@ -143,75 +143,77 @@ class _VideoCardHState extends State<VideoCardH> {
                 children: <Widget>[
                   AspectRatio(
                     aspectRatio: StyleString.aspectRatio,
-                    child: LayoutBuilder(
-                      builder: (context, boxConstraints) {
-                        final double maxWidth = boxConstraints.maxWidth;
-                        final double maxHeight = boxConstraints.maxHeight;
-                        num? progress;
-                        if (widget.videoItem case HotVideoItemModel item) {
-                          progress = item.progress;
-                        }
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6.0),
+                      child: LayoutBuilder(
+                        builder: (context, boxConstraints) {
+                          final double maxWidth = boxConstraints.maxWidth;
+                          final double maxHeight = boxConstraints.maxHeight;
+                          num? progress;
+                          if (widget.videoItem case HotVideoItemModel item) {
+                            progress = item.progress;
+                          }
 
-                        return Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            FutureBuilder<Uint8List?>(
-                              future: _thumbnailFuture,
-                              builder: (context, snapshot) {
-                                // [核心修改] 使用 AnimatedSwitcher 实现平滑过渡
-                                return AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
-                                  transitionBuilder: (child, animation) {
-                                    return FadeTransition(
-                                      opacity: animation,
-                                      child: child,
-                                    );
-                                  },
-                                  child: _buildImage(
-                                    snapshot,
-                                    maxWidth,
-                                    maxHeight,
+                          return Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              FutureBuilder<Uint8List?>(
+                                future: _thumbnailFuture,
+                                builder: (context, snapshot) {
+                                  return AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 300),
+                                    transitionBuilder: (child, animation) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      );
+                                    },
+                                    child: _buildImage(
+                                      snapshot,
+                                      maxWidth,
+                                      maxHeight,
+                                    ),
+                                  );
+                                },
+                              ),
+                              if (badge != null)
+                                PBadge(
+                                  text: badge,
+                                  top: 6.0,
+                                  right: 6.0,
+                                ),
+                              if (progress != null && progress != 0) ...[
+                                PBadge(
+                                  text: progress == -1
+                                      ? '已看完'
+                                      : '${DurationUtil.formatDuration(progress)}/${DurationUtil.formatDuration(widget.videoItem.duration)}',
+                                  right: 6,
+                                  bottom: 8,
+                                  type: PBadgeType.gray,
+                                ),
+                                Positioned(
+                                  left: 0,
+                                  bottom: 0,
+                                  right: 0,
+                                  child: videoProgressIndicator(
+                                    progress == -1
+                                        ? 1
+                                        : progress / widget.videoItem.duration,
                                   ),
-                                );
-                              },
-                            ),
-                            if (badge != null)
-                              PBadge(
-                                text: badge,
-                                top: 6.0,
-                                right: 6.0,
-                              ),
-                            if (progress != null && progress != 0) ...[
-                              PBadge(
-                                text: progress == -1
-                                    ? '已看完'
-                                    : '${DurationUtil.formatDuration(progress)}/${DurationUtil.formatDuration(widget.videoItem.duration)}',
-                                right: 6,
-                                bottom: 8,
-                                type: PBadgeType.gray,
-                              ),
-                              Positioned(
-                                left: 0,
-                                bottom: 0,
-                                right: 0,
-                                child: videoProgressIndicator(
-                                  progress == -1
-                                      ? 1
-                                      : progress / widget.videoItem.duration,
                                 ),
-                              ),
-                            ] else if (widget.videoItem.duration > 0)
-                              PBadge(
-                                text: DurationUtil.formatDuration(
-                                  widget.videoItem.duration,
+                              ] else if (widget.videoItem.duration > 0)
+                                PBadge(
+                                  text: DurationUtil.formatDuration(
+                                    widget.videoItem.duration,
+                                  ),
+                                  right: 6.0,
+                                  bottom: 6.0,
+                                  type: PBadgeType.gray,
                                 ),
-                                right: 6.0,
-                                bottom: 6.0,
-                                type: PBadgeType.gray,
-                              ),
-                          ],
-                        );
-                      },
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -235,23 +237,18 @@ class _VideoCardHState extends State<VideoCardH> {
     );
   }
 
-  // [最终版“三步加载策略”]
   Widget _buildImage(
     AsyncSnapshot<Uint8List?> snapshot,
     double maxWidth,
     double maxHeight,
   ) {
-    // 关键点：为 AnimatedSwitcher 的 child 提供唯一的 Key
-    // Key 的选择要能代表当前UI的状态，以确保动画能被正确触发
     final key = ValueKey(
       snapshot.connectionState == ConnectionState.done
           ? (snapshot.data ?? widget.videoItem.cover ?? 'final_placeholder')
           : 'waiting_placeholder',
     );
 
-    // 状态1: 正在加载中
     if (snapshot.connectionState == ConnectionState.waiting) {
-      // 只显示无网络的灰色占位符，不加载任何图片
       return Container(
         key: key,
         color: Colors.grey[200],
@@ -260,7 +257,6 @@ class _VideoCardHState extends State<VideoCardH> {
       );
     }
 
-    // 状态2: 加载完成，并且成功获取到预览图
     if (snapshot.hasData && snapshot.data != null) {
       return Image.memory(
         key: key,
@@ -271,7 +267,6 @@ class _VideoCardHState extends State<VideoCardH> {
       );
     }
 
-    // 状态3: 加载完成但失败了，执行“下下策” -> 加载原始封面
     final coverUrl = widget.videoItem.cover;
     if (coverUrl != null && coverUrl.isNotEmpty) {
       return Image.network(
@@ -280,7 +275,6 @@ class _VideoCardHState extends State<VideoCardH> {
         width: maxWidth,
         height: maxHeight,
         fit: BoxFit.cover,
-        // 如果连原始封面都加载失败，显示灰色占位符
         errorBuilder: (context, error, stackTrace) {
           return Container(
             key: const ValueKey('error_placeholder'),
@@ -292,7 +286,6 @@ class _VideoCardHState extends State<VideoCardH> {
       );
     }
 
-    // 状态4: 所有尝试都失败了，只能显示灰色占位符
     return Container(
       key: key,
       color: Colors.grey[200],
