@@ -30,7 +30,7 @@ class TvKeyHandler {
   final FocusNode _focusNode = FocusNode();
   FocusNode get focusNode => _focusNode;
 
-  KeyEventResult handleKeyEvent(RawKeyEvent event) {
+  void handleKeyEvent(RawKeyEvent event) {
     if (event is RawKeyDownEvent) {
       if (event.data is RawKeyEventDataAndroid) {
         final keyCode = (event.data as RawKeyEventDataAndroid).keyCode;
@@ -40,29 +40,17 @@ class TvKeyHandler {
           if (context != null) {
             if (logicalKey == LogicalKeyboardKey.arrowUp) {
               Focus.of(context).focusInDirection(TraversalDirection.up);
-              return KeyEventResult.handled;
             } else if (logicalKey == LogicalKeyboardKey.arrowDown) {
               Focus.of(context).focusInDirection(TraversalDirection.down);
-              return KeyEventResult.handled;
             } else if (logicalKey == LogicalKeyboardKey.arrowLeft) {
               Focus.of(context).focusInDirection(TraversalDirection.left);
-              return KeyEventResult.handled;
             } else if (logicalKey == LogicalKeyboardKey.arrowRight) {
               Focus.of(context).focusInDirection(TraversalDirection.right);
-              return KeyEventResult.handled;
             }
-          }
-          if (logicalKey == LogicalKeyboardKey.select) {
-            // Simulate a tap on the focused widget
-            return KeyEventResult.handled;
-          } else if (logicalKey == LogicalKeyboardKey.back) {
-            Get.back();
-            return KeyEventResult.handled;
           }
         }
       }
     }
-    return KeyEventResult.ignored;
   }
 
   void dispose() {
