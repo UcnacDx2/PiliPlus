@@ -218,10 +218,15 @@ class PlayerFocus extends StatelessWidget {
           return true;
 
         case LogicalKeyboardKey.enter:
+        case LogicalKeyboardKey.select:
           if (onSkipSegment?.call() ?? false) {
             return true;
           }
-          onSendDanmaku();
+          if (plPlayerController.isLive || canPlay!()) {
+            if (hasPlayer) {
+              plPlayerController.onDoubleTapCenter();
+            }
+          }
           return true;
       }
 
