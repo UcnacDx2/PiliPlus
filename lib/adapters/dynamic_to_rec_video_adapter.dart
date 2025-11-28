@@ -1,12 +1,12 @@
-import 'package:PiliPlus/models/dynamics/result.dart';
+import 'package.PiliPlus/models/dynamics/result.dart' as dyn_result;
 import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
-import 'package:PiliPlus/models/model_video.dart';
+import 'package:PiliPlus/models/model_video.dart' as mod_video;
 
 class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
   DynamicToRecVideoAdapter.fromDynamicItem(
-    DynamicItemModel dynamicItem,
-    DynamicArchiveModel video,
+    dyn_result.DynamicItemModel dynamicItem,
+    dyn_result.DynamicArchiveModel video,
   ) {
     aid = video.aid;
     bvid = video.bvid;
@@ -15,7 +15,7 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
     title = video.title;
     duration = _parseDurationText(video.durationText);
     owner = Owner.fromDynamic(dynamicItem.modules.moduleAuthor);
-    stat = Stat.fromDynamic(video.stat);
+    stat = mod_video.Stat.fromDynamic(video.stat);
     goto = 'av';
     uri = video.jumpUrl;
     pubdate = dynamicItem.modules.moduleAuthor?.pubTs;
@@ -40,19 +40,19 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
 }
 
 extension on Owner {
-  static Owner fromDynamic(ModuleAuthorModel? moduleAuthor) {
+  static Owner fromDynamic(dyn_result.ModuleAuthorModel? moduleAuthor) {
     return Owner(
       mid: moduleAuthor?.mid,
-      name: moduleAuthor?.name,
+      name: moduleAuthor?.name ?? '',
       face: moduleAuthor?.face,
     );
   }
 }
 
-extension on Stat {
-  static Stat fromDynamic(dynamic stat) {
-    return Stat()
-      ..view = int.tryParse(stat.play ?? '0')
-      ..danmu = int.tryParse(stat.danmu ?? '0');
+extension on mod_video.Stat {
+  static mod_video.Stat fromDynamic(dyn_result.Stat? stat) {
+    return mod_video.Stat()
+      ..view = int.tryParse(stat?.play ?? '0')
+      ..danmu = int.tryParse(stat?.danmu ?? '0');
   }
 }
