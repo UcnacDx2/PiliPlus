@@ -1,3 +1,4 @@
+import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/additional_panel.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/blocked_item.dart';
@@ -13,6 +14,7 @@ List<Widget> dynContent(
   required bool isSave,
   required bool isDetail,
   required double maxWidth,
+  DynamicsTabType? dynamicsType,
 }) {
   final moduleDynamic = item.modules.moduleDynamic;
   return [
@@ -34,6 +36,7 @@ List<Widget> dynContent(
       item: item,
       floor: floor,
       maxWidth: maxWidth,
+      dynamicsType: dynamicsType,
     ),
     if (moduleDynamic?.additional case final additional?)
       addWidget(
