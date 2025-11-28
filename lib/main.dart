@@ -40,6 +40,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart' hide calcWindowPosition;
+import 'package:PiliPlus/utils/tv_key_handler.dart';
 
 WebViewEnvironment? webViewEnvironment;
 
@@ -202,8 +203,6 @@ Commit Hash: ${BuildConfig.commitHash}''';
     runApp(const MyApp());
   }
 }
-
-import 'package:PiliPlus/utils/tv_key_handler.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});

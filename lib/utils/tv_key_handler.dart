@@ -14,16 +14,16 @@ class TvKeyHandler {
     // Media
     85: LogicalKeyboardKey.mediaPlayPause,
     86: LogicalKeyboardKey.mediaStop,
-    87: LogicalKeyboardKey.mediaNext,
-    88: LogicalKeyboardKey.mediaPrevious,
+    87: LogicalKeyboardKey.mediaTrackNext,
+    88: LogicalKeyboardKey.mediaTrackPrevious,
     89: LogicalKeyboardKey.mediaRewind,
     90: LogicalKeyboardKey.mediaFastForward,
     126: LogicalKeyboardKey.mediaPlay,
     127: LogicalKeyboardKey.mediaPause,
 
     // Other
-    4: LogicalKeyboardKey.back,
-    82: LogicalKeyboardKey.menu,
+    4: LogicalKeyboardKey.backspace,
+    82: LogicalKeyboardKey.contextMenu,
     111: LogicalKeyboardKey.escape,
   };
 
