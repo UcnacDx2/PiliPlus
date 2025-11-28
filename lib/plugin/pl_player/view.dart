@@ -126,11 +126,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   final _playerKey = GlobalKey();
   final _videoKey = GlobalKey();
-  final _keyboardKey = GlobalKey();
-  final _focusNode = FocusNode();
-
-  bool _isOverlayFocused = false;
-  final FocusNode _playPauseFocusNode = FocusNode();
 
   final RxDouble _brightnessValue = 0.0.obs;
   final RxBool _brightnessIndicator = false.obs;
@@ -151,7 +146,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   StreamSubscription? _listener;
   StreamSubscription? _controlsListener;
-  StreamSubscription? _statusListener;
 
   bool _pauseDueToPauseUponEnteringBackgroundMode = false;
 
@@ -262,15 +256,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
     _doubleTapGestureRecognizer = DoubleTapGestureRecognizer()
       ..onDoubleTapDown = _onDoubleTapDown;
-
-    _statusListener = plPlayerController.playerStatus.listen((status) {
-      if (status == PlayerStatus.paused) {
-        _playPauseFocusNode.requestFocus();
-        setState(() {
-          _isOverlayFocused = true;
-        });
-      }
-    });
   }
 
   @override
@@ -325,7 +310,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     _doubleTapGestureRecognizer.dispose();
     _listener?.cancel();
     _controlsListener?.cancel();
-    _statusListener?.cancel();
     animationController.dispose();
     if (Utils.isMobile) {
       FlutterVolumeController.removeListener();
@@ -355,7 +339,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       /// 播放暂停
       BottomControlType.playOrPause => PlayOrPauseButton(
         plPlayerController: plPlayerController,
-        focusNode: _playPauseFocusNode,
       ),
 
       /// 上一集
@@ -1203,9 +1186,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         break;
       default:
         if (_suspendedDm == null) {
-          if (plPlayerController.playerStatus.value != PlayerStatus.paused) {
-            plPlayerController.controls = !plPlayerController.showControls.value;
-          }
+          plPlayerController.controls = !plPlayerController.showControls.value;
         } else if (_suspendedDm!.suspend) {
           _dmOffset.value = details.localPosition;
         } else {
@@ -1378,50 +1359,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         1.0,
       );
       plPlayerController.setVolume(volume);
-    }
-  }
-
-  void _handleKey(KeyEvent event) {
-    if (event is KeyDownEvent) {
-      if (_isOverlayFocused) {
-        if (event.logicalKey == LogicalKeyboardKey.escape) {
-          setState(() {
-            _isOverlayFocused = false;
-          });
-          plPlayerController.controls = false;
-        }
-        return;
-      }
-
-      final key = event.logicalKey;
-      switch (key) {
-        case LogicalKeyboardKey.space:
-          onDoubleTapCenter();
-          break;
-        case LogicalKeyboardKey.keyF:
-          plPlayerController.triggerFullScreen(status: !isFullScreen);
-          break;
-        case LogicalKeyboardKey.arrowLeft when (!plPlayerController.isLive):
-          onDoubleTapSeekBackward();
-          break;
-        case LogicalKeyboardKey.arrowRight when (!plPlayerController.isLive):
-          onDoubleTapSeekForward();
-          break;
-        case LogicalKeyboardKey.escape:
-          if (isFullScreen) {
-            plPlayerController.triggerFullScreen(status: false);
-          } else {
-            Get.back();
-          }
-          break;
-        case LogicalKeyboardKey.keyD:
-          final newVal = !plPlayerController.enableShowDanmaku.value;
-          plPlayerController.enableShowDanmaku.value = newVal;
-          if (!plPlayerController.tempPlayerConf) {
-            GStorage.setting.put(SettingBoxKey.enableShowDanmaku, newVal);
-          }
-          break;
-      }
     }
   }
 
@@ -1706,19 +1643,18 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                   isTop: false,
                   controller: animationController,
                   isFullScreen: isFullScreen,
-                  child: FocusScope(
-                    child: widget.bottomControl ??
-                        BottomControl(
-                          maxWidth: maxWidth,
-                          isFullScreen: isFullScreen,
-                          controller: plPlayerController,
-                          videoDetailController: videoDetailController,
-                          buildBottomControl: () => buildBottomControl(
-                            videoDetailController,
-                            maxWidth > maxHeight,
-                          ),
+                  child:
+                      widget.bottomControl ??
+                      BottomControl(
+                        maxWidth: maxWidth,
+                        isFullScreen: isFullScreen,
+                        controller: plPlayerController,
+                        videoDetailController: videoDetailController,
+                        buildBottomControl: () => buildBottomControl(
+                          videoDetailController,
+                          maxWidth > maxHeight,
                         ),
-                  ),
+                      ),
                 ),
               ],
             ),
@@ -2126,13 +2062,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         ),
       );
     }
-    return KeyboardListener(
-      key: _keyboardKey,
-      focusNode: _focusNode,
-      autofocus: true,
-      onKeyEvent: _handleKey,
-      child: child,
-    );
+    return child;
   }
 
   Widget get _videoWidget {

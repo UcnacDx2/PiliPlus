@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class ComBtn extends StatelessWidget {
   final Widget icon;
@@ -9,7 +8,6 @@ class ComBtn extends StatelessWidget {
   final double width;
   final double height;
   final String? tooltip;
-  final FocusNode? focusNode;
 
   const ComBtn({
     super.key,
@@ -20,7 +18,6 @@ class ComBtn extends StatelessWidget {
     this.width = 34,
     this.height = 34,
     this.tooltip,
-    this.focusNode,
   });
 
   @override
@@ -36,22 +33,9 @@ class ComBtn extends StatelessWidget {
         child: icon,
       ),
     );
-    final focusChild = Focus(
-      focusNode: focusNode,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            (event.logicalKey == LogicalKeyboardKey.select ||
-                event.logicalKey == LogicalKeyboardKey.enter)) {
-          onTap?.call();
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
-      child: child,
-    );
     if (tooltip != null) {
-      return Tooltip(message: tooltip, child: focusChild);
+      return Tooltip(message: tooltip, child: child);
     }
-    return focusChild;
+    return child;
   }
 }
