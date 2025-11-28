@@ -20,6 +20,7 @@ class PlayerFocus extends StatelessWidget {
     required this.plPlayerController,
     this.introController,
     required this.onSendDanmaku,
+    this.onShowSettings,
     this.canPlay,
     this.onSkipSegment,
   });
@@ -28,6 +29,7 @@ class PlayerFocus extends StatelessWidget {
   final PlPlayerController plPlayerController;
   final CommonIntroController? introController;
   final VoidCallback onSendDanmaku;
+  final VoidCallback? onShowSettings;
   final bool Function()? canPlay;
   final bool Function()? onSkipSegment;
 
@@ -215,6 +217,11 @@ class PlayerFocus extends StatelessWidget {
               plPlayerController.onDoubleTapCenter();
             }
           }
+          return true;
+
+        case LogicalKeyboardKey.menu:
+        case LogicalKeyboardKey.contextMenu:
+          onShowSettings?.call();
           return true;
       }
 
