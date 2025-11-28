@@ -159,7 +159,7 @@ class _DynamicsTabPageState
       return SliverGrid.builder(
         gridDelegate: gridDelegate,
         itemBuilder: (context, index) {
-          if (index == response.length - 1) {
+          if (response != null && index == response.length - 1) {
             controller.onLoadMore();
           }
           return VideoCardV(
