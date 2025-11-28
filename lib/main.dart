@@ -203,10 +203,30 @@ Commit Hash: ${BuildConfig.commitHash}''';
   }
 }
 
-class MyApp extends StatelessWidget {
+import 'package:PiliPlus/utils/tv_focusable.dart';
+import 'package:PiliPlus/utils/tv_key_handler.dart';
+
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   static ThemeData? darkThemeData;
+  final TvKeyHandler _tvKeyHandler = TvKeyHandler();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _tvKeyHandler.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -263,10 +283,17 @@ class MyApp extends StatelessWidget {
 
         // 图片缓存
         // PaintingBinding.instance.imageCache.maximumSizeBytes = 1000 << 20;
-        return GetMaterialApp(
-          title: Constants.appName,
-          theme: ThemeUtils.getThemeData(
-            colorScheme: lightColorScheme,
+        return TvKeyHandlerProvider(
+          tvKeyHandler: _tvKeyHandler,
+          child: Focus(
+            focusNode: _tvKeyHandler.focusNode,
+            onKeyEvent: (node, event) {
+              return _tvKeyHandler.handleKeyEvent(event);
+            },
+            child: GetMaterialApp(
+              title: Constants.appName,
+            theme: ThemeUtils.getThemeData(
+              colorScheme: lightColorScheme,
             isDynamic: lightDynamic != null && isDynamicColor,
             variant: variant,
           ),

@@ -176,4 +176,5 @@ class MainActivity : AudioServiceActivity() {
             "floating"
         ).invokeMethod("onPipChanged", isInPictureInPictureMode)
     }
+
 }
