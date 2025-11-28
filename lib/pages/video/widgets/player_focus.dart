@@ -219,7 +219,6 @@ class PlayerFocus extends StatelessWidget {
           }
           return true;
 
-        case LogicalKeyboardKey.menu:
         case LogicalKeyboardKey.contextMenu:
           onShowSettings?.call();
           return true;

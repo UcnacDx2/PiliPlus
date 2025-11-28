@@ -86,8 +86,7 @@ class _VideoCardVState extends State<VideoCardV> {
     return Focus(
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
-            (event.logicalKey == LogicalKeyboardKey.menu ||
-                event.logicalKey == LogicalKeyboardKey.contextMenu)) {
+            (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
           _menuKey.currentState?.showButtonMenu();
           return KeyEventResult.handled;
         }
@@ -169,7 +168,7 @@ class _VideoCardVState extends State<VideoCardV> {
           children: [
             Expanded(
               child: Text(
-                "${videoItem.title}\n",
+                "${widget.videoItem.title}\n",
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -181,22 +180,22 @@ class _VideoCardVState extends State<VideoCardV> {
             Row(
               spacing: 2,
               children: [
-                if (videoItem.goto == 'bangumi')
+                if (widget.videoItem.goto == 'bangumi')
                   PBadge(
-                    text: videoItem.pgcBadge,
+                    text: widget.videoItem.pgcBadge,
                     isStack: false,
                     size: PBadgeSize.small,
                     type: PBadgeType.line_primary,
                     fontSize: 9,
                   ),
-                if (videoItem.rcmdReason != null)
+                if (widget.videoItem.rcmdReason != null)
                   PBadge(
-                    text: videoItem.rcmdReason,
+                    text: widget.videoItem.rcmdReason,
                     isStack: false,
                     size: PBadgeSize.small,
                     type: PBadgeType.secondary,
                   ),
-                if (videoItem.goto == 'picture')
+                if (widget.videoItem.goto == 'picture')
                   const PBadge(
                     text: '动态',
                     isStack: false,
@@ -204,7 +203,7 @@ class _VideoCardVState extends State<VideoCardV> {
                     type: PBadgeType.line_primary,
                     fontSize: 9,
                   ),
-                if (videoItem.isFollowed)
+                if (widget.videoItem.isFollowed)
                   const PBadge(
                     text: '已关注',
                     isStack: false,
@@ -214,10 +213,10 @@ class _VideoCardVState extends State<VideoCardV> {
                 Expanded(
                   flex: 1,
                   child: Text(
-                    videoItem.owner.name.toString(),
+                    widget.videoItem.owner.name.toString(),
                     maxLines: 1,
                     overflow: TextOverflow.clip,
-                    semanticsLabel: 'UP：${videoItem.owner.name}',
+                    semanticsLabel: 'UP：${widget.videoItem.owner.name}',
                     style: TextStyle(
                       height: 1.5,
                       fontSize: theme.textTheme.labelMedium!.fontSize,
@@ -225,7 +224,7 @@ class _VideoCardVState extends State<VideoCardV> {
                     ),
                   ),
                 ),
-                if (videoItem.goto == 'av') const SizedBox(width: 10),
+                if (widget.videoItem.goto == 'av') const SizedBox(width: 10),
               ],
             ),
           ],
@@ -234,24 +233,21 @@ class _VideoCardVState extends State<VideoCardV> {
     );
   }
 
-  static final shortFormat = DateFormat('M-d');
-  static final longFormat = DateFormat('yy-M-d');
-
   Widget videoStat(BuildContext context, ThemeData theme) {
     return Row(
       children: [
         StatWidget(
           type: StatType.play,
-          value: videoItem.stat.view,
+          value: widget.videoItem.stat.view,
         ),
-        if (videoItem.goto != 'picture') ...[
+        if (widget.videoItem.goto != 'picture') ...[
           const SizedBox(width: 4),
           StatWidget(
             type: StatType.danmaku,
-            value: videoItem.stat.danmu,
+            value: widget.videoItem.stat.danmu,
           ),
         ],
-        if (videoItem is RecVideoItemModel) ...[
+        if (widget.videoItem is RecVideoItemModel) ...[
           const Spacer(),
           Text.rich(
             maxLines: 1,
@@ -261,18 +257,16 @@ class _VideoCardVState extends State<VideoCardV> {
                 color: theme.colorScheme.outline.withValues(alpha: 0.8),
               ),
               text: DateFormatUtils.dateFormat(
-                videoItem.pubdate,
-                short: shortFormat,
-                long: longFormat,
+                widget.videoItem.pubdate,
               ),
             ),
           ),
           const SizedBox(width: 2),
         ],
         // deprecated
-        //  else if (videoItem is RecVideoItemAppModel &&
-        //     videoItem.desc != null &&
-        //     videoItem.desc!.contains(' · ')) ...[
+        //  else if (widget.videoItem is RecVideoItemAppModel &&
+        //     widget.videoItem.desc != null &&
+        //     widget.videoItem.desc!.contains(' · ')) ...[
         //   const Spacer(),
         //   Text.rich(
         //     maxLines: 1,

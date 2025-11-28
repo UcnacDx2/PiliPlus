@@ -78,8 +78,7 @@ class _VideoCardHState extends State<VideoCardH> {
       child: Focus(
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent &&
-              (event.logicalKey == LogicalKeyboardKey.menu ||
-                  event.logicalKey == LogicalKeyboardKey.contextMenu)) {
+              (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
             _menuKey.currentState?.showButtonMenu();
             return KeyEventResult.handled;
           }
@@ -233,13 +232,13 @@ class _VideoCardHState extends State<VideoCardH> {
 
   Widget content(BuildContext context) {
     final theme = Theme.of(context);
-    String pubdate = DateFormatUtils.dateFormat(videoItem.pubdate!);
+    String pubdate = DateFormatUtils.dateFormat(widget.videoItem.pubdate!);
     if (pubdate != '') pubdate += '  ';
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (videoItem case SearchVideoItemModel item) ...[
+          if (widget.videoItem case SearchVideoItemModel item) ...[
             if (item.titleList?.isNotEmpty == true)
               Expanded(
                 child: Text.rich(
@@ -267,7 +266,7 @@ class _VideoCardHState extends State<VideoCardH> {
           ] else
             Expanded(
               child: Text(
-                videoItem.title,
+                widget.videoItem.title,
                 textAlign: TextAlign.start,
                 style: TextStyle(
                   fontSize: theme.textTheme.bodyMedium!.fontSize,
@@ -279,7 +278,7 @@ class _VideoCardHState extends State<VideoCardH> {
               ),
             ),
           Text(
-            "$pubdate${videoItem.owner.name}",
+            "$pubdate${widget.videoItem.owner.name}",
             maxLines: 1,
             style: TextStyle(
               fontSize: 12,
@@ -294,11 +293,11 @@ class _VideoCardHState extends State<VideoCardH> {
             children: [
               StatWidget(
                 type: StatType.play,
-                value: videoItem.stat.view,
+                value: widget.videoItem.stat.view,
               ),
               StatWidget(
                 type: StatType.danmaku,
-                value: videoItem.stat.danmu,
+                value: widget.videoItem.stat.danmu,
               ),
             ],
           ),
