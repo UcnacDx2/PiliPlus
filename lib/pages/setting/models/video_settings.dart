@@ -19,6 +19,14 @@ import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 List<SettingsModel> get videoSettings => [
+      const SettingsModel(
+        settingsType: SettingsType.sw1tch,
+        title: '替换封面',
+        subtitle: '替换为高清封面',
+        leading: Icon(Icons.collections_outlined),
+        setKey: SettingBoxKey.replaceCover,
+        defaultVal: false,
+      ),
   const SettingsModel(
     settingsType: SettingsType.sw1tch,
     title: '开启硬解',

@@ -879,4 +879,7 @@ abstract class Pref {
     SettingBoxKey.showBatteryLevel,
     defaultValue: Utils.isMobile,
   );
+
+  static bool get replaceCover =>
+      _setting.get(SettingBoxKey.replaceCover, defaultValue: false);
 }
