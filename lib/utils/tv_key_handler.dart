@@ -48,6 +48,9 @@ class TvKeyHandler {
             focusManager.moveFocus(AxisDirection.right);
           } else if (logicalKey == LogicalKeyboardKey.backspace) {
             Get.back();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              FocusScope.of(_focusNode.context!).requestFocus(_focusNode);
+            });
           }
         }
       }
