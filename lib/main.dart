@@ -388,8 +388,8 @@ class _MyAppState extends State<MyApp> {
               if (Utils.isDesktop) PointerDeviceKind.mouse,
             },
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 }
