@@ -98,11 +98,6 @@ class _VideoCardVState extends State<VideoCardV> {
     );
     return Focus(
       focusNode: _focusNode,
-      onFocusChange: (hasFocus) {
-        if (hasFocus) {
-          _focusNode.requestFocus();
-        }
-      },
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
             (event.logicalKey == LogicalKeyboardKey.contextMenu)) {

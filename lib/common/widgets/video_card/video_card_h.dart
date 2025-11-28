@@ -90,11 +90,6 @@ class _VideoCardHState extends State<VideoCardH> {
       type: MaterialType.transparency,
       child: Focus(
         focusNode: _focusNode,
-        onFocusChange: (hasFocus) {
-          if (hasFocus) {
-            _focusNode.requestFocus();
-          }
-        },
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent &&
               (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
