@@ -14,7 +14,6 @@ import 'package:PiliPlus/models/search/result.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
-import 'package:PiliPlus/modules/replace_cover/replace_cover.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -140,7 +139,7 @@ class VideoCardH extends StatelessWidget {
                           clipBehavior: Clip.none,
                           children: [
                             NetworkImgLayer(
-                              src: ReplaceCover.getReplacedCover(videoItem.cover),
+                              src: videoItem.cover,
                               width: maxWidth,
                               height: maxHeight,
                             ),
