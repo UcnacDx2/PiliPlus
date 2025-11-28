@@ -2,6 +2,7 @@
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/flutter/text/text.dart' as custom_text;
 import 'package:PiliPlus/common/widgets/image/custom_grid_view.dart';
+import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/rich_node_panel.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
@@ -16,6 +17,7 @@ Widget content(
   required bool isSave,
   required bool isDetail,
   required double maxWidth,
+  DynamicsTabType? dynamicsType,
 }) {
   if (floor == 1) {
     maxWidth -= 24;

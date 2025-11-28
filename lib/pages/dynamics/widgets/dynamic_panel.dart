@@ -1,5 +1,6 @@
 import 'package:PiliPlus/common/widgets/flutter/dyn/ink_well.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
+import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/action_panel.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/author_panel.dart';
@@ -18,6 +19,7 @@ class DynamicPanel extends StatelessWidget {
   final VoidCallback? onBlock;
   final VoidCallback? onUnfold;
   final bool isDetailPortraitW;
+  final DynamicsTabType? dynamicsType;
 
   const DynamicPanel({
     super.key,
@@ -30,6 +32,7 @@ class DynamicPanel extends StatelessWidget {
     this.onBlock,
     this.onUnfold,
     this.isDetailPortraitW = true,
+    this.dynamicsType,
   });
 
   @override
@@ -84,6 +87,7 @@ class DynamicPanel extends StatelessWidget {
               item: item,
               floor: 1,
               maxWidth: maxWidth,
+              dynamicsType: dynamicsType,
             ),
             const SizedBox(height: 2),
             if (!isDetail) ...[

@@ -131,6 +131,7 @@ class _DynamicsTabPageState
                             onBlock: () => controller.onBlock(index),
                             maxWidth: maxWidth,
                             onUnfold: () => controller.onUnfold(item, index),
+                            dynamicsType: widget.dynamicsType,
                           );
                         },
                         childCount: response!.length,
@@ -149,6 +150,7 @@ class _DynamicsTabPageState
                           onBlock: () => controller.onBlock(index),
                           maxWidth: maxWidth,
                           onUnfold: () => controller.onUnfold(item, index),
+                          dynamicsType: widget.dynamicsType,
                         );
                       },
                       itemCount: response!.length,
