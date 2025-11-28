@@ -30,6 +30,9 @@ class VideoCardV extends StatefulWidget {
     this.onRemove,
   });
 
+  static final shortFormat = DateFormat('M-d');
+  static final longFormat = DateFormat('yy-M-d');
+
   @override
   State<VideoCardV> createState() => _VideoCardVState();
 }
@@ -84,8 +87,7 @@ class _VideoCardVState extends State<VideoCardV> {
     return Focus(
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
-            (event.logicalKey == LogicalKeyboardKey.menu ||
-                event.logicalKey == LogicalKeyboardKey.contextMenu)) {
+            (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
           _menuKey.currentState?.showButtonMenu();
           return KeyEventResult.handled;
         }
@@ -232,9 +234,6 @@ class _VideoCardVState extends State<VideoCardV> {
     );
   }
 
-  static final shortFormat = DateFormat('M-d');
-  static final longFormat = DateFormat('yy-M-d');
-
   Widget videoStat(BuildContext context, ThemeData theme) {
     return Row(
       children: [
@@ -260,8 +259,8 @@ class _VideoCardVState extends State<VideoCardV> {
               ),
               text: DateFormatUtils.dateFormat(
                 (widget.videoItem as RecVideoItemModel).pubdate,
-                short: shortFormat,
-                long: longFormat,
+                short: VideoCardV.shortFormat,
+                long: VideoCardV.longFormat,
               ),
             ),
           ),

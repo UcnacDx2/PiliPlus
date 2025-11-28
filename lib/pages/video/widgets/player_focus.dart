@@ -213,7 +213,6 @@ class PlayerFocus extends StatelessWidget {
             return true;
           }
         case LogicalKeyboardKey.contextMenu:
-        case LogicalKeyboardKey.menu:
           onMenuPressed?.call();
           return true;
           if (plPlayerController.isLive || canPlay!()) {

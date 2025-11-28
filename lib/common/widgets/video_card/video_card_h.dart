@@ -75,8 +75,7 @@ class _VideoCardHState extends State<VideoCardH> {
     return Focus(
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
-            (event.logicalKey == LogicalKeyboardKey.menu ||
-                event.logicalKey == LogicalKeyboardKey.contextMenu)) {
+            (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
           _menuKey.currentState?.showButtonMenu();
           return KeyEventResult.handled;
         }
