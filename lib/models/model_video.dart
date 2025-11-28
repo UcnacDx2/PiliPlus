@@ -34,6 +34,12 @@ class Stat extends BaseStat {
     like = json["like"];
     danmu = json['danmaku'];
   }
+
+  static Stat fromDynamic(dynamic stat) {
+    return Stat()
+      ..view = int.tryParse(stat?.play ?? '0')
+      ..danmu = int.tryParse(stat?.danmu ?? '0');
+  }
 }
 
 class PlayStat extends BaseStat {

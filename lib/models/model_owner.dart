@@ -31,4 +31,12 @@ class Owner implements BaseOwner {
     'name': name,
     'face': face,
   };
+
+  static Owner fromDynamic(dynamic moduleAuthor) {
+    return Owner(
+      mid: moduleAuthor?.mid,
+      name: moduleAuthor?.name ?? '',
+      face: moduleAuthor?.face,
+    );
+  }
 }

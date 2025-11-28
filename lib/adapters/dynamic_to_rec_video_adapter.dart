@@ -12,7 +12,7 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
     bvid = video.bvid;
     cid = null;
     cover = video.cover;
-    title = video.title;
+    title = video.title ?? '';
     duration = _parseDurationText(video.durationText);
     owner = Owner.fromDynamic(dynamicItem.modules.moduleAuthor);
     stat = mod_video.Stat.fromDynamic(video.stat);
@@ -36,23 +36,5 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
           int.parse(parts[2]);
     }
     return 0;
-  }
-}
-
-extension on Owner {
-  static Owner fromDynamic(dyn_result.ModuleAuthorModel? moduleAuthor) {
-    return Owner(
-      mid: moduleAuthor?.mid,
-      name: moduleAuthor?.name ?? '',
-      face: moduleAuthor?.face,
-    );
-  }
-}
-
-extension on mod_video.Stat {
-  static mod_video.Stat fromDynamic(dyn_result.Stat? stat) {
-    return mod_video.Stat()
-      ..view = int.tryParse(stat?.play ?? '0')
-      ..danmu = int.tryParse(stat?.danmu ?? '0');
   }
 }
