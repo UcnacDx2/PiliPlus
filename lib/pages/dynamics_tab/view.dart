@@ -8,13 +8,16 @@ import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/pages/common/common_page.dart';
 import 'package:PiliPlus/pages/dynamics/controller.dart';
-import 'package:PiliPlus/pages/dynamics/widgets/dynamic_panel.dart';
+import 'package:PiliPlus/adapters/dynamic_to_rec_video_adapter.dart';
+import 'package:PiliPlus/common/widgets/video_card/video_card_v.dart';
 import 'package:PiliPlus/pages/dynamics_tab/controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/waterfall.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/utils/grid.dart';
 import 'package:waterfall_flow/waterfall_flow.dart'
     hide SliverWaterfallFlowDelegateWithMaxCrossAxisExtent;
 
@@ -110,50 +113,47 @@ class _DynamicsTabPageState
     );
   }
 
+  late final gridDelegate = SliverGridDelegateWithExtentAndRatio(
+    mainAxisSpacing: StyleString.cardSpace,
+    crossAxisSpacing: StyleString.cardSpace,
+    maxCrossAxisExtent: Grid.smallCardWidth,
+    childAspectRatio: StyleString.aspectRatio,
+    mainAxisExtent: MediaQuery.textScalerOf(context).scale(90),
+  );
+
   Widget _buildBody(LoadingState<List<DynamicItemModel>?> loadingState) {
     return switch (loadingState) {
       Loading() => dynSkeleton,
       Success(:var response) =>
-        response?.isNotEmpty == true
-            ? GlobalData().dynamicsWaterfallFlow
-                  ? SliverWaterfallFlow(
-                      gridDelegate: dynGridDelegate,
-                      delegate: SliverChildBuilderDelegate(
-                        (_, index) {
-                          if (index == response.length - 1) {
-                            controller.onLoadMore();
-                          }
-                          final item = response[index];
-                          return DynamicPanel(
-                            item: item,
-                            onRemove: (idStr) =>
-                                controller.onRemove(index, idStr),
-                            onBlock: () => controller.onBlock(index),
-                            maxWidth: maxWidth,
-                            onUnfold: () => controller.onUnfold(item, index),
-                          );
-                        },
-                        childCount: response!.length,
+        () {
+          final videoItems = response!
+              .where((i) => i.modules.moduleDynamic?.major?.archive != null)
+              .toList();
+          return response.isNotEmpty == true
+              ? SliverGrid.builder(
+                  gridDelegate: gridDelegate,
+                  itemBuilder: (context, index) {
+                    if (index == videoItems.length - 1) {
+                      controller.onLoadMore();
+                    }
+                    final item = videoItems[index];
+                    final archive =
+                        item.modules.moduleDynamic!.major!.archive!;
+                    return VideoCardV(
+                      videoItem: DynamicToRecVideoAdapter.fromDynamicItem(
+                        item,
+                        archive,
                       ),
-                    )
-                  : SliverList.builder(
-                      itemBuilder: (context, index) {
-                        if (index == response.length - 1) {
-                          controller.onLoadMore();
-                        }
-                        final item = response[index];
-                        return DynamicPanel(
-                          item: item,
-                          onRemove: (idStr) =>
-                              controller.onRemove(index, idStr),
-                          onBlock: () => controller.onBlock(index),
-                          maxWidth: maxWidth,
-                          onUnfold: () => controller.onUnfold(item, index),
-                        );
+                      onRemove: () {
+                        final originalIndex = response.indexOf(item);
+                        controller.onRemove(originalIndex, item.idStr);
                       },
-                      itemCount: response!.length,
-                    )
-            : HttpError(onReload: controller.onReload),
+                    );
+                  },
+                  itemCount: videoItems.length,
+                )
+              : HttpError(onReload: controller.onReload);
+        }(),
       Error(:var errMsg) => HttpError(
         errMsg: errMsg,
         onReload: controller.onReload,

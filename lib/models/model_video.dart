@@ -27,6 +27,8 @@ abstract class BaseStat {
 }
 
 class Stat extends BaseStat {
+  Stat();
+
   Stat.fromJson(Map<String, dynamic> json) {
     view = json["view"];
     like = json["like"];
