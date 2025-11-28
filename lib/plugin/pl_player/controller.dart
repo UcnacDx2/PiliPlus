@@ -1022,9 +1022,13 @@ class PlPlayerController {
             }
           }
           playerStatus.value = PlayerStatus.playing;
+          if (showControls.value) {
+            hideTaskControls();
+          }
         } else {
           disableAutoEnterPip();
           playerStatus.value = PlayerStatus.paused;
+          controls = true;
         }
         videoPlayerServiceHandler?.onStatusChange(
           playerStatus.value,
@@ -1296,7 +1300,9 @@ class PlPlayerController {
   void hideTaskControls() {
     _timer?.cancel();
     _timer = Timer(showControlDuration, () {
-      if (!isSliderMoving.value && !tripling) {
+      if (!isSliderMoving.value &&
+          !tripling &&
+          playerStatus.value != PlayerStatus.paused) {
         controls = false;
       }
       _timer = null;
@@ -1416,7 +1422,7 @@ class PlPlayerController {
   set controls(bool visible) {
     showControls.value = visible;
     _timer?.cancel();
-    if (visible) {
+    if (visible && playerStatus.value != PlayerStatus.paused) {
       hideTaskControls();
     }
   }
@@ -1459,6 +1465,7 @@ class PlPlayerController {
 
   // 双击播放、暂停
   Future<void> onDoubleTapCenter() async {
+    controls = true;
     if (!isLive && _isCompleted) {
       await videoPlayerController!.seek(Duration.zero);
       videoPlayerController!.play();
