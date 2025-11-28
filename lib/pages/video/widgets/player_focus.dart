@@ -34,9 +34,7 @@ class PlayerFocus extends StatelessWidget {
   static bool _shouldHandle(LogicalKeyboardKey logicalKey) {
     return logicalKey == LogicalKeyboardKey.tab ||
         logicalKey == LogicalKeyboardKey.arrowLeft ||
-        logicalKey == LogicalKeyboardKey.arrowRight ||
-        logicalKey == LogicalKeyboardKey.arrowUp ||
-        logicalKey == LogicalKeyboardKey.arrowDown;
+        logicalKey == LogicalKeyboardKey.arrowRight;
   }
 
   @override
@@ -102,7 +100,25 @@ class PlayerFocus extends StatelessWidget {
 
     final isArrowUp = key == LogicalKeyboardKey.arrowUp;
     if (isArrowUp || key == LogicalKeyboardKey.arrowDown) {
-      _updateVolume(event, isIncrease: isArrowUp);
+      if (HardwareKeyboard.instance.isMetaPressed) {
+        _updateVolume(event, isIncrease: isArrowUp);
+      } else {
+        if (event is KeyDownEvent) {
+          if (isArrowUp) {
+            if (introController case final introController?) {
+              if (!introController.prevPlay()) {
+                SmartDialog.showToast('已经是第一集了');
+              }
+            }
+          } else {
+            if (introController case final introController?) {
+              if (!introController.nextPlay()) {
+                SmartDialog.showToast('已经是最后一集了');
+              }
+            }
+          }
+        }
+      }
       return true;
     }
 
