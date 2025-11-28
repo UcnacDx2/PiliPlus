@@ -20,11 +20,21 @@ class DynamicsController extends GetxController
     with GetSingleTickerProviderStateMixin, ScrollOrRefreshMixin, AccountMixin {
   @override
   final ScrollController scrollController = ScrollController();
-  late final TabController tabController = TabController(
-    length: DynamicsTabType.values.length,
-    vsync: this,
-    initialIndex: Pref.defaultDynamicType,
-  );
+  late final TabController tabController = () {
+    final defaultType = DynamicsTabType.values[Pref.defaultDynamicType];
+    int initialIndex = displayedTabs.indexOf(defaultType);
+    if (initialIndex == -1) {
+      initialIndex = 0;
+    }
+    return TabController(
+      length: displayedTabs.length,
+      vsync: this,
+      initialIndex: initialIndex,
+    );
+  }();
+
+  final List<DynamicsTabType> displayedTabs =
+      DynamicsTabType.values.where((e) => e != DynamicsTabType.video).toList();
 
   late final RxInt mid = (-1).obs;
   late int currentMid = -1;
@@ -47,7 +57,7 @@ class DynamicsController extends GetxController
   DynamicsTabController? get controller {
     try {
       return Get.find<DynamicsTabController>(
-        tag: DynamicsTabType.values[tabController.index].name,
+        tag: displayedTabs[tabController.index].name,
       );
     } catch (_) {
       return null;
@@ -176,8 +186,13 @@ class DynamicsController extends GetxController
   }
 
   void onSelectUp(int mid) {
+    final targetIndex = mid == -1
+        ? displayedTabs.indexOf(DynamicsTabType.all)
+        : displayedTabs.indexOf(DynamicsTabType.up);
     if (this.mid.value == mid) {
-      tabController.index = (mid == -1 ? 0 : 4);
+      if (targetIndex != -1) {
+        tabController.index = targetIndex;
+      }
       if (mid == -1) {
         queryFollowUp();
       }
@@ -186,7 +201,9 @@ class DynamicsController extends GetxController
     }
 
     this.mid.value = mid;
-    tabController.index = (mid == -1 ? 0 : 4);
+    if (targetIndex != -1) {
+      tabController.index = targetIndex;
+    }
   }
 
   @override
