@@ -79,6 +79,10 @@ class DynamicsDataModel {
             tempBannedList!.contains(item.modules.moduleAuthor?.mid)) {
           continue;
         }
+        if (type == DynamicsTabType.videoNew &&
+            item.modules.moduleDynamic?.major?.type != 'MAJOR_TYPE_ARCHIVE') {
+          continue;
+        }
         items!.add(item);
       }
       // filtered all
