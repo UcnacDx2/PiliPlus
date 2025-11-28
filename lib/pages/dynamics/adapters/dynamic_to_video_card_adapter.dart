@@ -1,0 +1,47 @@
+import 'package:PiliPlus/models/dynamics/result.dart' as dyn;
+import 'package:PiliPlus/models/model_owner.dart';
+import 'package:PiliPlus/models/model_rec_video_item.dart';
+import 'package:PiliPlus/models/model_video.dart';
+import 'package:PiliPlus/utils/duration_utils.dart';
+import 'package:PiliPlus/utils/num_utils.dart';
+
+class DynamicToVideoCardAdapter extends BaseRecVideoItemModel {
+  final dyn.DynamicItemModel item;
+
+  DynamicToVideoCardAdapter({required this.item}) {
+    final video = _getVideo();
+    final author = item.modules.moduleAuthor;
+
+    aid = video?.aid;
+    bvid = video?.bvid;
+    cid = null;
+    goto = 'av';
+    uri = video?.jumpUrl;
+    cover = video?.cover;
+    title = video?.title ?? '';
+    duration = DurationUtils.parseDuration(video?.durationText ?? '0:00');
+    owner = Owner(
+      mid: author?.mid,
+      name: author?.name,
+      face: author?.face,
+    );
+    stat = video?.stat != null
+        ? PlayStat.fromJson(
+            {'play': video!.stat!.play, 'danmaku': video.stat!.danmu})
+        : PlayStat.fromJson({});
+    isFollowed = false;
+    rcmdReason = null;
+  }
+
+  dyn.DynamicArchiveModel? _getVideo() {
+    return switch (item.type) {
+      'DYNAMIC_TYPE_AV' => item.modules.moduleDynamic?.major?.archive,
+      'DYNAMIC_TYPE_UGC_SEASON' => item.modules.moduleDynamic?.major?.ugcSeason,
+      'DYNAMIC_TYPE_PGC' ||
+      'DYNAMIC_TYPE_PGC_UNION' => item.modules.moduleDynamic?.major?.pgc,
+      'DYNAMIC_TYPE_COURSES_SEASON' =>
+        item.modules.moduleDynamic?.major?.courses,
+      _ => null,
+    };
+  }
+}

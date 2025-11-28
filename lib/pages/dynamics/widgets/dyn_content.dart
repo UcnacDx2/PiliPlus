@@ -13,6 +13,7 @@ List<Widget> dynContent(
   required bool isSave,
   required bool isDetail,
   required double maxWidth,
+  DynamicsTabType? dynamicsType,
 }) {
   final moduleDynamic = item.modules.moduleDynamic;
   return [
@@ -34,6 +35,7 @@ List<Widget> dynContent(
       item: item,
       floor: floor,
       maxWidth: maxWidth,
+      dynamicsType: dynamicsType,
     ),
     if (moduleDynamic?.additional case final additional?)
       addWidget(

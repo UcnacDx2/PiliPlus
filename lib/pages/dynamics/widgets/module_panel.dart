@@ -4,6 +4,7 @@ import 'package:PiliPlus/common/widgets/flutter/dyn/ink_well.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/grpc/bilibili/app/listener/v1.pbenum.dart'
     show PlaylistSource;
+import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/pages/audio/view.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/forward_panel.dart';
@@ -40,6 +41,7 @@ Widget module(
   required bool isSave,
   required bool isDetail,
   required double maxWidth,
+  DynamicsTabType? dynamicsType,
 }) {
   final moduleDynamic = item.modules.moduleDynamic;
   final major = moduleDynamic?.major;
@@ -77,6 +79,7 @@ Widget module(
         isSave: isSave,
         isDetail: isDetail,
         maxWidth: maxWidth,
+        dynamicsType: dynamicsType,
       );
     // 转发
     case 'DYNAMIC_TYPE_FORWARD':

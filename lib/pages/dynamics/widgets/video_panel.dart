@@ -2,8 +2,11 @@
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
+import 'package:PiliPlus/common/widgets/video_card/video_card_v.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
+import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
+import 'package:PiliPlus/pages/dynamics/adapters/dynamic_to_video_card_adapter.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +18,7 @@ Widget videoSeasonWidget(
   required bool isSave,
   required bool isDetail,
   required double maxWidth,
+  DynamicsTabType? dynamicsType,
 }) {
   // type archive  ugcSeason
   // archive 视频/显示发布人
@@ -40,6 +44,26 @@ Widget videoSeasonWidget(
   } else {
     padding = EdgeInsets.zero;
   }
+
+  if (dynamicsType == DynamicsTabType.video) {
+    return Padding(
+      padding: padding,
+      child: LayoutBuilder(builder: (context, constraints) {
+        final double cardWidth = constraints.maxWidth;
+        // Manually calculate the height for the VideoCardV to avoid layout errors
+        // The card's content area (title, stats, etc.) has an approximate height of 80
+        const double _kVideoCardContentHeight = 80;
+        final double cardImageHeight = cardWidth / StyleString.aspectRatio;
+        final double cardHeight = cardImageHeight + _kVideoCardContentHeight;
+        return SizedBox(
+          width: cardWidth,
+          height: cardHeight,
+          child: VideoCardV(videoItem: DynamicToVideoCardAdapter(item: item)),
+        );
+      }),
+    );
+  }
+
   return Padding(
     padding: padding,
     child: Column(
