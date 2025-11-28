@@ -19,7 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 // 视频卡片 - 水平布局
-class VideoCardH extends StatelessWidget {
+class VideoCardH extends StatefulWidget {
   const VideoCardH({
     super.key,
     required this.videoItem,
@@ -27,16 +27,25 @@ class VideoCardH extends StatelessWidget {
     this.onViewLater,
     this.onRemove,
   });
+
   final BaseVideoItemModel videoItem;
   final VoidCallback? onTap;
   final ValueChanged<int>? onViewLater;
   final VoidCallback? onRemove;
 
   @override
+  State<VideoCardH> createState() => _VideoCardHState();
+}
+
+class _VideoCardHState extends State<VideoCardH> {
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+
+  @override
   Widget build(BuildContext context) {
     String type = 'video';
     String? badge;
-    if (videoItem case SearchVideoItemModel item) {
+    if (widget.videoItem case SearchVideoItemModel item) {
       var typeOrNull = item.type;
       if (typeOrNull?.isNotEmpty == true) {
         type = typeOrNull!;
@@ -49,7 +58,7 @@ class VideoCardH extends StatelessWidget {
       if (item.isUnionVideo == 1) {
         badge = '合作';
       }
-    } else if (videoItem case HotVideoItemModel item) {
+    } else if (widget.videoItem case HotVideoItemModel item) {
       if (item.isCharging == true) {
         badge = '充电专属';
       } else if (item.isCooperation == 1) {
@@ -59,136 +68,155 @@ class VideoCardH extends StatelessWidget {
       }
     }
     void onLongPress() => imageSaveDialog(
-      bvid: videoItem.bvid,
-      title: videoItem.title,
-      cover: videoItem.cover,
-    );
+          bvid: widget.videoItem.bvid,
+          title: widget.videoItem.title,
+          cover: widget.videoItem.cover,
+        );
+
+    final theme = Theme.of(context);
+
     return Material(
       type: MaterialType.transparency,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          InkWell(
-            onLongPress: onLongPress,
-            onSecondaryTap: Utils.isMobile ? null : onLongPress,
-            onTap:
-                onTap ??
-                () async {
-                  if (type == 'ketang') {
-                    PageUtils.viewPugv(seasonId: videoItem.aid);
-                    return;
-                  } else if (type == 'live_room') {
-                    if (videoItem case SearchVideoItemModel item) {
-                      int? roomId = item.id;
-                      if (roomId != null) {
-                        PageUtils.toLiveRoom(roomId);
+          Focus(
+            focusNode: _focusNode,
+            canRequestFocus:
+                MediaQuery.maybeNavigationModeOf(context) == NavigationMode.directional,
+            onFocusChange: (value) => setState(() => _isFocused = value),
+            child: InkWell(
+              onLongPress: onLongPress,
+              onSecondaryTap: Utils.isMobile ? null : onLongPress,
+              onTap: widget.onTap ??
+                  () async {
+                    if (type == 'ketang') {
+                      PageUtils.viewPugv(seasonId: widget.videoItem.aid);
+                      return;
+                    } else if (type == 'live_room') {
+                      if (widget.videoItem case SearchVideoItemModel item) {
+                        int? roomId = item.id;
+                        if (roomId != null) {
+                          PageUtils.toLiveRoom(roomId);
+                        }
+                      } else {
+                        SmartDialog.showToast(
+                          'err: live_room : ${widget.videoItem.runtimeType}',
+                        );
                       }
-                    } else {
-                      SmartDialog.showToast(
-                        'err: live_room : ${videoItem.runtimeType}',
-                      );
-                    }
-                    return;
-                  }
-                  if (videoItem case HotVideoItemModel item) {
-                    if (item.redirectUrl?.isNotEmpty == true &&
-                        PageUtils.viewPgcFromUri(item.redirectUrl!)) {
                       return;
                     }
-                  }
-
-                  try {
-                    final int? cid =
-                        videoItem.cid ??
-                        await SearchHttp.ab2c(
-                          aid: videoItem.aid,
-                          bvid: videoItem.bvid,
-                        );
-                    if (cid != null) {
-                      PageUtils.toVideoPage(
-                        bvid: videoItem.bvid,
-                        cid: cid,
-                        cover: videoItem.cover,
-                        title: videoItem.title,
-                      );
+                    if (widget.videoItem case HotVideoItemModel item) {
+                      if (item.redirectUrl?.isNotEmpty == true &&
+                          PageUtils.viewPgcFromUri(item.redirectUrl!)) {
+                        return;
+                      }
                     }
-                  } catch (err) {
-                    SmartDialog.showToast(err.toString());
-                  }
-                },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: StyleString.safeSpace,
-                vertical: 5,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  AspectRatio(
-                    aspectRatio: StyleString.aspectRatio,
-                    child: LayoutBuilder(
-                      builder: (context, boxConstraints) {
-                        final double maxWidth = boxConstraints.maxWidth;
-                        final double maxHeight = boxConstraints.maxHeight;
-                        num? progress;
-                        if (videoItem case HotVideoItemModel item) {
-                          progress = item.progress;
-                        }
 
-                        return Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            NetworkImgLayer(
-                              src: videoItem.cover,
-                              width: maxWidth,
-                              height: maxHeight,
-                            ),
-                            if (badge != null)
-                              PBadge(
-                                text: badge,
-                                top: 6.0,
-                                right: 6.0,
-                                type: switch (badge) {
-                                  '充电专属' => PBadgeType.error,
-                                  _ => PBadgeType.primary,
-                                },
-                              ),
-                            if (progress != null && progress != 0) ...[
-                              PBadge(
-                                text: progress == -1
-                                    ? '已看完'
-                                    : '${DurationUtils.formatDuration(progress)}/${DurationUtils.formatDuration(videoItem.duration)}',
-                                right: 6,
-                                bottom: 8,
-                                type: PBadgeType.gray,
-                              ),
-                              Positioned(
-                                left: 0,
-                                bottom: 0,
-                                right: 0,
-                                child: videoProgressIndicator(
-                                  progress == -1
-                                      ? 1
-                                      : progress / videoItem.duration,
-                                ),
-                              ),
-                            ] else if (videoItem.duration > 0)
-                              PBadge(
-                                text: DurationUtils.formatDuration(
-                                  videoItem.duration,
-                                ),
-                                right: 6.0,
-                                bottom: 6.0,
-                                type: PBadgeType.gray,
-                              ),
-                          ],
+                    try {
+                      final int? cid = widget.videoItem.cid ??
+                          await SearchHttp.ab2c(
+                            aid: widget.videoItem.aid,
+                            bvid: widget.videoItem.bvid,
+                          );
+                      if (cid != null) {
+                        PageUtils.toVideoPage(
+                          bvid: widget.videoItem.bvid,
+                          cid: cid,
+                          cover: widget.videoItem.cover,
+                          title: widget.videoItem.title,
                         );
-                      },
-                    ),
+                      }
+                    } catch (err) {
+                      SmartDialog.showToast(err.toString());
+                    }
+                  },
+              child: Container(
+                decoration: _isFocused
+                    ? BoxDecoration(
+                        border: Border.all(
+                          color: theme.colorScheme.primary,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      )
+                    : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: StyleString.safeSpace,
+                    vertical: 5,
                   ),
-                  const SizedBox(width: 10),
-                  content(context),
-                ],
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      AspectRatio(
+                        aspectRatio: StyleString.aspectRatio,
+                        child: LayoutBuilder(
+                          builder: (context, boxConstraints) {
+                            final double maxWidth = boxConstraints.maxWidth;
+                            final double maxHeight = boxConstraints.maxHeight;
+                            num? progress;
+                            if (widget.videoItem case HotVideoItemModel item) {
+                              progress = item.progress;
+                            }
+
+                            return Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                NetworkImgLayer(
+                                  src: widget.videoItem.cover,
+                                  width: maxWidth,
+                                  height: maxHeight,
+                                ),
+                                if (badge != null)
+                                  PBadge(
+                                    text: badge,
+                                    top: 6.0,
+                                    right: 6.0,
+                                    type: switch (badge) {
+                                      '充电专属' => PBadgeType.error,
+                                      _ => PBadgeType.primary,
+                                    },
+                                  ),
+                                if (progress != null && progress != 0) ...[
+                                  PBadge(
+                                    text: progress == -1
+                                        ? '已看完'
+                                        : '${DurationUtils.formatDuration(progress)}/${DurationUtils.formatDuration(widget.videoItem.duration)}',
+                                    right: 6,
+                                    bottom: 8,
+                                    type: PBadgeType.gray,
+                                  ),
+                                  Positioned(
+                                    left: 0,
+                                    bottom: 0,
+                                    right: 0,
+                                    child: videoProgressIndicator(
+                                      progress == -1
+                                          ? 1
+                                          : progress /
+                                              widget.videoItem.duration,
+                                    ),
+                                  ),
+                                ] else if (widget.videoItem.duration > 0)
+                                  PBadge(
+                                    text: DurationUtils.formatDuration(
+                                      widget.videoItem.duration,
+                                    ),
+                                    right: 6.0,
+                                    bottom: 6.0,
+                                    type: PBadgeType.gray,
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      content(context),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -198,8 +226,8 @@ class VideoCardH extends StatelessWidget {
             child: VideoPopupMenu(
               size: 29,
               iconSize: 17,
-              videoItem: videoItem,
-              onRemove: onRemove,
+              videoItem: widget.videoItem,
+              onRemove: widget.onRemove,
             ),
           ),
         ],
@@ -209,13 +237,13 @@ class VideoCardH extends StatelessWidget {
 
   Widget content(BuildContext context) {
     final theme = Theme.of(context);
-    String pubdate = DateFormatUtils.dateFormat(videoItem.pubdate!);
+    String pubdate = DateFormatUtils.dateFormat(widget.videoItem.pubdate!);
     if (pubdate != '') pubdate += '  ';
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (videoItem case SearchVideoItemModel item) ...[
+          if (widget.videoItem case SearchVideoItemModel item) ...[
             if (item.titleList?.isNotEmpty == true)
               Expanded(
                 child: Text.rich(
@@ -227,7 +255,8 @@ class VideoCardH extends StatelessWidget {
                           (e) => TextSpan(
                             text: e.text,
                             style: TextStyle(
-                              fontSize: theme.textTheme.bodyMedium!.fontSize,
+                              fontSize:
+                                  theme.textTheme.bodyMedium!.fontSize,
                               height: 1.42,
                               letterSpacing: 0.3,
                               color: e.isEm
@@ -243,7 +272,7 @@ class VideoCardH extends StatelessWidget {
           ] else
             Expanded(
               child: Text(
-                videoItem.title,
+                widget.videoItem.title,
                 textAlign: TextAlign.start,
                 style: TextStyle(
                   fontSize: theme.textTheme.bodyMedium!.fontSize,
@@ -255,7 +284,7 @@ class VideoCardH extends StatelessWidget {
               ),
             ),
           Text(
-            "$pubdate${videoItem.owner.name}",
+            "$pubdate${widget.videoItem.owner.name}",
             maxLines: 1,
             style: TextStyle(
               fontSize: 12,
@@ -270,11 +299,11 @@ class VideoCardH extends StatelessWidget {
             children: [
               StatWidget(
                 type: StatType.play,
-                value: videoItem.stat.view,
+                value: widget.videoItem.stat.view,
               ),
               StatWidget(
                 type: StatType.danmaku,
-                value: videoItem.stat.danmu,
+                value: widget.videoItem.stat.danmu,
               ),
             ],
           ),

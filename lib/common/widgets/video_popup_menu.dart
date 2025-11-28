@@ -41,24 +41,28 @@ class VideoPopupMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ExcludeSemantics(
-      child: SizedBox(
-        width: size,
-        height: size,
-        child: PopupMenuButton(
-          padding: EdgeInsets.zero,
-          icon: Icon(
-            Icons.more_vert_outlined,
-            color: Theme.of(context).colorScheme.outline,
-            size: iconSize,
-          ),
-          position: PopupMenuPosition.under,
-          itemBuilder: (context) =>
-              [
-                    if (videoItem.bvid?.isNotEmpty == true) ...[
-                      _VideoCustomAction(
-                        videoItem.bvid!,
-                        const Stack(
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      descendantsAreFocusable: false,
+      descendantsAreTraversable: false,
+      child: ExcludeSemantics(
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: PopupMenuButton(
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              Icons.more_vert_outlined,
+              color: Theme.of(context).colorScheme.outline,
+              size: iconSize,
+            ),
+            position: PopupMenuPosition.under,
+            itemBuilder: (context) => [
+              if (videoItem.bvid?.isNotEmpty == true) ...[
+                _VideoCustomAction(
+                  videoItem.bvid!,
+                  const Stack(
                           clipBehavior: Clip.none,
                           children: [
                             Icon(MdiIcons.identifier, size: 16),
