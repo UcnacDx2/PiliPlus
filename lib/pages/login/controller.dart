@@ -717,8 +717,12 @@ class LoginPageController extends GetxController
     if (Accounts.main.isLogin) {
       SmartDialog.showToast('登录成功');
     } else {
-      SmartDialog.showToast('登录成功, 请先设置账号模式');
-      await switchAccountDialog(Get.context!);
+      SmartDialog.showToast('登录成功');
+      final firstAccount =
+          Accounts.account.values.firstWhere((i) => i is LoginAccount);
+      for (final i in AccountType.values) {
+        await Accounts.set(i, firstAccount);
+      }
     }
   }
 
