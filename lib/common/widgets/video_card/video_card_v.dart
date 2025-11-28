@@ -84,78 +84,76 @@ class _VideoCardVState extends State<VideoCardV> {
           cover: widget.videoItem.cover,
           bvid: widget.videoItem.bvid,
         );
-    return Focus(
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
-          _menuKey.currentState?.showButtonMenu();
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Card(
-            clipBehavior: Clip.hardEdge,
-            child: InkWell(
-              onTap: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
-              onLongPress: onLongPress,
-              onSecondaryTap: Utils.isMobile ? null : onLongPress,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AspectRatio(
-                    aspectRatio: StyleString.aspectRatio,
-                    child: LayoutBuilder(
-                      builder: (context, boxConstraints) {
-                        double maxWidth = boxConstraints.maxWidth;
-                        double maxHeight = boxConstraints.maxHeight;
-                        return Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            NetworkImgLayer(
-                              src: widget.videoItem.cover,
-                              width: maxWidth,
-                              height: maxHeight,
-                              radius: 0,
-                            ),
-                            if (widget.videoItem.duration > 0)
-                              PBadge(
-                                bottom: 6,
-                                right: 7,
-                                size: PBadgeSize.small,
-                                type: PBadgeType.gray,
-                                text: DurationUtils.formatDuration(
-                                  widget.videoItem.duration,
-                                ),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Card(
+          clipBehavior: Clip.hardEdge,
+          child: InkWell(
+            onTap: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
+            onLongPress: onLongPress,
+            onSecondaryTap: Utils.isMobile ? null : onLongPress,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AspectRatio(
+                  aspectRatio: StyleString.aspectRatio,
+                  child: LayoutBuilder(
+                    builder: (context, boxConstraints) {
+                      double maxWidth = boxConstraints.maxWidth;
+                      double maxHeight = boxConstraints.maxHeight;
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          NetworkImgLayer(
+                            src: widget.videoItem.cover,
+                            width: maxWidth,
+                            height: maxHeight,
+                            radius: 0,
+                          ),
+                          if (widget.videoItem.duration > 0)
+                            PBadge(
+                              bottom: 6,
+                              right: 7,
+                              size: PBadgeSize.small,
+                              type: PBadgeType.gray,
+                              text: DurationUtils.formatDuration(
+                                widget.videoItem.duration,
                               ),
-                          ],
-                        );
-                      },
-                    ),
+                            ),
+                        ],
+                      );
+                    },
                   ),
-                  content(context),
-                ],
+                ),
+                content(context),
+              ],
+            ),
+          ),
+        ),
+        if (widget.videoItem.goto == 'av')
+          Positioned(
+            right: -5,
+            bottom: -2,
+            child: Focus(
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent &&
+                    (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
+                  _menuKey.currentState?.showButtonMenu();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: VideoPopupMenu(
+                menuKey: _menuKey,
+                size: 29,
+                iconSize: 17,
+                videoItem: widget.videoItem,
+                onRemove: widget.onRemove,
               ),
             ),
           ),
-          if (widget.videoItem.goto == 'av')
-            Positioned(
-              right: -5,
-              bottom: -2,
-              child: ExcludeFocus(
-                child: VideoPopupMenu(
-                  menuKey: _menuKey,
-                  size: 29,
-                  iconSize: 17,
-                  videoItem: widget.videoItem,
-                  onRemove: widget.onRemove,
-                ),
-              ),
-            ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -266,23 +264,6 @@ class _VideoCardVState extends State<VideoCardV> {
           ),
           const SizedBox(width: 2),
         ],
-        // deprecated
-        //  else if (videoItem is RecVideoItemAppModel &&
-        //     videoItem.desc != null &&
-        //     videoItem.desc!.contains(' · ')) ...[
-        //   const Spacer(),
-        //   Text.rich(
-        //     maxLines: 1,
-        //     TextSpan(
-        //         style: TextStyle(
-        //           fontSize: theme.textTheme.labelSmall!.fontSize,
-        //           color: theme.colorScheme.outline.withValues(alpha: 0.8),
-        //         ),
-        //         text: Utils.shortenChineseDateString(
-        //             videoItem.desc!.split(' · ').last)),
-        //   ),
-        //   const SizedBox(width: 2),
-        // ]
       ],
     );
   }

@@ -40,7 +40,6 @@ class VideoCardH extends StatefulWidget {
 class _VideoCardHState extends State<VideoCardH> {
   final GlobalKey<PopupMenuButtonState> _menuKey =
       GlobalKey<PopupMenuButtonState>();
-
   @override
   Widget build(BuildContext context) {
     String type = 'video';
@@ -72,157 +71,155 @@ class _VideoCardHState extends State<VideoCardH> {
           title: widget.videoItem.title,
           cover: widget.videoItem.cover,
         );
-    return Focus(
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
-          _menuKey.currentState?.showButtonMenu();
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
-      child: Material(
-        type: MaterialType.transparency,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            InkWell(
-              onLongPress: onLongPress,
-              onSecondaryTap: Utils.isMobile ? null : onLongPress,
-              onTap: widget.onTap ??
-                  () async {
-                    if (type == 'ketang') {
-                      PageUtils.viewPugv(seasonId: widget.videoItem.aid);
-                      return;
-                    } else if (type == 'live_room') {
-                      if (widget.videoItem case SearchVideoItemModel item) {
-                        int? roomId = item.id;
-                        if (roomId != null) {
-                          PageUtils.toLiveRoom(roomId);
-                        }
-                      } else {
-                        SmartDialog.showToast(
-                          'err: live_room : ${widget.videoItem.runtimeType}',
-                        );
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          InkWell(
+            onLongPress: onLongPress,
+            onSecondaryTap: Utils.isMobile ? null : onLongPress,
+            onTap: widget.onTap ??
+                () async {
+                  if (type == 'ketang') {
+                    PageUtils.viewPugv(seasonId: widget.videoItem.aid);
+                    return;
+                  } else if (type == 'live_room') {
+                    if (widget.videoItem case SearchVideoItemModel item) {
+                      int? roomId = item.id;
+                      if (roomId != null) {
+                        PageUtils.toLiveRoom(roomId);
                       }
+                    } else {
+                      SmartDialog.showToast(
+                        'err: live_room : ${widget.videoItem.runtimeType}',
+                      );
+                    }
+                    return;
+                  }
+                  if (widget.videoItem case HotVideoItemModel item) {
+                    if (item.redirectUrl?.isNotEmpty == true &&
+                        PageUtils.viewPgcFromUri(item.redirectUrl!)) {
                       return;
                     }
-                    if (widget.videoItem case HotVideoItemModel item) {
-                      if (item.redirectUrl?.isNotEmpty == true &&
-                          PageUtils.viewPgcFromUri(item.redirectUrl!)) {
-                        return;
-                      }
-                    }
+                  }
 
-                    try {
-                      final int? cid = widget.videoItem.cid ??
-                          await SearchHttp.ab2c(
-                            aid: widget.videoItem.aid,
-                            bvid: widget.videoItem.bvid,
-                          );
-                      if (cid != null) {
-                        PageUtils.toVideoPage(
+                  try {
+                    final int? cid = widget.videoItem.cid ??
+                        await SearchHttp.ab2c(
+                          aid: widget.videoItem.aid,
                           bvid: widget.videoItem.bvid,
-                          cid: cid,
-                          cover: widget.videoItem.cover,
-                          title: widget.videoItem.title,
                         );
-                      }
-                    } catch (err) {
-                      SmartDialog.showToast(err.toString());
+                    if (cid != null) {
+                      PageUtils.toVideoPage(
+                        bvid: widget.videoItem.bvid,
+                        cid: cid,
+                        cover: widget.videoItem.cover,
+                        title: widget.videoItem.title,
+                      );
                     }
-                  },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: StyleString.safeSpace,
-                  vertical: 5,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    AspectRatio(
-                      aspectRatio: StyleString.aspectRatio,
-                      child: LayoutBuilder(
-                        builder: (context, boxConstraints) {
-                          final double maxWidth = boxConstraints.maxWidth;
-                          final double maxHeight = boxConstraints.maxHeight;
-                          num? progress;
-                          if (widget.videoItem case HotVideoItemModel item) {
-                            progress = item.progress;
-                          }
+                  } catch (err) {
+                    SmartDialog.showToast(err.toString());
+                  }
+                },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: StyleString.safeSpace,
+                vertical: 5,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  AspectRatio(
+                    aspectRatio: StyleString.aspectRatio,
+                    child: LayoutBuilder(
+                      builder: (context, boxConstraints) {
+                        final double maxWidth = boxConstraints.maxWidth;
+                        final double maxHeight = boxConstraints.maxHeight;
+                        num? progress;
+                        if (widget.videoItem case HotVideoItemModel item) {
+                          progress = item.progress;
+                        }
 
-                          return Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              NetworkImgLayer(
-                                src: widget.videoItem.cover,
-                                width: maxWidth,
-                                height: maxHeight,
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            NetworkImgLayer(
+                              src: widget.videoItem.cover,
+                              width: maxWidth,
+                              height: maxHeight,
+                            ),
+                            if (badge != null)
+                              PBadge(
+                                text: badge,
+                                top: 6.0,
+                                right: 6.0,
+                                type: switch (badge) {
+                                  '充电专属' => PBadgeType.error,
+                                  _ => PBadgeType.primary,
+                                },
                               ),
-                              if (badge != null)
-                                PBadge(
-                                  text: badge,
-                                  top: 6.0,
-                                  right: 6.0,
-                                  type: switch (badge) {
-                                    '充电专属' => PBadgeType.error,
-                                    _ => PBadgeType.primary,
-                                  },
+                            if (progress != null && progress != 0) ...[
+                              PBadge(
+                                text: progress == -1
+                                    ? '已看完'
+                                    : '${DurationUtils.formatDuration(progress)}/${DurationUtils.formatDuration(widget.videoItem.duration)}',
+                                right: 6,
+                                bottom: 8,
+                                type: PBadgeType.gray,
+                              ),
+                              Positioned(
+                                left: 0,
+                                bottom: 0,
+                                right: 0,
+                                child: videoProgressIndicator(
+                                  progress == -1
+                                      ? 1
+                                      : progress / widget.videoItem.duration,
                                 ),
-                              if (progress != null && progress != 0) ...[
-                                PBadge(
-                                  text: progress == -1
-                                      ? '已看完'
-                                      : '${DurationUtils.formatDuration(progress)}/${DurationUtils.formatDuration(widget.videoItem.duration)}',
-                                  right: 6,
-                                  bottom: 8,
-                                  type: PBadgeType.gray,
+                              ),
+                            ] else if (widget.videoItem.duration > 0)
+                              PBadge(
+                                text: DurationUtils.formatDuration(
+                                  widget.videoItem.duration,
                                 ),
-                                Positioned(
-                                  left: 0,
-                                  bottom: 0,
-                                  right: 0,
-                                  child: videoProgressIndicator(
-                                    progress == -1
-                                        ? 1
-                                        : progress / widget.videoItem.duration,
-                                  ),
-                                ),
-                              ] else if (widget.videoItem.duration > 0)
-                                PBadge(
-                                  text: DurationUtils.formatDuration(
-                                    widget.videoItem.duration,
-                                  ),
-                                  right: 6.0,
-                                  bottom: 6.0,
-                                  type: PBadgeType.gray,
-                                ),
-                            ],
-                          );
-                        },
-                      ),
+                                right: 6.0,
+                                bottom: 6.0,
+                                type: PBadgeType.gray,
+                              ),
+                          ],
+                        );
+                      },
                     ),
-                    const SizedBox(width: 10),
-                    content(context),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 10),
+                  content(context),
+                ],
               ),
             ),
-            Positioned(
-              bottom: 0,
-              right: 12,
-              child: ExcludeFocus(
-                child: VideoPopupMenu(
-                  menuKey: _menuKey,
-                  size: 29,
-                  iconSize: 17,
-                  videoItem: widget.videoItem,
-                  onRemove: widget.onRemove,
-                ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 12,
+            child: Focus(
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent &&
+                    (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
+                  _menuKey.currentState?.showButtonMenu();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: VideoPopupMenu(
+                menuKey: _menuKey,
+                size: 29,
+                iconSize: 17,
+                videoItem: widget.videoItem,
+                onRemove: widget.onRemove,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
