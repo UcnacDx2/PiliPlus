@@ -57,31 +57,6 @@ class PlayerFocus extends StatelessWidget {
   bool get isFullScreen => plPlayerController.isFullScreen.value;
   bool get hasPlayer => plPlayerController.videoPlayerController != null;
 
-  void _setVolume({required bool isIncrease}) {
-    final volume = isIncrease
-        ? math.min(1.0, plPlayerController.volume.value + 0.1)
-        : math.max(0.0, plPlayerController.volume.value - 0.1);
-    plPlayerController.setVolume(volume);
-  }
-
-  void _updateVolume(KeyEvent event, {required bool isIncrease}) {
-    if (event is KeyDownEvent) {
-      if (hasPlayer) {
-        plPlayerController
-          ..cancelLongPressTimer()
-          ..longPressTimer ??= Timer.periodic(
-            const Duration(milliseconds: 150),
-            (_) => _setVolume(isIncrease: isIncrease),
-          );
-      }
-    } else if (event is KeyUpEvent) {
-      if (plPlayerController.longPressTimer?.tick == 0 && hasPlayer) {
-        _setVolume(isIncrease: isIncrease);
-      }
-      plPlayerController.cancelLongPressTimer();
-    }
-  }
-
   bool _handleKey(KeyEvent event) {
     final key = event.logicalKey;
 
@@ -102,7 +77,20 @@ class PlayerFocus extends StatelessWidget {
 
     final isArrowUp = key == LogicalKeyboardKey.arrowUp;
     if (isArrowUp || key == LogicalKeyboardKey.arrowDown) {
-      _updateVolume(event, isIncrease: isArrowUp);
+      if (event is! KeyDownEvent) return true;
+      if (isArrowUp) {
+        if (introController case final introController?) {
+          if (!introController.prevPlay()) {
+            SmartDialog.showToast('已经是第一集了');
+          }
+        }
+      } else {
+        if (introController case final introController?) {
+          if (!introController.nextPlay()) {
+            SmartDialog.showToast('已经是最后一集了');
+          }
+        }
+      }
       return true;
     }
 
@@ -218,10 +206,15 @@ class PlayerFocus extends StatelessWidget {
           return true;
 
         case LogicalKeyboardKey.enter:
+        case LogicalKeyboardKey.select:
           if (onSkipSegment?.call() ?? false) {
             return true;
           }
-          onSendDanmaku();
+          if (plPlayerController.isLive || canPlay!()) {
+            if (hasPlayer) {
+              plPlayerController.onDoubleTapCenter();
+            }
+          }
           return true;
       }
 
