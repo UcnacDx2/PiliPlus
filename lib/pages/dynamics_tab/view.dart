@@ -163,12 +163,12 @@ class _DynamicsTabPageState
             controller.onLoadMore();
           }
           return VideoCardV(
-            videoItem: DynamicToRecVideoAdapter(response[index]),
+            videoItem: DynamicToRecVideoAdapter(response![index]),
             onRemove: () =>
                 controller.onRemove(index, response[index].idStr),
           );
         },
-        itemCount: response!.length,
+        itemCount: response?.length ?? 0,
       );
     } else {
       return GlobalData().dynamicsWaterfallFlow
@@ -176,10 +176,10 @@ class _DynamicsTabPageState
               gridDelegate: dynGridDelegate,
               delegate: SliverChildBuilderDelegate(
                 (_, index) {
-                  if (index == response.length - 1) {
+                  if (response != null && index == response.length - 1) {
                     controller.onLoadMore();
                   }
-                  final item = response[index];
+                  final item = response![index];
                   return DynamicPanel(
                     item: item,
                     onRemove: (idStr) => controller.onRemove(index, idStr),
@@ -188,15 +188,15 @@ class _DynamicsTabPageState
                     onUnfold: () => controller.onUnfold(item, index),
                   );
                 },
-                childCount: response.length,
+                childCount: response?.length ?? 0,
               ),
             )
           : SliverList.builder(
               itemBuilder: (context, index) {
-                if (index == response.length - 1) {
+                if (response != null && index == response.length - 1) {
                   controller.onLoadMore();
                 }
-                final item = response[index];
+                final item = response![index];
                 return DynamicPanel(
                   item: item,
                   onRemove: (idStr) => controller.onRemove(index, idStr),
@@ -205,7 +205,7 @@ class _DynamicsTabPageState
                   onUnfold: () => controller.onUnfold(item, index),
                 );
               },
-              itemCount: response.length,
+              itemCount: response?.length ?? 0,
             );
     }
   }
