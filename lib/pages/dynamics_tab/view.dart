@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/video_card/video_card_v.dart';
+import 'package:PiliPlus/utils/dynamic_to_rec_video_adapter.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
@@ -32,6 +34,14 @@ class _DynamicsTabPageState
     with AutomaticKeepAliveClientMixin, DynMixin {
   StreamSubscription? _listener;
   late final MainController _mainController = Get.find<MainController>();
+
+  late final videoNewGridDelegate =
+      SliverWaterfallFlowDelegateWithMaxCrossAxisExtent(
+    maxCrossAxisExtent: Grid.smallCardWidth,
+    crossAxisSpacing: 4,
+    mainAxisSpacing: 4,
+    callback: (value) => maxWidth = value,
+  );
 
   DynamicsController dynamicsController = Get.put(DynamicsController());
   @override
@@ -113,9 +123,28 @@ class _DynamicsTabPageState
   Widget _buildBody(LoadingState<List<DynamicItemModel>?> loadingState) {
     return switch (loadingState) {
       Loading() => dynSkeleton,
-      Success(:var response) =>
-        response?.isNotEmpty == true
-            ? GlobalData().dynamicsWaterfallFlow
+      Success(:var response) => response?.isNotEmpty == true
+          ? widget.dynamicsType == DynamicsTabType.video
+              ? SliverWaterfallFlow(
+                  gridDelegate: videoNewGridDelegate,
+                  delegate: SliverChildBuilderDelegate(
+                    (_, index) {
+                      if (index == response.length - 1) {
+                        controller.onLoadMore();
+                      }
+                      final item = response[index];
+                      return VideoCardV(
+                        videoItem: DynamicToRecVideoAdapter(item),
+                        onRemove: () => controller.onRemove(
+                          index,
+                          item.idStr,
+                        ),
+                      );
+                    },
+                    childCount: response.length,
+                  ),
+                )
+              : GlobalData().dynamicsWaterfallFlow
                   ? SliverWaterfallFlow(
                       gridDelegate: dynGridDelegate,
                       delegate: SliverChildBuilderDelegate(
@@ -153,7 +182,7 @@ class _DynamicsTabPageState
                       },
                       itemCount: response!.length,
                     )
-            : HttpError(onReload: controller.onReload),
+          : HttpError(onReload: controller.onReload),
       Error(:var errMsg) => HttpError(
         errMsg: errMsg,
         onReload: controller.onReload,
