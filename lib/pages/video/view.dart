@@ -1411,6 +1411,8 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
           return false;
         },
         onSkipSegment: videoDetailController.onSkipSegment,
+        onMenuPressed: () =>
+            videoDetailController.headerCtrKey.currentState?.showSettingSheet(),
         child: child,
       );
     }

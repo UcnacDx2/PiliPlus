@@ -22,6 +22,7 @@ class PlayerFocus extends StatelessWidget {
     required this.onSendDanmaku,
     this.canPlay,
     this.onSkipSegment,
+    this.onMenuPressed,
   });
 
   final Widget child;
@@ -30,6 +31,7 @@ class PlayerFocus extends StatelessWidget {
   final VoidCallback onSendDanmaku;
   final bool Function()? canPlay;
   final bool Function()? onSkipSegment;
+  final VoidCallback? onMenuPressed;
 
   static bool _shouldHandle(LogicalKeyboardKey logicalKey) {
     return logicalKey == LogicalKeyboardKey.tab ||
@@ -210,6 +212,10 @@ class PlayerFocus extends StatelessWidget {
           if (onSkipSegment?.call() ?? false) {
             return true;
           }
+        case LogicalKeyboardKey.contextMenu:
+        case LogicalKeyboardKey.menu:
+          onMenuPressed?.call();
+          return true;
           if (plPlayerController.isLive || canPlay!()) {
             if (hasPlayer) {
               plPlayerController.onDoubleTapCenter();

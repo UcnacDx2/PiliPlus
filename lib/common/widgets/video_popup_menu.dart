@@ -29,6 +29,7 @@ class VideoPopupMenu extends StatelessWidget {
   final double menuItemHeight;
   final BaseSimpleVideoItemModel videoItem;
   final VoidCallback? onRemove;
+  final GlobalKey<PopupMenuButtonState>? menuKey;
 
   const VideoPopupMenu({
     super.key,
@@ -37,6 +38,7 @@ class VideoPopupMenu extends StatelessWidget {
     required this.videoItem,
     this.onRemove,
     this.menuItemHeight = 45,
+    this.menuKey,
   });
 
   @override
@@ -46,6 +48,7 @@ class VideoPopupMenu extends StatelessWidget {
         width: size,
         height: size,
         child: PopupMenuButton(
+          key: menuKey,
           padding: EdgeInsets.zero,
           icon: Icon(
             Icons.more_vert_outlined,
