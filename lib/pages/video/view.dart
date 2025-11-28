@@ -1575,9 +1575,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
   Widget videoPlayer({required double width, required double height}) {
     final isFullScreen = this.isFullScreen;
     return PopScope(
-      canPop:
-          !isFullScreen &&
-          (videoDetailController.horizontalScreen || isPortrait),
+      canPop: !isFullScreen,
       onPopInvokedWithResult: _onPopInvokedWithResult,
       child: Stack(
         clipBehavior: Clip.none,
