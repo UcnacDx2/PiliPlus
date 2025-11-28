@@ -1465,7 +1465,6 @@ class PlPlayerController {
 
   // 双击播放、暂停
   Future<void> onDoubleTapCenter() async {
-    controls = true;
     if (!isLive && _isCompleted) {
       await videoPlayerController!.seek(Duration.zero);
       videoPlayerController!.play();

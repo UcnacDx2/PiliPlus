@@ -2,14 +2,17 @@ import 'dart:async';
 
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 
 class PlayOrPauseButton extends StatefulWidget {
   final PlPlayerController plPlayerController;
+  final FocusNode? focusNode;
 
   const PlayOrPauseButton({
     super.key,
     required this.plPlayerController,
+    this.focusNode,
   });
 
   @override
@@ -49,19 +52,31 @@ class PlayOrPauseButtonState extends State<PlayOrPauseButton>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 42,
-      height: 34,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.plPlayerController.onDoubleTapCenter,
-        child: Center(
-          child: AnimatedIcon(
-            semanticLabel: player.state.playing ? '暂停' : '播放',
-            progress: controller,
-            icon: AnimatedIcons.play_pause,
-            color: Colors.white,
-            size: 20,
+    return Focus(
+      focusNode: widget.focusNode,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            (event.logicalKey == LogicalKeyboardKey.select ||
+                event.logicalKey == LogicalKeyboardKey.enter)) {
+          widget.plPlayerController.onDoubleTapCenter();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: SizedBox(
+        width: 42,
+        height: 34,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.plPlayerController.onDoubleTapCenter,
+          child: Center(
+            child: AnimatedIcon(
+              semanticLabel: player.state.playing ? '暂停' : '播放',
+              progress: controller,
+              icon: AnimatedIcons.play_pause,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
         ),
       ),
