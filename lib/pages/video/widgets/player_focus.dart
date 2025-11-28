@@ -44,6 +44,9 @@ class PlayerFocus extends StatelessWidget {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
+        if (event.logicalKey == LogicalKeyboardKey.backspace) {
+          return KeyEventResult.ignored;
+        }
         final handled = _handleKey(event);
         if (handled || _shouldHandle(event.logicalKey)) {
           return KeyEventResult.handled;
