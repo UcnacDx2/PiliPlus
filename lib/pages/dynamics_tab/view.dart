@@ -12,6 +12,10 @@ import 'package:PiliPlus/pages/dynamics/widgets/dynamic_panel.dart';
 import 'package:PiliPlus/pages/dynamics_tab/controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/utils/global_data.dart';
+import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/widgets/video_card/video_card_v.dart';
+import 'package:PiliPlus/models/common/dynamic/dynamic_to_rec_video_adapter.dart';
+import 'package:PiliPlus/utils/grid.dart';
 import 'package:PiliPlus/utils/waterfall.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -88,76 +92,121 @@ class _DynamicsTabPageState
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return onBuild(
-      refreshIndicator(
-        onRefresh: () {
-          dynamicsController.queryFollowUp();
-          return controller.onRefresh();
-        },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          controller: controller.scrollController,
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.only(bottom: 100),
-              sliver: buildPage(
-                Obx(() => _buildBody(controller.loadingState.value)),
-              ),
+    final body = refreshIndicator(
+      onRefresh: () {
+        dynamicsController.queryFollowUp();
+        return controller.onRefresh();
+      },
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        controller: controller.scrollController,
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.only(
+              top: widget.dynamicsType == DynamicsTabType.videoNew
+                  ? StyleString.cardSpace
+                  : 0,
+              bottom: 100,
             ),
-          ],
-        ),
+            sliver: buildPage(
+              Obx(() => _buildBody(controller.loadingState.value)),
+            ),
+          ),
+        ],
       ),
     );
+
+    return onBuild(
+      widget.dynamicsType == DynamicsTabType.videoNew
+          ? Container(
+              clipBehavior: Clip.hardEdge,
+              margin:
+                  const EdgeInsets.symmetric(horizontal: StyleString.safeSpace),
+              decoration:
+                  const BoxDecoration(borderRadius: StyleString.mdRadius),
+              child: body,
+            )
+          : body,
+    );
   }
+
+  late final gridDelegate = SliverGridDelegateWithExtentAndRatio(
+    mainAxisSpacing: StyleString.cardSpace,
+    crossAxisSpacing: StyleString.cardSpace,
+    maxCrossAxisExtent: Grid.smallCardWidth,
+    childAspectRatio: StyleString.aspectRatio,
+    mainAxisExtent: MediaQuery.textScalerOf(context).scale(90),
+  );
 
   Widget _buildBody(LoadingState<List<DynamicItemModel>?> loadingState) {
     return switch (loadingState) {
       Loading() => dynSkeleton,
       Success(:var response) =>
-        response?.isNotEmpty == true
-            ? GlobalData().dynamicsWaterfallFlow
-                  ? SliverWaterfallFlow(
-                      gridDelegate: dynGridDelegate,
-                      delegate: SliverChildBuilderDelegate(
-                        (_, index) {
-                          if (index == response.length - 1) {
-                            controller.onLoadMore();
-                          }
-                          final item = response[index];
-                          return DynamicPanel(
-                            item: item,
-                            onRemove: (idStr) =>
-                                controller.onRemove(index, idStr),
-                            onBlock: () => controller.onBlock(index),
-                            maxWidth: maxWidth,
-                            onUnfold: () => controller.onUnfold(item, index),
-                          );
-                        },
-                        childCount: response!.length,
-                      ),
-                    )
-                  : SliverList.builder(
-                      itemBuilder: (context, index) {
-                        if (index == response.length - 1) {
-                          controller.onLoadMore();
-                        }
-                        final item = response[index];
-                        return DynamicPanel(
-                          item: item,
-                          onRemove: (idStr) =>
-                              controller.onRemove(index, idStr),
-                          onBlock: () => controller.onBlock(index),
-                          maxWidth: maxWidth,
-                          onUnfold: () => controller.onUnfold(item, index),
-                        );
-                      },
-                      itemCount: response!.length,
-                    )
-            : HttpError(onReload: controller.onReload),
+        _buildSuccess(context, response),
       Error(:var errMsg) => HttpError(
         errMsg: errMsg,
         onReload: controller.onReload,
       ),
     };
+  }
+
+  Widget _buildSuccess(
+      BuildContext context, List<DynamicItemModel>? response) {
+    if (response?.isNotEmpty != true) {
+      return HttpError(onReload: controller.onReload);
+    }
+    if (widget.dynamicsType == DynamicsTabType.videoNew) {
+      return SliverGrid.builder(
+        gridDelegate: gridDelegate,
+        itemBuilder: (context, index) {
+          if (index == response.length - 1) {
+            controller.onLoadMore();
+          }
+          return VideoCardV(
+            videoItem: DynamicToRecVideoAdapter(response[index]),
+            onRemove: () =>
+                controller.onRemove(index, response[index].idStr),
+          );
+        },
+        itemCount: response!.length,
+      );
+    } else {
+      return GlobalData().dynamicsWaterfallFlow
+          ? SliverWaterfallFlow(
+              gridDelegate: dynGridDelegate,
+              delegate: SliverChildBuilderDelegate(
+                (_, index) {
+                  if (index == response.length - 1) {
+                    controller.onLoadMore();
+                  }
+                  final item = response[index];
+                  return DynamicPanel(
+                    item: item,
+                    onRemove: (idStr) => controller.onRemove(index, idStr),
+                    onBlock: () => controller.onBlock(index),
+                    maxWidth: maxWidth,
+                    onUnfold: () => controller.onUnfold(item, index),
+                  );
+                },
+                childCount: response.length,
+              ),
+            )
+          : SliverList.builder(
+              itemBuilder: (context, index) {
+                if (index == response.length - 1) {
+                  controller.onLoadMore();
+                }
+                final item = response[index];
+                return DynamicPanel(
+                  item: item,
+                  onRemove: (idStr) => controller.onRemove(index, idStr),
+                  onBlock: () => controller.onBlock(index),
+                  maxWidth: maxWidth,
+                  onUnfold: () => controller.onUnfold(item, index),
+                );
+              },
+              itemCount: response.length,
+            );
+    }
   }
 }
