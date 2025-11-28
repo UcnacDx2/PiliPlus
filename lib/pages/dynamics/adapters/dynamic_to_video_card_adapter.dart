@@ -19,16 +19,15 @@ class DynamicToVideoCardAdapter extends BaseRecVideoItemModel {
     uri = video?.jumpUrl;
     cover = video?.cover;
     title = video?.title ?? '';
-    duration = DurationUtils.durationToSecondsV2(video?.durationText ?? '0:00');
+    duration = DurationUtils.parseDuration(video?.durationText ?? '0:00');
     owner = Owner(
       mid: author?.mid,
       name: author?.name,
       face: author?.face,
     );
-    stat = Stat(
-      danmu: NumUtils.numFormat(video?.stat?.danmu),
-      view: NumUtils.numFormat(video?.stat?.play),
-    );
+    stat = Stat()
+      ..danmu = NumUtils.numFormat(video?.stat?.danmu)
+      ..view = NumUtils.numFormat(video?.stat?.play);
     isFollowed = false;
     rcmdReason = null;
   }
