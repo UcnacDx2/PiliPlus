@@ -63,6 +63,9 @@ class PlPlayerController {
   Player? _videoPlayerController;
   VideoController? _videoController;
 
+  final GlobalKey<PopupMenuButtonState> speedPopupMenuKey =
+      GlobalKey<PopupMenuButtonState>();
+
   // 添加一个私有静态变量来保存实例
   static PlPlayerController? _instance;
 
@@ -1255,6 +1258,10 @@ class PlPlayerController {
         danmakuController!.updateOption(updatedOption);
       } catch (_) {}
     }
+  }
+
+  void showSpeedPopupMenu() {
+    speedPopupMenuKey.currentState?.showButtonMenu();
   }
 
   // 还原默认速度

@@ -205,6 +205,11 @@ class PlayerFocus extends StatelessWidget {
           }
           return true;
 
+        case LogicalKeyboardKey.contextMenu:
+          if (!plPlayerController.controlsLock.value) {
+            plPlayerController.showSpeedPopupMenu();
+          }
+          return true;
         case LogicalKeyboardKey.enter:
         case LogicalKeyboardKey.select:
           if (onSkipSegment?.call() ?? false) {
