@@ -252,7 +252,7 @@ class _MyAppState extends State<MyApp> {
     }
 
     return DynamicColorBuilder(
-      builder: ((ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         ColorScheme? lightColorScheme;
         ColorScheme? darkColorScheme;
         if (lightDynamic != null && darkDynamic != null && isDynamicColor) {
