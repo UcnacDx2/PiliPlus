@@ -1,8 +1,10 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'tv_focus_manager.dart';
 
 class TvKeyHandler {
+  final TvFocusManager focusManager = TvFocusManager();
   static const Map<int, LogicalKeyboardKey> androidToLogicalKey = {
     // D-Pad
     19: LogicalKeyboardKey.arrowUp,
@@ -36,17 +38,14 @@ class TvKeyHandler {
         final keyCode = (event.data as RawKeyEventDataAndroid).keyCode;
         final logicalKey = androidToLogicalKey[keyCode];
         if (logicalKey != null) {
-          final context = _focusNode.context;
-          if (context != null) {
-            if (logicalKey == LogicalKeyboardKey.arrowUp) {
-              Focus.of(context).focusInDirection(TraversalDirection.up);
-            } else if (logicalKey == LogicalKeyboardKey.arrowDown) {
-              Focus.of(context).focusInDirection(TraversalDirection.down);
-            } else if (logicalKey == LogicalKeyboardKey.arrowLeft) {
-              Focus.of(context).focusInDirection(TraversalDirection.left);
-            } else if (logicalKey == LogicalKeyboardKey.arrowRight) {
-              Focus.of(context).focusInDirection(TraversalDirection.right);
-            }
+          if (logicalKey == LogicalKeyboardKey.arrowUp) {
+            focusManager.moveFocus(AxisDirection.up);
+          } else if (logicalKey == LogicalKeyboardKey.arrowDown) {
+            focusManager.moveFocus(AxisDirection.down);
+          } else if (logicalKey == LogicalKeyboardKey.arrowLeft) {
+            focusManager.moveFocus(AxisDirection.left);
+          } else if (logicalKey == LogicalKeyboardKey.arrowRight) {
+            focusManager.moveFocus(AxisDirection.right);
           }
         }
       }
