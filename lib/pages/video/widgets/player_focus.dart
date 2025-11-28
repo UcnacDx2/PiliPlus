@@ -9,7 +9,12 @@ import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
-    show KeyDownEvent, KeyUpEvent, LogicalKeyboardKey, HardwareKeyboard;
+    show
+        KeyDownEvent,
+        KeyUpEvent,
+        LogicalKeyboardKey,
+        HardwareKeyboard,
+        PhysicalKeyboardKey;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
@@ -44,6 +49,12 @@ class PlayerFocus extends StatelessWidget {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
+        if (event.physicalKey == PhysicalKeyboardKey.contextMenu) {
+          if (!plPlayerController.controlsLock.value) {
+            plPlayerController.showSpeedPopupMenu();
+          }
+          return KeyEventResult.handled;
+        }
         final handled = _handleKey(event);
         if (handled || _shouldHandle(event.logicalKey)) {
           return KeyEventResult.handled;
@@ -205,16 +216,16 @@ class PlayerFocus extends StatelessWidget {
           }
           return true;
 
-        case LogicalKeyboardKey.contextMenu:
-          if (!plPlayerController.controlsLock.value) {
-            plPlayerController.showSpeedPopupMenu();
-          }
-          return true;
         case LogicalKeyboardKey.enter:
         case LogicalKeyboardKey.select:
           if (onSkipSegment?.call() ?? false) {
             return true;
           }
+        case LogicalKeyboardKey.contextMenu:
+          if (!plPlayerController.controlsLock.value) {
+            plPlayerController.showSpeedPopupMenu();
+          }
+          return true;
           if (plPlayerController.isLive || canPlay!()) {
             if (hasPlayer) {
               plPlayerController.onDoubleTapCenter();
