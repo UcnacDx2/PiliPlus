@@ -10,6 +10,7 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
     show KeyDownEvent, KeyUpEvent, LogicalKeyboardKey, HardwareKeyboard;
+import 'package:PiliPlus/utils/global_data.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
@@ -105,7 +106,17 @@ class PlayerFocus extends StatelessWidget {
 
     final isArrowUp = key == LogicalKeyboardKey.arrowUp;
     if (isArrowUp || key == LogicalKeyboardKey.arrowDown) {
-      _updateVolume(event, isIncrease: isArrowUp);
+      if (GlobalData.isAndroidTV) {
+        if (event is KeyDownEvent) {
+          if (isArrowUp) {
+            introController?.prevPlay();
+          } else {
+            introController?.nextPlay();
+          }
+        }
+      } else {
+        _updateVolume(event, isIncrease: isArrowUp);
+      }
       return true;
     }
 

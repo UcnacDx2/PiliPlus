@@ -41,6 +41,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart' hide calcWindowPosition;
 import 'package:PiliPlus/utils/tv_key_handler.dart';
+import 'package:PiliPlus/utils/global_data.dart';
 
 WebViewEnvironment? webViewEnvironment;
 
@@ -218,6 +219,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    GlobalData.isAndroidTV = true;
   }
 
   @override

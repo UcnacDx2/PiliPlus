@@ -1,6 +1,7 @@
 import 'package:PiliPlus/utils/storage_pref.dart';
 
 class GlobalData {
+  static bool isAndroidTV = false;
   int imgQuality = Pref.picQuality;
 
   num? coins;
