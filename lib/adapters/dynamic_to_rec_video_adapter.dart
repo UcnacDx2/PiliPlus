@@ -1,4 +1,4 @@
-import 'package.PiliPlus/models/dynamics/result.dart' as dyn_result;
+import 'package:PiliPlus/models/dynamics/result.dart' as dyn_result;
 import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
 import 'package:PiliPlus/models/model_video.dart' as mod_video;
