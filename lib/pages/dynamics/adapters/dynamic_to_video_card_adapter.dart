@@ -1,4 +1,4 @@
-import 'package:PiliPlus/models/dynamics/result.dart';
+import 'package:PiliPlus/models/dynamics/result.dart' hide Stat;
 import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
 import 'package:PiliPlus/models/model_video.dart';
@@ -18,17 +18,16 @@ class DynamicToVideoCardAdapter extends BaseRecVideoItemModel {
     goto = 'av';
     uri = video?.jumpUrl;
     cover = video?.cover;
-    title = video?.title;
-    duration = DurationUtils.durationToSeconds(video?.durationText ?? '0:00');
+    title = video?.title ?? '';
+    duration = DurationUtils.durationToSecondsV2(video?.durationText ?? '0:00');
     owner = Owner(
       mid: author?.mid,
       name: author?.name,
       face: author?.face,
-      officialVerify: author?.officialVerify,
     );
     stat = Stat(
-      danmu: NumUtils.numOtherFormat(video?.stat?.danmu),
-      view: NumUtils.numOtherFormat(video?.stat?.play),
+      danmu: NumUtils.numFormat(video?.stat?.danmu),
+      view: NumUtils.numFormat(video?.stat?.play),
     );
     isFollowed = false;
     rcmdReason = null;
