@@ -149,6 +149,7 @@ class PlayerFocus extends StatelessWidget {
       }
 
       switch (key) {
+        case LogicalKeyboardKey.select:
         case LogicalKeyboardKey.space:
           if (plPlayerController.isLive || canPlay!()) {
             if (hasPlayer) {
