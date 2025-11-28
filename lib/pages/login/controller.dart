@@ -53,7 +53,7 @@ class LoginPageController extends GetxController
   @override
   void onInit() {
     super.onInit();
-    tabController = TabController(length: 4, vsync: this)
+    tabController = TabController(length: 4, vsync: this, initialIndex: 2)
       ..addListener(_handleTabChange);
   }
 
