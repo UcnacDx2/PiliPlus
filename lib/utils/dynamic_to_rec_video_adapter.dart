@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
+import 'package:PiliPlus/models/model_video.dart';
 
 class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
   final DynamicItemModel item;
@@ -45,9 +48,9 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
     if (major != null) {
       switch (item.type) {
         case 'DYNAMIC_TYPE_AV':
-          return major.archive?.aid;
+          return major.archive?.aid.toString();
         case 'DYNAMIC_TYPE_UGC_SEASON':
-          return major.ugcSeason?.aid;
+          return major.ugcSeason?.aid.toString();
         case 'DYNAMIC_TYPE_PGC':
         case 'DYNAMIC_TYPE_PGC_UNION':
           return major.pgc?.epid.toString();
@@ -101,53 +104,66 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
   static int _getDuration(DynamicItemModel item) {
     final major = item.modules.moduleDynamic?.major;
     if (major != null) {
+      String? durationText;
       switch (item.type) {
         case 'DYNAMIC_TYPE_AV':
-          return int.tryParse(major.archive?.durationText?.split(':').fold<int>('', (prev, e) => prev + e) ?? '0') ?? 0;
+          durationText = major.archive?.durationText;
+          break;
         case 'DYNAMIC_TYPE_UGC_SEASON':
-          return int.tryParse(major.ugcSeason?.durationText?.split(':').fold<int>('', (prev, e) => prev + e) ?? '0') ?? 0;
+          durationText = major.ugcSeason?.durationText;
+          break;
         case 'DYNAMIC_TYPE_PGC':
         case 'DYNAMIC_TYPE_PGC_UNION':
-          return int.tryParse(major.pgc?.durationText?.split(':').fold<int>('', (prev, e) => prev + e) ?? '0') ?? 0;
+          durationText = major.pgc?.durationText;
+          break;
         case 'DYNAMIC_TYPE_COURSES_SEASON':
-          return int.tryParse(major.courses?.durationText?.split(':').fold<int>('', (prev, e) => prev + e) ?? '0') ?? 0;
+          durationText = major.courses?.durationText;
+          break;
         default:
           return 0;
+      }
+      if (durationText != null) {
+        List<String> parts = durationText.split(':').reversed.toList();
+        int seconds = 0;
+        for (int i = 0; i < parts.length; i++) {
+          seconds += (int.tryParse(parts[i]) ?? 0) * (pow(60, i) as int);
+        }
+        return seconds;
       }
     }
     return 0;
   }
 
-  static Stat _getStat(DynamicItemModel item) {
+  static PlayStat _getStat(DynamicItemModel item) {
     final major = item.modules.moduleDynamic?.major;
     if (major != null) {
       switch (item.type) {
         case 'DYNAMIC_TYPE_AV':
-          return Stat(
-            view: int.tryParse(major.archive?.stat?.play ?? '0') ?? 0,
-            danmu: int.tryParse(major.archive?.stat?.danmu ?? '0') ?? 0,
-          );
+          return PlayStat.fromJson({
+            'play': int.tryParse(major.archive?.stat?.play ?? '0') ?? 0,
+            'danmaku': int.tryParse(major.archive?.stat?.danmu ?? '0') ?? 0,
+          });
         case 'DYNAMIC_TYPE_UGC_SEASON':
-          return Stat(
-            view: int.tryParse(major.ugcSeason?.stat?.play ?? '0') ?? 0,
-            danmu: int.tryParse(major.ugcSeason?.stat?.danmu ?? '0') ?? 0,
-          );
+          return PlayStat.fromJson({
+            'play': int.tryParse(major.ugcSeason?.stat?.play ?? '0') ?? 0,
+            'danmaku': int.tryParse(major.ugcSeason?.stat?.danmu ?? '0') ?? 0,
+          });
         case 'DYNAMIC_TYPE_PGC':
         case 'DYNAMIC_TYPE_PGC_UNION':
-          return Stat(
-            view: int.tryParse(major.pgc?.stat?.play ?? '0') ?? 0,
-            danmu: int.tryParse(major.pgc?.stat?.danmu ?? '0') ?? 0,
-          );
+          return PlayStat.fromJson({
+            'play': int.tryParse(major.pgc?.stat?.play ?? '0') ?? 0,
+            'danmaku': int.tryParse(major.pgc?.stat?.danmu ?? '0') ?? 0,
+          });
         case 'DYNAMIC_TYPE_COURSES_SEASON':
-          return Stat(
-            view: int.tryParse(major.courses?.stat?.play ?? '0') ?? 0,
-            danmu: int.tryParse(major.courses?.stat?.danmu ?? '0') ?? 0,
-          );
+          return PlayStat.fromJson({
+            'play': int.tryParse(major.courses?.stat?.play ?? '0') ?? 0,
+            'danmaku': int.tryParse(major.courses?.stat?.danmu ?? '0') ?? 0,
+          });
         default:
-          return Stat(view: 0, danmu: 0);
+          return PlayStat.fromJson({'play': 0, 'danmaku': 0});
       }
     }
-    return Stat(view: 0, danmu: 0);
+    return PlayStat.fromJson({'play': 0, 'danmaku': 0});
   }
 
   static String? _getBvid(DynamicItemModel item) {
@@ -170,9 +186,9 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
     if (major != null) {
       switch (item.type) {
         case 'DYNAMIC_TYPE_AV':
-          return int.tryParse(major.archive?.aid ?? '');
+          return int.tryParse(major.archive?.aid?.toString() ?? '');
         case 'DYNAMIC_TYPE_UGC_SEASON':
-          return int.tryParse(major.ugcSeason?.aid ?? '');
+          return int.tryParse(major.ugcSeason?.aid?.toString() ?? '');
         default:
           return null;
       }
