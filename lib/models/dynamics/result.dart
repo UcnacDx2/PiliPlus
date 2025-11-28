@@ -79,6 +79,10 @@ class DynamicsDataModel {
             tempBannedList!.contains(item.modules.moduleAuthor?.mid)) {
           continue;
         }
+        if (type == DynamicsTabType.videoNew &&
+            item.modules.moduleDynamic?.major?.type != 'MAJOR_TYPE_ARCHIVE') {
+          continue;
+        }
         items!.add(item);
       }
       // filtered all
@@ -358,11 +362,13 @@ class ModuleAuthorModel extends Avatar {
   int? pubTs;
   String? type;
   Decorate? decorate;
+  bool? isFollow;
 
   ModuleAuthorModel.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
     if (json['official'] != null) {
       officialVerify ??= BaseOfficialVerify.fromJson(json['official']); // opus
     }
+    isFollow = json['is_follow'];
     pubAction = json['pub_action'];
     pubTime = json['pub_time'];
     pubTs = json['pub_ts'] == 0 ? null : Utils.safeToInt(json['pub_ts']);
@@ -1005,12 +1011,16 @@ class DynamicArchiveModel {
   int? type;
   int? epid;
   int? seasonId;
+  int? cid;
+  String? goto;
 
   DynamicArchiveModel.fromJson(Map<String, dynamic> json) {
     id = Utils.safeToInt(json['id']);
     aid = Utils.safeToInt(json['aid']);
     badge = json['badge'] == null ? null : Badge.fromJson(json['badge']);
     bvid = json['bvid'] ?? json['epid'].toString() ?? ' ';
+    cid = Utils.safeToInt(json['cid']);
+    goto = json['goto'];
     cover = json['cover'];
     durationText = json['duration_text'];
     jumpUrl = json['jump_url'];

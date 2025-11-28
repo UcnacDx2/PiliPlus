@@ -124,6 +124,7 @@ class _DynamicsPageState extends State<DynamicsPage>
                 TabBarTheme.of(context).labelStyle?.copyWith(fontSize: 13) ??
                 const TextStyle(fontSize: 13),
             tabs: DynamicsTabType.values
+                .where((e) => e != DynamicsTabType.video)
                 .map((e) => Tab(text: e.label))
                 .toList(),
             onTap: (index) {
@@ -156,6 +157,7 @@ class _DynamicsPageState extends State<DynamicsPage>
                   child: videoTabBarView(
                     controller: _dynamicsController.tabController,
                     children: DynamicsTabType.values
+                        .where((e) => e != DynamicsTabType.video)
                         .map((e) => DynamicsTabPage(dynamicsType: e))
                         .toList(),
                   ),

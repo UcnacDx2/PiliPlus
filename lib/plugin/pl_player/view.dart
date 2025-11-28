@@ -118,6 +118,9 @@ class PLVideoPlayer extends StatefulWidget {
 
 class _PLVideoPlayerState extends State<PLVideoPlayer>
     with WidgetsBindingObserver, TickerProviderStateMixin {
+  void onDoubleTapCenter() {}
+  void onDoubleTapSeekBackward() {}
+  void onDoubleTapSeekForward() {}
   late AnimationController animationController;
   late VideoController videoController;
   late final CommonIntroController introController = widget.introController!;
