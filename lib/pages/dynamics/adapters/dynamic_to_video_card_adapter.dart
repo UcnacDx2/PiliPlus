@@ -1,4 +1,4 @@
-import 'package:PiliPlus/models/dynamics/result.dart' hide Stat;
+import 'package:PiliPlus/models/dynamics/result.dart' as dyn;
 import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
 import 'package:PiliPlus/models/model_video.dart';
@@ -6,7 +6,7 @@ import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
 
 class DynamicToVideoCardAdapter extends BaseRecVideoItemModel {
-  final DynamicItemModel item;
+  final dyn.DynamicItemModel item;
 
   DynamicToVideoCardAdapter({required this.item}) {
     final video = _getVideo();
@@ -25,14 +25,15 @@ class DynamicToVideoCardAdapter extends BaseRecVideoItemModel {
       name: author?.name,
       face: author?.face,
     );
-    stat = Stat()
-      ..danmu = NumUtils.numFormat(video?.stat?.danmu)
-      ..view = NumUtils.numFormat(video?.stat?.play);
+    stat = video?.stat != null
+        ? PlayStat.fromJson(
+            {'play': video!.stat!.play, 'danmaku': video.stat!.danmu})
+        : PlayStat.fromJson({});
     isFollowed = false;
     rcmdReason = null;
   }
 
-  DynamicArchiveModel? _getVideo() {
+  dyn.DynamicArchiveModel? _getVideo() {
     return switch (item.type) {
       'DYNAMIC_TYPE_AV' => item.modules.moduleDynamic?.major?.archive,
       'DYNAMIC_TYPE_UGC_SEASON' => item.modules.moduleDynamic?.major?.ugcSeason,
