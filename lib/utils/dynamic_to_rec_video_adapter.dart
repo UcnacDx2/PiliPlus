@@ -1,26 +1,30 @@
 import 'package:PiliPlus/models/dynamics/result.dart';
+import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
 
 class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
   final DynamicItemModel item;
 
-  DynamicToRecVideoAdapter(this.item)
-      : super(
-          goto: _getGoto(item),
-          param: _getParam(item),
-          cover: _getCover(item),
-          title: _getTitle(item),
-          duration: _getDuration(item),
-          owner: _getOwner(item),
-          stat: _getStat(item),
-          bvid: _getBvid(item),
-          aid: _getAid(item),
-          cid: null,
-          uri: null,
-          pgcBadge: null,
-          rcmdReason: null,
-          isFollowed: false,
-        );
+  DynamicToRecVideoAdapter(this.item) {
+    goto = _getGoto(item);
+    param = _getParam(item);
+    cover = _getCover(item);
+    title = _getTitle(item);
+    duration = _getDuration(item);
+    owner = Owner(
+      mid: item.modules.moduleAuthor?.mid ?? 0,
+      name: item.modules.moduleAuthor?.name ?? '',
+      face: item.modules.moduleAuthor?.face ?? '',
+    );
+    stat = _getStat(item);
+    bvid = _getBvid(item);
+    aid = _getAid(item);
+    cid = null;
+    uri = null;
+    pgcBadge = null;
+    rcmdReason = null;
+    isFollowed = false;
+  }
 
   static String _getGoto(DynamicItemModel item) {
     switch (item.type) {
@@ -99,27 +103,19 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
     if (major != null) {
       switch (item.type) {
         case 'DYNAMIC_TYPE_AV':
-          return major.archive?.duration ?? 0;
+          return int.tryParse(major.archive?.durationText?.split(':').fold<int>('', (prev, e) => prev + e) ?? '0') ?? 0;
         case 'DYNAMIC_TYPE_UGC_SEASON':
-          return major.ugcSeason?.duration ?? 0;
+          return int.tryParse(major.ugcSeason?.durationText?.split(':').fold<int>('', (prev, e) => prev + e) ?? '0') ?? 0;
         case 'DYNAMIC_TYPE_PGC':
         case 'DYNAMIC_TYPE_PGC_UNION':
-          return major.pgc?.duration ?? 0;
+          return int.tryParse(major.pgc?.durationText?.split(':').fold<int>('', (prev, e) => prev + e) ?? '0') ?? 0;
         case 'DYNAMIC_TYPE_COURSES_SEASON':
-          return major.courses?.duration ?? 0;
+          return int.tryParse(major.courses?.durationText?.split(':').fold<int>('', (prev, e) => prev + e) ?? '0') ?? 0;
         default:
           return 0;
       }
     }
     return 0;
-  }
-
-  static Owner _getOwner(DynamicItemModel item) {
-    return Owner(
-      mid: item.modules.moduleAuthor?.mid ?? 0,
-      name: item.modules.moduleAuthor?.name ?? '',
-      face: item.modules.moduleAuthor?.face ?? '',
-    );
   }
 
   static Stat _getStat(DynamicItemModel item) {

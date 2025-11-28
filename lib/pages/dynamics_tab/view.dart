@@ -123,16 +123,16 @@ class _DynamicsTabPageState
   Widget _buildBody(LoadingState<List<DynamicItemModel>?> loadingState) {
     return switch (loadingState) {
       Loading() => dynSkeleton,
-      Success(:var response) => response?.isNotEmpty == true
+      Success(:final response) => response?.isNotEmpty == true
           ? widget.dynamicsType == DynamicsTabType.video
               ? SliverWaterfallFlow(
                   gridDelegate: videoNewGridDelegate,
                   delegate: SliverChildBuilderDelegate(
                     (_, index) {
-                      if (index == response.length - 1) {
+                      if (response != null && index == response.length - 1) {
                         controller.onLoadMore();
                       }
-                      final item = response[index];
+                      final item = response![index];
                       return VideoCardV(
                         videoItem: DynamicToRecVideoAdapter(item),
                         onRemove: () => controller.onRemove(
@@ -141,7 +141,7 @@ class _DynamicsTabPageState
                         ),
                       );
                     },
-                    childCount: response.length,
+                    childCount: response?.length ?? 0,
                   ),
                 )
               : GlobalData().dynamicsWaterfallFlow
@@ -149,10 +149,11 @@ class _DynamicsTabPageState
                       gridDelegate: dynGridDelegate,
                       delegate: SliverChildBuilderDelegate(
                         (_, index) {
-                          if (index == response.length - 1) {
+                          if (response != null &&
+                              index == response.length - 1) {
                             controller.onLoadMore();
                           }
-                          final item = response[index];
+                          final item = response![index];
                           return DynamicPanel(
                             item: item,
                             onRemove: (idStr) =>
@@ -162,15 +163,16 @@ class _DynamicsTabPageState
                             onUnfold: () => controller.onUnfold(item, index),
                           );
                         },
-                        childCount: response!.length,
+                        childCount: response?.length ?? 0,
                       ),
                     )
                   : SliverList.builder(
                       itemBuilder: (context, index) {
-                        if (index == response.length - 1) {
+                        if (response != null &&
+                            index == response.length - 1) {
                           controller.onLoadMore();
                         }
-                        final item = response[index];
+                        final item = response![index];
                         return DynamicPanel(
                           item: item,
                           onRemove: (idStr) =>
@@ -180,7 +182,7 @@ class _DynamicsTabPageState
                           onUnfold: () => controller.onUnfold(item, index),
                         );
                       },
-                      itemCount: response!.length,
+                      itemCount: response?.length ?? 0,
                     )
           : HttpError(onReload: controller.onReload),
       Error(:var errMsg) => HttpError(
