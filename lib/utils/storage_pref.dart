@@ -148,13 +148,13 @@ abstract class Pref {
   static DynamicBadgeMode get dynamicBadgeType =>
       DynamicBadgeMode.values[_setting.get(
         SettingBoxKey.dynamicBadgeMode,
-        defaultValue: DynamicBadgeMode.number.index,
+        defaultValue: DynamicBadgeMode.hidden.index,
       )];
 
   static DynamicBadgeMode get msgBadgeMode =>
       DynamicBadgeMode.values[_setting.get(
         SettingBoxKey.msgBadgeMode,
-        defaultValue: DynamicBadgeMode.number.index,
+        defaultValue: DynamicBadgeMode.hidden.index,
       )];
 
   static Set<MsgUnReadType> get msgUnReadTypeV2 =>
@@ -164,7 +164,7 @@ abstract class Pref {
       MsgUnReadType.values.toSet();
 
   static int get defaultHomePage =>
-      _setting.get(SettingBoxKey.defaultHomePage, defaultValue: 0);
+      _setting.get(SettingBoxKey.defaultHomePage, defaultValue: 1);
 
   static int get previewQ =>
       _setting.get(SettingBoxKey.previewQuality, defaultValue: 100);
@@ -178,7 +178,7 @@ abstract class Pref {
   static UpPanelPosition get upPanelPosition =>
       UpPanelPosition.values[_setting.get(
         SettingBoxKey.upPanelPosition,
-        defaultValue: UpPanelPosition.leftFixed.index,
+        defaultValue: UpPanelPosition.top.index,
       )];
 
   static int get fullScreenMode => _setting.get(
@@ -256,7 +256,7 @@ abstract class Pref {
       _setting.get(SettingBoxKey.banWordForReply, defaultValue: '');
 
   static String get banWordForZone =>
-      _setting.get(SettingBoxKey.banWordForZone, defaultValue: '');
+      _setting.get(SettingBoxKey.banWordForZone, defaultValue: '知识|网络游戏|射击游戏|数码|社科·法律·心理|社会观察');
 
   static bool get appRcmd =>
       _setting.get(SettingBoxKey.appRcmd, defaultValue: true);
@@ -406,10 +406,10 @@ abstract class Pref {
       _setting.get(SettingBoxKey.savedRcmdTip, defaultValue: true);
 
   static bool get showVipDanmaku =>
-      _setting.get(SettingBoxKey.showVipDanmaku, defaultValue: true);
+      _setting.get(SettingBoxKey.showVipDanmaku, defaultValue: false);
 
   static bool get mergeDanmaku =>
-      _setting.get(SettingBoxKey.mergeDanmaku, defaultValue: false);
+      _setting.get(SettingBoxKey.mergeDanmaku, defaultValue: true);
 
   static bool get showHotRcmd =>
       _setting.get(SettingBoxKey.showHotRcmd, defaultValue: false);
@@ -422,7 +422,7 @@ abstract class Pref {
 
   static SuperResolutionType get superResolutionType {
     SuperResolutionType? superResolutionType;
-    final index = _setting.get(SettingBoxKey.superResolutionType);
+    final index = _setting.get(SettingBoxKey.superResolutionType, defaultValue: SuperResolutionType.efficiency.index);
     if (index != null) {
       superResolutionType = SuperResolutionType.values.getOrNull(index);
     }
@@ -449,7 +449,7 @@ abstract class Pref {
       _setting.get(SettingBoxKey.showSeekPreview, defaultValue: true);
 
   static bool get showDmChart =>
-      _setting.get(SettingBoxKey.showDmChart, defaultValue: false);
+      _setting.get(SettingBoxKey.showDmChart, defaultValue: true);
 
   static bool get enableCommAntifraud =>
       _setting.get(SettingBoxKey.enableCommAntifraud, defaultValue: false);
@@ -467,10 +467,10 @@ abstract class Pref {
       _setting.get(SettingBoxKey.isPureBlackTheme, defaultValue: false);
 
   static bool get antiGoodsDyn =>
-      _setting.get(SettingBoxKey.antiGoodsDyn, defaultValue: false);
+      _setting.get(SettingBoxKey.antiGoodsDyn, defaultValue: true);
 
   static bool get antiGoodsReply =>
-      _setting.get(SettingBoxKey.antiGoodsReply, defaultValue: false);
+      _setting.get(SettingBoxKey.antiGoodsReply, defaultValue: true);
 
   static bool get expandDynLivePanel =>
       _setting.get(SettingBoxKey.expandDynLivePanel, defaultValue: false);
@@ -481,7 +481,7 @@ abstract class Pref {
   );
 
   static bool get showFSActionItem =>
-      _setting.get(SettingBoxKey.showFSActionItem, defaultValue: true);
+      _setting.get(SettingBoxKey.showFSActionItem, defaultValue: false);
 
   static bool get enableShrinkVideoSize =>
       _setting.get(SettingBoxKey.enableShrinkVideoSize, defaultValue: true);
@@ -575,7 +575,7 @@ abstract class Pref {
       _setting.get(SettingBoxKey.disableAudioCDN, defaultValue: false);
 
   static int get minDurationForRcmd =>
-      _setting.get(SettingBoxKey.minDurationForRcmd, defaultValue: 0);
+      _setting.get(SettingBoxKey.minDurationForRcmd, defaultValue: 900);
 
   static int get minPlayForRcmd =>
       _setting.get(SettingBoxKey.minPlayForRcmd, defaultValue: 0);
@@ -598,16 +598,16 @@ abstract class Pref {
       _setting.get(SettingBoxKey.allowRotateScreen, defaultValue: true);
 
   static bool get disableLikeMsg =>
-      _setting.get(SettingBoxKey.disableLikeMsg, defaultValue: false);
+      _setting.get(SettingBoxKey.disableLikeMsg, defaultValue: true);
 
   static bool get enableWordRe =>
       _setting.get(SettingBoxKey.enableWordRe, defaultValue: false);
 
   static bool get autoExitFullscreen =>
-      _setting.get(SettingBoxKey.enableAutoExit, defaultValue: true);
+      _setting.get(SettingBoxKey.enableAutoExit, defaultValue: false);
 
   static bool get autoPlayEnable =>
-      _setting.get(SettingBoxKey.autoPlayEnable, defaultValue: false);
+      _setting.get(SettingBoxKey.autoPlayEnable, defaultValue: true);
 
   static bool get pipNoDanmaku =>
       _setting.get(SettingBoxKey.pipNoDanmaku, defaultValue: false);
@@ -698,7 +698,7 @@ abstract class Pref {
       _setting.get(SettingBoxKey.autoPiP, defaultValue: false);
 
   static bool get enableSponsorBlock =>
-      _setting.get(SettingBoxKey.enableSponsorBlock, defaultValue: false);
+      _setting.get(SettingBoxKey.enableSponsorBlock, defaultValue: true);
 
   static bool get enableHA =>
       _setting.get(SettingBoxKey.enableHA, defaultValue: true);
@@ -741,13 +741,13 @@ abstract class Pref {
       _setting.get(SettingBoxKey.useOpenSLES, defaultValue: true);
 
   static bool get enableAi =>
-      _setting.get(SettingBoxKey.enableAi, defaultValue: false);
+      _setting.get(SettingBoxKey.enableAi, defaultValue: true);
 
   static bool get enableOnlineTotal =>
       _setting.get(SettingBoxKey.enableOnlineTotal, defaultValue: false);
 
   static bool get enableAutoEnter =>
-      _setting.get(SettingBoxKey.enableAutoEnter, defaultValue: false);
+      _setting.get(SettingBoxKey.enableAutoEnter, defaultValue: true);
 
   static bool get enableAutoLongPressSpeed =>
       _setting.get(SettingBoxKey.enableAutoLongPressSpeed, defaultValue: false);
@@ -762,10 +762,10 @@ abstract class Pref {
       _setting.get(SettingBoxKey.defaultShowComment, defaultValue: false);
 
   static bool get enableTrending =>
-      _setting.get(SettingBoxKey.enableHotKey, defaultValue: true);
+      _setting.get(SettingBoxKey.enableHotKey, defaultValue: false);
 
   static bool get enableSearchRcmd =>
-      _setting.get(SettingBoxKey.enableSearchRcmd, defaultValue: true);
+      _setting.get(SettingBoxKey.enableSearchRcmd, defaultValue: false);
 
   static bool get enableSaveLastData =>
       _setting.get(SettingBoxKey.enableSaveLastData, defaultValue: false);
@@ -803,10 +803,10 @@ abstract class Pref {
   }
 
   static bool get showFsScreenshotBtn =>
-      _setting.get(SettingBoxKey.showFsScreenshotBtn, defaultValue: true);
+      _setting.get(SettingBoxKey.showFsScreenshotBtn, defaultValue: false);
 
   static bool get showFsLockBtn =>
-      _setting.get(SettingBoxKey.showFsLockBtn, defaultValue: true);
+      _setting.get(SettingBoxKey.showFsLockBtn, defaultValue: false);
 
   static bool get silentDownImg =>
       _setting.get(SettingBoxKey.silentDownImg, defaultValue: false);
@@ -879,7 +879,7 @@ abstract class Pref {
 
   static bool get showBatteryLevel => _setting.get(
     SettingBoxKey.showBatteryLevel,
-    defaultValue: Utils.isMobile,
+    defaultValue: false,
   );
 
   static FollowOrderType get followOrderType =>
