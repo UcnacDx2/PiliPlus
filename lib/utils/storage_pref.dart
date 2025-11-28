@@ -365,6 +365,9 @@ abstract class Pref {
   static bool get reverseFromFirst =>
       _setting.get(SettingBoxKey.reverseFromFirst, defaultValue: true);
 
+  static bool get replaceCover =>
+      _setting.get(SettingBoxKey.replaceCover, defaultValue: false);
+
   static int get subtitlePaddingH =>
       _setting.get(SettingBoxKey.subtitlePaddingH, defaultValue: 24);
 

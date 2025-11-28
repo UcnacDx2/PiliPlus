@@ -254,6 +254,14 @@ List<SettingsModel> get extraSettings => [
       ),
       const SettingsModel(
         settingsType: SettingsType.sw1tch,
+        title: '替换视频封面',
+        subtitle: '获取更高质量的封面',
+        leading: Icon(Icons.image_outlined),
+        setKey: SettingBoxKey.replaceCover,
+        defaultVal: false,
+      ),
+      const SettingsModel(
+        settingsType: SettingsType.sw1tch,
         title: '视频页显示相关视频',
         leading: Icon(MdiIcons.motionPlayOutline),
         setKey: SettingBoxKey.showRelatedVideo,

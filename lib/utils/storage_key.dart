@@ -84,6 +84,7 @@ abstract class SettingBoxKey {
       replyLengthLimit = 'replyLengthLimit',
       showArgueMsg = 'showArgueMsg',
       reverseFromFirst = 'reverseFromFirst',
+      replaceCover = 'replaceCover',
       badCertificateCallback = 'badCertificateCallback',
       continuePlayingPart = 'continuePlayingPart',
       cdnSpeedTest = 'cdnSpeedTest',
