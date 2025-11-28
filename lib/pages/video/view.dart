@@ -2181,7 +2181,14 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     }
   }
 
-  void _onPopInvokedWithResult(bool didPop, result) {
+  void _onPopInvokedWithResult(bool didPop, result) async {
+    if (await Utils.isTV &&
+        !isFullScreen &&
+        plPlayerController?.controlsLock.value != true) {
+      Get.back();
+      videoDetailController.plPlayerController.disableAutoEnterPipIfNeeded();
+      return;
+    }
     if (didPop) {
       videoDetailController.plPlayerController.disableAutoEnterPipIfNeeded();
     }

@@ -18,6 +18,15 @@ abstract class Utils {
 
   static const channel = MethodChannel(Constants.appName);
 
+  static Future<bool> get isTV async {
+    if (!Platform.isAndroid) return false;
+    try {
+      return await channel.invokeMethod<bool>('isTV') ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @pragma("vm:platform-const")
   static final bool isMobile = Platform.isAndroid || Platform.isIOS;
 

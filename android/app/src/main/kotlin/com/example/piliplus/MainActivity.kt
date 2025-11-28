@@ -2,6 +2,7 @@ package com.example.piliplus
 
 import android.app.PictureInPictureParams
 import android.app.SearchManager
+import android.app.UiModeManager
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -26,6 +27,10 @@ class MainActivity : AudioServiceActivity() {
         methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "PiliPlus")
         methodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "isTV" -> {
+                    val uiModeManager = getSystemService(UI_MODE_SERVICE) as UiModeManager
+                    result.success(uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION)
+                }
                 "back" -> back();
                 "biliSendCommAntifraud" -> {
                     try {
