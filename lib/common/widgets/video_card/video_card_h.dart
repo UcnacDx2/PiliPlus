@@ -40,6 +40,32 @@ class VideoCardH extends StatefulWidget {
 class _VideoCardHState extends State<VideoCardH> {
   final GlobalKey<PopupMenuButtonState> _menuKey =
       GlobalKey<PopupMenuButtonState>();
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _showPopupMenu() {
+    _menuKey.currentState?.showButtonMenu();
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _focusNode.requestFocus();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     String type = 'video';
@@ -73,10 +99,20 @@ class _VideoCardHState extends State<VideoCardH> {
         );
     return Material(
       type: MaterialType.transparency,
+      shape: _isFocused
+          ? RoundedRectangleBorder(
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2.0,
+              ),
+              borderRadius: BorderRadius.circular(12.0),
+            )
+          : null,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           InkWell(
+            focusNode: _focusNode,
             onLongPress: onLongPress,
             onSecondaryTap: Utils.isMobile ? null : onLongPress,
             onTap: widget.onTap ??
@@ -122,6 +158,14 @@ class _VideoCardHState extends State<VideoCardH> {
                     SmartDialog.showToast(err.toString());
                   }
                 },
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent &&
+                  (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
+                _showPopupMenu();
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: StyleString.safeSpace,
@@ -201,15 +245,7 @@ class _VideoCardHState extends State<VideoCardH> {
           Positioned(
             bottom: 0,
             right: 12,
-            child: Focus(
-              onKeyEvent: (node, event) {
-                if (event is KeyDownEvent &&
-                    (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
-                  _menuKey.currentState?.showButtonMenu();
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.ignored;
-              },
+            child: ExcludeFocus(
               child: VideoPopupMenu(
                 menuKey: _menuKey,
                 size: 29,
