@@ -85,10 +85,15 @@ class _VideoCardVState extends State<VideoCardV> {
     );
     return Focus(
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
-          _menuKey.currentState?.showButtonMenu();
-          return KeyEventResult.handled;
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.contextMenu) {
+            _menuKey.currentState?.showButtonMenu();
+            return KeyEventResult.handled;
+          } else if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter) {
+            onPushDetail(Utils.makeHeroTag(widget.videoItem.aid));
+            return KeyEventResult.handled;
+          }
         }
         return KeyEventResult.ignored;
       },

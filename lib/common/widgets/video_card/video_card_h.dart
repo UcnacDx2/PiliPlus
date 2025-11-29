@@ -42,6 +42,58 @@ class _VideoCardHState extends State<VideoCardH> {
   final GlobalKey<VideoPopupMenuState> _menuKey =
       GlobalKey<VideoPopupMenuState>();
 
+  Future<void> _onTap() async {
+    String type = 'video';
+    if (widget.videoItem case SearchVideoItemModel item) {
+      var typeOrNull = item.type;
+      if (typeOrNull?.isNotEmpty == true) {
+        type = typeOrNull!;
+      }
+    }
+
+    if (type == 'ketang') {
+      PageUtils.viewPugv(seasonId: widget.videoItem.aid);
+      return;
+    } else if (type == 'live_room') {
+      if (widget.videoItem case SearchVideoItemModel item) {
+        int? roomId = item.id;
+        if (roomId != null) {
+          PageUtils.toLiveRoom(roomId);
+        }
+      } else {
+        SmartDialog.showToast(
+          'err: live_room : ${widget.videoItem.runtimeType}',
+        );
+      }
+      return;
+    }
+    if (widget.videoItem case HotVideoItemModel item) {
+      if (item.redirectUrl?.isNotEmpty == true &&
+          PageUtils.viewPgcFromUri(item.redirectUrl!)) {
+        return;
+      }
+    }
+
+    try {
+      final int? cid =
+          widget.videoItem.cid ??
+          await SearchHttp.ab2c(
+            aid: widget.videoItem.aid,
+            bvid: widget.videoItem.bvid,
+          );
+      if (cid != null) {
+        PageUtils.toVideoPage(
+          bvid: widget.videoItem.bvid,
+          cid: cid,
+          cover: widget.videoItem.cover,
+          title: widget.videoItem.title,
+        );
+      }
+    } catch (err) {
+      SmartDialog.showToast(err.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String type = 'video';
@@ -77,10 +129,15 @@ class _VideoCardHState extends State<VideoCardH> {
       type: MaterialType.transparency,
       child: Focus(
         onKeyEvent: (node, event) {
-          if (event is KeyDownEvent &&
-              (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
-            _menuKey.currentState?.showButtonMenu();
-            return KeyEventResult.handled;
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.contextMenu) {
+              _menuKey.currentState?.showButtonMenu();
+              return KeyEventResult.handled;
+            } else if (event.logicalKey == LogicalKeyboardKey.select ||
+                event.logicalKey == LogicalKeyboardKey.enter) {
+              widget.onTap ?? _onTap();
+              return KeyEventResult.handled;
+            }
           }
           return KeyEventResult.ignored;
         },
@@ -90,51 +147,7 @@ class _VideoCardHState extends State<VideoCardH> {
             InkWell(
               onLongPress: onLongPress,
               onSecondaryTap: Utils.isMobile ? null : onLongPress,
-              onTap:
-                  widget.onTap ??
-                  () async {
-                    if (type == 'ketang') {
-                      PageUtils.viewPugv(seasonId: widget.videoItem.aid);
-                      return;
-                    } else if (type == 'live_room') {
-                      if (widget.videoItem case SearchVideoItemModel item) {
-                        int? roomId = item.id;
-                        if (roomId != null) {
-                          PageUtils.toLiveRoom(roomId);
-                        }
-                      } else {
-                        SmartDialog.showToast(
-                          'err: live_room : ${widget.videoItem.runtimeType}',
-                        );
-                      }
-                      return;
-                    }
-                    if (widget.videoItem case HotVideoItemModel item) {
-                      if (item.redirectUrl?.isNotEmpty == true &&
-                          PageUtils.viewPgcFromUri(item.redirectUrl!)) {
-                        return;
-                      }
-                    }
-
-                    try {
-                      final int? cid =
-                          widget.videoItem.cid ??
-                          await SearchHttp.ab2c(
-                            aid: widget.videoItem.aid,
-                            bvid: widget.videoItem.bvid,
-                          );
-                      if (cid != null) {
-                        PageUtils.toVideoPage(
-                          bvid: widget.videoItem.bvid,
-                          cid: cid,
-                          cover: widget.videoItem.cover,
-                          title: widget.videoItem.title,
-                        );
-                      }
-                    } catch (err) {
-                      SmartDialog.showToast(err.toString());
-                    }
-                  },
+              onTap: widget.onTap ?? _onTap,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: StyleString.safeSpace,
