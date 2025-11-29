@@ -51,7 +51,7 @@ List<SettingsModel> get playSettings => [
         subtitle: '进入详情页自动播放',
         leading: Icon(Icons.motion_photos_auto_outlined),
         setKey: SettingBoxKey.autoPlayEnable,
-        defaultVal: false,
+        defaultVal: true,
       ),
       const SettingsModel(
         settingsType: SettingsType.sw1tch,
