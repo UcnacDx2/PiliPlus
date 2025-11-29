@@ -879,4 +879,7 @@ abstract class Pref {
     SettingBoxKey.showBatteryLevel,
     defaultValue: Utils.isMobile,
   );
+
+  static bool get useFirstFrameAsCover =>
+      _setting.get(SettingBoxKey.useFirstFrameAsCover, defaultValue: false);
 }

@@ -83,6 +83,8 @@ class SearchVideoItemModel extends BaseVideoItemModel {
     title = titleList!.map((i) => i.text).join();
     desc = json['description'];
     cover = (json['pic'] as String?)?.http2https;
+    // Search API does not provide first_frame
+    // firstFrame = json["first_frame"];
     pubdate = json['pubdate'];
     ctime = json['senddate'];
     duration = DurationUtils.parseDuration(json['duration']);

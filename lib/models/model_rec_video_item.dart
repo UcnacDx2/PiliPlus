@@ -5,6 +5,7 @@ abstract class BaseRecVideoItemModel extends BaseVideoItemModel {
   String? goto;
   String? uri;
   String? rcmdReason;
+  String? firstFrame;
 
   // app推荐专属
   int? param;
@@ -19,6 +20,7 @@ class RecVideoItemModel extends BaseRecVideoItemModel {
     goto = json["goto"];
     uri = json["uri"];
     cover = json["pic"];
+    firstFrame = json["first_frame"];
     title = json["title"];
     duration = json["duration"];
     pubdate = json["pubdate"];
