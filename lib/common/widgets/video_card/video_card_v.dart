@@ -19,11 +19,14 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart'; // 必须导入
 
 // 视频卡片 - 垂直布局
 class VideoCardV extends StatefulWidget {
+  // [Main] 日期格式
   static final shortFormat = DateFormat('M-d');
   static final longFormat = DateFormat('yy-M-d');
+  
   final BaseRecVideoItemModel videoItem;
   final VoidCallback? onRemove;
 
@@ -38,6 +41,11 @@ class VideoCardV extends StatefulWidget {
 }
 
 class _VideoCardVState extends State<VideoCardV> {
+  // [Feat] TV 菜单键支持
+  final GlobalKey<VideoPopupMenuState> _menuKey =
+      GlobalKey<VideoPopupMenuState>();
+  
+  // [Main] 首帧图支持
   String? _firstFrame;
 
   @override
@@ -106,73 +114,89 @@ class _VideoCardVState extends State<VideoCardV> {
   @override
   Widget build(BuildContext context) {
     void onLongPress() => imageSaveDialog(
-          title: widget.videoItem.title,
-          cover: widget.videoItem.cover,
-          bvid: widget.videoItem.bvid,
-        );
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Card(
-          clipBehavior: Clip.hardEdge,
-          child: InkWell(
-            onTap: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
-            onLongPress: onLongPress,
-            onSecondaryTap: Utils.isMobile ? null : onLongPress,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AspectRatio(
-                  aspectRatio: StyleString.aspectRatio,
-                  child: LayoutBuilder(
-                    builder: (context, boxConstraints) {
-                      double maxWidth = boxConstraints.maxWidth;
-                      double maxHeight = boxConstraints.maxHeight;
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          NetworkImgLayer(
-                            src: _firstFrame ??
-                                widget.videoItem.firstFrame ??
-                                widget.videoItem.cover,
-                            width: maxWidth,
-                            height: maxHeight,
-                            radius: 0,
-                          ),
-                          if (widget.videoItem.duration > 0)
-                            PBadge(
-                              bottom: 6,
-                              right: 7,
-                              size: PBadgeSize.small,
-                              type: PBadgeType.gray,
-                              text: DurationUtils.formatDuration(
-                                widget.videoItem.duration,
-                              ),
+      title: widget.videoItem.title,
+      cover: widget.videoItem.cover,
+      bvid: widget.videoItem.bvid,
+    );
+    // [Feat] Focus 包裹
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.contextMenu) {
+          _menuKey.currentState?.showButtonMenu();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Card(
+            clipBehavior: Clip.hardEdge,
+            child: InkWell(
+              onTap: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
+              onLongPress: onLongPress,
+              onSecondaryTap: Utils.isMobile ? null : onLongPress,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AspectRatio(
+                    aspectRatio: StyleString.aspectRatio,
+                    child: LayoutBuilder(
+                      builder: (context, boxConstraints) {
+                        double maxWidth = boxConstraints.maxWidth;
+                        double maxHeight = boxConstraints.maxHeight;
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            // [Main] 首帧图逻辑
+                            NetworkImgLayer(
+                              src: _firstFrame ??
+                                  widget.videoItem.firstFrame ??
+                                  widget.videoItem.cover,
+                              width: maxWidth,
+                              height: maxHeight,
+                              radius: 0,
                             ),
-                        ],
-                      );
-                    },
+                            if (widget.videoItem.duration > 0)
+                              PBadge(
+                                bottom: 6,
+                                right: 7,
+                                size: PBadgeSize.small,
+                                type: PBadgeType.gray,
+                                text: DurationUtils.formatDuration(
+                                  widget.videoItem.duration,
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
-                content(context),
-              ],
-            ),
-          ),
-        ),
-        if (widget.videoItem.goto == 'av')
-          Positioned(
-            right: -5,
-            bottom: -2,
-            child: ExcludeFocus(
-              child: VideoPopupMenu(
-                size: 29,
-                iconSize: 17,
-                videoItem: widget.videoItem,
-                onRemove: widget.onRemove,
+                  content(context),
+                ],
               ),
             ),
           ),
-      ],
+          if (widget.videoItem.goto == 'av')
+            Positioned(
+              right: -5,
+              bottom: -2,
+              child: ExcludeFocus(
+                child: VideoPopupMenu(
+                  // [Feat] 绑定 Key
+                  key: _menuKey,
+                  size: 29,
+                  iconSize: 17,
+                  videoItem: widget.videoItem,
+                  onRemove: widget.onRemove,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -274,6 +298,7 @@ class _VideoCardVState extends State<VideoCardV> {
                 fontSize: theme.textTheme.labelSmall!.fontSize,
                 color: theme.colorScheme.outline.withValues(alpha: 0.8),
               ),
+              // [Main] 修复：保留 Main 分支的日期格式化逻辑
               text: DateFormatUtils.dateFormat(
                 widget.videoItem.pubdate,
                 short: VideoCardV.shortFormat,
