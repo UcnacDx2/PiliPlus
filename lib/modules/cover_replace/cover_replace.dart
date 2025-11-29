@@ -1,8 +1,8 @@
 
 import 'package:PiliPlus/http/index.dart';
-import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 class CoverReplaceService {
   static Future<String?> getReplacedCover(String? bvid) async {
@@ -18,9 +18,11 @@ class CoverReplaceService {
       final data = response.data;
       if (data != null && data['code'] == 0) {
         return data['data']['pic'];
+      } else {
+        SmartDialog.showToast('Failed to fetch replaced cover: ${data['message']}');
       }
     } catch (e) {
-      print('Failed to fetch replaced cover: $e');
+      SmartDialog.showToast('Failed to fetch replaced cover: $e');
     }
     return null;
   }
