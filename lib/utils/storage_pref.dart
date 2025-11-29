@@ -745,7 +745,7 @@ abstract class Pref {
       _setting.get(SettingBoxKey.enableOnlineTotal, defaultValue: false);
 
   static bool get enableAutoEnter =>
-      _setting.get(SettingBoxKey.enableAutoEnter, defaultValue: true);
+      _setting.get(SettingBoxKey.enableAutoEnter, defaultValue: false);
 
   static bool get enableAutoLongPressSpeed =>
       _setting.get(SettingBoxKey.enableAutoLongPressSpeed, defaultValue: false);

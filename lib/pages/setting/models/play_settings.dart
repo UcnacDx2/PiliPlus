@@ -197,7 +197,7 @@ List<SettingsModel> get playSettings => [
         subtitle: '视频开始播放时进入全屏',
         leading: Icon(Icons.fullscreen_outlined),
         setKey: SettingBoxKey.enableAutoEnter,
-        defaultVal: true,
+        defaultVal: false,
       ),
       const SettingsModel(
         settingsType: SettingsType.sw1tch,
