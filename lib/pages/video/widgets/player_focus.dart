@@ -22,12 +22,14 @@ class PlayerFocus extends StatelessWidget {
     required this.onSendDanmaku,
     this.canPlay,
     this.onSkipSegment,
+    this.onShowMenu,
   });
 
   final Widget child;
   final PlPlayerController plPlayerController;
   final CommonIntroController? introController;
   final VoidCallback onSendDanmaku;
+  final VoidCallback? onShowMenu;
   final bool Function()? canPlay;
   final bool Function()? onSkipSegment;
 
@@ -213,6 +215,13 @@ class PlayerFocus extends StatelessWidget {
           if (plPlayerController.isLive || canPlay!()) {
             if (hasPlayer) {
               plPlayerController.onDoubleTapCenter();
+            }
+          }
+          return true;
+        case LogicalKeyboardKey.contextMenu:
+          if (plPlayerController.isLive || (canPlay?.call() ?? false)) {
+            if (hasPlayer) {
+              onShowMenu?.call();
             }
           }
           return true;
