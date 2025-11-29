@@ -2,7 +2,6 @@ import 'package:PiliPlus/models/dynamics/result.dart' as dyn;
 import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
 import 'package:PiliPlus/models/model_video.dart' as model_video;
-import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 
 class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
@@ -14,12 +13,7 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
     cid = item.modules?.moduleDynamic?.major?.archive?.cid;
     goto = item.modules?.moduleDynamic?.major?.archive?.goto ?? 'av';
     uri = item.modules?.moduleDynamic?.major?.archive?.jumpUrl;
-    firstFrame = item.modules?.moduleDynamic?.major?.archive?.firstFrame;
-    if (Pref.useFirstFrameAsCover && firstFrame != null && firstFrame!.isNotEmpty) {
-      cover = firstFrame;
-    } else {
-      cover = item.modules?.moduleDynamic?.major?.archive?.cover ?? '';
-    }
+    cover = item.modules?.moduleDynamic?.major?.archive?.cover ?? '';
     title = item.modules?.moduleDynamic?.major?.archive?.title ?? '';
 
     final durationText = item.modules?.moduleDynamic?.major?.archive?.durationText;

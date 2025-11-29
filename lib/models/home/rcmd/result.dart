@@ -2,7 +2,6 @@ import 'package:PiliPlus/models/model_rec_video_item.dart';
 import 'package:PiliPlus/models/model_video.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
 
 class RecVideoItemAppModel extends BaseRecVideoItemModel {
   int? get id => aid;
@@ -15,12 +14,7 @@ class RecVideoItemAppModel extends BaseRecVideoItemModel {
     aid = json['player_args']?['aid'] ?? int.tryParse(json['param'] ?? '0');
     bvid = json['bvid'] ?? IdUtils.av2bv(aid!);
     cid = json['player_args']?['cid'];
-    firstFrame = json['first_frame'];
-    if (Pref.useFirstFrameAsCover && firstFrame != null && firstFrame!.isNotEmpty) {
-      cover = firstFrame;
-    } else {
-      cover = json['cover'];
-    }
+    cover = json['cover'];
     stat = RcmdStat.fromJson(json);
     // 改用player_args中的duration作为原始数据（秒数）
     duration = json['player_args']?['duration'] ?? 0;

@@ -4,7 +4,6 @@ import 'package:PiliPlus/models/model_video.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/em.dart';
 import 'package:PiliPlus/utils/extension.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
 
 abstract class SearchNumData<T> {
   SearchNumData({
@@ -83,12 +82,7 @@ class SearchVideoItemModel extends BaseVideoItemModel {
     titleList = Em.regTitle(json['title']);
     title = titleList!.map((i) => i.text).join();
     desc = json['description'];
-    firstFrame = (json['first_frame'] as String?)?.http2https;
-    if (Pref.useFirstFrameAsCover && firstFrame != null && firstFrame!.isNotEmpty) {
-      cover = firstFrame;
-    } else {
-      cover = (json['pic'] as String?)?.http2https;
-    }
+    cover = (json['pic'] as String?)?.http2https;
     pubdate = json['pubdate'];
     ctime = json['senddate'];
     duration = DurationUtils.parseDuration(json['duration']);
