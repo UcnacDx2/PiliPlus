@@ -17,7 +17,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:live_photo_maker/live_photo_maker.dart';
 import 'package:saver_gallery/saver_gallery.dart';
-import 'package.share_plus/share_plus.dart';
+import 'package:share_plus/share_plus.dart';
 
 abstract class ImageUtils {
   static String get time =>
@@ -33,14 +33,11 @@ abstract class ImageUtils {
       final res = await Request().downloadFile(url.http2https, path);
       SmartDialog.dismiss();
       if (res.statusCode == 200) {
-        await SharePlus.instance
-            .share(
-              ShareParams(
-                files: [XFile(path)],
-                sharePositionOrigin: await Utils.sharePositionOrigin,
-              ),
-            )
-            .whenComplete(File(path).tryDel);
+        await Share.shareXFiles(
+          [XFile(path)],
+          sharePositionOrigin: await Utils.sharePositionOrigin,
+        );
+        File(path).tryDel();
       }
     } catch (e) {
       SmartDialog.showToast(e.toString());
