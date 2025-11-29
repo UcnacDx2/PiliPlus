@@ -3,8 +3,6 @@ import 'package:intl/intl.dart' show DateFormat;
 abstract class DateFormatUtils {
   static final shortFormat = DateFormat('MM-dd');
   static final longFormat = DateFormat('yyyy-MM-dd');
-  static final shortFormatV2 = DateFormat('M-d');
-  static final longFormatV2 = DateFormat('yy-M-d');
   static final _shortFormatD = DateFormat('MM-dd HH:mm');
   static final longFormatD = DateFormat('yyyy-MM-dd HH:mm');
   static final longFormatDs = DateFormat('yyyy-MM-dd HH:mm:ss');

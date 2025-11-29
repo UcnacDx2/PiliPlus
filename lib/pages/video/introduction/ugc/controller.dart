@@ -106,12 +106,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
         if (videoDetailCtr.cover.value.isEmpty ||
             (videoDetailCtr.videoUrl.isNullOrEmpty &&
                 !videoDetailCtr.isQuerying)) {
-          if (Pref.useFirstFrameAsCover &&
-              data.pages?.first.firstFrame?.isNotEmpty == true) {
-            videoDetailCtr.cover.value = data.pages!.first.firstFrame!;
-          } else {
-            videoDetailCtr.cover.value = data.pic ?? '';
-          }
+          videoDetailCtr.cover.value = data.pic ?? '';
         }
         if (videoDetailCtr.showReply) {
           try {

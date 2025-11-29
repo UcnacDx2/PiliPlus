@@ -12,16 +12,15 @@ import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
-import 'package:PiliPlus/http/video.dart';
+import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart';
 
 // 视频卡片 - 垂直布局
-class VideoCardV extends StatefulWidget {
+class VideoCardV extends StatelessWidget {
   final BaseRecVideoItemModel videoItem;
   final VoidCallback? onRemove;
 
@@ -31,75 +30,38 @@ class VideoCardV extends StatefulWidget {
     this.onRemove,
   });
 
-  @override
-  State<VideoCardV> createState() => _VideoCardVState();
-}
-
-class _VideoCardVState extends State<VideoCardV> {
-  String? _firstFrame;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchFirstFrame();
-  }
-
-  @override
-  void didUpdateWidget(covariant VideoCardV oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.videoItem.bvid != widget.videoItem.bvid) {
-      _fetchFirstFrame();
-    }
-  }
-
-  Future<void> _fetchFirstFrame() async {
-    if (Pref.useFirstFrameAsCover) {
-      String? firstFrame = widget.videoItem.firstFrame;
-      if (firstFrame == null || firstFrame.isEmpty) {
-        if (widget.videoItem.bvid != null) {
-          firstFrame = await VideoHttp.getVideoFirstFrame(widget.videoItem.bvid!);
-        }
-      }
-      if (mounted && firstFrame != null && firstFrame.isNotEmpty) {
-        setState(() {
-          _firstFrame = firstFrame;
-        });
-      }
-    }
-  }
-
   Future<void> onPushDetail(String heroTag) async {
-    String? goto = widget.videoItem.goto;
+    String? goto = videoItem.goto;
     switch (goto) {
       case 'bangumi':
-        PageUtils.viewPgc(epId: widget.videoItem.param!);
+        PageUtils.viewPgc(epId: videoItem.param!);
         break;
       case 'av':
-        String bvid =
-            widget.videoItem.bvid ?? IdUtils.av2bv(widget.videoItem.aid!);
-        int? cid = widget.videoItem.cid ??
-            await SearchHttp.ab2c(aid: widget.videoItem.aid, bvid: bvid);
+        String bvid = videoItem.bvid ?? IdUtils.av2bv(videoItem.aid!);
+        int? cid =
+            videoItem.cid ??
+            await SearchHttp.ab2c(aid: videoItem.aid, bvid: bvid);
         if (cid != null) {
           PageUtils.toVideoPage(
-            aid: widget.videoItem.aid,
+            aid: videoItem.aid,
             bvid: bvid,
             cid: cid,
-            cover: widget.videoItem.cover,
-            title: widget.videoItem.title,
+            cover: videoItem.cover,
+            title: videoItem.title,
           );
         }
         break;
       // 动态
       case 'picture':
         try {
-          PiliScheme.routePushFromUrl(widget.videoItem.uri!);
+          PiliScheme.routePushFromUrl(videoItem.uri!);
         } catch (err) {
           SmartDialog.showToast(err.toString());
         }
         break;
       default:
-        if (widget.videoItem.uri?.isNotEmpty == true) {
-          PiliScheme.routePushFromUrl(widget.videoItem.uri!);
+        if (videoItem.uri?.isNotEmpty == true) {
+          PiliScheme.routePushFromUrl(videoItem.uri!);
         }
     }
   }
@@ -107,17 +69,17 @@ class _VideoCardVState extends State<VideoCardV> {
   @override
   Widget build(BuildContext context) {
     void onLongPress() => imageSaveDialog(
-          title: widget.videoItem.title,
-          cover: widget.videoItem.cover,
-          bvid: widget.videoItem.bvid,
-        );
+      title: videoItem.title,
+      cover: videoItem.cover,
+      bvid: videoItem.bvid,
+    );
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Card(
           clipBehavior: Clip.hardEdge,
           child: InkWell(
-            onTap: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
+            onTap: () => onPushDetail(Utils.makeHeroTag(videoItem.aid)),
             onLongPress: onLongPress,
             onSecondaryTap: Utils.isMobile ? null : onLongPress,
             child: Column(
@@ -133,19 +95,20 @@ class _VideoCardVState extends State<VideoCardV> {
                         clipBehavior: Clip.none,
                         children: [
                           NetworkImgLayer(
-                            src: _firstFrame ?? widget.videoItem.cover,
+                            src: ImageUtils.getCover(
+                                videoItem.cover, videoItem.firstFrame),
                             width: maxWidth,
                             height: maxHeight,
                             radius: 0,
                           ),
-                          if (widget.videoItem.duration > 0)
+                          if (videoItem.duration > 0)
                             PBadge(
                               bottom: 6,
                               right: 7,
                               size: PBadgeSize.small,
                               type: PBadgeType.gray,
                               text: DurationUtils.formatDuration(
-                                widget.videoItem.duration,
+                                videoItem.duration,
                               ),
                             ),
                         ],
@@ -158,7 +121,7 @@ class _VideoCardVState extends State<VideoCardV> {
             ),
           ),
         ),
-        if (widget.videoItem.goto == 'av')
+        if (videoItem.goto == 'av')
           Positioned(
             right: -5,
             bottom: -2,
@@ -166,8 +129,8 @@ class _VideoCardVState extends State<VideoCardV> {
               child: VideoPopupMenu(
                 size: 29,
                 iconSize: 17,
-                videoItem: widget.videoItem,
-                onRemove: widget.onRemove,
+                videoItem: videoItem,
+                onRemove: onRemove,
               ),
             ),
           ),
@@ -185,7 +148,7 @@ class _VideoCardVState extends State<VideoCardV> {
           children: [
             Expanded(
               child: Text(
-                "${widget.videoItem.title}\n",
+                "${videoItem.title}\n",
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -197,22 +160,22 @@ class _VideoCardVState extends State<VideoCardV> {
             Row(
               spacing: 2,
               children: [
-                if (widget.videoItem.goto == 'bangumi')
+                if (videoItem.goto == 'bangumi')
                   PBadge(
-                    text: widget.videoItem.pgcBadge,
+                    text: videoItem.pgcBadge,
                     isStack: false,
                     size: PBadgeSize.small,
                     type: PBadgeType.line_primary,
                     fontSize: 9,
                   ),
-                if (widget.videoItem.rcmdReason != null)
+                if (videoItem.rcmdReason != null)
                   PBadge(
-                    text: widget.videoItem.rcmdReason,
+                    text: videoItem.rcmdReason,
                     isStack: false,
                     size: PBadgeSize.small,
                     type: PBadgeType.secondary,
                   ),
-                if (widget.videoItem.goto == 'picture')
+                if (videoItem.goto == 'picture')
                   const PBadge(
                     text: '动态',
                     isStack: false,
@@ -220,7 +183,7 @@ class _VideoCardVState extends State<VideoCardV> {
                     type: PBadgeType.line_primary,
                     fontSize: 9,
                   ),
-                if (widget.videoItem.isFollowed)
+                if (videoItem.isFollowed)
                   const PBadge(
                     text: '已关注',
                     isStack: false,
@@ -230,10 +193,10 @@ class _VideoCardVState extends State<VideoCardV> {
                 Expanded(
                   flex: 1,
                   child: Text(
-                    widget.videoItem.owner.name.toString(),
+                    videoItem.owner.name.toString(),
                     maxLines: 1,
                     overflow: TextOverflow.clip,
-                    semanticsLabel: 'UP：${widget.videoItem.owner.name}',
+                    semanticsLabel: 'UP：${videoItem.owner.name}',
                     style: TextStyle(
                       height: 1.5,
                       fontSize: theme.textTheme.labelMedium!.fontSize,
@@ -241,7 +204,7 @@ class _VideoCardVState extends State<VideoCardV> {
                     ),
                   ),
                 ),
-                if (widget.videoItem.goto == 'av') const SizedBox(width: 10),
+                if (videoItem.goto == 'av') const SizedBox(width: 10),
               ],
             ),
           ],
@@ -250,21 +213,24 @@ class _VideoCardVState extends State<VideoCardV> {
     );
   }
 
+  static final shortFormat = DateFormat('M-d');
+  static final longFormat = DateFormat('yy-M-d');
+
   Widget videoStat(BuildContext context, ThemeData theme) {
     return Row(
       children: [
         StatWidget(
           type: StatType.play,
-          value: widget.videoItem.stat.view,
+          value: videoItem.stat.view,
         ),
-        if (widget.videoItem.goto != 'picture') ...[
+        if (videoItem.goto != 'picture') ...[
           const SizedBox(width: 4),
           StatWidget(
             type: StatType.danmaku,
-            value: widget.videoItem.stat.danmu,
+            value: videoItem.stat.danmu,
           ),
         ],
-        if (widget.videoItem is RecVideoItemModel) ...[
+        if (videoItem is RecVideoItemModel) ...[
           const Spacer(),
           Text.rich(
             maxLines: 1,
@@ -274,9 +240,9 @@ class _VideoCardVState extends State<VideoCardV> {
                 color: theme.colorScheme.outline.withValues(alpha: 0.8),
               ),
               text: DateFormatUtils.dateFormat(
-                widget.videoItem.pubdate,
-                short: DateFormatUtils.shortFormatV2,
-                long: DateFormatUtils.longFormatV2,
+                videoItem.pubdate,
+                short: shortFormat,
+                long: longFormat,
               ),
             ),
           ),
