@@ -141,7 +141,7 @@ class VideoCardH extends StatelessWidget {
                           children: [
                             NetworkImgLayer(
                               src: ImageUtils.getCoverUrl(
-                                  videoItem.cover, videoItem.firstFrame),
+                                  videoItem.cover ?? '', videoItem.firstFrame),
                               width: maxWidth,
                               height: maxHeight,
                             ),
