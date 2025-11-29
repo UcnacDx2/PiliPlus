@@ -15,6 +15,8 @@ class RecVideoItemAppModel extends BaseRecVideoItemModel {
     bvid = json['bvid'] ?? IdUtils.av2bv(aid!);
     cid = json['player_args']?['cid'];
     cover = json['cover'];
+    // App API does not provide first_frame
+    // firstFrame = json["first_frame"];
     stat = RcmdStat.fromJson(json);
     // 改用player_args中的duration作为原始数据（秒数）
     duration = json['player_args']?['duration'] ?? 0;

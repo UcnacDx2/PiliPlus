@@ -1004,6 +1004,7 @@ class DynamicArchiveModel {
   Badge? badge;
   String? bvid;
   String? cover;
+  String? firstFrame;
   String? durationText;
   String? jumpUrl;
   Stat? stat;
