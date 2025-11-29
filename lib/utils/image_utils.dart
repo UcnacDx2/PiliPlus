@@ -20,13 +20,6 @@ import 'package:saver_gallery/saver_gallery.dart';
 import 'package:share_plus/share_plus.dart';
 
 abstract class ImageUtils {
-  static String getCoverUrl(String defaultCover, String? firstFrame) {
-    if (Pref.useFirstFrameAsCover && firstFrame != null && firstFrame.isNotEmpty) {
-      return firstFrame;
-    }
-    return defaultCover;
-  }
-
   static String get time =>
       DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
   static bool silentDownImg = Pref.silentDownImg;
@@ -40,11 +33,14 @@ abstract class ImageUtils {
       final res = await Request().downloadFile(url.http2https, path);
       SmartDialog.dismiss();
       if (res.statusCode == 200) {
-        await Share.shareXFiles(
-          [XFile(path)],
-          sharePositionOrigin: await Utils.sharePositionOrigin,
-        );
-        File(path).tryDel();
+        await SharePlus.instance
+            .share(
+              ShareParams(
+                files: [XFile(path)],
+                sharePositionOrigin: await Utils.sharePositionOrigin,
+              ),
+            )
+            .whenComplete(File(path).tryDel);
       }
     } catch (e) {
       SmartDialog.showToast(e.toString());
