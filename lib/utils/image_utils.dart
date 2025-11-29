@@ -264,14 +264,6 @@ abstract class ImageUtils {
     r'(@(\d+[a-z]_?)*)(\..*)?$',
     caseSensitive: false,
   );
-
-  static String getCover(String? defaultCover, String? firstFrame) {
-    if (Pref.useFirstFrameAsCover && firstFrame?.isNotEmpty == true) {
-      return firstFrame!;
-    }
-    return defaultCover ?? '';
-  }
-
   static String thumbnailUrl(String? src, [int? quality]) {
     if (src != null && quality != 100) {
       bool hasMatch = false;

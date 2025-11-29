@@ -38,6 +38,25 @@ import 'package:flutter/foundation.dart' show compute;
 
 /// view层根据 status 判断渲染逻辑
 class VideoHttp {
+  static final Map<String, String> _firstFrameCache = {};
+
+  static Future<String?> getVideoFirstFrame(String bvid) async {
+    if (_firstFrameCache.containsKey(bvid)) {
+      return _firstFrameCache[bvid];
+    }
+    final res = await Request().get(Api.ab2c, queryParameters: {'bvid': bvid});
+    if (res.data['code'] == 0 &&
+        res.data['data'] != null &&
+        res.data['data'].isNotEmpty) {
+      final firstFrame = res.data['data'][0]['first_frame'];
+      if (firstFrame != null && firstFrame.isNotEmpty) {
+        _firstFrameCache[bvid] = firstFrame;
+        return firstFrame;
+      }
+    }
+    return null;
+  }
+
   static RegExp zoneRegExp = RegExp(Pref.banWordForZone, caseSensitive: false);
   static bool enableFilter = zoneRegExp.pattern.isNotEmpty;
 
