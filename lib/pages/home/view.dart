@@ -29,7 +29,10 @@ class _HomePageState extends State<HomePage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    PageUtils.routeObserver.subscribe(this, ModalRoute.of(context)!);
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      PageUtils.routeObserver.subscribe(this, route);
+    }
   }
 
   @override
