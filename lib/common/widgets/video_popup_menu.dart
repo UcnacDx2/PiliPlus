@@ -23,7 +23,7 @@ class _VideoCustomAction {
   const _VideoCustomAction(this.title, this.icon, this.onTap);
 }
 
-class VideoPopupMenu extends StatelessWidget {
+class VideoPopupMenu extends StatefulWidget {
   final double? size;
   final double? iconSize;
   final double menuItemHeight;
@@ -40,24 +40,37 @@ class VideoPopupMenu extends StatelessWidget {
   });
 
   @override
+  State<VideoPopupMenu> createState() => VideoPopupMenuState();
+}
+
+class VideoPopupMenuState extends State<VideoPopupMenu> {
+  final GlobalKey<PopupMenuButtonState> _popupMenuKey =
+      GlobalKey<PopupMenuButtonState>();
+
+  void showButtonMenu() {
+    _popupMenuKey.currentState?.showButtonMenu();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ExcludeSemantics(
       child: SizedBox(
-        width: size,
-        height: size,
+        width: widget.size,
+        height: widget.size,
         child: PopupMenuButton(
+          key: _popupMenuKey,
           padding: EdgeInsets.zero,
           icon: Icon(
             Icons.more_vert_outlined,
             color: Theme.of(context).colorScheme.outline,
-            size: iconSize,
+            size: widget.iconSize,
           ),
           position: PopupMenuPosition.under,
           itemBuilder: (context) =>
               [
-                    if (videoItem.bvid?.isNotEmpty == true) ...[
+                    if (widget.videoItem.bvid?.isNotEmpty == true) ...[
                       _VideoCustomAction(
-                        videoItem.bvid!,
+                        widget.videoItem.bvid!,
                         const Stack(
                           clipBehavior: Clip.none,
                           children: [
@@ -65,19 +78,19 @@ class VideoPopupMenu extends StatelessWidget {
                             Icon(MdiIcons.circleOutline, size: 16),
                           ],
                         ),
-                        () => Utils.copyText(videoItem.bvid!),
+                        () => Utils.copyText(widget.videoItem.bvid!),
                       ),
                       _VideoCustomAction(
                         '稍后再看',
                         const Icon(MdiIcons.clockTimeEightOutline, size: 16),
                         () async {
                           var res = await UserHttp.toViewLater(
-                            bvid: videoItem.bvid,
+                            bvid: widget.videoItem.bvid,
                           );
                           SmartDialog.showToast(res['msg']);
                         },
                       ),
-                      if (videoItem.cid != null && Pref.enableAi)
+                      if (widget.videoItem.cid != null && Pref.enableAi)
                         _VideoCustomAction(
                           'AI总结',
                           const Stack(
@@ -107,9 +120,9 @@ class VideoPopupMenu extends StatelessWidget {
                           () async {
                             final res =
                                 await UgcIntroController.getAiConclusion(
-                                  videoItem.bvid!,
-                                  videoItem.cid!,
-                                  videoItem.owner.mid,
+                                  widget.videoItem.bvid!,
+                                  widget.videoItem.cid!,
+                                  widget.videoItem.owner.mid,
                                 );
                             if (res != null && context.mounted) {
                               showDialog(
@@ -140,11 +153,11 @@ class VideoPopupMenu extends StatelessWidget {
                           },
                         ),
                     ],
-                    if (videoItem is! SpaceArchiveItem) ...[
+                    if (widget.videoItem is! SpaceArchiveItem) ...[
                       _VideoCustomAction(
-                        '访问：${videoItem.owner.name}',
+                        '访问：${widget.videoItem.owner.name}',
                         const Icon(MdiIcons.accountCircleOutline, size: 16),
-                        () => Get.toNamed('/member?mid=${videoItem.owner.mid}'),
+                        () => Get.toNamed('/member?mid=${widget.videoItem.owner.mid}'),
                       ),
                       _VideoCustomAction(
                         '不感兴趣',
@@ -157,7 +170,7 @@ class VideoPopupMenu extends StatelessWidget {
                             SmartDialog.showToast("请退出账号后重新登录");
                             return;
                           }
-                          if (videoItem case RecVideoItemAppModel item) {
+                          if (widget.videoItem case RecVideoItemAppModel item) {
                             ThreePoint? tp = item.threePoint;
                             if (tp == null) {
                               SmartDialog.showToast("未能获取threePoint");
@@ -189,7 +202,7 @@ class VideoPopupMenu extends StatelessWidget {
                                         : res['msg'],
                                   );
                                   if (res['status']) {
-                                    onRemove?.call();
+                                    widget.onRemove?.call();
                                   }
                                 },
                               );
@@ -285,7 +298,7 @@ class VideoPopupMenu extends StatelessWidget {
                                                 );
                                                 var res =
                                                     await VideoHttp.dislikeVideo(
-                                                      bvid: videoItem.bvid!,
+                                                      bvid: widget.videoItem.bvid!,
                                                       type: true,
                                                     );
                                                 SmartDialog.dismiss();
@@ -295,7 +308,7 @@ class VideoPopupMenu extends StatelessWidget {
                                                       : res['msg'],
                                                 );
                                                 if (res['status']) {
-                                                  onRemove?.call();
+                                                  widget.onRemove?.call();
                                                 }
                                               },
                                               style: FilledButton.styleFrom(
@@ -312,7 +325,7 @@ class VideoPopupMenu extends StatelessWidget {
                                                 );
                                                 var res =
                                                     await VideoHttp.dislikeVideo(
-                                                      bvid: videoItem.bvid!,
+                                                      bvid: widget.videoItem.bvid!,
                                                       type: false,
                                                     );
                                                 SmartDialog.dismiss();
@@ -340,7 +353,7 @@ class VideoPopupMenu extends StatelessWidget {
                         },
                       ),
                       _VideoCustomAction(
-                        '拉黑：${videoItem.owner.name}',
+                        '拉黑：${widget.videoItem.owner.name}',
                         const Icon(MdiIcons.cancel, size: 16),
                         () => showDialog(
                           context: context,
@@ -348,7 +361,7 @@ class VideoPopupMenu extends StatelessWidget {
                             return AlertDialog(
                               title: const Text('提示'),
                               content: Text(
-                                '确定拉黑:${videoItem.owner.name}(${videoItem.owner.mid})?'
+                                '确定拉黑:${widget.videoItem.owner.name}(${widget.videoItem.owner.mid})?'
                                 '\n\n注：被拉黑的Up可以在隐私设置-黑名单管理中解除',
                               ),
                               actions: [
@@ -367,12 +380,12 @@ class VideoPopupMenu extends StatelessWidget {
                                   onPressed: () async {
                                     Get.back();
                                     var res = await VideoHttp.relationMod(
-                                      mid: videoItem.owner.mid!,
+                                      mid: widget.videoItem.owner.mid!,
                                       act: 5,
                                       reSrc: 11,
                                     );
                                     if (res['status']) {
-                                      onRemove?.call();
+                                      widget.onRemove?.call();
                                     }
                                     SmartDialog.showToast(res['msg'] ?? '成功');
                                   },
@@ -394,7 +407,7 @@ class VideoPopupMenu extends StatelessWidget {
                   ]
                   .map(
                     (e) => PopupMenuItem(
-                      height: menuItemHeight,
+                      height: widget.menuItemHeight,
                       onTap: e.onTap,
                       child: Row(
                         children: [
