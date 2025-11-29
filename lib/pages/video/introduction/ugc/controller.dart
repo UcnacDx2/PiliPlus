@@ -35,6 +35,7 @@ import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
+import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
@@ -106,7 +107,8 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
         if (videoDetailCtr.cover.value.isEmpty ||
             (videoDetailCtr.videoUrl.isNullOrEmpty &&
                 !videoDetailCtr.isQuerying)) {
-          videoDetailCtr.cover.value = data.pic ?? '';
+          videoDetailCtr.cover.value = ImageUtils.getCoverUrl(
+              data.pic ?? '', data.pages?.first.firstFrame);
         }
         if (videoDetailCtr.showReply) {
           try {
