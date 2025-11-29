@@ -5,6 +5,7 @@ import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
 import 'package:PiliPlus/http/search.dart';
+import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/stat_type.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
@@ -13,11 +14,11 @@ import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart';
-import 'package:PiliPlus/http/video.dart';
 
 // 视频卡片 - 垂直布局
 class VideoCardV extends StatefulWidget {
@@ -55,7 +56,7 @@ class _VideoCardVState extends State<VideoCardV> {
   }
 
   Future<void> _fetchFirstFrame() async {
-    if (widget.videoItem.firstFrame == null) {
+    if (Pref.useFirstFrameAsCover && widget.videoItem.firstFrame == null) {
       final firstFrame =
           await VideoHttp.getVideoFirstFrame(widget.videoItem.bvid);
       if (firstFrame != null && mounted) {
@@ -282,23 +283,6 @@ class _VideoCardVState extends State<VideoCardV> {
           ),
           const SizedBox(width: 2),
         ],
-        // deprecated
-        //  else if (widget.videoItem is RecVideoItemAppModel &&
-        //     widget.videoItem.desc != null &&
-        //     widget.videoItem.desc!.contains(' · ')) ...[
-        //   const Spacer(),
-        //   Text.rich(
-        //     maxLines: 1,
-        //     TextSpan(
-        //         style: TextStyle(
-        //           fontSize: theme.textTheme.labelSmall!.fontSize,
-        //           color: theme.colorScheme.outline.withValues(alpha: 0.8),
-        //         ),
-        //         text: Utils.shortenChineseDateString(
-        //             widget.videoItem.desc!.split(' · ').last)),
-        //   ),
-        //   const SizedBox(width: 2),
-        // ]
       ],
     );
   }
