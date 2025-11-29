@@ -1023,6 +1023,7 @@ class DynamicArchiveModel {
     cid = Utils.safeToInt(json['cid']);
     goto = json['goto'];
     cover = json['cover'];
+    firstFrame = json['first_frame'];
     durationText = json['duration_text'];
     jumpUrl = json['jump_url'];
     stat = json['stat'] != null ? Stat.fromJson(json['stat']) : null;
