@@ -3,7 +3,6 @@ import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
-import 'package:PiliPlus/common/widgets/video_card/video_card_v.dart';
 import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/stat_type.dart';
@@ -123,8 +122,6 @@ class MemberCoinLikeItem extends StatelessWidget {
                       Text(
                         DateFormatUtils.dateFormat(
                           item.ctime,
-                          short: VideoCardV.shortFormat,
-                          long: VideoCardV.longFormat,
                         ),
                         style: TextStyle(
                           fontSize: 11,
