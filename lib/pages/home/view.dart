@@ -44,9 +44,8 @@ class _HomePageState extends State<HomePage>
 
   @override
   void didPopNext() {
-    // an an-old-bug of flutter
-    // when pop from a page which has focus, the focus will not be removed
-    // so we need to request focus manually
+    // When returning to this page, focus can linger from the previous route.
+    // Manually request focus to ensure the home page is interactive.
     FocusScope.of(context).requestFocus(_focusNode);
   }
 

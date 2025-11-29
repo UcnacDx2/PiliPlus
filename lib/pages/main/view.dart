@@ -70,6 +70,7 @@ class _MainAppState extends State<MainApp>
   @override
   void didPopNext() {
     WidgetsBinding.instance.addObserver(this);
+    FocusScope.of(context).unfocus();
     _mainController
       ..checkUnreadDynamic()
       ..checkDefaultSearch(true)
