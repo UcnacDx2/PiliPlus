@@ -12,31 +12,34 @@ Future<bool> showConfirmDialog({
   return await showDialog<bool>(
         context: context,
         builder: (context) {
-          return AlertDialog(
-            title: Text(title),
-            content: content is String
-                ? Text(content)
-                : content is Widget
-                ? content
-                : null,
-            actions: [
-              TextButton(
-                onPressed: Get.back,
-                child: Text(
-                  '取消',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.outline,
+          return FocusScope(
+            child: AlertDialog(
+              title: Text(title),
+              content: content is String
+                  ? Text(content)
+                  : content is Widget
+                      ? content
+                      : null,
+              actions: [
+                TextButton(
+                  onPressed: Get.back,
+                  child: Text(
+                    '取消',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                 ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Get.back(result: true);
-                  onConfirm?.call();
-                },
-                child: const Text('确认'),
-              ),
-            ],
+                TextButton(
+                  autofocus: true,
+                  onPressed: () {
+                    Get.back(result: true);
+                    onConfirm?.call();
+                  },
+                  child: const Text('确认'),
+                ),
+              ],
+            ),
           );
         },
       ) ??
@@ -53,10 +56,12 @@ void showPgcFollowDialog({
     required bool enabled,
     required String text,
     required VoidCallback onTap,
+    bool autofocus = false,
   }) {
     return ListTile(
       dense: true,
       enabled: enabled,
+      autofocus: autofocus,
       title: Padding(
         padding: const EdgeInsets.only(left: 10),
         child: Text(
@@ -71,41 +76,53 @@ void showPgcFollowDialog({
 
   showDialog(
     context: context,
-    builder: (context) => AlertDialog(
-      clipBehavior: Clip.hardEdge,
-      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ...const [
-            (followStatus: 3, title: '看过'),
-            (followStatus: 2, title: '在看'),
-            (followStatus: 1, title: '想看'),
-          ].map(
-            (item) => statusItem(
-              enabled: followStatus != item.followStatus,
-              text: item.title,
+    builder: (context) {
+      bool autoFocused = false;
+      return FocusScope(
+        child: AlertDialog(
+          clipBehavior: Clip.hardEdge,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...const [
+                (followStatus: 3, title: '看过'),
+                (followStatus: 2, title: '在看'),
+                (followStatus: 1, title: '想看'),
+              ].map(
+                (item) {
+                  final bool enabled = followStatus != item.followStatus;
+                  final bool autofocus = enabled && !autoFocused;
+                  if (autofocus) {
+                    autoFocused = true;
+                  }
+                  return statusItem(
+                    enabled: enabled,
+                    text: item.title,
+                    autofocus: autofocus,
+                    onTap: () {
+                      Get.back();
+                      onUpdateStatus(item.followStatus);
+                    },
+                  );
+                },
+              ),
+            ListTile(
+              dense: true,
+              title: Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Text(
+                  '取消$type',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
               onTap: () {
                 Get.back();
-                onUpdateStatus(item.followStatus);
+                onUpdateStatus(-1);
               },
             ),
-          ),
-          ListTile(
-            dense: true,
-            title: Padding(
-              padding: const EdgeInsets.only(left: 10),
-              child: Text(
-                '取消$type',
-                style: const TextStyle(fontSize: 14),
-              ),
-            ),
-            onTap: () {
-              Get.back();
-              onUpdateStatus(-1);
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     ),
   );
