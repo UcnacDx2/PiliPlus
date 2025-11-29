@@ -732,7 +732,7 @@ class LoginPageController extends GetxController
       SmartDialog.showToast('请先登录');
       return Get.toNamed('/loginPage');
     }
-    final selectAccount = Map.of(Accounts.accountMode);
+    final selectAccount = List.of(Accounts.accountMode);
     final options = {
       AnonymousAccount(): '0',
       ...Accounts.account.toMap().map(
@@ -757,9 +757,9 @@ class LoginPageController extends GetxController
                 .map(
                   (e) => Builder(
                     builder: (context) => RadioGroup(
-                      groupValue: selectAccount[e],
+                      groupValue: selectAccount[e.index],
                       onChanged: (v) {
-                        selectAccount[e] = v!;
+                        selectAccount[e.index] = v!;
                         (context as Element).markNeedsBuild();
                       },
                       child: WrapRadioOptionsGroup<Account>(
@@ -792,9 +792,9 @@ class LoginPageController extends GetxController
           ),
           TextButton(
             onPressed: () {
-              for (var i in selectAccount.entries) {
-                if (i.value != Accounts.get(i.key)) {
-                  Accounts.set(i.key, i.value);
+              for (var (i, v) in selectAccount.indexed) {
+                if (v != Accounts.accountMode[i]) {
+                  Accounts.set(AccountType.values[i], v);
                 }
               }
               Get.back();
