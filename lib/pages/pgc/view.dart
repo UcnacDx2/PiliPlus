@@ -278,7 +278,8 @@ class _PgcPageState extends CommonPageState<PgcPage, PgcController>
                                 child: tabBarView(
                                   children: types
                                       .map(
-                                        (type) => PgcIndexPage(indexType: type),
+                                        (type) =>
+                                            PgcIndexPage(indexType: type),
                                       )
                                       .toList(),
                                 ),

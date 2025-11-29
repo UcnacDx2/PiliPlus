@@ -69,6 +69,7 @@ class _MainAppState extends State<MainApp>
 
   @override
   void didPopNext() {
+    FocusScope.of(context).requestFocus(FocusNode());
     WidgetsBinding.instance.addObserver(this);
     _mainController
       ..checkUnreadDynamic()

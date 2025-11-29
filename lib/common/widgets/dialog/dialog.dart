@@ -30,6 +30,7 @@ Future<bool> showConfirmDialog({
                 ),
               ),
               TextButton(
+                autofocus: true,
                 onPressed: () {
                   Get.back(result: true);
                   onConfirm?.call();
@@ -74,38 +75,41 @@ void showPgcFollowDialog({
     builder: (context) => AlertDialog(
       clipBehavior: Clip.hardEdge,
       contentPadding: const EdgeInsets.symmetric(vertical: 12),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ...const [
-            (followStatus: 3, title: '看过'),
-            (followStatus: 2, title: '在看'),
-            (followStatus: 1, title: '想看'),
-          ].map(
-            (item) => statusItem(
-              enabled: followStatus != item.followStatus,
-              text: item.title,
-              onTap: () {
-                Get.back();
-                onUpdateStatus(item.followStatus);
-              },
-            ),
-          ),
-          ListTile(
-            dense: true,
-            title: Padding(
-              padding: const EdgeInsets.only(left: 10),
-              child: Text(
-                '取消$type',
-                style: const TextStyle(fontSize: 14),
+      content: FocusScope(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ...const [
+              (followStatus: 3, title: '看过'),
+              (followStatus: 2, title: '在看'),
+              (followStatus: 1, title: '想看'),
+            ].map(
+              (item) => statusItem(
+                enabled: followStatus != item.followStatus,
+                text: item.title,
+                onTap: () {
+                  Get.back();
+                  onUpdateStatus(item.followStatus);
+                },
               ),
             ),
-            onTap: () {
-              Get.back();
-              onUpdateStatus(-1);
-            },
-          ),
-        ],
+            ListTile(
+              autofocus: true,
+              dense: true,
+              title: Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Text(
+                  '取消$type',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+              onTap: () {
+                Get.back();
+                onUpdateStatus(-1);
+              },
+            ),
+          ],
+        ),
       ),
     ),
   );
