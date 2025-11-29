@@ -13,9 +13,8 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
     cid = item.modules?.moduleDynamic?.major?.archive?.cid;
     goto = item.modules?.moduleDynamic?.major?.archive?.goto ?? 'av';
     uri = item.modules?.moduleDynamic?.major?.archive?.jumpUrl;
-    cover = item.modules?.moduleDynamic?.major?.archive?.firstFrame ??
-        item.modules?.moduleDynamic?.major?.archive?.cover ??
-        '';
+    firstFrame = item.modules?.moduleDynamic?.major?.archive?.firstFrame;
+    cover = item.modules?.moduleDynamic?.major?.archive?.cover ?? '';
     title = item.modules?.moduleDynamic?.major?.archive?.title ?? '';
 
     final durationText =

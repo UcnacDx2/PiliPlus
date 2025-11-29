@@ -21,6 +21,8 @@ import 'package:PiliPlus/http/video.dart';
 
 // 视频卡片 - 垂直布局
 class VideoCardV extends StatefulWidget {
+  static final shortFormat = DateFormat('M-d');
+  static final longFormat = DateFormat('yy-M-d');
   final BaseRecVideoItemModel videoItem;
   final VoidCallback? onRemove;
 
@@ -248,9 +250,6 @@ class _VideoCardVState extends State<VideoCardV> {
     );
   }
 
-  static final shortFormat = DateFormat('M-d');
-  static final longFormat = DateFormat('yy-M-d');
-
   Widget videoStat(BuildContext context, ThemeData theme) {
     return Row(
       children: [
@@ -276,8 +275,8 @@ class _VideoCardVState extends State<VideoCardV> {
               ),
               text: DateFormatUtils.dateFormat(
                 widget.videoItem.pubdate,
-                short: shortFormat,
-                long: longFormat,
+                short: VideoCardV.shortFormat,
+                long: VideoCardV.longFormat,
               ),
             ),
           ),
