@@ -882,9 +882,14 @@ abstract class Pref {
     defaultValue: false,
   );
 
-  static FollowOrderType get followOrderType =>
-      FollowOrderType.values[_setting.get(
-        SettingBoxKey.followOrderType,
-        defaultValue: FollowOrderType.def.index,
-      )];
+    static FollowOrderType get followOrderType =>
+            FollowOrderType.values[_setting.get(
+                SettingBoxKey.followOrderType,
+                defaultValue: FollowOrderType.def.index,
+            )];
+
+    static bool get useFirstFrameAsCover => _setting.get(
+                SettingBoxKey.useFirstFrameAsCover,
+                defaultValue: true,
+            );
 }

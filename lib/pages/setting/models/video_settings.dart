@@ -25,7 +25,16 @@ List<SettingsModel> get videoSettings => [
     setKey: SettingBoxKey.enableHA,
     defaultVal: true,
   ),
-  const SwitchModel(
+  const SettingsModel(
+    settingsType: SettingsType.sw1tch,
+    title: '使用视频第一帧作为封面',
+    leading: Icon(Icons.photo_library_outlined),
+    subtitle: '开启后将尝试获取视频的第一帧作为封面，会增加网络请求',
+    setKey: SettingBoxKey.useFirstFrameAsCover,
+    defaultVal: true,
+  ),
+  const SettingsModel(
+    settingsType: SettingsType.sw1tch,
     title: '免登录1080P',
     subtitle: '免登录查看1080P视频',
     leading: Icon(Icons.hd_outlined),

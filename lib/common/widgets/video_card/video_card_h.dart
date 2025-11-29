@@ -6,6 +6,7 @@ import 'package:PiliPlus/common/widgets/progress_bar/video_progress_indicator.da
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
 import 'package:PiliPlus/http/search.dart';
+import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/stat_type.dart';
 import 'package:PiliPlus/models/model_hot_video_item.dart';
@@ -14,12 +15,13 @@ import 'package:PiliPlus/models/search/result.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 // 视频卡片 - 水平布局
-class VideoCardH extends StatelessWidget {
+class VideoCardH extends StatefulWidget {
   const VideoCardH({
     super.key,
     required this.videoItem,
@@ -33,10 +35,44 @@ class VideoCardH extends StatelessWidget {
   final VoidCallback? onRemove;
 
   @override
+  State<VideoCardH> createState() => _VideoCardHState();
+}
+
+class _VideoCardHState extends State<VideoCardH> {
+  String? _firstFrame;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFirstFrame();
+  }
+
+  @override
+  void didUpdateWidget(covariant VideoCardH oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.videoItem.bvid != widget.videoItem.bvid) {
+      _firstFrame = null;
+      _fetchFirstFrame();
+    }
+  }
+
+  Future<void> _fetchFirstFrame() async {
+    if (Pref.useFirstFrameAsCover && widget.videoItem.firstFrame == null) {
+      final firstFrame =
+          await VideoHttp.getVideoFirstFrame(widget.videoItem.bvid);
+      if (firstFrame != null && mounted) {
+        setState(() {
+          _firstFrame = firstFrame;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     String type = 'video';
     String? badge;
-    if (videoItem case SearchVideoItemModel item) {
+    if (widget.videoItem case SearchVideoItemModel item) {
       var typeOrNull = item.type;
       if (typeOrNull != null && typeOrNull.isNotEmpty) {
         type = typeOrNull;
@@ -49,7 +85,7 @@ class VideoCardH extends StatelessWidget {
       if (item.isUnionVideo == 1) {
         badge = '合作';
       }
-    } else if (videoItem case HotVideoItemModel item) {
+    } else if (widget.videoItem case HotVideoItemModel item) {
       if (item.isCharging == true) {
         badge = '充电专属';
       } else if (item.isCooperation == 1) {
@@ -59,10 +95,10 @@ class VideoCardH extends StatelessWidget {
       }
     }
     void onLongPress() => imageSaveDialog(
-      bvid: videoItem.bvid,
-      title: videoItem.title,
-      cover: videoItem.cover,
-    );
+          bvid: widget.videoItem.bvid,
+          title: widget.videoItem.title,
+          cover: widget.videoItem.cover,
+        );
     return Material(
       type: MaterialType.transparency,
       child: Stack(
@@ -71,26 +107,25 @@ class VideoCardH extends StatelessWidget {
           InkWell(
             onLongPress: onLongPress,
             onSecondaryTap: Utils.isMobile ? null : onLongPress,
-            onTap:
-                onTap ??
+            onTap: widget.onTap ??
                 () async {
                   if (type == 'ketang') {
-                    PageUtils.viewPugv(seasonId: videoItem.aid);
+                    PageUtils.viewPugv(seasonId: widget.videoItem.aid);
                     return;
                   } else if (type == 'live_room') {
-                    if (videoItem case SearchVideoItemModel item) {
+                    if (widget.videoItem case SearchVideoItemModel item) {
                       int? roomId = item.id;
                       if (roomId != null) {
                         PageUtils.toLiveRoom(roomId);
                       }
                     } else {
                       SmartDialog.showToast(
-                        'err: live_room : ${videoItem.runtimeType}',
+                        'err: live_room : ${widget.videoItem.runtimeType}',
                       );
                     }
                     return;
                   }
-                  if (videoItem case HotVideoItemModel item) {
+                  if (widget.videoItem case HotVideoItemModel item) {
                     if (item.redirectUrl?.isNotEmpty == true &&
                         PageUtils.viewPgcFromUri(item.redirectUrl!)) {
                       return;
@@ -98,18 +133,17 @@ class VideoCardH extends StatelessWidget {
                   }
 
                   try {
-                    final int? cid =
-                        videoItem.cid ??
+                    final int? cid = widget.videoItem.cid ??
                         await SearchHttp.ab2c(
-                          aid: videoItem.aid,
-                          bvid: videoItem.bvid,
+                          aid: widget.videoItem.aid,
+                          bvid: widget.videoItem.bvid,
                         );
                     if (cid != null) {
                       PageUtils.toVideoPage(
-                        bvid: videoItem.bvid,
+                        bvid: widget.videoItem.bvid,
                         cid: cid,
-                        cover: videoItem.cover,
-                        title: videoItem.title,
+                        cover: widget.videoItem.cover,
+                        title: widget.videoItem.title,
                       );
                     }
                   } catch (err) {
@@ -131,7 +165,7 @@ class VideoCardH extends StatelessWidget {
                         final double maxWidth = boxConstraints.maxWidth;
                         final double maxHeight = boxConstraints.maxHeight;
                         num? progress;
-                        if (videoItem case HotVideoItemModel item) {
+                        if (widget.videoItem case HotVideoItemModel item) {
                           progress = item.progress;
                         }
 
@@ -139,7 +173,9 @@ class VideoCardH extends StatelessWidget {
                           clipBehavior: Clip.none,
                           children: [
                             NetworkImgLayer(
-                              src: videoItem.cover,
+                              src: _firstFrame ??
+                                  widget.videoItem.firstFrame ??
+                                  widget.videoItem.cover,
                               width: maxWidth,
                               height: maxHeight,
                             ),
@@ -157,7 +193,7 @@ class VideoCardH extends StatelessWidget {
                               PBadge(
                                 text: progress == -1
                                     ? '已看完'
-                                    : '${DurationUtils.formatDuration(progress)}/${DurationUtils.formatDuration(videoItem.duration)}',
+                                    : '${DurationUtils.formatDuration(progress)}/${DurationUtils.formatDuration(widget.videoItem.duration)}',
                                 right: 6,
                                 bottom: 8,
                                 type: PBadgeType.gray,
@@ -169,13 +205,13 @@ class VideoCardH extends StatelessWidget {
                                 child: videoProgressIndicator(
                                   progress == -1
                                       ? 1
-                                      : progress / videoItem.duration,
+                                      : progress / widget.videoItem.duration,
                                 ),
                               ),
-                            ] else if (videoItem.duration > 0)
+                            ] else if (widget.videoItem.duration > 0)
                               PBadge(
                                 text: DurationUtils.formatDuration(
-                                  videoItem.duration,
+                                  widget.videoItem.duration,
                                 ),
                                 right: 6.0,
                                 bottom: 6.0,
@@ -199,8 +235,8 @@ class VideoCardH extends StatelessWidget {
               child: VideoPopupMenu(
                 size: 29,
                 iconSize: 17,
-                videoItem: videoItem,
-                onRemove: onRemove,
+                videoItem: widget.videoItem,
+                onRemove: widget.onRemove,
               ),
             ),
           ),
@@ -211,13 +247,13 @@ class VideoCardH extends StatelessWidget {
 
   Widget content(BuildContext context) {
     final theme = Theme.of(context);
-    String pubdate = DateFormatUtils.dateFormat(videoItem.pubdate!);
+    String pubdate = DateFormatUtils.dateFormat(widget.videoItem.pubdate!);
     if (pubdate != '') pubdate += '  ';
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (videoItem case SearchVideoItemModel item) ...[
+          if (widget.videoItem case SearchVideoItemModel item) ...[
             if (item.titleList?.isNotEmpty == true)
               Expanded(
                 child: Text.rich(
@@ -245,7 +281,7 @@ class VideoCardH extends StatelessWidget {
           ] else
             Expanded(
               child: Text(
-                videoItem.title,
+                widget.videoItem.title,
                 textAlign: TextAlign.start,
                 style: TextStyle(
                   fontSize: theme.textTheme.bodyMedium!.fontSize,
@@ -257,7 +293,7 @@ class VideoCardH extends StatelessWidget {
               ),
             ),
           Text(
-            "$pubdate${videoItem.owner.name}",
+            "$pubdate${widget.videoItem.owner.name}",
             maxLines: 1,
             style: TextStyle(
               fontSize: 12,
@@ -272,11 +308,11 @@ class VideoCardH extends StatelessWidget {
             children: [
               StatWidget(
                 type: StatType.play,
-                value: videoItem.stat.view,
+                value: widget.videoItem.stat.view,
               ),
               StatWidget(
                 type: StatType.danmaku,
-                value: videoItem.stat.danmu,
+                value: widget.videoItem.stat.danmu,
               ),
             ],
           ),
