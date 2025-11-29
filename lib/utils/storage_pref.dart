@@ -877,7 +877,7 @@ abstract class Pref {
 
   static bool get showBatteryLevel => _setting.get(
     SettingBoxKey.showBatteryLevel,
-    defaultValue: Utils.isMobile,
+    defaultValue: false,
   );
 
   static bool get useFirstFrameAsCover => _setting.get(
