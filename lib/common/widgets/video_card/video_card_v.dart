@@ -250,24 +250,21 @@ class _VideoCardVState extends State<VideoCardV> {
     );
   }
 
-  static final shortFormat = DateFormat('M-d');
-  static final longFormat = DateFormat('yy-M-d');
-
   Widget videoStat(BuildContext context, ThemeData theme) {
     return Row(
       children: [
         StatWidget(
           type: StatType.play,
-          value: videoItem.stat.view,
+          value: widget.videoItem.stat.view,
         ),
-        if (videoItem.goto != 'picture') ...[
+        if (widget.videoItem.goto != 'picture') ...[
           const SizedBox(width: 4),
           StatWidget(
             type: StatType.danmaku,
-            value: videoItem.stat.danmu,
+            value: widget.videoItem.stat.danmu,
           ),
         ],
-        if (videoItem is RecVideoItemModel) ...[
+        if (widget.videoItem is RecVideoItemModel) ...[
           const Spacer(),
           Text.rich(
             maxLines: 1,
@@ -277,9 +274,9 @@ class _VideoCardVState extends State<VideoCardV> {
                 color: theme.colorScheme.outline.withValues(alpha: 0.8),
               ),
               text: DateFormatUtils.dateFormat(
-                videoItem.pubdate,
-                short: shortFormat,
-                long: longFormat,
+                widget.videoItem.pubdate,
+                short: DateFormatUtils.shortFormatV2,
+                long: DateFormatUtils.longFormatV2,
               ),
             ),
           ),
