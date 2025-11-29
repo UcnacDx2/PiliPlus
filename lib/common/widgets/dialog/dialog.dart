@@ -85,44 +85,44 @@ void showPgcFollowDialog({
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-            ...[
-              (followStatus: 3, title: '看过'),
-              (followStatus: 2, title: '在看'),
-              (followStatus: 1, title: '想看'),
-            ].map(
-              (item) {
-                final bool enabled = followStatus != item.followStatus;
-                final bool autofocus = enabled && !autoFocused;
-                if (autofocus) {
-                  autoFocused = true;
-                }
-                return statusItem(
-                  enabled: enabled,
-                  text: item.title,
-                  autofocus: autofocus,
-                  onTap: () {
-                    Get.back();
-                    onUpdateStatus(item.followStatus);
-                  },
-                );
-              },
-            ).toList(), // Add this to convert the iterable to a list
-            ListTile(
-              dense: true,
-              title: Padding(
-                padding: const EdgeInsets.only(left: 10),
-                child: Text(
-                  '取消$type',
-                  style: const TextStyle(fontSize: 14),
+              ...[
+                (followStatus: 3, title: '看过'),
+                (followStatus: 2, title: '在看'),
+                (followStatus: 1, title: '想看'),
+              ].map(
+                (item) {
+                  final bool enabled = followStatus != item.followStatus;
+                  final bool autofocus = enabled && !autoFocused;
+                  if (autofocus) {
+                    autoFocused = true;
+                  }
+                  return statusItem(
+                    enabled: enabled,
+                    text: item.title,
+                    autofocus: autofocus,
+                    onTap: () {
+                      Get.back();
+                      onUpdateStatus(item.followStatus);
+                    },
+                  );
+                },
+              ).toList(),
+              ListTile(
+                dense: true,
+                title: Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: Text(
+                    '取消$type',
+                    style: const TextStyle(fontSize: 14),
+                  ),
                 ),
+                onTap: () {
+                  Get.back();
+                  onUpdateStatus(-1);
+                },
               ),
-              onTap: () {
-                Get.back();
-                onUpdateStatus(-1);
-              },
-            ),
-          ],
-        ),
+            ],
+          ),
       ),
     ),
   );
