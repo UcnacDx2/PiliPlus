@@ -140,9 +140,6 @@ class VideoCardH extends StatelessWidget {
                           children: [
                             NetworkImgLayer(
                               src: videoItem.cover,
-                              bvid: videoItem.bvid,
-                              cid: videoItem.cid,
-                              aid: videoItem.aid,
                               width: maxWidth,
                               height: maxHeight,
                             ),

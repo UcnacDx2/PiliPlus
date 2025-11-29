@@ -265,21 +265,27 @@ abstract class ImageUtils {
     caseSensitive: false,
   );
   static String thumbnailUrl(String? src, [int? quality]) {
-    if (src != null && quality != 100) {
-      bool hasMatch = false;
-      src = src.splitMapJoin(
-        _thumbRegex,
-        onMatch: (Match match) {
-          hasMatch = true;
-          String suffix = match.group(3) ?? '.webp';
-          return '${match.group(1)}_${quality ?? GlobalData().imgQuality}q$suffix';
-        },
-        onNonMatch: (String str) {
-          return str;
-        },
-      );
-      if (!hasMatch) {
-        src += '@${quality ?? GlobalData().imgQuality}q.webp';
+    if (src != null) {
+      if (Pref.replaceCover) {
+        return src.replaceAll(
+            RegExp(r'http://i[0-2]\.hdslb.com'), 'http://i0.hdslb.com');
+      }
+      if (quality != 100) {
+        bool hasMatch = false;
+        src = src.splitMapJoin(
+          _thumbRegex,
+          onMatch: (Match match) {
+            hasMatch = true;
+            String suffix = match.group(3) ?? '.webp';
+            return '${match.group(1)}_${quality ?? GlobalData().imgQuality}q$suffix';
+          },
+          onNonMatch: (String str) {
+            return str;
+          },
+        );
+        if (!hasMatch) {
+          src += '@${quality ?? GlobalData().imgQuality}q.webp';
+        }
       }
     }
     return src.http2https;
