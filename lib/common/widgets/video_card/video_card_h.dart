@@ -13,7 +13,6 @@ import 'package:PiliPlus/models/model_video.dart';
 import 'package:PiliPlus/models/search/result.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
-import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -140,8 +139,7 @@ class VideoCardH extends StatelessWidget {
                           clipBehavior: Clip.none,
                           children: [
                             NetworkImgLayer(
-                              src: ImageUtils.getCoverUrl(
-                                  videoItem.cover ?? '', videoItem.firstFrame),
+                              src: videoItem.cover,
                               width: maxWidth,
                               height: maxHeight,
                             ),
@@ -197,13 +195,11 @@ class VideoCardH extends StatelessWidget {
           Positioned(
             bottom: 0,
             right: 12,
-            child: ExcludeFocus(
-              child: VideoPopupMenu(
-                size: 29,
-                iconSize: 17,
-                videoItem: videoItem,
-                onRemove: onRemove,
-              ),
+            child: VideoPopupMenu(
+              size: 29,
+              iconSize: 17,
+              videoItem: videoItem,
+              onRemove: onRemove,
             ),
           ),
         ],

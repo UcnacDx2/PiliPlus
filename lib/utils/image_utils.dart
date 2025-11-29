@@ -20,13 +20,6 @@ import 'package:saver_gallery/saver_gallery.dart';
 import 'package:share_plus/share_plus.dart';
 
 abstract class ImageUtils {
-  static String getCoverUrl(String defaultCover, String? firstFrame) {
-    if (Pref.useFirstFrameAsCover && firstFrame != null && firstFrame.isNotEmpty) {
-      return firstFrame;
-    }
-    return defaultCover;
-  }
-
   static String get time =>
       DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
   static bool silentDownImg = Pref.silentDownImg;

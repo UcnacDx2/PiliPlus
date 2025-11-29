@@ -25,7 +25,6 @@ abstract class SettingBoxKey {
       enableAutoExit = 'enableAutoExit',
       enableOnlineTotal = 'enableOnlineTotal',
       showSuperChat = 'showSuperChat',
-      useFirstFrameAsCover = 'useFirstFrameAsCover',
       keyboardControl = 'keyboardControl',
       pauseOnMinimize = 'pauseOnMinimize',
       pgcSkipType = 'pgcSkipType',

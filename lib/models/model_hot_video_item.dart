@@ -12,6 +12,7 @@ class HotVideoItemModel extends BaseRecVideoItemModel with MultiSelectData {
   int? ctime;
   int? state;
   Dimension? dimension;
+  String? firstFrame;
   String? pubLocation;
   String? pgcLabel;
   String? redirectUrl;
@@ -37,7 +38,7 @@ class HotVideoItemModel extends BaseRecVideoItemModel with MultiSelectData {
     owner = Owner.fromJson(json["owner"]);
     stat = HotStat.fromJson(json['stat']);
     dimension = Dimension.fromJson(json['dimension']);
-    super.firstFrame = json["first_frame"];
+    firstFrame = json["first_frame"];
     pubLocation = json["pub_location"];
     dynamic rcmd = json['rcmd_reason'];
     rcmdReason = rcmd is Map ? rcmd['content'] : rcmd; // 相关视频里rcmd为String,

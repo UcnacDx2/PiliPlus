@@ -1004,7 +1004,6 @@ class DynamicArchiveModel {
   Badge? badge;
   String? bvid;
   String? cover;
-  String? firstFrame;
   String? durationText;
   String? jumpUrl;
   Stat? stat;
@@ -1014,16 +1013,17 @@ class DynamicArchiveModel {
   int? seasonId;
   int? cid;
   String? goto;
+  String? firstFrame;
 
   DynamicArchiveModel.fromJson(Map<String, dynamic> json) {
     id = Utils.safeToInt(json['id']);
     aid = Utils.safeToInt(json['aid']);
+    firstFrame = json['first_frame'];
     badge = json['badge'] == null ? null : Badge.fromJson(json['badge']);
     bvid = json['bvid'] ?? json['epid'].toString() ?? ' ';
     cid = Utils.safeToInt(json['cid']);
     goto = json['goto'];
     cover = json['cover'];
-    firstFrame = json['first_frame'];
     durationText = json['duration_text'];
     jumpUrl = json['jump_url'];
     stat = json['stat'] != null ? Stat.fromJson(json['stat']) : null;
