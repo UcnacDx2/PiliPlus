@@ -124,6 +124,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
   final videoReplyPanelKey = GlobalKey();
   final videoRelatedKey = GlobalKey();
   final videoIntroKey = GlobalKey();
+  final _moreBtnKey = GlobalKey<PopupMenuButtonState>();
 
   @override
   void initState() {
@@ -1290,9 +1291,10 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
   });
 
   Widget _moreBtn(Color color, {List<Shadow>? shadows}) => PopupMenuButton(
-    icon: Icon(
-      size: 22,
-      Icons.more_vert,
+        key: _moreBtnKey,
+        icon: Icon(
+          size: 22,
+          Icons.more_vert,
       color: color,
       shadows: shadows,
     ),
@@ -1399,9 +1401,18 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       child = childWhenDisabledAlmostSquare;
     }
     if (videoDetailController.plPlayerController.keyboardControl) {
-      child = PlayerFocus(
-        plPlayerController: videoDetailController.plPlayerController,
-        introController: introController,
+      child = Focus(
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.contextMenu) {
+            _moreBtnKey.currentState?.showButtonMenu();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: PlayerFocus(
+          plPlayerController: videoDetailController.plPlayerController,
+          introController: introController,
         onSendDanmaku: videoDetailController.showShootDanmakuSheet,
         canPlay: () {
           if (videoDetailController.autoPlay.value) {
@@ -1412,6 +1423,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         },
         onSkipSegment: videoDetailController.onSkipSegment,
         child: child,
+        ),
       );
     }
     return videoDetailController.plPlayerController.darkVideoPage
