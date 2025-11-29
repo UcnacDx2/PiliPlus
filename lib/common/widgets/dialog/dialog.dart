@@ -123,7 +123,8 @@ void showPgcFollowDialog({
               ),
             ],
           ),
-      ),
-    ),
+        ),
+      );
+    },
   );
 }
