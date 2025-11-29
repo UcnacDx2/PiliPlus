@@ -8,6 +8,7 @@ import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
+import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -20,9 +21,31 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, RouteAware {
   final HomeController _homeController = Get.put(HomeController());
   final MainController _mainController = Get.put(MainController());
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    PageUtils.routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    PageUtils.routeObserver.unsubscribe(this);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // an an-old-bug of flutter
+    // when pop from a page which has focus, the focus will not be removed
+    // so we need to request focus manually
+    FocusScope.of(context).requestFocus(_focusNode);
+  }
 
   @override
   bool get wantKeepAlive => true;
@@ -183,6 +206,8 @@ class _HomePageState extends State<HomePage>
           borderRadius: const BorderRadius.all(Radius.circular(25)),
           color: theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.05),
           child: InkWell(
+            focusNode: _focusNode,
+            autofocus: true,
             borderRadius: const BorderRadius.all(Radius.circular(25)),
             splashColor: theme.colorScheme.primaryContainer.withValues(
               alpha: 0.3,
