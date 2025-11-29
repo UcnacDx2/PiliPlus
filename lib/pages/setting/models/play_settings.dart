@@ -72,7 +72,7 @@ List<SettingsModel> get playSettings => [
         title: '全屏显示电池电量',
         leading: const Icon(Icons.battery_3_bar),
         setKey: SettingBoxKey.showBatteryLevel,
-        defaultVal: Utils.isMobile,
+        defaultVal: false,
       ),
       const SettingsModel(
         settingsType: SettingsType.sw1tch,
