@@ -421,7 +421,7 @@ abstract class Pref {
 
   static SuperResolutionType get superResolutionType {
     SuperResolutionType? superResolutionType;
-    final index = _setting.get(SettingBoxKey.superResolutionType, defaultValue: SuperResolutionType.efficiency.index);
+    final index = _setting.get(SettingBoxKey.superResolutionType, defaultValue: SuperResolutionType.disable.index);
     if (index != null) {
       superResolutionType = SuperResolutionType.values.getOrNull(index);
     }
