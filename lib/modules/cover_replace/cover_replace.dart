@@ -1,11 +1,12 @@
 
 import 'package:PiliPlus/http/index.dart';
+import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:dio/dio.dart';
 
 class CoverReplaceService {
   static Future<String?> getReplacedCover(String? bvid) async {
-    if (bvid == null || bvid.isEmpty || !Pref.get(PrefKey.replaceCover, false)) {
+    if (bvid == null || bvid.isEmpty || !Pref.replaceCover) {
       return null;
     }
 
