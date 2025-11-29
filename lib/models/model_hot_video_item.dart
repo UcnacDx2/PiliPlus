@@ -2,6 +2,7 @@ import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
 import 'package:PiliPlus/models/model_video.dart';
 import 'package:PiliPlus/pages/common/multi_select/base.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 
 // 稍后再看, 排行榜等网页返回也使用该类
 class HotVideoItemModel extends BaseRecVideoItemModel with MultiSelectData {
@@ -12,7 +13,6 @@ class HotVideoItemModel extends BaseRecVideoItemModel with MultiSelectData {
   int? ctime;
   int? state;
   Dimension? dimension;
-  String? firstFrame;
   String? pubLocation;
   String? pgcLabel;
   String? redirectUrl;
@@ -28,7 +28,12 @@ class HotVideoItemModel extends BaseRecVideoItemModel with MultiSelectData {
     tid = json["tid"];
     tname = json["tname"];
     copyright = json["copyright"];
-    cover = json["pic"];
+    super.firstFrame = json["first_frame"];
+    if (Pref.useFirstFrameAsCover && super.firstFrame != null && super.firstFrame!.isNotEmpty) {
+      cover = super.firstFrame;
+    } else {
+      cover = json["pic"];
+    }
     title = json["title"];
     pubdate = json["pubdate"];
     ctime = json["ctime"];
@@ -38,7 +43,7 @@ class HotVideoItemModel extends BaseRecVideoItemModel with MultiSelectData {
     owner = Owner.fromJson(json["owner"]);
     stat = HotStat.fromJson(json['stat']);
     dimension = Dimension.fromJson(json['dimension']);
-    firstFrame = json["first_frame"];
+    super.firstFrame = json["first_frame"];
     pubLocation = json["pub_location"];
     dynamic rcmd = json['rcmd_reason'];
     rcmdReason = rcmd is Map ? rcmd['content'] : rcmd; // 相关视频里rcmd为String,

@@ -17,7 +17,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:live_photo_maker/live_photo_maker.dart';
 import 'package:saver_gallery/saver_gallery.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package.share_plus/share_plus.dart';
 
 abstract class ImageUtils {
   static String get time =>

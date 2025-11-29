@@ -94,7 +94,7 @@ class VideoCardV extends StatelessWidget {
                         clipBehavior: Clip.none,
                         children: [
                           NetworkImgLayer(
-                            src: videoItem.firstFrame ?? videoItem.cover,
+                            src: videoItem.cover ?? '',
                             width: maxWidth,
                             height: maxHeight,
                             radius: 0,
@@ -123,11 +123,13 @@ class VideoCardV extends StatelessWidget {
           Positioned(
             right: -5,
             bottom: -2,
-            child: VideoPopupMenu(
-              size: 29,
-              iconSize: 17,
-              videoItem: videoItem,
-              onRemove: onRemove,
+            child: ExcludeFocus(
+              child: VideoPopupMenu(
+                size: 29,
+                iconSize: 17,
+                videoItem: videoItem,
+                onRemove: onRemove,
+              ),
             ),
           ),
       ],

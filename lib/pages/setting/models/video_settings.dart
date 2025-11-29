@@ -35,6 +35,14 @@ List<SettingsModel> get videoSettings => [
     setKey: SettingBoxKey.p1080,
     defaultVal: true,
   ),
+  const SettingsModel(
+    settingsType: SettingsType.sw1tch,
+    title: '使用视频第一帧作为封面',
+    subtitle: '将视频封面替换为真实的第一帧画面',
+    leading: Icon(Icons.image_outlined),
+    setKey: SettingBoxKey.useFirstFrameAsCover,
+    defaultVal: false,
+  ),
   SettingsModel(
     settingsType: SettingsType.normal,
     title: 'B站定向流量支持',

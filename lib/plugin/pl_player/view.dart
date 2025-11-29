@@ -1189,7 +1189,9 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         break;
       default:
         if (_suspendedDm == null) {
-          plPlayerController.controls = !plPlayerController.showControls.value;
+          if (plPlayerController.playerStatus.value != PlayerStatus.paused) {
+            plPlayerController.controls = !plPlayerController.showControls.value;
+          }
         } else if (_suspendedDm!.suspend) {
           _dmOffset.value = details.localPosition;
         } else {
