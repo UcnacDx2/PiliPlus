@@ -19,6 +19,7 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:flutter/services.dart'; // 必须导入，用于 LogicalKeyboardKey
 
 // 视频卡片 - 水平布局
 class VideoCardH extends StatefulWidget {
@@ -39,6 +40,11 @@ class VideoCardH extends StatefulWidget {
 }
 
 class _VideoCardHState extends State<VideoCardH> {
+  // [Feat] TV 菜单键支持
+  final GlobalKey<VideoPopupMenuState> _menuKey =
+      GlobalKey<VideoPopupMenuState>();
+  
+  // [Main] 首帧图支持
   String? _firstFrame;
 
   @override
@@ -65,6 +71,59 @@ class _VideoCardHState extends State<VideoCardH> {
           _firstFrame = firstFrame;
         });
       }
+    }
+  }
+
+  // [Feat] 抽离出的点击逻辑
+  Future<void> _onTap() async {
+    String type = 'video';
+    if (widget.videoItem case SearchVideoItemModel item) {
+      var typeOrNull = item.type;
+      if (typeOrNull?.isNotEmpty == true) {
+        type = typeOrNull!;
+      }
+    }
+
+    if (type == 'ketang') {
+      PageUtils.viewPugv(seasonId: widget.videoItem.aid);
+      return;
+    } else if (type == 'live_room') {
+      if (widget.videoItem case SearchVideoItemModel item) {
+        int? roomId = item.id;
+        if (roomId != null) {
+          PageUtils.toLiveRoom(roomId);
+        }
+      } else {
+        SmartDialog.showToast(
+          'err: live_room : ${widget.videoItem.runtimeType}',
+        );
+      }
+      return;
+    }
+    if (widget.videoItem case HotVideoItemModel item) {
+      if (item.redirectUrl?.isNotEmpty == true &&
+          PageUtils.viewPgcFromUri(item.redirectUrl!)) {
+        return;
+      }
+    }
+
+    try {
+      final int? cid =
+          widget.videoItem.cid ??
+          await SearchHttp.ab2c(
+            aid: widget.videoItem.aid,
+            bvid: widget.videoItem.bvid,
+          );
+      if (cid != null) {
+        PageUtils.toVideoPage(
+          bvid: widget.videoItem.bvid,
+          cid: cid,
+          cover: widget.videoItem.cover,
+          title: widget.videoItem.title,
+        );
+      }
+    } catch (err) {
+      SmartDialog.showToast(err.toString());
     }
   }
 
@@ -95,152 +154,128 @@ class _VideoCardHState extends State<VideoCardH> {
       }
     }
     void onLongPress() => imageSaveDialog(
-          bvid: widget.videoItem.bvid,
-          title: widget.videoItem.title,
-          cover: widget.videoItem.cover,
-        );
+      bvid: widget.videoItem.bvid,
+      title: widget.videoItem.title,
+      cover: widget.videoItem.cover,
+    );
+    
     return Material(
       type: MaterialType.transparency,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          InkWell(
-            onLongPress: onLongPress,
-            onSecondaryTap: Utils.isMobile ? null : onLongPress,
-            onTap: widget.onTap ??
-                () async {
-                  if (type == 'ketang') {
-                    PageUtils.viewPugv(seasonId: widget.videoItem.aid);
-                    return;
-                  } else if (type == 'live_room') {
-                    if (widget.videoItem case SearchVideoItemModel item) {
-                      int? roomId = item.id;
-                      if (roomId != null) {
-                        PageUtils.toLiveRoom(roomId);
-                      }
-                    } else {
-                      SmartDialog.showToast(
-                        'err: live_room : ${widget.videoItem.runtimeType}',
-                      );
-                    }
-                    return;
-                  }
-                  if (widget.videoItem case HotVideoItemModel item) {
-                    if (item.redirectUrl?.isNotEmpty == true &&
-                        PageUtils.viewPgcFromUri(item.redirectUrl!)) {
-                      return;
-                    }
-                  }
+      // [Feat] Focus 监听逻辑
+      child: Focus(
+        canRequestFocus: false,
+        skipTraversal: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.contextMenu) {
+            _menuKey.currentState?.showButtonMenu();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            InkWell(
+              onLongPress: onLongPress,
+              onSecondaryTap: Utils.isMobile ? null : onLongPress,
+              onTap: widget.onTap ?? _onTap, // 使用合并后的 onTap
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: StyleString.safeSpace,
+                  vertical: 5,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    AspectRatio(
+                      aspectRatio: StyleString.aspectRatio,
+                      child: LayoutBuilder(
+                        builder: (context, boxConstraints) {
+                          final double maxWidth = boxConstraints.maxWidth;
+                          final double maxHeight = boxConstraints.maxHeight;
+                          num? progress;
+                          if (widget.videoItem case HotVideoItemModel item) {
+                            progress = item.progress;
+                          }
 
-                  try {
-                    final int? cid = widget.videoItem.cid ??
-                        await SearchHttp.ab2c(
-                          aid: widget.videoItem.aid,
-                          bvid: widget.videoItem.bvid,
-                        );
-                    if (cid != null) {
-                      PageUtils.toVideoPage(
-                        bvid: widget.videoItem.bvid,
-                        cid: cid,
-                        cover: widget.videoItem.cover,
-                        title: widget.videoItem.title,
-                      );
-                    }
-                  } catch (err) {
-                    SmartDialog.showToast(err.toString());
-                  }
-                },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: StyleString.safeSpace,
-                vertical: 5,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  AspectRatio(
-                    aspectRatio: StyleString.aspectRatio,
-                    child: LayoutBuilder(
-                      builder: (context, boxConstraints) {
-                        final double maxWidth = boxConstraints.maxWidth;
-                        final double maxHeight = boxConstraints.maxHeight;
-                        num? progress;
-                        if (widget.videoItem case HotVideoItemModel item) {
-                          progress = item.progress;
-                        }
-
-                        return Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            NetworkImgLayer(
-                              src: _firstFrame ??
-                                  widget.videoItem.firstFrame ??
-                                  widget.videoItem.cover,
-                              width: maxWidth,
-                              height: maxHeight,
-                            ),
-                            if (badge != null)
-                              PBadge(
-                                text: badge,
-                                top: 6.0,
-                                right: 6.0,
-                                type: switch (badge) {
-                                  '充电专属' => PBadgeType.error,
-                                  _ => PBadgeType.primary,
-                                },
+                          return Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              // [Main] 使用首帧图逻辑
+                              NetworkImgLayer(
+                                src: _firstFrame ??
+                                    widget.videoItem.firstFrame ??
+                                    widget.videoItem.cover,
+                                width: maxWidth,
+                                height: maxHeight,
                               ),
-                            if (progress != null && progress != 0) ...[
-                              PBadge(
-                                text: progress == -1
-                                    ? '已看完'
-                                    : '${DurationUtils.formatDuration(progress)}/${DurationUtils.formatDuration(widget.videoItem.duration)}',
-                                right: 6,
-                                bottom: 8,
-                                type: PBadgeType.gray,
-                              ),
-                              Positioned(
-                                left: 0,
-                                bottom: 0,
-                                right: 0,
-                                child: videoProgressIndicator(
-                                  progress == -1
-                                      ? 1
-                                      : progress / widget.videoItem.duration,
+                              if (badge != null)
+                                PBadge(
+                                  text: badge,
+                                  top: 6.0,
+                                  right: 6.0,
+                                  type: switch (badge) {
+                                    '充电专属' => PBadgeType.error,
+                                    _ => PBadgeType.primary,
+                                  },
                                 ),
-                              ),
-                            ] else if (widget.videoItem.duration > 0)
-                              PBadge(
-                                text: DurationUtils.formatDuration(
-                                  widget.videoItem.duration,
+                              // [Main] 进度条逻辑
+                              if (progress != null && progress != 0) ...[
+                                PBadge(
+                                  text: progress == -1
+                                      ? '已看完'
+                                      : '${DurationUtils.formatDuration(progress)}/${DurationUtils.formatDuration(widget.videoItem.duration)}',
+                                  right: 6,
+                                  bottom: 8,
+                                  type: PBadgeType.gray,
                                 ),
-                                right: 6.0,
-                                bottom: 6.0,
-                                type: PBadgeType.gray,
-                              ),
-                          ],
-                        );
-                      },
+                                Positioned(
+                                  left: 0,
+                                  bottom: 0,
+                                  right: 0,
+                                  child: videoProgressIndicator(
+                                    progress == -1
+                                        ? 1
+                                        : progress / widget.videoItem.duration,
+                                  ),
+                                ),
+                              ] else if (widget.videoItem.duration > 0)
+                                PBadge(
+                                  text: DurationUtils.formatDuration(
+                                    widget.videoItem.duration,
+                                  ),
+                                  right: 6.0,
+                                  bottom: 6.0,
+                                  type: PBadgeType.gray,
+                                ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  content(context),
-                ],
+                    const SizedBox(width: 10),
+                    content(context),
+                  ],
+                ),
               ),
             ),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 12,
-            child: ExcludeFocus(
-              child: VideoPopupMenu(
-                size: 29,
-                iconSize: 17,
-                videoItem: widget.videoItem,
-                onRemove: widget.onRemove,
+            Positioned(
+              bottom: 0,
+              right: 12,
+              child: ExcludeFocus(
+                child: VideoPopupMenu(
+                  // [Feat] 绑定 Key
+                  key: _menuKey,
+                  size: 29,
+                  iconSize: 17,
+                  videoItem: widget.videoItem,
+                  onRemove: widget.onRemove,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
