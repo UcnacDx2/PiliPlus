@@ -1013,8 +1013,10 @@ class DynamicArchiveModel {
   int? seasonId;
   int? cid;
   String? goto;
+  String? firstFrame;
 
   DynamicArchiveModel.fromJson(Map<String, dynamic> json) {
+    firstFrame = json['first_frame'];
     id = Utils.safeToInt(json['id']);
     aid = Utils.safeToInt(json['aid']);
     badge = json['badge'] == null ? null : Badge.fromJson(json['badge']);
