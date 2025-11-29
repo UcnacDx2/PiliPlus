@@ -38,19 +38,6 @@ class VideoCardV extends StatefulWidget {
 class _VideoCardVState extends State<VideoCardV> {
   final GlobalKey<VideoPopupMenuState> _menuKey =
       GlobalKey<VideoPopupMenuState>();
-  late final FocusNode _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode();
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
 
   Future<void> onPushDetail(String heroTag) async {
     String? goto = widget.videoItem.goto;
@@ -97,7 +84,6 @@ class _VideoCardVState extends State<VideoCardV> {
       bvid: widget.videoItem.bvid,
     );
     return Focus(
-      focusNode: _focusNode,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
             (event.logicalKey == LogicalKeyboardKey.contextMenu)) {

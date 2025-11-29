@@ -41,19 +41,6 @@ class VideoCardH extends StatefulWidget {
 class _VideoCardHState extends State<VideoCardH> {
   final GlobalKey<VideoPopupMenuState> _menuKey =
       GlobalKey<VideoPopupMenuState>();
-  late final FocusNode _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode();
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +76,6 @@ class _VideoCardHState extends State<VideoCardH> {
     return Material(
       type: MaterialType.transparency,
       child: Focus(
-        focusNode: _focusNode,
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent &&
               (event.logicalKey == LogicalKeyboardKey.contextMenu)) {
