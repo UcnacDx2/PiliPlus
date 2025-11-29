@@ -85,28 +85,28 @@ void showPgcFollowDialog({
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ...const [
-                (followStatus: 3, title: '看过'),
-                (followStatus: 2, title: '在看'),
-                (followStatus: 1, title: '想看'),
-              ].map(
-                (item) {
-                  final bool enabled = followStatus != item.followStatus;
-                  final bool autofocus = enabled && !autoFocused;
-                  if (autofocus) {
-                    autoFocused = true;
-                  }
-                  return statusItem(
-                    enabled: enabled,
-                    text: item.title,
-                    autofocus: autofocus,
-                    onTap: () {
-                      Get.back();
-                      onUpdateStatus(item.followStatus);
-                    },
-                  );
-                },
-              ),
+            ...[
+              (followStatus: 3, title: '看过'),
+              (followStatus: 2, title: '在看'),
+              (followStatus: 1, title: '想看'),
+            ].map(
+              (item) {
+                final bool enabled = followStatus != item.followStatus;
+                final bool autofocus = enabled && !autoFocused;
+                if (autofocus) {
+                  autoFocused = true;
+                }
+                return statusItem(
+                  enabled: enabled,
+                  text: item.title,
+                  autofocus: autofocus,
+                  onTap: () {
+                    Get.back();
+                    onUpdateStatus(item.followStatus);
+                  },
+                );
+              },
+            ).toList(), // Add this to convert the iterable to a list
             ListTile(
               dense: true,
               title: Padding(
