@@ -5,6 +5,10 @@ abstract class BaseRecVideoItemModel extends BaseVideoItemModel {
   String? goto;
   String? uri;
   String? rcmdReason;
+
+  // app推荐专属
+  int? param;
+  String? pgcBadge;
 }
 
 class RecVideoItemModel extends BaseRecVideoItemModel {
