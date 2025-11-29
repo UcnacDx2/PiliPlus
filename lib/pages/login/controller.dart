@@ -774,6 +774,14 @@ class LoginPageController extends GetxController
         ),
         actions: [
           TextButton(
+            onPressed: () {
+              Get.back();
+              Get.toNamed('/loginPage');
+            },
+            child: const Text('登陆其他账户'),
+          ),
+          const Spacer(),
+          TextButton(
             onPressed: Get.back,
             child: Text(
               '取消',
