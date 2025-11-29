@@ -710,20 +710,12 @@ class LoginPageController extends GetxController
       tokenInfo['refresh_token'],
     );
     await Future.wait([account.onChange(), AnonymousAccount().delete()]);
-    for (int i = 0; i < AccountType.values.length; i++) {
-      if (Accounts.accountMode[i].mid == account.mid) {
-        Accounts.accountMode[i] = account;
-      }
-    }
+    Accounts.accountMode.updateAll((_, a) => a == account ? account : a);
     if (Accounts.main.isLogin) {
       SmartDialog.showToast('登录成功');
     } else {
-      SmartDialog.showToast('登录成功');
-      final firstAccount =
-          Accounts.account.values.firstWhere((i) => i is LoginAccount);
-      for (final i in AccountType.values) {
-        await Accounts.set(i, firstAccount);
-      }
+      SmartDialog.showToast('登录成功, 请先设置账号模式');
+      await switchAccountDialog(Get.context!);
     }
   }
 
@@ -732,7 +724,7 @@ class LoginPageController extends GetxController
       SmartDialog.showToast('请先登录');
       return Get.toNamed('/loginPage');
     }
-    final selectAccount = List.of(Accounts.accountMode);
+    final selectAccount = Map.of(Accounts.accountMode);
     final options = {
       AnonymousAccount(): '0',
       ...Accounts.account.toMap().map(
@@ -757,9 +749,9 @@ class LoginPageController extends GetxController
                 .map(
                   (e) => Builder(
                     builder: (context) => RadioGroup(
-                      groupValue: selectAccount[e.index],
+                      groupValue: selectAccount[e],
                       onChanged: (v) {
-                        selectAccount[e.index] = v!;
+                        selectAccount[e] = v!;
                         (context as Element).markNeedsBuild();
                       },
                       child: WrapRadioOptionsGroup<Account>(
@@ -774,6 +766,11 @@ class LoginPageController extends GetxController
         ),
         actions: [
           TextButton(
+            onPressed: () => Get.toNamed('/loginPage'),
+            child: const Text('登录其他账户'),
+          ),
+          const Spacer(),
+          TextButton(
             onPressed: Get.back,
             child: Text(
               '取消',
@@ -784,9 +781,9 @@ class LoginPageController extends GetxController
           ),
           TextButton(
             onPressed: () {
-              for (var (i, v) in selectAccount.indexed) {
-                if (v != Accounts.accountMode[i]) {
-                  Accounts.set(AccountType.values[i], v);
+              for (var i in selectAccount.entries) {
+                if (i.value != Accounts.get(i.key)) {
+                  Accounts.set(i.key, i.value);
                 }
               }
               Get.back();
