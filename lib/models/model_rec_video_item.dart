@@ -19,6 +19,7 @@ class RecVideoItemModel extends BaseRecVideoItemModel {
     goto = json["goto"];
     uri = json["uri"];
     cover = json["pic"];
+    firstFrame = json["first_frame"];
     title = json["title"];
     duration = json["duration"];
     pubdate = json["pubdate"];
