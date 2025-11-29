@@ -724,9 +724,7 @@ List<SettingsModel> get styleSettings => [
           '/barSetting',
           arguments: {
             'key': SettingBoxKey.tabBarSort,
-            'defaultBars': HomeTabType.values
-                .where((e) => e != HomeTabType.hot && e != HomeTabType.rank)
-                .toList(),
+            'defaultBars': HomeTabType.values,
             'title': '首页标签页',
           },
         ),
