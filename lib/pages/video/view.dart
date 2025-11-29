@@ -1403,6 +1403,10 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         plPlayerController: videoDetailController.plPlayerController,
         introController: introController,
         onSendDanmaku: videoDetailController.showShootDanmakuSheet,
+        onShowSettings: () =>
+            (videoDetailController.headerCtrKey.currentState
+                    as HeaderControlState?)
+                ?.showSettingSheet(),
         canPlay: () {
           if (videoDetailController.autoPlay.value) {
             return true;
