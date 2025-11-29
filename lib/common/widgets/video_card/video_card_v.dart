@@ -184,8 +184,7 @@ class _VideoCardVState extends State<VideoCardV> {
             Positioned(
               right: -5,
               bottom: -2,
-              child: ExcludeFocus(
-                child: VideoPopupMenu(
+              child: VideoPopupMenu(
                   // [Feat] 绑定 Key
                   key: _menuKey,
                   size: 29,
@@ -193,7 +192,6 @@ class _VideoCardVState extends State<VideoCardV> {
                   videoItem: widget.videoItem,
                   onRemove: widget.onRemove,
                 ),
-              ),
             ),
         ],
       ),
