@@ -41,19 +41,6 @@ class VideoCardH extends StatefulWidget {
 class _VideoCardHState extends State<VideoCardH> {
   final GlobalKey<VideoPopupMenuState> _menuKey =
       GlobalKey<VideoPopupMenuState>();
-  late final FocusNode _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode();
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
 
   Future<void> _onTap() async {
     String type = 'video';
@@ -141,17 +128,13 @@ class _VideoCardHState extends State<VideoCardH> {
     return Material(
       type: MaterialType.transparency,
       child: Focus(
-        focusNode: _focusNode,
+        canRequestFocus: false,
+        skipTraversal: true,
         onKeyEvent: (node, event) {
-          if (event is KeyDownEvent) {
-            if (event.logicalKey == LogicalKeyboardKey.contextMenu) {
-              _menuKey.currentState?.showButtonMenu();
-              return KeyEventResult.handled;
-            } else if (event.logicalKey == LogicalKeyboardKey.select ||
-                event.logicalKey == LogicalKeyboardKey.enter) {
-              widget.onTap ?? _onTap();
-              return KeyEventResult.handled;
-            }
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.contextMenu) {
+            _menuKey.currentState?.showButtonMenu();
+            return KeyEventResult.handled;
           }
           return KeyEventResult.ignored;
         },
@@ -159,7 +142,6 @@ class _VideoCardHState extends State<VideoCardH> {
           clipBehavior: Clip.none,
           children: [
             InkWell(
-              focusNode: _focusNode,
               onLongPress: onLongPress,
               onSecondaryTap: Utils.isMobile ? null : onLongPress,
               onTap: widget.onTap ?? _onTap,

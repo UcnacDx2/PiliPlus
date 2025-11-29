@@ -38,19 +38,6 @@ class VideoCardV extends StatefulWidget {
 class _VideoCardVState extends State<VideoCardV> {
   final GlobalKey<VideoPopupMenuState> _menuKey =
       GlobalKey<VideoPopupMenuState>();
-  late final FocusNode _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode();
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
 
   Future<void> onPushDetail(String heroTag) async {
     String? goto = widget.videoItem.goto;
@@ -97,17 +84,13 @@ class _VideoCardVState extends State<VideoCardV> {
       bvid: widget.videoItem.bvid,
     );
     return Focus(
-      focusNode: _focusNode,
+      canRequestFocus: false,
+      skipTraversal: true,
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent) {
-          if (event.logicalKey == LogicalKeyboardKey.contextMenu) {
-            _menuKey.currentState?.showButtonMenu();
-            return KeyEventResult.handled;
-          } else if (event.logicalKey == LogicalKeyboardKey.select ||
-              event.logicalKey == LogicalKeyboardKey.enter) {
-            onPushDetail(Utils.makeHeroTag(widget.videoItem.aid));
-            return KeyEventResult.handled;
-          }
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.contextMenu) {
+          _menuKey.currentState?.showButtonMenu();
+          return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
       },
@@ -117,7 +100,6 @@ class _VideoCardVState extends State<VideoCardV> {
           Card(
             clipBehavior: Clip.hardEdge,
             child: InkWell(
-              focusNode: _focusNode,
               onTap: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
               onLongPress: onLongPress,
               onSecondaryTap: Utils.isMobile ? null : onLongPress,
