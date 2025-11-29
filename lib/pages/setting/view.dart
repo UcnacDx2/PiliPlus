@@ -193,7 +193,7 @@ class _SettingPageState extends State<SettingPage> {
           title: Text('设置账号模式', style: titleStyle),
         ),
         ListTile(
-          onTap: () => Get.toNamed('/login'),
+          onTap: () => Get.toNamed('/loginPage'),
           leading: const Icon(Icons.add_circle_outline_outlined),
           title: Text('添加账户', style: titleStyle),
         ),
