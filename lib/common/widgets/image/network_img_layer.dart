@@ -27,6 +27,7 @@ class NetworkImgLayer extends StatefulWidget {
     this.boxFit,
     this.bvid,
     this.cid,
+    this.aid,
   });
 
   final String? src;
@@ -45,6 +46,7 @@ class NetworkImgLayer extends StatefulWidget {
   final BoxFit? boxFit;
   final String? bvid;
   final int? cid;
+  final int? aid;
 
   static Color? reduceLuxColor = Pref.reduceLuxColor;
   static bool reduce = false;
@@ -68,7 +70,8 @@ class _NetworkImgLayerState extends State<NetworkImgLayer> {
     super.didUpdateWidget(oldWidget);
     if (widget.bvid != oldWidget.bvid ||
         widget.src != oldWidget.src ||
-        widget.cid != oldWidget.cid) {
+        widget.cid != oldWidget.cid ||
+        widget.aid != oldWidget.aid) {
       setState(() {
         _effectiveSrc = widget.src;
       });
@@ -77,8 +80,8 @@ class _NetworkImgLayerState extends State<NetworkImgLayer> {
   }
 
   Future<void> _fetchReplacedCover() async {
-    final replacedCover =
-        await CoverReplaceService.getReplacedCover(widget.bvid, widget.cid);
+    final replacedCover = await CoverReplaceService.getReplacedCover(
+        widget.bvid, widget.cid, widget.aid);
     if (replacedCover != null && mounted) {
       setState(() {
         _effectiveSrc = replacedCover;

@@ -97,6 +97,7 @@ class VideoCardV extends StatelessWidget {
                             src: videoItem.cover,
                             bvid: videoItem.bvid,
                             cid: videoItem.cid,
+                            aid: videoItem.aid,
                             width: maxWidth,
                             height: maxHeight,
                             radius: 0,
