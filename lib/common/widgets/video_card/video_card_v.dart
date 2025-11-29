@@ -96,6 +96,7 @@ class VideoCardV extends StatelessWidget {
                           NetworkImgLayer(
                             src: videoItem.cover,
                             bvid: videoItem.bvid,
+                            cid: videoItem.cid,
                             width: maxWidth,
                             height: maxHeight,
                             radius: 0,
