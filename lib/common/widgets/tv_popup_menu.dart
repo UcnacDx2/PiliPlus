@@ -75,6 +75,10 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
       ),
       content: FocusScope(
         onKeyEvent: (node, event) {
+          if (event.logicalKey == LogicalKeyboardKey.escape ||
+              event.logicalKey == LogicalKeyboardKey.back) {
+            return KeyEventResult.ignored;
+          }
           _handleKeyEvent(event);
           return KeyEventResult.handled;
         },
@@ -87,6 +91,16 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
               final item = widget.items[index];
               return Focus(
                 focusNode: _focusNodes[index],
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent &&
+                      (event.logicalKey == LogicalKeyboardKey.select ||
+                          event.logicalKey == LogicalKeyboardKey.enter)) {
+                    Get.back();
+                    item.onTap();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
                 child: Builder(
                   builder: (context) {
                     final bool hasFocus = Focus.of(context).hasFocus;
