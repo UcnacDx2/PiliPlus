@@ -603,7 +603,7 @@ abstract class Pref {
       _setting.get(SettingBoxKey.enableWordRe, defaultValue: false);
 
   static bool get autoExitFullscreen =>
-      _setting.get(SettingBoxKey.enableAutoExit, defaultValue: true);
+      _setting.get(SettingBoxKey.enableAutoExit, defaultValue: false);
 
   static bool get autoPlayEnable =>
       _setting.get(SettingBoxKey.autoPlayEnable, defaultValue: true);
@@ -745,7 +745,7 @@ abstract class Pref {
       _setting.get(SettingBoxKey.enableOnlineTotal, defaultValue: false);
 
   static bool get enableAutoEnter =>
-      _setting.get(SettingBoxKey.enableAutoEnter, defaultValue: false);
+      _setting.get(SettingBoxKey.enableAutoEnter, defaultValue: true);
 
   static bool get enableAutoLongPressSpeed =>
       _setting.get(SettingBoxKey.enableAutoLongPressSpeed, defaultValue: false);
