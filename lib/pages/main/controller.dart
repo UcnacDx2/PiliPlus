@@ -93,8 +93,8 @@ class MainController extends GetxController
       if (hasDyn) {
         if (checkDynamic) {
           _lastCheckDynamicAt = DateTime.now().millisecondsSinceEpoch;
+          getUnreadDynamic();
         }
-        getUnreadDynamic();
       }
     }
 
