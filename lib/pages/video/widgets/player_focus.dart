@@ -51,15 +51,10 @@ class PlayerFocus extends StatelessWidget {
         if (hasFocus) {
           TvMenuManager().currentContext.value =
               const TvMenuContext(type: TvMenuContextType.player);
-        } else {
-          if (TvMenuManager().currentContext.value?.type ==
-              TvMenuContextType.player) {
-            TvMenuManager().currentContext.value = null;
-          }
         }
       },
       onKeyEvent: (node, event) {
-        final handled = _handleKey(event);
+        final handled = _handleKey(node, event);
         if (handled || _shouldHandle(event.logicalKey)) {
           return KeyEventResult.handled;
         }
@@ -72,7 +67,7 @@ class PlayerFocus extends StatelessWidget {
   bool get isFullScreen => plPlayerController.isFullScreen.value;
   bool get hasPlayer => plPlayerController.videoPlayerController != null;
 
-  bool _handleKey(KeyEvent event) {
+  bool _handleKey(FocusNode node, KeyEvent event) {
     final key = event.logicalKey;
 
     final isKeyQ = key == LogicalKeyboardKey.keyQ;
@@ -232,7 +227,9 @@ class PlayerFocus extends StatelessWidget {
           }
           return true;
         case LogicalKeyboardKey.contextMenu:
-          TvMenuManager().showTvMenu(Get.context!);
+          if (node.context != null) {
+            TvMenuManager().showTvMenu(node.context!);
+          }
           return true;
       }
 

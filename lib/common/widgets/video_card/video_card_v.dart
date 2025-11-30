@@ -124,10 +124,6 @@ class _VideoCardVState extends State<VideoCardV> {
             type: TvMenuContextType.videoCard,
             data: widget.videoItem,
           );
-        } else {
-          if (TvMenuManager().currentContext.value?.data == widget.videoItem) {
-            TvMenuManager().currentContext.value = null;
-          }
         }
       },
       onKeyEvent: (node, event) {
