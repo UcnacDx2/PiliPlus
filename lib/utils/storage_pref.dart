@@ -252,7 +252,7 @@ abstract class Pref {
       _setting.get(SettingBoxKey.banWordForReply, defaultValue: '');
 
   static String get banWordForZone =>
-      _setting.get(SettingBoxKey.banWordForZone, defaultValue: '');
+      _setting.get(SettingBoxKey.banWordForZone, defaultValue: '知识|网络游戏|射击游戏|数码|社科·法律·心理|社会观察');
 
   static bool get appRcmd =>
       _setting.get(SettingBoxKey.appRcmd, defaultValue: true);
