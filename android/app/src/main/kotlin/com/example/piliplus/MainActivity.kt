@@ -15,7 +15,7 @@ import android.view.WindowManager.LayoutParams
 import androidx.core.net.toUri
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugin.common.KeyEventChannel
+import io.flutter.embedding.engine.system.KeyEventChannel
 import io.flutter.plugin.common.MethodChannel
 import kotlin.system.exitProcess
 
@@ -169,15 +169,12 @@ class MainActivity : AudioServiceActivity() {
         if (backPressedCount == 3) {
             finish()
         } else {
-            flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->
-                val channel = KeyEventChannel(messenger)
-                channel.keyDown(
-                    KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ESCAPE)
-                )
-                channel.keyUp(
-                    KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ESCAPE)
-                )
-            }
+            flutterEngine?.keyEventChannel?.keyDown(
+                KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ESCAPE),
+            )
+            flutterEngine?.keyEventChannel?.keyUp(
+                KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ESCAPE),
+            )
         }
     }
 
