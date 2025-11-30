@@ -197,7 +197,7 @@ List<SettingsModel> get playSettings => [
         subtitle: '视频开始播放时进入全屏',
         leading: Icon(Icons.fullscreen_outlined),
         setKey: SettingBoxKey.enableAutoEnter,
-        defaultVal: false,
+        defaultVal: true,
       ),
       const SettingsModel(
         settingsType: SettingsType.sw1tch,
@@ -205,7 +205,7 @@ List<SettingsModel> get playSettings => [
         subtitle: '视频结束播放时退出全屏',
         leading: Icon(Icons.fullscreen_exit_outlined),
         setKey: SettingBoxKey.enableAutoExit,
-        defaultVal: true,
+        defaultVal: false,
       ),
       const SettingsModel(
         settingsType: SettingsType.sw1tch,
