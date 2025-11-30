@@ -119,18 +119,7 @@ class _VideoCardVState extends State<VideoCardV> {
       bvid: widget.videoItem.bvid,
     );
     // [Feat] Focus 包裹
-    return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.contextMenu) {
-          _menuKey.currentState?.showButtonMenu();
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
-      child: Stack(
+    return Stack(
         clipBehavior: Clip.none,
         children: [
           Card(
@@ -196,8 +185,7 @@ class _VideoCardVState extends State<VideoCardV> {
               ),
             ),
         ],
-      ),
-    );
+      );
   }
 
   Widget content(BuildContext context) {

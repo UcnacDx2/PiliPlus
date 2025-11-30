@@ -162,18 +162,7 @@ class _VideoCardHState extends State<VideoCardH> {
     return Material(
       type: MaterialType.transparency,
       // [Feat] Focus 监听逻辑
-      child: Focus(
-        canRequestFocus: false,
-        skipTraversal: true,
-        onKeyEvent: (node, event) {
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.contextMenu) {
-            _menuKey.currentState?.showButtonMenu();
-            return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
-        },
-        child: Stack(
+      child: Stack(
           clipBehavior: Clip.none,
           children: [
             InkWell(
@@ -276,7 +265,6 @@ class _VideoCardHState extends State<VideoCardH> {
             ),
           ],
         ),
-      ),
     );
   }
 

@@ -16,11 +16,13 @@ Future<void> showPiliPopupMenu({
   required BuildContext context,
   required List<PiliPopupMenuItem> items,
 }) async {
-  final RenderBox? overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+  final RenderBox? overlay =
+      Overlay.of(context).context.findRenderObject() as RenderBox?;
   if (overlay == null) return;
 
   final RenderBox? widgetRenderBox = context.findRenderObject() as RenderBox?;
-  final Offset widgetPosition = widgetRenderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
+  final Offset widgetPosition =
+      widgetRenderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
   final Size widgetSize = widgetRenderBox?.size ?? Size.zero;
 
   await showMenu<VoidCallback>(
@@ -28,9 +30,9 @@ Future<void> showPiliPopupMenu({
     color: Colors.black.withOpacity(0.8),
     position: RelativeRect.fromLTRB(
       widgetPosition.dx,
-      widgetPosition.dy + widgetSize.height,
+      widgetPosition.dy,
       overlay.size.width - widgetPosition.dx - widgetSize.width,
-      overlay.size.height - widgetPosition.dy - widgetSize.height,
+      overlay.size.height - widgetPosition.dy,
     ),
     items: items.map((item) {
       return PopupMenuItem<VoidCallback>(

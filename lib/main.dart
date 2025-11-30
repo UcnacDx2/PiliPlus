@@ -16,7 +16,6 @@ import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/calc_window_position.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
-import 'package:PiliPlus/utils/context_menu.dart' as pili_context;
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
@@ -24,6 +23,7 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
+import 'package:PiliPlus/utils/context_menu.dart' as pili_context;
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -298,47 +298,48 @@ class MyApp extends StatelessWidget {
                 ),
                 child: child!,
               );
-              void onBack() {
-                if (SmartDialog.checkExist()) {
-                  SmartDialog.dismiss();
-                  return;
-                }
+              if (Utils.isDesktop) {
+                void onBack() {
+                  if (SmartDialog.checkExist()) {
+                    SmartDialog.dismiss();
+                    return;
+                  }
 
-                if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
+                  if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
+                    Get.back();
+                    return;
+                  }
+
+                  final plCtr = PlPlayerController.instance;
+                  if (plCtr != null) {
+                    if (plCtr.isFullScreen.value) {
+                      plCtr
+                        ..triggerFullScreen(status: false)
+                        ..controlsLock.value = false
+                        ..showControls.value = false;
+                      return;
+                    }
+
+                    if (plCtr.isDesktopPip) {
+                      plCtr
+                        ..exitDesktopPip().whenComplete(
+                          () => plCtr.initialFocalPoint = Offset.zero,
+                        )
+                        ..controlsLock.value = false
+                        ..showControls.value = false;
+                      return;
+                    }
+                  }
+
                   Get.back();
-                  return;
                 }
 
-                final plCtr = PlPlayerController.instance;
-                if (plCtr != null) {
-                  if (plCtr.isFullScreen.value) {
-                    plCtr
-                      ..triggerFullScreen(status: false)
-                      ..controlsLock.value = false
-                      ..showControls.value = false;
-                    return;
-                  }
-
-                  if (plCtr.isDesktopPip) {
-                    plCtr
-                      ..exitDesktopPip().whenComplete(
-                        () => plCtr.initialFocalPoint = Offset.zero,
-                      )
-                      ..controlsLock.value = false
-                      ..showControls.value = false;
-                    return;
-                  }
-                }
-
-                Get.back();
-              }
-
-              return Focus(
-                canRequestFocus: false,
-                onKeyEvent: (_, event) {
-                  if (event is KeyDownEvent) {
+                return Focus(
+                  autofocus: true,
+                  canRequestFocus: false,
+                  onKeyEvent: (node, event) {
                     if (event.logicalKey == LogicalKeyboardKey.escape &&
-                        Utils.isDesktop) {
+                        event is KeyDownEvent) {
                       onBack();
                       return KeyEventResult.handled;
                     }
@@ -346,13 +347,15 @@ class MyApp extends StatelessWidget {
                       pili_context.ContextMenu.onKey(context, event);
                       return KeyEventResult.handled;
                     }
-                  }
-                  return KeyEventResult.ignored;
-                },
-                child: Utils.isDesktop
-                    ? MouseBackDetector(onTapDown: onBack, child: child!)
-                    : child!,
-              );
+                    return KeyEventResult.ignored;
+                  },
+                  child: MouseBackDetector(
+                    onTapDown: onBack,
+                    child: child,
+                  ),
+                );
+              }
+              return child;
             },
           ),
           navigatorObservers: [

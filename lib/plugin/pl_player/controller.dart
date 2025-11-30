@@ -1902,17 +1902,18 @@ class PlPlayerController {
   void showSettings() {
     final context = settingsKey.currentContext;
     if (context == null) return;
-
-    final List<PiliPopupMenuItem> items = VideoFitType.values
-        .map(
-          (boxFit) => PiliPopupMenuItem(
-            title: boxFit.desc,
-            icon: const Icon(Icons.aspect_ratio, color: Colors.white, size: 16),
-            onTap: () => toggleVideoFit(boxFit),
-          ),
-        )
-        .toList();
-
-    showPiliPopupMenu(context: context, items: items);
+    showPiliPopupMenu(
+      context: context,
+      items: VideoFitType.values
+          .map(
+            (boxFit) => PiliPopupMenuItem(
+              title: boxFit.desc,
+              icon:
+                  const Icon(Icons.aspect_ratio, color: Colors.white, size: 16),
+              onTap: () => toggleVideoFit(boxFit),
+            ),
+          )
+          .toList(),
+    );
   }
 }
