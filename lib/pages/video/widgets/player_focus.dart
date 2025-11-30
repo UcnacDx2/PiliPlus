@@ -12,6 +12,7 @@ import 'package:flutter/services.dart'
     show KeyDownEvent, KeyUpEvent, LogicalKeyboardKey, HardwareKeyboard;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
+import 'package:PiliPlus/common/widgets/tv_popup_menu.dart';
 
 class PlayerFocus extends StatelessWidget {
   const PlayerFocus({
@@ -221,7 +222,14 @@ class PlayerFocus extends StatelessWidget {
         case LogicalKeyboardKey.contextMenu:
           if (plPlayerController.isLive || (canPlay?.call() ?? false)) {
             if (hasPlayer) {
-              onShowMenu?.call();
+              showDialog(
+                  context: Get.context!,
+                  builder: (context) {
+                    return TvPopupMenu(
+                      focusData: plPlayerController,
+                      contextType: 'videoPlayer',
+                    );
+                  });
             }
           }
           return true;

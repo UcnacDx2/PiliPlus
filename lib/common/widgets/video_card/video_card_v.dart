@@ -3,6 +3,7 @@ import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
+import 'package:PiliPlus/common/widgets/tv_popup_menu.dart';
 import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
 import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/http/video.dart';
@@ -125,7 +126,13 @@ class _VideoCardVState extends State<VideoCardV> {
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
             event.logicalKey == LogicalKeyboardKey.contextMenu) {
-          _menuKey.currentState?.showButtonMenu();
+          showDialog(
+            context: context,
+            builder: (context) => TvPopupMenu(
+              focusData: widget.videoItem,
+              contextType: 'videoCard',
+            ),
+          );
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
