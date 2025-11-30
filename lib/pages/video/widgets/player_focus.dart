@@ -227,9 +227,6 @@ class PlayerFocus extends StatelessWidget {
           }
           return true;
         case LogicalKeyboardKey.contextMenu:
-          if (node.context != null) {
-            TvMenuManager().showTvMenu(node.context!);
-          }
           return true;
       }
 
