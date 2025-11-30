@@ -41,10 +41,6 @@ class VideoCardV extends StatefulWidget {
 }
 
 class _VideoCardVState extends State<VideoCardV> {
-  // [Feat] TV 菜单键支持
-  final GlobalKey<VideoPopupMenuState> _menuKey =
-      GlobalKey<VideoPopupMenuState>();
-  
   // [Main] 首帧图支持
   String? _firstFrame;
 
@@ -114,21 +110,15 @@ class _VideoCardVState extends State<VideoCardV> {
   @override
   Widget build(BuildContext context) {
     void onLongPress() => imageSaveDialog(
-      title: widget.videoItem.title,
-      cover: widget.videoItem.cover,
-      bvid: widget.videoItem.bvid,
-    );
-    // [Feat] Focus 包裹
-    return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.contextMenu) {
-          _menuKey.currentState?.showButtonMenu();
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
+          title: widget.videoItem.title,
+          cover: widget.videoItem.cover,
+          bvid: widget.videoItem.bvid,
+        );
+    final GlobalKey<VideoPopupMenuState> menuKey =
+        GlobalKey<VideoPopupMenuState>();
+    return FocusableActionDetector(
+      onShowContextMenu: (details) {
+        menuKey.currentState!.showButtonMenu();
       },
       child: Stack(
         clipBehavior: Clip.none,
@@ -138,7 +128,11 @@ class _VideoCardVState extends State<VideoCardV> {
             child: InkWell(
               onTap: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
               onLongPress: onLongPress,
-              onSecondaryTap: Utils.isMobile ? null : onLongPress,
+              onSecondaryTap: Utils.isMobile
+                  ? null
+                  : (details) {
+                      menuKey.currentState!.showButtonMenu();
+                    },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -151,7 +145,6 @@ class _VideoCardVState extends State<VideoCardV> {
                         return Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            // [Main] 首帧图逻辑
                             NetworkImgLayer(
                               src: _firstFrame ??
                                   widget.videoItem.firstFrame ??
@@ -186,8 +179,7 @@ class _VideoCardVState extends State<VideoCardV> {
               bottom: -2,
               child: ExcludeFocus(
                 child: VideoPopupMenu(
-                  // [Feat] 绑定 Key
-                  key: _menuKey,
+                  key: menuKey,
                   size: 29,
                   iconSize: 17,
                   videoItem: widget.videoItem,
