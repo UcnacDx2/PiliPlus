@@ -4,6 +4,7 @@ import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -65,7 +66,7 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
         title: const Text('稍后再看'),
         onTap: () {
           Get.back();
-          introController.viewLater(aid: videoItem.aid!);
+          introController.viewLater();
         },
       ),
     ];
