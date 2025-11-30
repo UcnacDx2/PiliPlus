@@ -165,7 +165,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       plPlayerController!
         ..addStatusLister(playerListener)
         ..addPositionListener(positionListener);
-      await plPlayerController!.autoEnterFullscreen();
     }
   }
 
