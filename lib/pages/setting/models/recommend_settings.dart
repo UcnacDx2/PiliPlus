@@ -84,7 +84,7 @@ List<SettingsModel> get recommendSettings => [
         title: '视频时长',
         suffix: 's',
         key: SettingBoxKey.minDurationForRcmd,
-        values: [0, 30, 60, 90, 120],
+        values: [0, 30, 60, 90, 120, 900],
         onChanged: (value) => RecommendFilter.minDurationForRcmd = value,
       ),
       getVideoFilterSelectModel(
