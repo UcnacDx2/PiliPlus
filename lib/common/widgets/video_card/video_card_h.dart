@@ -225,7 +225,7 @@ class _VideoCardHState extends State<VideoCardH> {
                                 PBadge(
                                   text: progress == -1
                                       ? '已看完'
-                                      : '${DurationUtils.formatDuration(progress)}/${DurationUtils.formatDuration(widget.videoItem.duration)}',
+                                      : '${DurationUtils.formatDuration(progress)}/${DurationUtils.formatDuration(widget.videoItem.duration ?? 0)}',
                                   right: 6,
                                   bottom: 8,
                                   type: PBadgeType.gray,
@@ -237,13 +237,13 @@ class _VideoCardHState extends State<VideoCardH> {
                                   child: videoProgressIndicator(
                                     progress == -1
                                         ? 1
-                                        : progress / widget.videoItem.duration,
+                                        : progress / (widget.videoItem.duration ?? 1),
                                   ),
                                 ),
-                              ] else if (widget.videoItem.duration > 0)
+                              ] else if ((widget.videoItem.duration ?? 0) > 0)
                                 PBadge(
                                   text: DurationUtils.formatDuration(
-                                    widget.videoItem.duration,
+                                    widget.videoItem.duration!,
                                   ),
                                   right: 6.0,
                                   bottom: 6.0,
