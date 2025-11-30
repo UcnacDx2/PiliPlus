@@ -35,6 +35,7 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
       default:
         return [
           ListTile(
+            autofocus: true,
             leading: const Icon(Icons.exit_to_app),
             title: const Text('退出'),
             onTap: () => SystemNavigator.pop(),
@@ -48,6 +49,7 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
     final UgcIntroController introController = Get.find<UgcIntroController>();
     return [
       ListTile(
+        autofocus: true,
         leading: const Icon(Icons.play_arrow_outlined),
         title: const Text('立即播放'),
         onTap: () {
@@ -77,6 +79,7 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
     final introController = Get.find<CommonIntroController>();
     return [
       ListTile(
+        autofocus: true,
         leading: const Icon(Icons.speed_outlined),
         title: const Text('倍速播放'),
         onTap: () {
@@ -141,9 +144,9 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return AlertDialog(
-      contentPadding: EdgeInsets.zero,
-      content: Material(
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Material(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         child: SizedBox(
