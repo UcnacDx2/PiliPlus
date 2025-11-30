@@ -168,7 +168,7 @@ class MainActivity : AudioServiceActivity() {
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             val pressedDuration = event.eventTime - backPressedKeyDownTime
-            if (pressedDuration >= 5000) {
+            if (pressedDuration >= 3500) {
                 finish()
             } else {
                 methodChannel.invokeMethod("onBackPressed", null)
