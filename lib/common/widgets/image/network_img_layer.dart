@@ -95,7 +95,8 @@ class _NetworkImgLayerState extends State<NetworkImgLayer> {
   @override
   void didUpdateWidget(covariant NetworkImgLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.src != oldWidget.src) {
+    if (widget.src != oldWidget.src ||
+        widget.firstFrame != oldWidget.firstFrame) {
       setState(() {
         _activeSrc = widget.src;
       });
