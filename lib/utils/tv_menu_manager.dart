@@ -3,7 +3,7 @@ import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/model_video.dart';
 import 'package:PiliPlus/models/tv_menu_context.dart';
-import 'package:PiliPlus/pages/video/index.dart';
+import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';

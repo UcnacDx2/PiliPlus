@@ -1,5 +1,5 @@
-import 'package:PiliPlus/pages/video/index.dart';
-import 'package:PiliPlus/plugin/pl_player/index.dart';
+import 'package:PiliPlus/pages/video/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:flutter/material.dart';
 
 class SetDanmakuPanel extends StatelessWidget {
