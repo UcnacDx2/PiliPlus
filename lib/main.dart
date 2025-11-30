@@ -16,7 +16,7 @@ import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/calc_window_position.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
-import 'package:PiliPlus/utils/context_menu.dart';
+import 'package:PiliPlus/utils/context_menu.dart' as pili_context;
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
@@ -343,7 +343,7 @@ class MyApp extends StatelessWidget {
                       return KeyEventResult.handled;
                     }
                     if (event.logicalKey == LogicalKeyboardKey.contextMenu) {
-                      ContextMenu.onKey(context, event);
+                      pili_context.ContextMenu.onKey(context, event);
                       return KeyEventResult.handled;
                     }
                   }

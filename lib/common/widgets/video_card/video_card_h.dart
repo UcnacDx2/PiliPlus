@@ -17,6 +17,7 @@ import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
+import 'package:PiliPlus/utils/context_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter/services.dart'; // 必须导入，用于 LogicalKeyboardKey
@@ -40,6 +41,8 @@ class VideoCardH extends StatefulWidget {
 }
 
 class _VideoCardHState extends State<VideoCardH> {
+  final GlobalKey<VideoPopupMenuState> _menuKey =
+      GlobalKey<VideoPopupMenuState>();
   // [Main] 首帧图支持
   String? _firstFrame;
 
@@ -155,13 +158,11 @@ class _VideoCardHState extends State<VideoCardH> {
       cover: widget.videoItem.cover,
     );
     
-    final GlobalKey<VideoPopupMenuState> menuKey =
-        GlobalKey<VideoPopupMenuState>();
     return Material(
       type: MaterialType.transparency,
       child: FocusableActionDetector(
-        onShowContextMenu: (details) {
-          menuKey.currentState!.showButtonMenu();
+        actions: {
+          ShowVideoMenuIntent: ShowVideoMenuAction(_menuKey),
         },
         child: Stack(
           clipBehavior: Clip.none,
@@ -171,7 +172,7 @@ class _VideoCardHState extends State<VideoCardH> {
               onSecondaryTap: Utils.isMobile
                   ? null
                   : (details) {
-                      menuKey.currentState!.showButtonMenu();
+                      _menuKey.currentState?.showButtonMenu();
                     },
               onTap: widget.onTap ?? _onTap,
               child: Padding(
@@ -257,7 +258,7 @@ class _VideoCardHState extends State<VideoCardH> {
               right: 12,
               child: ExcludeFocus(
                 child: VideoPopupMenu(
-                  key: menuKey,
+                  key: _menuKey,
                   size: 29,
                   iconSize: 17,
                   videoItem: widget.videoItem,

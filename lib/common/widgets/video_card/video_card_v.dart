@@ -13,6 +13,7 @@ import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
+import 'package:PiliPlus/utils/context_menu.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
@@ -41,6 +42,8 @@ class VideoCardV extends StatefulWidget {
 }
 
 class _VideoCardVState extends State<VideoCardV> {
+  final GlobalKey<VideoPopupMenuState> _menuKey =
+      GlobalKey<VideoPopupMenuState>();
   // [Main] 首帧图支持
   String? _firstFrame;
 
@@ -114,11 +117,9 @@ class _VideoCardVState extends State<VideoCardV> {
           cover: widget.videoItem.cover,
           bvid: widget.videoItem.bvid,
         );
-    final GlobalKey<VideoPopupMenuState> menuKey =
-        GlobalKey<VideoPopupMenuState>();
     return FocusableActionDetector(
-      onShowContextMenu: (details) {
-        menuKey.currentState!.showButtonMenu();
+      actions: {
+        ShowVideoMenuIntent: ShowVideoMenuAction(_menuKey),
       },
       child: Stack(
         clipBehavior: Clip.none,
@@ -131,7 +132,7 @@ class _VideoCardVState extends State<VideoCardV> {
               onSecondaryTap: Utils.isMobile
                   ? null
                   : (details) {
-                      menuKey.currentState!.showButtonMenu();
+                      _menuKey.currentState?.showButtonMenu();
                     },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,7 +180,7 @@ class _VideoCardVState extends State<VideoCardV> {
               bottom: -2,
               child: ExcludeFocus(
                 child: VideoPopupMenu(
-                  key: menuKey,
+                  key: _menuKey,
                   size: 29,
                   iconSize: 17,
                   videoItem: widget.videoItem,
