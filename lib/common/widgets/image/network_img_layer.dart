@@ -25,9 +25,9 @@ bool _isImageMostlyDark(Uint8List imageBytes) {
   for (int y = 0; y < image.height; y++) {
     for (int x = 0; x < image.width; x++) {
       final pixel = image.getPixel(x, y);
-      final r = (pixel >> 16) & 0xFF;
-      final g = (pixel >> 8) & 0xFF;
-      final b = pixel & 0xFF;
+      final r = pixel.r;
+      final g = pixel.g;
+      final b = pixel.b;
       final brightness = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
       if (brightness < _kBrightnessThreshold) {
         darkPixels++;
