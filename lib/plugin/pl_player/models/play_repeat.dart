@@ -9,3 +9,11 @@ enum PlayRepeat {
   final String desc;
   const PlayRepeat(this.desc);
 }
+
+extension PlayRepeatExtension on PlayRepeat {
+  PlayRepeat get next {
+    final values = PlayRepeat.values;
+    final nextIndex = (index + 1) % values.length;
+    return values[nextIndex];
+  }
+}

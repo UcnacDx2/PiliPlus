@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart'; // 必须导入
+import 'package:get/get.dart';
 
 // 视频卡片 - 垂直布局
 class VideoCardV extends StatefulWidget {
@@ -126,13 +127,17 @@ class _VideoCardVState extends State<VideoCardV> {
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
             event.logicalKey == LogicalKeyboardKey.contextMenu) {
-          showDialog(
-            context: context,
-            builder: (context) => TvPopupMenu(
-              focusData: widget.videoItem,
-              contextType: 'videoCard',
-            ),
-          );
+          if (GetPlatform.isAndroid) {
+            showDialog(
+              context: context,
+              builder: (context) => TvPopupMenu(
+                focusData: widget.videoItem,
+                contextType: 'videoCard',
+              ),
+            );
+          } else {
+            _menuKey.currentState?.showButtonMenu();
+          }
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;

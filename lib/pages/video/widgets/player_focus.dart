@@ -222,14 +222,18 @@ class PlayerFocus extends StatelessWidget {
         case LogicalKeyboardKey.contextMenu:
           if (plPlayerController.isLive || (canPlay?.call() ?? false)) {
             if (hasPlayer) {
-              showDialog(
-                  context: Get.context!,
-                  builder: (context) {
-                    return TvPopupMenu(
-                      focusData: plPlayerController,
-                      contextType: 'videoPlayer',
-                    );
-                  });
+              if (GetPlatform.isAndroid) {
+                showDialog(
+                    context: Get.context!,
+                    builder: (context) {
+                      return TvPopupMenu(
+                        focusData: plPlayerController,
+                        contextType: 'videoPlayer',
+                      );
+                    });
+              } else {
+                onShowMenu?.call();
+              }
             }
           }
           return true;

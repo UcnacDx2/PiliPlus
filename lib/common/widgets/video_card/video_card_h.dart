@@ -21,6 +21,7 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter/services.dart'; // 必须导入，用于 LogicalKeyboardKey
+import 'package:get/get.dart';
 
 // 视频卡片 - 水平布局
 class VideoCardH extends StatefulWidget {
@@ -169,13 +170,17 @@ class _VideoCardHState extends State<VideoCardH> {
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent &&
               event.logicalKey == LogicalKeyboardKey.contextMenu) {
-            showDialog(
-              context: context,
-              builder: (context) => TvPopupMenu(
-                focusData: widget.videoItem,
-                contextType: 'videoCard',
-              ),
-            );
+            if (GetPlatform.isAndroid) {
+              showDialog(
+                context: context,
+                builder: (context) => TvPopupMenu(
+                  focusData: widget.videoItem,
+                  contextType: 'videoCard',
+                ),
+              );
+            } else {
+              _menuKey.currentState?.showButtonMenu();
+            }
             return KeyEventResult.handled;
           }
           return KeyEventResult.ignored;

@@ -53,7 +53,7 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
           Get.back();
           PageUtils.toVideoPage(
             bvid: videoItem.bvid,
-            cid: videoItem.cid,
+            cid: videoItem.cid ?? 0,
             aid: videoItem.aid,
             cover: videoItem.cover,
             title: videoItem.title,
@@ -65,8 +65,7 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
         title: const Text('稍后再看'),
         onTap: () {
           Get.back();
-          introController.viewLater(
-              bvid: videoItem.bvid, aid: videoItem.aid!);
+          introController.viewLater(aid: videoItem.aid!);
         },
       ),
     ];
