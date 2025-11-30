@@ -51,7 +51,9 @@ class AccountSwitchController extends GetxController {
   }
 
   Future<void> switchAccount(Account account) async {
-    await Accounts.set(AccountType.main, account);
+    for (var type in AccountType.values) {
+      await Accounts.set(type, account);
+    }
     Get.back();
   }
 
