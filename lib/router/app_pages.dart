@@ -245,6 +245,7 @@ class CustomGetPage extends GetPage<dynamic> {
   CustomGetPage({
     required super.name,
     required super.page,
+    super.binding,
     bool fullscreen = false,
     super.transitionDuration,
   }) : super(
