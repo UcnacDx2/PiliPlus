@@ -1903,10 +1903,11 @@ class PlPlayerController {
     final context = settingsKey.currentContext;
     if (context == null) return;
 
-    final items = VideoFitType.values
+    final List<PiliPopupMenuItem> items = VideoFitType.values
         .map(
           (boxFit) => PiliPopupMenuItem(
             title: boxFit.desc,
+            icon: const Icon(Icons.aspect_ratio, color: Colors.white, size: 16),
             onTap: () => toggleVideoFit(boxFit),
           ),
         )
