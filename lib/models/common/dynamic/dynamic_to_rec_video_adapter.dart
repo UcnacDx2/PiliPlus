@@ -8,7 +8,7 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
   final dyn.DynamicItemModel item;
 
   DynamicToRecVideoAdapter(this.item) {
-    aid = item.modules?.moduleAuthor?.mid;
+    aid = item.modules?.moduleDynamic?.major?.archive?.aid;
     bvid = item.modules?.moduleDynamic?.major?.archive?.bvid;
     cid = item.modules?.moduleDynamic?.major?.archive?.cid;
     goto = item.modules?.moduleDynamic?.major?.archive?.goto ?? 'av';
@@ -19,11 +19,16 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
 
     final durationText =
         item.modules?.moduleDynamic?.major?.archive?.durationText;
-    if (durationText != null) {
+    if (durationText != null && durationText.isNotEmpty) {
       final parts = durationText.split(':');
-      if (parts.length == 2) {
-        duration = (int.tryParse(parts[0]) ?? 0) * 60 + (int.tryParse(parts[1]) ?? 0);
-      }
+      duration = switch (parts.length) {
+        2 => (int.tryParse(parts[0]) ?? 0) * 60 + (int.tryParse(parts[1]) ?? 0),
+        3 =>
+          (int.tryParse(parts[0]) ?? 0) * 3600 +
+              (int.tryParse(parts[1]) ?? 0) * 60 +
+              (int.tryParse(parts[2]) ?? 0),
+        _ => null
+      };
     }
 
     pubdate = item.modules?.moduleAuthor?.pubTs;
@@ -33,8 +38,10 @@ class DynamicToRecVideoAdapter extends BaseRecVideoItemModel {
       face: item.modules?.moduleAuthor?.face,
     );
     stat = model_video.Stat.fromJson({
-      "view": Utils.safeToInt(item.modules?.moduleDynamic?.major?.archive?.stat?.play),
-      "danmaku": Utils.safeToInt(item.modules?.moduleDynamic?.major?.archive?.stat?.danmu),
+      "view":
+          Utils.safeToNum(item.modules?.moduleDynamic?.major?.archive?.stat?.play),
+      "danmaku":
+          Utils.safeToNum(item.modules?.moduleDynamic?.major?.archive?.stat?.danmu),
       "like": item.modules?.moduleStat?.like?.count,
     });
     isFollowed = item.modules?.moduleAuthor?.isFollow ?? false;

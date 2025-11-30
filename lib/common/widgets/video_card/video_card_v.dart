@@ -160,7 +160,7 @@ class _VideoCardVState extends State<VideoCardV> {
                               height: maxHeight,
                               radius: 0,
                             ),
-                            if (widget.videoItem.duration > 0)
+                            if ((widget.videoItem.duration ?? 0) > 0)
                               PBadge(
                                 bottom: 6,
                                 right: 7,

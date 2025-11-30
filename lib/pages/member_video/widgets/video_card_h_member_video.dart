@@ -169,11 +169,15 @@ class VideoCardHMemberVideo extends StatelessWidget {
                                               type: PBadgeType.gray,
                                             );
                                           } catch (_) {
+                                            if ((videoItem.duration ?? 0) <=
+                                                0) {
+                                              return const SizedBox.shrink();
+                                            }
                                             return PBadge(
                                               text:
                                                   DurationUtils.formatDuration(
-                                                    videoItem.duration,
-                                                  ),
+                                                videoItem.duration!,
+                                              ),
                                               right: 6.0,
                                               bottom: 6.0,
                                               type: PBadgeType.gray,
@@ -181,10 +185,10 @@ class VideoCardHMemberVideo extends StatelessWidget {
                                           }
                                         },
                                       ),
-                                    ] else if (videoItem.duration > 0)
+                                    ] else if ((videoItem.duration ?? 0) > 0)
                                       PBadge(
                                         text: DurationUtils.formatDuration(
-                                          videoItem.duration,
+                                          videoItem.duration!,
                                         ),
                                         right: 6.0,
                                         bottom: 6.0,
