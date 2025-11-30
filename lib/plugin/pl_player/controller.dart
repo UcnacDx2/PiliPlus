@@ -559,18 +559,39 @@ class PlPlayerController {
       enableHeart = false;
     }
 
-    if (Platform.isAndroid && autoPiP) {
-      Utils.sdkInt.then((sdkInt) {
-        if (sdkInt < 31) {
-          Utils.channel.setMethodCallHandler((call) async {
-            if (call.method == 'onUserLeaveHint') {
-              if (playerStatus.playing && _isCurrVideoPage) {
-                enterPip();
+    if (Platform.isAndroid) {
+      Utils.channel.setMethodCallHandler((call) async {
+        if (call.method == 'onBackPressed') {
+          Services.hardwareKeyboard.handleKeyEvent(
+            const RawKeyEventDataAndroid(
+              keyCode: 111, // KEYCODE_ESCAPE
+              metaState: 0,
+              action: RawKeyEventDataAndroid.kActionDown,
+              physicalKey: PhysicalKeyboardKey.escape,
+              logicalKey: LogicalKeyboardKey.escape,
+            ).physical,
+          );
+          Services.hardwareKeyboard.handleKeyEvent(
+            const RawKeyEventDataAndroid(
+              keyCode: 111, // KEYCODE_ESCAPE
+              metaState: 0,
+              action: RawKeyEventDataAndroid.kActionUp,
+              physicalKey: PhysicalKeyboardKey.escape,
+              logicalKey: LogicalKeyboardKey.escape,
+            ).physical,
+          );
+        } else if (autoPiP) {
+          Utils.sdkInt.then((sdkInt) {
+            if (sdkInt < 31) {
+              if (call.method == 'onUserLeaveHint') {
+                if (playerStatus.playing && _isCurrVideoPage) {
+                  enterPip();
+                }
               }
+            } else {
+              _shouldSetPip = true;
             }
           });
-        } else {
-          _shouldSetPip = true;
         }
       });
     }

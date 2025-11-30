@@ -10,12 +10,10 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
-import android.view.KeyEvent
 import android.view.WindowManager.LayoutParams
 import androidx.core.net.toUri
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.embedding.engine.system.KeyEventChannel
 import io.flutter.plugin.common.MethodChannel
 import kotlin.system.exitProcess
 
@@ -61,7 +59,7 @@ class MainActivity : AudioServiceActivity() {
                             putExtra("comment_text", commentText)
                             if (pictures != null)
                                 putExtra("pictures", pictures)
-                            putExtra("source_id", sourceId)
+                            putExtra("sourceId", sourceId)
                             putExtra("uid", uid.toLong())
                             putStringArrayListExtra("cookies", ArrayList(cookies))
                         }
@@ -169,12 +167,7 @@ class MainActivity : AudioServiceActivity() {
         if (backPressedCount == 3) {
             finish()
         } else {
-            flutterEngine?.keyEventChannel?.keyDown(
-                KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ESCAPE),
-            )
-            flutterEngine?.keyEventChannel?.keyUp(
-                KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ESCAPE),
-            )
+            methodChannel.invokeMethod("onBackPressed", null)
         }
     }
 
