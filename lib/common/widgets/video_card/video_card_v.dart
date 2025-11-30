@@ -153,9 +153,8 @@ class _VideoCardVState extends State<VideoCardV> {
                           children: [
                             // [Main] 首帧图逻辑
                             NetworkImgLayer(
-                              src: _firstFrame ??
-                                  widget.videoItem.firstFrame ??
-                                  widget.videoItem.cover,
+                              src: widget.videoItem.cover,
+                              firstFrame: _firstFrame ?? widget.videoItem.firstFrame,
                               width: maxWidth,
                               height: maxHeight,
                               radius: 0,

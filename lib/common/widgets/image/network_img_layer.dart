@@ -1,15 +1,48 @@
+import 'dart:developer';
+import 'dart:typed_data';
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/models/common/image_type.dart';
 import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as img;
 
-class NetworkImgLayer extends StatelessWidget {
+const double _kBrightnessThreshold = 0.2;
+const double _kDarkPixelPercentage = 0.5;
+
+bool _isImageMostlyDark(Uint8List imageBytes) {
+  final image = img.decodeImage(imageBytes);
+  if (image == null) {
+    return false;
+  }
+  int darkPixels = 0;
+  final totalPixels = image.width * image.height;
+
+  for (int y = 0; y < image.height; y++) {
+    for (int x = 0; x < image.width; x++) {
+      final pixel = image.getPixel(x, y);
+      final brightness = (img.getRed(pixel) * 0.299 +
+              img.getGreen(pixel) * 0.587 +
+              img.getBlue(pixel) * 0.114) /
+          255;
+      if (brightness < _kBrightnessThreshold) {
+        darkPixels++;
+      }
+    }
+  }
+
+  return (darkPixels / totalPixels) > _kDarkPixelPercentage;
+}
+
+class NetworkImgLayer extends StatefulWidget {
   const NetworkImgLayer({
     super.key,
     required this.src,
+    this.firstFrame,
     required this.width,
     this.height,
     this.type = ImageType.def,
@@ -27,6 +60,7 @@ class NetworkImgLayer extends StatelessWidget {
   });
 
   final String? src;
+  final String? firstFrame;
   final double width;
   final double? height;
   final ImageType type;
@@ -45,31 +79,77 @@ class NetworkImgLayer extends StatelessWidget {
   static bool reduce = false;
 
   @override
+  State<NetworkImgLayer> createState() => _NetworkImgLayerState();
+}
+
+class _NetworkImgLayerState extends State<NetworkImgLayer> {
+  late String? _activeSrc;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeSrc = widget.src;
+    _processFirstFrame();
+  }
+
+  @override
+  void didUpdateWidget(covariant NetworkImgLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.src != oldWidget.src) {
+      setState(() {
+        _activeSrc = widget.src;
+      });
+      _processFirstFrame();
+    }
+  }
+
+  Future<void> _processFirstFrame() async {
+    if (widget.firstFrame != null && widget.firstFrame!.isNotEmpty) {
+      try {
+        final response = await http.get(Uri.parse(widget.firstFrame!));
+        if (response.statusCode == 200) {
+          final isDark = await compute(_isImageMostlyDark, response.bodyBytes);
+          if (!isDark) {
+            if (mounted) {
+              setState(() {
+                _activeSrc = widget.firstFrame;
+              });
+            }
+          }
+        }
+      } catch (e) {
+        log('Failed to process first frame: $e');
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final noRadius = type == ImageType.emote || radius == 0;
+    final noRadius = widget.type == ImageType.emote || widget.radius == 0;
     final Widget child;
 
-    if (src?.isNotEmpty == true) {
+    if (_activeSrc?.isNotEmpty == true) {
       child = noRadius
           ? _buildImage(context, noRadius)
-          : type == ImageType.avatar
-          ? ClipOval(child: _buildImage(context, noRadius))
-          : ClipRRect(
-              borderRadius: radius != null
-                  ? BorderRadius.circular(radius!)
-                  : StyleString.mdRadius,
-              child: _buildImage(context, noRadius),
-            );
+          : widget.type == ImageType.avatar
+              ? ClipOval(child: _buildImage(context, noRadius))
+              : ClipRRect(
+                  borderRadius: widget.radius != null
+                      ? BorderRadius.circular(widget.radius!)
+                      : StyleString.mdRadius,
+                  child: _buildImage(context, noRadius),
+                );
     } else {
-      child = getPlaceHolder?.call() ?? _placeholder(context, noRadius);
+      child =
+          widget.getPlaceHolder?.call() ?? _placeholder(context, noRadius);
     }
 
-    return semanticsLabel?.isNotEmpty == true
+    return widget.semanticsLabel?.isNotEmpty == true
         ? Semantics(
             container: true,
             image: true,
             excludeSemantics: true,
-            label: semanticsLabel,
+            label: widget.semanticsLabel,
             child: child,
           )
         : child;
@@ -77,36 +157,41 @@ class NetworkImgLayer extends StatelessWidget {
 
   Widget _buildImage(BuildContext context, bool noRadius) {
     int? memCacheWidth, memCacheHeight;
-    if (height == null || forceUseCacheWidth || width <= height!) {
-      memCacheWidth = width.cacheSize(context);
+    if (widget.height == null ||
+        widget.forceUseCacheWidth ||
+        widget.width <= widget.height!) {
+      memCacheWidth = widget.width.cacheSize(context);
     } else {
-      memCacheHeight = height?.cacheSize(context);
+      memCacheHeight = widget.height?.cacheSize(context);
     }
     return CachedNetworkImage(
-      imageUrl: ImageUtils.thumbnailUrl(src, quality),
-      width: width,
-      height: height,
+      imageUrl: ImageUtils.thumbnailUrl(_activeSrc, widget.quality),
+      width: widget.width,
+      height: widget.height,
       memCacheWidth: memCacheWidth,
       memCacheHeight: memCacheHeight,
-      fit: boxFit ?? BoxFit.cover,
-      alignment: isLongPic ? Alignment.topCenter : Alignment.center,
-      fadeOutDuration: fadeOutDuration ?? const Duration(milliseconds: 120),
-      fadeInDuration: fadeInDuration ?? const Duration(milliseconds: 120),
+      fit: widget.boxFit ?? BoxFit.cover,
+      alignment: widget.isLongPic ? Alignment.topCenter : Alignment.center,
+      fadeOutDuration:
+          widget.fadeOutDuration ?? const Duration(milliseconds: 120),
+      fadeInDuration:
+          widget.fadeInDuration ?? const Duration(milliseconds: 120),
       filterQuality: FilterQuality.low,
       placeholder: (BuildContext context, String url) =>
-          getPlaceHolder?.call() ?? _placeholder(context, noRadius),
-      imageBuilder: imageBuilder,
+          widget.getPlaceHolder?.call() ?? _placeholder(context, noRadius),
+      imageBuilder: widget.imageBuilder,
       errorWidget: (context, url, error) => _placeholder(context, noRadius),
-      colorBlendMode: reduce ? BlendMode.modulate : null,
-      color: reduce ? reduceLuxColor : null,
+      colorBlendMode: NetworkImgLayer.reduce ? BlendMode.modulate : null,
+      color:
+          NetworkImgLayer.reduce ? NetworkImgLayer.reduceLuxColor : null,
     );
   }
 
   Widget _placeholder(BuildContext context, bool noRadius) {
-    final isAvatar = type == ImageType.avatar;
+    final isAvatar = widget.type == ImageType.avatar;
     return Container(
-      width: width,
-      height: height,
+      width: widget.width,
+      height: widget.height,
       clipBehavior: noRadius ? Clip.none : Clip.antiAlias,
       decoration: BoxDecoration(
         shape: isAvatar ? BoxShape.circle : BoxShape.rectangle,
@@ -115,18 +200,21 @@ class NetworkImgLayer extends StatelessWidget {
         ).colorScheme.onInverseSurface.withValues(alpha: 0.4),
         borderRadius: noRadius || isAvatar
             ? null
-            : radius != null
-            ? BorderRadius.circular(radius!)
-            : StyleString.mdRadius,
+            : widget.radius != null
+                ? BorderRadius.circular(widget.radius!)
+                : StyleString.mdRadius,
       ),
       child: Center(
         child: Image.asset(
-          isAvatar ? 'assets/images/noface.jpeg' : 'assets/images/loading.png',
-          width: width,
-          height: height,
-          cacheWidth: width.cacheSize(context),
-          colorBlendMode: reduce ? BlendMode.modulate : null,
-          color: reduce ? reduceLuxColor : null,
+          isAvatar
+              ? 'assets/images/noface.jpeg'
+              : 'assets/images/loading.png',
+          width: widget.width,
+          height: widget.height,
+          cacheWidth: widget.width.cacheSize(context),
+          colorBlendMode: NetworkImgLayer.reduce ? BlendMode.modulate : null,
+          color:
+              NetworkImgLayer.reduce ? NetworkImgLayer.reduceLuxColor : null,
         ),
       ),
     );

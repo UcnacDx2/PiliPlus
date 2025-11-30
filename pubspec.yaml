@@ -208,6 +208,7 @@ dependencies:
   crclib: ^3.0.0
   web_socket_channel: ^3.0.3
   image: ^4.5.4
+  http: ^1.2.1
   # window_manager: ^0.5.1
   window_manager:
     git:
