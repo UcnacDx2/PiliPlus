@@ -144,18 +144,17 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Material(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.all(Radius.circular(12)),
-        child: SizedBox(
-          width: 250, // Set a fixed width for the menu
-          child: ListView(
-            shrinkWrap: true,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            children: _buildMenuItems(),
-          ),
+    return AlertDialog(
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12))),
+      contentPadding: EdgeInsets.zero,
+      content: SizedBox(
+        width: 250, // Set a fixed width for the menu
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          children: _buildMenuItems(),
         ),
       ),
     );
