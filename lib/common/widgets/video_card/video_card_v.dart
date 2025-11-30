@@ -20,6 +20,7 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart';
+import 'package:PiliPlus/utils/tv_menu_manager.dart';
 import 'package:flutter/services.dart'; // 必须导入
 import 'package:get/get.dart';
 
@@ -122,25 +123,12 @@ class _VideoCardVState extends State<VideoCardV> {
     );
     // [Feat] Focus 包裹
     return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.contextMenu) {
-          if (GetPlatform.isAndroid) {
-            showDialog(
-              context: context,
-              builder: (context) => TvPopupMenu(
-                focusData: widget.videoItem,
-                contextType: 'videoCard',
-              ),
-            );
-          } else {
-            _menuKey.currentState?.showButtonMenu();
-          }
-          return KeyEventResult.handled;
+      onFocusChange: (hasFocus) {
+        if (hasFocus) {
+          TvMenuManager().register(context, 'videoCard', widget.videoItem);
+        } else {
+          TvMenuManager().unregister();
         }
-        return KeyEventResult.ignored;
       },
       child: Stack(
         clipBehavior: Clip.none,

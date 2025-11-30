@@ -23,6 +23,7 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
+import 'package:PiliPlus/utils/tv_menu_manager.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -331,6 +332,19 @@ class MyApp extends StatelessWidget {
                   }
 
                   Get.back();
+                }
+
+                if (GetPlatform.isAndroid) {
+                  return RawKeyboardListener(
+                    focusNode: FocusNode(),
+                    onKey: (event) {
+                      if (event.logicalKey == LogicalKeyboardKey.contextMenu &&
+                          event is RawKeyDownEvent) {
+                        TvMenuManager().showMenu();
+                      }
+                    },
+                    child: child,
+                  );
                 }
 
                 return Focus(

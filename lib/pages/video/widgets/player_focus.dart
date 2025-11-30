@@ -13,6 +13,7 @@ import 'package:flutter/services.dart'
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:PiliPlus/common/widgets/tv_popup_menu.dart';
+import 'package:PiliPlus/utils/tv_menu_manager.dart';
 
 class PlayerFocus extends StatelessWidget {
   const PlayerFocus({
@@ -46,6 +47,13 @@ class PlayerFocus extends StatelessWidget {
   Widget build(BuildContext context) {
     return Focus(
       autofocus: true,
+      onFocusChange: (hasFocus) {
+        if (hasFocus) {
+          TvMenuManager().register(context, 'videoPlayer', plPlayerController);
+        } else {
+          TvMenuManager().unregister();
+        }
+      },
       onKeyEvent: (node, event) {
         final handled = _handleKey(event);
         if (handled || _shouldHandle(event.logicalKey)) {
@@ -216,24 +224,6 @@ class PlayerFocus extends StatelessWidget {
           if (plPlayerController.isLive || canPlay!()) {
             if (hasPlayer) {
               plPlayerController.onDoubleTapCenter();
-            }
-          }
-          return true;
-        case LogicalKeyboardKey.contextMenu:
-          if (plPlayerController.isLive || (canPlay?.call() ?? false)) {
-            if (hasPlayer) {
-              if (GetPlatform.isAndroid) {
-                showDialog(
-                    context: Get.context!,
-                    builder: (context) {
-                      return TvPopupMenu(
-                        focusData: plPlayerController,
-                        contextType: 'videoPlayer',
-                      );
-                    });
-              } else {
-                onShowMenu?.call();
-              }
             }
           }
           return true;
