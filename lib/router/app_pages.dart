@@ -1,4 +1,6 @@
 import 'package:PiliPlus/pages/about/view.dart';
+import 'package:PiliPlus/pages/account_switch/binding.dart';
+import 'package:PiliPlus/pages/account_switch/view.dart';
 import 'package:PiliPlus/pages/article/view.dart';
 import 'package:PiliPlus/pages/article_list/view.dart';
 import 'package:PiliPlus/pages/audio/view.dart';
@@ -175,6 +177,11 @@ class Routes {
     CustomGetPage(name: '/sysMsg', page: () => const SysMsgPage()),
     // 登录页面
     CustomGetPage(name: '/loginPage', page: () => const LoginPage()),
+    // 切换账户页面
+    CustomGetPage(
+        name: '/accountSwitch',
+        page: () => const AccountSwitchPage(),
+        binding: AccountSwitchBinding()),
     // 用户动态
     CustomGetPage(
       name: '/memberDynamics',

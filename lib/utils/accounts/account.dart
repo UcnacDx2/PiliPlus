@@ -96,6 +96,10 @@ class LoginAccount extends Account {
       .cookie
       .value;
 
+  String get userId =>
+      cookieJar.domainCookies['bilibili.com']?['/']?['DedeUserID']?.cookie.value ??
+      '';
+
   late final Box<LoginAccount> _box = Accounts.account;
 
   LoginAccount(
