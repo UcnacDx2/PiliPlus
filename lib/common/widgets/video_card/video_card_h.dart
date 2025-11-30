@@ -17,7 +17,6 @@ import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
-import 'package:PiliPlus/utils/context_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter/services.dart'; // 必须导入，用于 LogicalKeyboardKey
@@ -41,8 +40,10 @@ class VideoCardH extends StatefulWidget {
 }
 
 class _VideoCardHState extends State<VideoCardH> {
+  // [Feat] TV 菜单键支持
   final GlobalKey<VideoPopupMenuState> _menuKey =
       GlobalKey<VideoPopupMenuState>();
+
   // [Main] 首帧图支持
   String? _firstFrame;
 
@@ -160,21 +161,25 @@ class _VideoCardHState extends State<VideoCardH> {
     
     return Material(
       type: MaterialType.transparency,
-      child: FocusableActionDetector(
-        actions: {
-          ShowVideoMenuIntent: ShowVideoMenuAction(_menuKey),
+      // [Feat] Focus 监听逻辑
+      child: Focus(
+        canRequestFocus: false,
+        skipTraversal: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.contextMenu) {
+            _menuKey.currentState?.showButtonMenu();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
         },
         child: Stack(
           clipBehavior: Clip.none,
           children: [
             InkWell(
               onLongPress: onLongPress,
-              onSecondaryTap: Utils.isMobile
-                  ? null
-                  : () {
-                      _menuKey.currentState?.showButtonMenu();
-                    },
-              onTap: widget.onTap ?? _onTap,
+              onSecondaryTap: Utils.isMobile ? null : onLongPress,
+              onTap: widget.onTap ?? _onTap, // 使用合并后的 onTap
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: StyleString.safeSpace,
@@ -197,6 +202,7 @@ class _VideoCardHState extends State<VideoCardH> {
                           return Stack(
                             clipBehavior: Clip.none,
                             children: [
+                              // [Main] 使用首帧图逻辑
                               NetworkImgLayer(
                                 src: _firstFrame ??
                                     widget.videoItem.firstFrame ??
@@ -214,6 +220,7 @@ class _VideoCardHState extends State<VideoCardH> {
                                     _ => PBadgeType.primary,
                                   },
                                 ),
+                              // [Main] 进度条逻辑
                               if (progress != null && progress != 0) ...[
                                 PBadge(
                                   text: progress == -1
@@ -258,6 +265,7 @@ class _VideoCardHState extends State<VideoCardH> {
               right: 12,
               child: ExcludeFocus(
                 child: VideoPopupMenu(
+                  // [Feat] 绑定 Key
                   key: _menuKey,
                   size: 29,
                   iconSize: 17,
