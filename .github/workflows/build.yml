@@ -78,11 +78,6 @@ jobs:
                   flutter-version-file: pubspec.yaml
                   cache: true
 
-            - name: apply bottom sheet patch
-              working-directory: ${{ env.FLUTTER_ROOT }}
-              run: git apply $GITHUB_WORKSPACE/lib/scripts/bottom_sheet_patch.diff
-              continue-on-error: true
-
             - name: Write key
               run: |
                   if [ ! -z "${{ secrets.SIGN_KEYSTORE_BASE64 }}" ]; then
