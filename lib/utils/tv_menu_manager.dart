@@ -83,7 +83,7 @@ class TvMenuManager {
       TvPopupMenuItem(
         icon: Icons.info_outline,
         title: '播放信息',
-        onTap: () => showPlayerInfo(
+        onTap: () => HeaderControlState.showPlayerInfo(
           context,
           plPlayerController: videoDetailCtr.plPlayerController,
         ),
