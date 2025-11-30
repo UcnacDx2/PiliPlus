@@ -20,6 +20,7 @@ import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -36,6 +37,8 @@ class _MainAppState extends State<MainApp>
     with RouteAware, WidgetsBindingObserver, WindowListener, TrayListener {
   final MainController _mainController = Get.put(MainController());
   late final _setting = GStorage.setting;
+  int _backPressCount = 0;
+  DateTime? _firstBackPressedTime;
 
   @override
   void initState() {
@@ -300,7 +303,21 @@ class _MainAppState extends State<MainApp>
               ..bottomBarStream?.add(true)
               ..setSearchBar();
           } else {
-            onBack();
+            final now = DateTime.now();
+            if (_firstBackPressedTime == null ||
+                now.difference(_firstBackPressedTime!) >
+                    const Duration(seconds: 1)) {
+              _firstBackPressedTime = now;
+              _backPressCount = 1;
+              SmartDialog.showToast('再按两次退出');
+            } else {
+              _backPressCount++;
+              if (_backPressCount >= 3) {
+                onBack();
+              } else if (_backPressCount == 2) {
+                SmartDialog.showToast('再按一次退出');
+              }
+            }
           }
         }
       },
