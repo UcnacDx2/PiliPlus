@@ -559,20 +559,23 @@ class PlPlayerController {
       enableHeart = false;
     }
 
-    if (Platform.isAndroid && autoPiP) {
-      Utils.sdkInt.then((sdkInt) {
-        if (sdkInt < 31) {
-          Utils.channel.setMethodCallHandler((call) async {
-            if (call.method == 'onUserLeaveHint') {
-              if (playerStatus.playing && _isCurrVideoPage) {
-                enterPip();
-              }
-            }
-          });
-        } else {
-          _shouldSetPip = true;
+    if (Platform.isAndroid) {
+      Utils.channel.setMethodCallHandler((call) async {
+        if (call.method == 'onBackPressed') {
+          onBackPressed();
+        } else if (autoPiP && call.method == 'onUserLeaveHint') {
+          if (playerStatus.playing && _isCurrVideoPage) {
+            enterPip();
+          }
         }
       });
+      if (autoPiP) {
+        Utils.sdkInt.then((sdkInt) {
+          if (sdkInt >= 31) {
+            _shouldSetPip = true;
+          }
+        });
+      }
     }
   }
 
@@ -1849,6 +1852,22 @@ class PlPlayerController {
     } catch (e) {
       videoShot = const Error(null);
       if (kDebugMode) debugPrint('getVideoShot: $e');
+    }
+  }
+
+  int _backButtonPressCount = 0;
+  Timer? _backButtonTimer;
+
+  void onBackPressed() {
+    _backButtonPressCount++;
+    _backButtonTimer?.cancel();
+    if (_backButtonPressCount >= 3) {
+      SystemNavigator.pop();
+    } else {
+      SmartDialog.showToast('再按${3 - _backButtonPressCount}次退出');
+      _backButtonTimer = Timer(const Duration(seconds: 1), () {
+        _backButtonPressCount = 0;
+      });
     }
   }
 

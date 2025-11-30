@@ -19,8 +19,6 @@ import kotlin.system.exitProcess
 
 class MainActivity : AudioServiceActivity() {
     private lateinit var methodChannel: MethodChannel
-    private var backPressedCount = 0
-    private var lastBackPressedTime: Long = 0
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -157,18 +155,7 @@ class MainActivity : AudioServiceActivity() {
     }
 
     override fun onBackPressed() {
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastBackPressedTime > 1500) {
-            backPressedCount = 1
-        } else {
-            backPressedCount++
-        }
-        lastBackPressedTime = currentTime
-        if (backPressedCount == 3) {
-            finish()
-        } else {
-            super.onBackPressed()
-        }
+        methodChannel.invokeMethod("onBackPressed", null)
     }
 
     override fun onDestroy() {
