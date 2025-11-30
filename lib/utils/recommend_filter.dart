@@ -36,8 +36,8 @@ class RecommendFilter {
   }
 
   static bool filterAll(BaseVideoItemModel videoItem) {
-    return (videoItem.duration > 0 &&
-            videoItem.duration < minDurationForRcmd) ||
+    final duration = videoItem.duration ?? 0;
+    return (duration > 0 && duration < minDurationForRcmd) ||
         filterLikeRatio(videoItem.stat.like, videoItem.stat.view) ||
         filterTitle(videoItem.title);
   }

@@ -93,7 +93,7 @@ class VideoCardVMemberHome extends StatelessWidget {
                         height: maxHeight,
                         radius: 0,
                       ),
-                      if (videoItem.duration > 0)
+                      if ((videoItem.duration ?? 0) > 0)
                         PBadge(
                           bottom: 6,
                           right: 7,
