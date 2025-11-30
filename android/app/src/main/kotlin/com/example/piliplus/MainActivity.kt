@@ -10,7 +10,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
-import android.view.KeyEvent
 import android.view.WindowManager.LayoutParams
 import androidx.core.net.toUri
 import com.ryanheise.audioservice.AudioServiceActivity
@@ -20,7 +19,8 @@ import kotlin.system.exitProcess
 
 class MainActivity : AudioServiceActivity() {
     private lateinit var methodChannel: MethodChannel
-    private var backPressedKeyDownTime: Long = 0
+    private var backPressedCount = 0
+    private var lastBackPressedTime: Long = 0
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -156,26 +156,19 @@ class MainActivity : AudioServiceActivity() {
         }
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (event.repeatCount == 0) {
-                backPressedKeyDownTime = event.eventTime
-            }
+    override fun onBackPressed() {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastBackPressedTime > 1500) {
+            backPressedCount = 1
+        } else {
+            backPressedCount++
         }
-        return super.onKeyDown(keyCode, event)
-    }
-
-    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            val pressedDuration = event.eventTime - backPressedKeyDownTime
-            if (pressedDuration >= 3500) {
-                finish()
-            } else {
-                methodChannel.invokeMethod("onBackPressed", null)
-            }
-            return true
+        lastBackPressedTime = currentTime
+        if (backPressedCount == 3) {
+            finish()
+        } else {
+            super.onBackPressed()
         }
-        return super.onKeyUp(keyCode, event)
     }
 
     override fun onDestroy() {
