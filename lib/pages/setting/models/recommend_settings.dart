@@ -79,6 +79,15 @@ List<SettingsModel> get recommendSettings => [
           VideoHttp.enableFilter = value.pattern.isNotEmpty;
         },
       ),
+      getBanwordModel(
+        context: Get.context!,
+        title: 'App推荐/热门/排行榜: 知识|网络游戏|射击游戏|数码|社科·法律·心理|社会观察',
+        key: SettingBoxKey.banWordForZone,
+        onChanged: (value) {
+          VideoHttp.zoneRegExp = value;
+          VideoHttp.enableFilter = value.pattern.isNotEmpty;
+        },
+      ),
       getVideoFilterSelectModel(
         context: Get.context!,
         title: '视频时长',
