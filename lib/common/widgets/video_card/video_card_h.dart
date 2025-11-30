@@ -171,7 +171,7 @@ class _VideoCardHState extends State<VideoCardH> {
               onLongPress: onLongPress,
               onSecondaryTap: Utils.isMobile
                   ? null
-                  : (details) {
+                  : () {
                       _menuKey.currentState?.showButtonMenu();
                     },
               onTap: widget.onTap ?? _onTap,

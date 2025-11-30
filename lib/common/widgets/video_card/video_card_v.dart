@@ -131,7 +131,7 @@ class _VideoCardVState extends State<VideoCardV> {
               onLongPress: onLongPress,
               onSecondaryTap: Utils.isMobile
                   ? null
-                  : (details) {
+                  : () {
                       _menuKey.currentState?.showButtonMenu();
                     },
               child: Column(
