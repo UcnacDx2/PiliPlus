@@ -46,6 +46,12 @@ import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 List<SettingsModel> get extraSettings => [
+      SettingsModel(
+        settingsType: SettingsType.normal,
+        title: '切换账户',
+        leading: const Icon(Icons.switch_account_outlined),
+        onTap: (_) => Get.toNamed('/accountSwitch'),
+      ),
       if (Utils.isDesktop) ...[
         SettingsModel(
           settingsType: SettingsType.sw1tch,
