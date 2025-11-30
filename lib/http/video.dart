@@ -222,13 +222,13 @@ class VideoHttp {
       'cur_language': ?language,
     });
 
+    var originalBaseUrl = Request.dio.options.baseUrl;
     try {
-      var dio = Request();
       if (videoType == VideoType.pgc &&
           (seasonType == 1 || seasonType == 4)) {
-        dio.options.baseUrl = Pref.pgcProxyServer;
+        Request.dio.options.baseUrl = Pref.pgcProxyServer;
       }
-      var res = await dio.get(
+      var res = await Request().get(
         videoType.api,
         queryParameters: params,
       );
@@ -268,6 +268,8 @@ class VideoHttp {
       return Error(_parseVideoErr(res.data['code'], res.data['message']));
     } catch (e, s) {
       return Error('$e\n\n$s');
+    } finally {
+      Request.dio.options.baseUrl = originalBaseUrl;
     }
   }
 
