@@ -30,7 +30,7 @@ class ContextMenu {
 
     // Check if the focused widget is inside the video player
     if (focusedContext.findAncestorWidgetOfExactType<PLVideoPlayer>() != null) {
-      PlPlayerController.instance?.showSettings.call();
+      PlPlayerController.instance?.showSettings();
       return;
     }
 

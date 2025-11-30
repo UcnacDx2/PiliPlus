@@ -571,35 +571,39 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
       /// 画面比例
       BottomControlType.fit => Obx(
-        () => PopupMenuButton<VideoFitType>(
-          tooltip: '画面比例',
-          requestFocus: false,
-          initialValue: plPlayerController.videoFit.value,
-          color: Colors.black.withValues(alpha: 0.8),
-          itemBuilder: (context) {
-            return VideoFitType.values
-                .map(
-                  (boxFit) => PopupMenuItem<VideoFitType>(
-                    height: 35,
-                    padding: const EdgeInsets.only(left: 30),
-                    value: boxFit,
-                    onTap: () => plPlayerController.toggleVideoFit(boxFit),
-                    child: Text(
-                      boxFit.desc,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+        () {
+          return PopupMenuButton<VideoFitType>(
+            key: plPlayerController.settingsKey,
+            tooltip: '画面比例',
+            requestFocus: false,
+            initialValue: plPlayerController.videoFit.value,
+            color: Colors.black.withValues(alpha: 0.8),
+            itemBuilder: (context) {
+              return VideoFitType.values
+                  .map(
+                    (boxFit) => PopupMenuItem<VideoFitType>(
+                      height: 35,
+                      padding: const EdgeInsets.only(left: 30),
+                      value: boxFit,
+                      onTap: () => plPlayerController.toggleVideoFit(boxFit),
+                      child: Text(
+                        boxFit.desc,
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 13),
+                      ),
                     ),
-                  ),
-                )
-                .toList();
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              plPlayerController.videoFit.value.desc,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
+                  )
+                  .toList();
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                plPlayerController.videoFit.value.desc,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
 
       BottomControlType.aiTranslate => Obx(

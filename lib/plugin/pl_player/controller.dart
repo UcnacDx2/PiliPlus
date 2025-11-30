@@ -28,6 +28,7 @@ import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/heart_beat_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
+import 'package:PiliPlus/common/widgets/pili_popup_menu.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/services/service_locator.dart';
@@ -60,6 +61,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:window_manager/window_manager.dart';
 
 class PlPlayerController {
+  final GlobalKey settingsKey = GlobalKey();
   Player? _videoPlayerController;
   VideoController? _videoController;
 
@@ -1895,5 +1897,21 @@ class PlPlayerController {
         SmartDialog.showToast('截图失败');
       }
     });
+  }
+
+  void showSettings() {
+    final context = settingsKey.currentContext;
+    if (context == null) return;
+
+    final items = VideoFitType.values
+        .map(
+          (boxFit) => PiliPopupMenuItem(
+            title: boxFit.desc,
+            onTap: () => toggleVideoFit(boxFit),
+          ),
+        )
+        .toList();
+
+    showPiliPopupMenu(context: context, items: items);
   }
 }
