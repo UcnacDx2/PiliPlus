@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
+import android.view.KeyEvent
 import android.view.WindowManager.LayoutParams
 import androidx.core.net.toUri
 import com.ryanheise.audioservice.AudioServiceActivity
@@ -167,7 +168,12 @@ class MainActivity : AudioServiceActivity() {
         if (backPressedCount == 3) {
             finish()
         } else {
-            super.onBackPressed()
+            flutterEngine?.keyEventChannel?.keyDown(
+                KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ESCAPE)
+            )
+            flutterEngine?.keyEventChannel?.keyUp(
+                KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ESCAPE)
+            )
         }
     }
 
