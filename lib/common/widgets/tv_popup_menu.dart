@@ -76,7 +76,7 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
       content: FocusScope(
         onKeyEvent: (node, event) {
           if (event.logicalKey == LogicalKeyboardKey.escape ||
-              event.logicalKey == LogicalKeyboardKey.back) {
+              event.logicalKey == LogicalKeyboardKey.goBack) {
             return KeyEventResult.ignored;
           }
           _handleKeyEvent(event);
