@@ -2191,7 +2191,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       return;
     }
     if (isFullScreen) {
-      videoDetailController.plPlayerController.triggerFullScreen(status: false);
+      Get.back();
       return;
     }
     if (!videoDetailController.horizontalScreen && !isPortrait) {
