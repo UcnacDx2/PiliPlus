@@ -70,11 +70,17 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
-import 'package:get/get.dart' hide ContextExtensionss;
+import 'packagepackage:get/get.dart' hide ContextExtensionss;
 import 'package:get/get_navigation/src/dialog/dialog_route.dart';
 import 'package:hive/hive.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:media_kit/media_kit.dart';
+
+import 'widgets/settings_panels/set_audio_qa.dart';
+import 'widgets/settings_panels/set_danmaku.dart';
+import 'widgets/settings_panels/set_repeat.dart';
+import 'widgets/settings_panels/set_subtitle.dart';
+import 'widgets/settings_panels/set_video_qa.dart';
 
 class VideoDetailController extends GetxController
     with GetTickerProviderStateMixin {
@@ -2020,5 +2026,66 @@ class VideoDetailController extends GetxController
     } else {
       res.toast();
     }
+  }
+
+  void showBottomSheet(StatefulWidgetBuilder builder, {double? padding}) {
+    PageUtils.showVideoBottomSheet(
+      Get.context!,
+      isFullScreen: () => plPlayerController.isFullScreen.value,
+      padding: padding,
+      child: StatefulBuilder(
+        builder: (context, setState) => plPlayerController.darkVideoPage
+            ? Theme(
+                data: Theme.of(Get.context!),
+                child: builder(Get.context!, setState),
+              )
+            : builder(context, setState),
+      ),
+    );
+  }
+
+  void showSetVideoQa() {
+    showBottomSheet(
+      (context, setState) => SetVideoQaPanel(
+        videoDetailCtr: this,
+        plPlayerController: plPlayerController,
+      ),
+    );
+  }
+
+  void showSetAudioQa() {
+    showBottomSheet(
+      (b, s) => SetAudioQaPanel(
+        videoDetailCtr: this,
+        plPlayerController: plPlayerController,
+      ),
+    );
+  }
+
+  void showSetDanmaku() {
+    showBottomSheet(
+      (b, s) => SetDanmakuPanel(
+        videoDetailCtr: this,
+        plPlayerController: plPlayerController,
+      ),
+    );
+  }
+
+  void showSetSubtitle() {
+    showBottomSheet(
+      (b, s) => SetSubtitlePanel(
+        videoDetailCtr: this,
+        plPlayerController: plPlayerController,
+      ),
+    );
+  }
+
+  void showSetRepeat() {
+    showBottomSheet(
+      (b, s) => SetRepeatPanel(
+        videoDetailCtr: this,
+        plPlayerController: plPlayerController,
+      ),
+    );
   }
 }

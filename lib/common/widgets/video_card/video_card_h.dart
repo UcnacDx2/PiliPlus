@@ -14,8 +14,10 @@ import 'package:PiliPlus/models/model_video.dart';
 import 'package:PiliPlus/models/search/result.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
+import 'package:PiliPlus/models/tv_menu_context.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/utils/tv_menu_manager.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -40,10 +42,6 @@ class VideoCardH extends StatefulWidget {
 }
 
 class _VideoCardHState extends State<VideoCardH> {
-  // [Feat] TV 菜单键支持
-  final GlobalKey<VideoPopupMenuState> _menuKey =
-      GlobalKey<VideoPopupMenuState>();
-  
   // [Main] 首帧图支持
   String? _firstFrame;
 
@@ -154,21 +152,31 @@ class _VideoCardHState extends State<VideoCardH> {
       }
     }
     void onLongPress() => imageSaveDialog(
-      bvid: widget.videoItem.bvid,
-      title: widget.videoItem.title,
-      cover: widget.videoItem.cover,
-    );
-    
+          bvid: widget.videoItem.bvid,
+          title: widget.videoItem.title,
+          cover: widget.videoItem.cover,
+        );
     return Material(
       type: MaterialType.transparency,
       // [Feat] Focus 监听逻辑
       child: Focus(
-        canRequestFocus: false,
-        skipTraversal: true,
+        onFocusChange: (hasFocus) {
+          if (hasFocus) {
+            TvMenuManager().currentContext.value = TvMenuContext(
+              type: TvMenuContextType.videoCard,
+              data: widget.videoItem,
+            );
+          } else {
+            if (TvMenuManager().currentContext.value?.data ==
+                widget.videoItem) {
+              TvMenuManager().currentContext.value = null;
+            }
+          }
+        },
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent &&
               event.logicalKey == LogicalKeyboardKey.contextMenu) {
-            _menuKey.currentState?.showButtonMenu();
+            TvMenuManager().showTvMenu(context);
             return KeyEventResult.handled;
           }
           return KeyEventResult.ignored;
@@ -237,7 +245,8 @@ class _VideoCardHState extends State<VideoCardH> {
                                   child: videoProgressIndicator(
                                     progress == -1
                                         ? 1
-                                        : progress / (widget.videoItem.duration ?? 1),
+                                        : progress /
+                                            (widget.videoItem.duration ?? 1),
                                   ),
                                 ),
                               ] else if ((widget.videoItem.duration ?? 0) > 0)
@@ -265,8 +274,6 @@ class _VideoCardHState extends State<VideoCardH> {
               right: 12,
               child: ExcludeFocus(
                 child: VideoPopupMenu(
-                  // [Feat] 绑定 Key
-                  key: _menuKey,
                   size: 29,
                   iconSize: 17,
                   videoItem: widget.videoItem,

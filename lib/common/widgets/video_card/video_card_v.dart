@@ -13,8 +13,10 @@ import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
+import 'package:PiliPlus/models/tv_menu_context.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/utils/tv_menu_manager.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -41,10 +43,6 @@ class VideoCardV extends StatefulWidget {
 }
 
 class _VideoCardVState extends State<VideoCardV> {
-  // [Feat] TV 菜单键支持
-  final GlobalKey<VideoPopupMenuState> _menuKey =
-      GlobalKey<VideoPopupMenuState>();
-  
   // [Main] 首帧图支持
   String? _firstFrame;
 
@@ -114,18 +112,28 @@ class _VideoCardVState extends State<VideoCardV> {
   @override
   Widget build(BuildContext context) {
     void onLongPress() => imageSaveDialog(
-      title: widget.videoItem.title,
-      cover: widget.videoItem.cover,
-      bvid: widget.videoItem.bvid,
-    );
+          title: widget.videoItem.title,
+          cover: widget.videoItem.cover,
+          bvid: widget.videoItem.bvid,
+        );
     // [Feat] Focus 包裹
     return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
+      onFocusChange: (hasFocus) {
+        if (hasFocus) {
+          TvMenuManager().currentContext.value = TvMenuContext(
+            type: TvMenuContextType.videoCard,
+            data: widget.videoItem,
+          );
+        } else {
+          if (TvMenuManager().currentContext.value?.data == widget.videoItem) {
+            TvMenuManager().currentContext.value = null;
+          }
+        }
+      },
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
             event.logicalKey == LogicalKeyboardKey.contextMenu) {
-          _menuKey.currentState?.showButtonMenu();
+          TvMenuManager().showTvMenu(context);
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
@@ -186,8 +194,6 @@ class _VideoCardVState extends State<VideoCardV> {
               bottom: -2,
               child: ExcludeFocus(
                 child: VideoPopupMenu(
-                  // [Feat] 绑定 Key
-                  key: _menuKey,
                   size: 29,
                   iconSize: 17,
                   videoItem: widget.videoItem,

@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:PiliPlus/models/tv_menu_context.dart';
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
+import 'package:PiliPlus/utils/tv_menu_manager.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
@@ -45,6 +47,17 @@ class PlayerFocus extends StatelessWidget {
   Widget build(BuildContext context) {
     return Focus(
       autofocus: true,
+      onFocusChange: (hasFocus) {
+        if (hasFocus) {
+          TvMenuManager().currentContext.value =
+              const TvMenuContext(type: TvMenuContextType.player);
+        } else {
+          if (TvMenuManager().currentContext.value?.type ==
+              TvMenuContextType.player) {
+            TvMenuManager().currentContext.value = null;
+          }
+        }
+      },
       onKeyEvent: (node, event) {
         final handled = _handleKey(event);
         if (handled || _shouldHandle(event.logicalKey)) {
@@ -219,11 +232,7 @@ class PlayerFocus extends StatelessWidget {
           }
           return true;
         case LogicalKeyboardKey.contextMenu:
-          if (plPlayerController.isLive || (canPlay?.call() ?? false)) {
-            if (hasPlayer) {
-              onShowMenu?.call();
-            }
-          }
+          TvMenuManager().showTvMenu(Get.context!);
           return true;
       }
 
