@@ -307,6 +307,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   @override
   void dispose() {
+    _focusNode.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _danmakuListener?.cancel();
     _tapGestureRecognizer.dispose();
@@ -1370,12 +1371,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   @override
   final FocusNode _focusNode = FocusNode();
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
 
   Widget build(BuildContext context) {
     maxWidth = widget.maxWidth;
