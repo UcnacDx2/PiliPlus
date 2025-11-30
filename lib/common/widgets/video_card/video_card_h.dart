@@ -164,6 +164,7 @@ class _VideoCardHState extends State<VideoCardH> {
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent &&
               event.logicalKey == LogicalKeyboardKey.contextMenu) {
+            // [Feat] On TV, show the unified popup menu on context menu key press.
             TVPopupMenu.show(
               context,
               videoItem: widget.videoItem,
