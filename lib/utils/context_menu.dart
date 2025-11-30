@@ -14,6 +14,8 @@ import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/pages/search/widgets/search_text.dart';
 import 'package:PiliPlus/pages/video/ai_conclusion/view.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/view.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
@@ -26,14 +28,22 @@ class ContextMenu {
     final focusedContext = FocusManager.instance.primaryFocus?.context;
     if (focusedContext == null) return;
 
+    // Check if the focused widget is inside the video player
+    if (focusedContext.findAncestorWidgetOfExactType<PLVideoPlayer>() != null) {
+      PlPlayerController.instance?.showSettings.call();
+      return;
+    }
+
     List<PiliPopupMenuItem> items = [];
 
     // Find if the focused widget is a video card
     final videoCard = _findVideoCard(FocusManager.instance.primaryFocus);
     if (videoCard is VideoCardV) {
-      items = _getVideoCardMenuItems(videoCard.videoItem, videoCard.onRemove);
+      items = _getVideoCardMenuItems(
+          focusedContext, videoCard.videoItem, videoCard.onRemove);
     } else if (videoCard is VideoCardH) {
-      items = _getVideoCardMenuItems(videoCard.videoItem, videoCard.onRemove);
+      items = _getVideoCardMenuItems(
+          focusedContext, videoCard.videoItem, videoCard.onRemove);
     }
 
     if (items.isEmpty) {
@@ -49,7 +59,7 @@ class ContextMenu {
     showPiliPopupMenu(context: focusedContext, items: items);
   }
 
-  static List<PiliPopupMenuItem> _getVideoCardMenuItems(
+  static List<PiliPopupMenuItem> _getVideoCardMenuItems(BuildContext context,
       BaseVideoItemModel videoItem, VoidCallback? onRemove) {
     return [
       if (videoItem.bvid?.isNotEmpty == true) ...[
@@ -107,9 +117,9 @@ class ContextMenu {
                 videoItem.cid!,
                 videoItem.owner.mid,
               );
-              if (res != null && Get.context != null) {
+              if (res != null) {
                 showDialog(
-                  context: Get.context!,
+                  context: context,
                   builder: (context) {
                     return Dialog(
                       child: ConstrainedBox(
@@ -189,7 +199,7 @@ class ContextMenu {
               }
 
               showDialog(
-                context: Get.context!,
+                context: context,
                 builder: (context) {
                   return AlertDialog(
                     content: SingleChildScrollView(
@@ -252,7 +262,7 @@ class ContextMenu {
               );
             } else {
               showDialog(
-                context: Get.context!,
+                context: context,
                 builder: (context) {
                   return AlertDialog(
                     content: SingleChildScrollView(
@@ -323,7 +333,7 @@ class ContextMenu {
           title: '拉黑：${videoItem.owner.name}',
           icon: const Icon(MdiIcons.cancel, size: 16),
           onTap: () => showDialog(
-            context: Get.context!,
+            context: context,
             builder: (context) {
               return AlertDialog(
                 title: const Text('提示'),

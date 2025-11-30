@@ -29,8 +29,8 @@ Future<void> showPiliPopupMenu({
     position: RelativeRect.fromLTRB(
       widgetPosition.dx,
       widgetPosition.dy + widgetSize.height,
-      widgetPosition.dx + widgetSize.width,
-      widgetPosition.dy + widgetSize.height,
+      overlay.size.width - widgetPosition.dx - widgetSize.width,
+      overlay.size.height - widgetPosition.dy - widgetSize.height,
     ),
     items: items.map((item) {
       return PopupMenuItem<VoidCallback>(
