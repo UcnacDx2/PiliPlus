@@ -54,11 +54,29 @@ abstract class Utils {
   }
 
   static int? safeToInt(dynamic value) => switch (value) {
-    int e => e,
-    String e => int.tryParse(e),
-    num e => e.toInt(),
-    _ => null,
-  };
+        int e => e,
+        String e => int.tryParse(e),
+        num e => e.toInt(),
+        _ => null,
+      };
+
+  static int? safeToNum(dynamic value) {
+    if (value == null) return null;
+    int? result;
+    if (value is int) {
+      result = value;
+    } else if (value is String) {
+      if (value.contains('万')) {
+        double? num = double.tryParse(value.replaceAll('万', ''));
+        if (num != null) {
+          result = (num * 10000).toInt();
+        }
+      } else {
+        result = int.tryParse(value);
+      }
+    }
+    return result;
+  }
 
   static Future<bool> get isWiFi async {
     try {
