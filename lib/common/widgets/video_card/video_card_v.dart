@@ -3,7 +3,7 @@ import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
-import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
+import 'package:PiliPlus/common/widgets/tv_popup_menu.dart';
 import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
@@ -26,7 +26,7 @@ class VideoCardV extends StatefulWidget {
   // [Main] 日期格式
   static final shortFormat = DateFormat('M-d');
   static final longFormat = DateFormat('yy-M-d');
-  
+
   final BaseRecVideoItemModel videoItem;
   final VoidCallback? onRemove;
 
@@ -41,10 +41,6 @@ class VideoCardV extends StatefulWidget {
 }
 
 class _VideoCardVState extends State<VideoCardV> {
-  // [Feat] TV 菜单键支持
-  final GlobalKey<VideoPopupMenuState> _menuKey =
-      GlobalKey<VideoPopupMenuState>();
-  
   // [Main] 首帧图支持
   String? _firstFrame;
 
@@ -114,10 +110,10 @@ class _VideoCardVState extends State<VideoCardV> {
   @override
   Widget build(BuildContext context) {
     void onLongPress() => imageSaveDialog(
-      title: widget.videoItem.title,
-      cover: widget.videoItem.cover,
-      bvid: widget.videoItem.bvid,
-    );
+          title: widget.videoItem.title,
+          cover: widget.videoItem.cover,
+          bvid: widget.videoItem.bvid,
+        );
     // [Feat] Focus 包裹
     return Focus(
       canRequestFocus: false,
@@ -125,7 +121,11 @@ class _VideoCardVState extends State<VideoCardV> {
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
             event.logicalKey == LogicalKeyboardKey.contextMenu) {
-          _menuKey.currentState?.showButtonMenu();
+          TVPopupMenu.show(
+            context,
+            videoItem: widget.videoItem,
+            onRemove: widget.onRemove,
+          );
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
@@ -180,21 +180,6 @@ class _VideoCardVState extends State<VideoCardV> {
               ),
             ),
           ),
-          if (widget.videoItem.goto == 'av')
-            Positioned(
-              right: -5,
-              bottom: -2,
-              child: ExcludeFocus(
-                child: VideoPopupMenu(
-                  // [Feat] 绑定 Key
-                  key: _menuKey,
-                  size: 29,
-                  iconSize: 17,
-                  videoItem: widget.videoItem,
-                  onRemove: widget.onRemove,
-                ),
-              ),
-            ),
         ],
       ),
     );
