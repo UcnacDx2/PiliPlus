@@ -1172,6 +1172,63 @@ List<SettingsModel> get extraSettings => [
         subtitle: '设置代理 host:port',
         setKey: SettingBoxKey.enableSystemProxy,
       ),
+      SettingsModel(
+        settingsType: SettingsType.normal,
+        leading: const Icon(Icons.vpn_lock_outlined),
+        title: '番剧解锁服务器',
+        getSubtitle: () => Pref.pgcProxyServer,
+        onTap: (setState) {
+          String pgcProxyServer = Pref.pgcProxyServer;
+
+          showDialog(
+            context: Get.context!,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text('番剧解锁服务器'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      initialValue: pgcProxyServer,
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        labelText: '请输入服务器地址',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(6)),
+                        ),
+                      ),
+                      onChanged: (e) => pgcProxyServer = e,
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: Get.back,
+                    child: Text(
+                      '取消',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Get.back();
+                      GStorage.setting.put(
+                        SettingBoxKey.pgcProxyServer,
+                        pgcProxyServer,
+                      );
+                      setState();
+                    },
+                    child: const Text('确认'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
       const SettingsModel(
         settingsType: SettingsType.sw1tch,
         title: '自动清除缓存',

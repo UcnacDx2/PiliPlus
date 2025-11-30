@@ -1248,6 +1248,7 @@ class VideoDetailController extends GetxController
     var result = await VideoHttp.videoUrl(
       cid: cid.value,
       bvid: bvid,
+      seasonType: pgcType,
       epid: epId,
       seasonId: seasonId,
       tryLook: plPlayerController.tryLook,
