@@ -2072,19 +2072,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         ),
       );
     }
-    if (!Utils.isDesktop) {
-      return KeyboardListener(
-        focusNode: _focusNode,
-        autofocus: true,
-        onKeyEvent: (event) {
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.contextMenu) {
-            TvMenuManager().showTvMenu(context);
-          }
-        },
-        child: child,
-      );
-    }
     return child;
   }
 
