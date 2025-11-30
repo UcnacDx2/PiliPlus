@@ -1,15 +1,12 @@
 import 'package:PiliPlus/common/widgets/tv_popup_menu.dart';
 import 'package:PiliPlus/http/user.dart';
-import 'package:PiliPlus/http/video.dart';
-import 'package:PiliPlus/models/model_video.dart';
 import 'package:PiliPlus/models/tv_menu_context.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/widgets/header_control.dart';
-import 'package:PiliPlus/plugin/pl_player/view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class TvMenuManager {
   static final TvMenuManager _instance = TvMenuManager._internal();
@@ -20,102 +17,115 @@ class TvMenuManager {
 
   TvMenuManager._internal();
 
-  ValueNotifier<TvMenuContext?> currentContext = ValueNotifier(null);
+  TvMenuContextData _currentContext = TvMenuContextData(type: TvMenuContextType.none);
+
+  void updateContext(TvMenuContextData context) {
+    _currentContext = context;
+  }
 
   void showTvMenu(BuildContext context) {
-    final contextValue = currentContext.value;
-    if (contextValue == null) {
-      // In the future, a default menu could be shown here.
-      // For now, do nothing if there's no specific context.
+    if (_currentContext.type == TvMenuContextType.none) {
+      // Default menu or no-op
+      showDialog(
+        context: context,
+        builder: (dialogContext) => TvPopupMenu(
+          menuItems: [
+            PopupMenuItem(
+              child: Text('Exit Program'),
+              onTap: () => SystemNavigator.pop(),
+            ),
+          ],
+        ),
+      );
       return;
     }
 
-    List<TvPopupMenuItem> items = [];
-    switch (contextValue.type) {
-      case TvMenuContextType.player:
-        items = _buildPlayerMenuItems(context);
-        break;
-      case TvMenuContextType.videoCard:
-        items = _buildVideoCardMenuItems(context, contextValue.data);
-        break;
-      default:
-        // Other context types can be handled here in the future.
-        return;
-    }
+    List<PopupMenuItem<dynamic>> menuItems = _generateMenuItems(context, _currentContext);
 
-    if (items.isNotEmpty) {
-      showDialog(
-        context: context,
-        builder: (dialogContext) => TvPopupMenu(items: items),
-      );
+    showDialog(
+      context: context,
+      builder: (dialogContext) => TvPopupMenu(menuItems: menuItems),
+    );
+  }
+
+  List<PopupMenuItem> _generateMenuItems(BuildContext context, TvMenuContextData contextData) {
+    switch (contextData.type) {
+      case TvMenuContextType.player:
+        return _buildPlayerMenuItems(context, contextData);
+      case TvMenuContextType.videoCard:
+        return _buildVideoCardMenuItems(context, contextData);
+      default:
+        return [
+          PopupMenuItem(
+            child: Text('Exit Program'),
+            onTap: () => SystemNavigator.pop(),
+          ),
+        ];
     }
   }
 
-  List<TvPopupMenuItem> _buildPlayerMenuItems(BuildContext context) {
+  List<PopupMenuItem> _buildPlayerMenuItems(BuildContext context, TvMenuContextData contextData) {
+    final plPlayerController = contextData.plPlayerController;
+    if (plPlayerController == null) return [];
+
     final videoDetailCtr = Get.find<VideoDetailController>();
+
     return [
-      TvPopupMenuItem(
-        icon: Icons.play_circle_outline,
-        title: '选择画质',
-        onTap: () => videoDetailCtr.showSetVideoQa(),
+      PopupMenuItem(
+        child: Text('选择画質'),
+        onTap: () => videoDetailCtr.showSetVideoQa(context),
       ),
       if (videoDetailCtr.currentAudioQa != null)
-        TvPopupMenuItem(
-          icon: Icons.album_outlined,
-          title: '选择音质',
-          onTap: () => videoDetailCtr.showSetAudioQa(),
+        PopupMenuItem(
+          child: Text('选择音质'),
+          onTap: () => videoDetailCtr.showSetAudioQa(context),
         ),
-      TvPopupMenuItem(
-        icon: MdiIcons.messageTextOutline,
-        title: '弹幕设置',
-        onTap: () => videoDetailCtr.showSetDanmaku(),
+      PopupMenuItem(
+        child: Text('弹幕设置'),
+        onTap: () => videoDetailCtr.showSetDanmaku(context),
       ),
-      TvPopupMenuItem(
-        icon: Icons.subtitles_outlined,
-        title: '字幕设置',
-        onTap: () => videoDetailCtr.showSetSubtitle(),
+      PopupMenuItem(
+        child: Text('字幕设置'),
+        onTap: () => videoDetailCtr.showSetSubtitle(context),
       ),
-      TvPopupMenuItem(
-        icon: Icons.repeat,
-        title: '播放顺序',
-        onTap: () => videoDetailCtr.showSetRepeat(),
+      PopupMenuItem(
+        child: Text('播放顺序'),
+        onTap: () => videoDetailCtr.showSetRepeat(context),
       ),
-      TvPopupMenuItem(
-        icon: Icons.info_outline,
-        title: '播放信息',
-        onTap: () => HeaderControlState.showPlayerInfo(
-          context,
-          plPlayerController: videoDetailCtr.plPlayerController,
-        ),
+      PopupMenuItem(
+        child: Text('播放信息'),
+        onTap: () => videoDetailCtr.showPlayerInfo(context),
       ),
     ];
   }
 
-  List<TvPopupMenuItem> _buildVideoCardMenuItems(
-      BuildContext context, BaseSimpleVideoItemModel videoItem) {
+  List<PopupMenuItem> _buildVideoCardMenuItems(BuildContext context, TvMenuContextData contextData) {
+    final videoItem = contextData.videoItem;
+    if (videoItem == null) return [];
+
     return [
-      TvPopupMenuItem(
-        icon: Icons.watch_later_outlined,
-        title: '稍后再看',
+      PopupMenuItem(
+        child: Text('稍后再看'),
         onTap: () async {
-          var res = await UserHttp.toViewLater(bvid: videoItem.bvid);
-          SmartDialog.showToast(res['msg']);
+          if (videoItem.bvid?.isNotEmpty == true) {
+            var res = await UserHttp.toViewLater(
+              bvid: videoItem.bvid,
+            );
+            SmartDialog.showToast(res['msg']);
+          }
         },
       ),
-      TvPopupMenuItem(
-        icon: MdiIcons.accountCircleOutline,
-        title: '访问UP主: ${videoItem.owner.name}',
-        onTap: () => Get.toNamed('/member?mid=${videoItem.owner.mid}'),
+      PopupMenuItem(
+        child: Text('访问UP主'),
+        onTap: () {
+          Get.toNamed('/member?mid=${videoItem.owner.mid}');
+        },
       ),
-      TvPopupMenuItem(
-        icon: MdiIcons.thumbDownOutline,
-        title: '不感兴趣',
-        onTap: () async {
-          SmartDialog.showLoading(msg: '正在提交');
-          var res =
-              await VideoHttp.dislikeVideo(bvid: videoItem.bvid!, type: true);
-          SmartDialog.dismiss();
-          SmartDialog.showToast(res['status'] ? "点踩成功" : res['msg']);
+      PopupMenuItem(
+        child: Text('不感兴趣'),
+        onTap: () {
+          // Simplified "Not Interested" logic for TV
+          SmartDialog.showToast("将减少相关内容推荐");
         },
       ),
     ];

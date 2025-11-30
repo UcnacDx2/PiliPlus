@@ -120,10 +120,13 @@ class _VideoCardVState extends State<VideoCardV> {
     return Focus(
       onFocusChange: (hasFocus) {
         if (hasFocus) {
-          TvMenuManager().currentContext.value = TvMenuContext(
+          TvMenuManager().updateContext(TvMenuContextData(
             type: TvMenuContextType.videoCard,
-            data: widget.videoItem,
-          );
+            videoItem: widget.videoItem,
+          ));
+        } else {
+          TvMenuManager().updateContext(
+              TvMenuContextData(type: TvMenuContextType.none));
         }
       },
       onKeyEvent: (node, event) {

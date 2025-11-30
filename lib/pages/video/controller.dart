@@ -2088,4 +2088,8 @@ class VideoDetailController extends GetxController
       ),
     );
   }
+
+  void showPlayerInfo(BuildContext context) {
+    HeaderControl.showPlayerInfo(context, plPlayerController: plPlayerController);
+  }
 }

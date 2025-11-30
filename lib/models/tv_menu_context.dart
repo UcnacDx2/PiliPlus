@@ -1,15 +1,21 @@
+import 'package:PiliPlus/plugin/pl_player/controller.dart';
+
 enum TvMenuContextType {
   player,
   videoCard,
   liveRoom,
+  none,
 }
 
-class TvMenuContext {
+class TvMenuContextData {
   final TvMenuContextType type;
-  final dynamic data;
+  final PlPlayerController? plPlayerController;
+  // Add other controllers or data as needed for different contexts
+  final dynamic videoItem;
 
-  const TvMenuContext({
+  TvMenuContextData({
     required this.type,
-    this.data,
+    this.plPlayerController,
+    this.videoItem,
   });
 }

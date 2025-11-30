@@ -156,7 +156,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   @override
   void initState() {
     super.initState();
-    _focusNode.requestFocus();
     WidgetsBinding.instance.addObserver(this);
 
     _controlsListener = plPlayerController.showControls.listen((bool val) {
@@ -308,7 +307,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   @override
   void dispose() {
-    _focusNode.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _danmakuListener?.cancel();
     _tapGestureRecognizer.dispose();
@@ -1371,8 +1369,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   }
 
   @override
-  final FocusNode _focusNode = FocusNode();
-
   Widget build(BuildContext context) {
     maxWidth = widget.maxWidth;
     maxHeight = widget.maxHeight;
@@ -2070,19 +2066,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               widget.videoDetailController?.showSteinEdgeInfo.value ?? false,
           child: child,
         ),
-      );
-    }
-    if (!Utils.isDesktop) {
-      return KeyboardListener(
-        focusNode: _focusNode,
-        autofocus: true,
-        onKeyEvent: (event) {
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.contextMenu) {
-            TvMenuManager().showTvMenu(context);
-          }
-        },
-        child: child,
       );
     }
     return child;
