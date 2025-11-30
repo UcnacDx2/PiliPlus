@@ -70,7 +70,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
-import 'packagepackage:get/get.dart' hide ContextExtensionss;
+import 'package:get/get.dart' hide ContextExtensionss;
 import 'package:get/get_navigation/src/dialog/dialog_route.dart';
 import 'package:hive/hive.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
