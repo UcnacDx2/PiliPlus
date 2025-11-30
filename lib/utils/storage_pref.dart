@@ -263,6 +263,11 @@ abstract class Pref {
   static String get systemProxyPort =>
       _setting.get(SettingBoxKey.systemProxyPort, defaultValue: '');
 
+  static String get pgcProxyServer => _setting.get(
+        SettingBoxKey.pgcProxyServer,
+        defaultValue: 'https://xn--2vrub.plus/',
+      );
+
   static int get defaultDynamicType =>
       _setting.get(SettingBoxKey.defaultDynamicType, defaultValue: 0);
 

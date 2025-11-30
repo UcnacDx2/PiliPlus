@@ -200,7 +200,8 @@ abstract class SettingBoxKey {
       fontWeight = 'fontWeight';
 
   static const String systemProxyHost = 'systemProxyHost',
-      systemProxyPort = 'systemProxyPort';
+      systemProxyPort = 'systemProxyPort',
+      pgcProxyServer = 'pgcProxyServer';
 
   static const String themeMode = 'themeMode',
       defaultTextScale = 'textScale',

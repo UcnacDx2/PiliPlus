@@ -200,6 +200,7 @@ class VideoHttp {
     required bool tryLook,
     required VideoType videoType,
     String? language,
+    int? seasonType,
   }) async {
     final params = await WbiSign.makSign({
       'avid': ?avid,
@@ -221,7 +222,12 @@ class VideoHttp {
       'cur_language': ?language,
     });
 
+    var originalBaseUrl = Request.dio.options.baseUrl;
     try {
+      if (videoType == VideoType.pgc &&
+          (seasonType == 1 || seasonType == 4)) {
+        Request.dio.options.baseUrl = Pref.pgcProxyServer;
+      }
       var res = await Request().get(
         videoType.api,
         queryParameters: params,
@@ -262,6 +268,8 @@ class VideoHttp {
       return Error(_parseVideoErr(res.data['code'], res.data['message']));
     } catch (e, s) {
       return Error('$e\n\n$s');
+    } finally {
+      Request.dio.options.baseUrl = originalBaseUrl;
     }
   }
 
