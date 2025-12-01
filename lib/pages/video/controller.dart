@@ -1267,12 +1267,36 @@ class VideoDetailController extends GetxController
       if (progress != null) {
         this.defaultST = Duration(milliseconds: progress);
         args['progress'] = null;
+      } else if (defaultST != null) {
+        this.defaultST = defaultST;
       } else {
-        this.defaultST =
-            defaultST ??
-            (data.lastPlayTime == null
+        // Default progress from videoUrl API
+        Duration getDefaultProgress() => data.lastPlayTime == null
+            ? Duration.zero
+            : Duration(milliseconds: data.lastPlayTime!);
+
+        // When video account differs from heartbeat account, get progress from playInfo API
+        // which uses the heartbeat account for accurate progress tracking
+        final videoAccount = Accounts.get(AccountType.video);
+        final heartbeatAccount = Accounts.heartbeat;
+        if (isUgc &&
+            videoAccount != heartbeatAccount &&
+            heartbeatAccount.isLogin) {
+          final playInfoRes = await VideoHttp.playInfo(
+            bvid: bvid,
+            cid: cid.value,
+          );
+          if (playInfoRes['status']) {
+            final PlayInfoData playInfo = playInfoRes['data'];
+            this.defaultST = playInfo.lastPlayTime == null
                 ? Duration.zero
-                : Duration(milliseconds: data.lastPlayTime!));
+                : Duration(milliseconds: playInfo.lastPlayTime!);
+          } else {
+            this.defaultST = getDefaultProgress();
+          }
+        } else {
+          this.defaultST = getDefaultProgress();
+        }
       }
 
       if (!isUgc && !fromReset && plPlayerController.enablePgcSkip) {
