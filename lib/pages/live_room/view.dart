@@ -29,6 +29,8 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:pilipala/models/focus_context.dart';
+import 'package:pilipala/services/global_menu_manager.dart';
 import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -63,6 +65,14 @@ class _LiveRoomPageState extends State<LiveRoomPage>
       LiveRoomController(heroTag),
       tag: heroTag,
     );
+
+    Get.find<GlobalMenuManager>().updateFocus(
+      FocusContext(
+        pageType: 'live',
+        roomId: _liveRoomController.roomId.toString(),
+      ),
+    );
+
     plPlayerController = _liveRoomController.plPlayerController;
     PlPlayerController.setPlayCallBack(plPlayerController.play);
     plPlayerController
@@ -140,6 +150,7 @@ class _LiveRoomPageState extends State<LiveRoomPage>
 
   @override
   void dispose() {
+    Get.find<GlobalMenuManager>().updateFocus(null);
     videoPlayerServiceHandler?.onVideoDetailDispose(heroTag);
     WidgetsBinding.instance.removeObserver(this);
     if (Platform.isAndroid && !plPlayerController.setSystemBrightness) {

@@ -10,6 +10,7 @@ import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/router/app_pages.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
+import 'package:PiliPlus/services/global_menu_manager.dart';
 import 'package:PiliPlus/services/logger.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
@@ -84,7 +85,8 @@ void main() async {
   }
   Get
     ..lazyPut(AccountService.new)
-    ..lazyPut(DownloadService.new);
+    ..lazyPut(DownloadService.new)
+    ..lazyPut(GlobalMenuManager.new);
   HttpOverrides.global = _CustomHttpOverrides();
 
   CacheManager.autoClearCache();

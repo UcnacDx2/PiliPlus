@@ -55,6 +55,13 @@ List<SettingsModel> get playSettings => [
       ),
       const SettingsModel(
         settingsType: SettingsType.sw1tch,
+        title: '启用遥控菜单键',
+        leading: Icon(Icons.remote_control),
+        setKey: SettingBoxKey.enableRemoteMenu,
+        defaultVal: true,
+      ),
+      const SettingsModel(
+        settingsType: SettingsType.sw1tch,
         title: '全屏显示锁定按钮',
         leading: Icon(Icons.lock_outline),
         setKey: SettingBoxKey.showFsLockBtn,

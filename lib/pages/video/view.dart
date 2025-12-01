@@ -12,6 +12,8 @@ import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/main.dart';
 import 'package:PiliPlus/models/common/episode_panel_type.dart';
+import 'package:pilipala/models/focus_context.dart';
+import 'package:pilipala/services/global_menu_manager.dart';
 import 'package:PiliPlus/models_new/pgc/pgc_info_model/result.dart';
 import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
 import 'package:PiliPlus/models_new/video/video_detail/page.dart';
@@ -128,6 +130,13 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
   @override
   void initState() {
     super.initState();
+
+    Get.find<GlobalMenuManager>().updateFocus(
+      FocusContext(
+        pageType: 'video',
+        videoId: videoDetailController.bvid,
+      ),
+    );
 
     PlPlayerController.setPlayCallBack(playCallBack);
     videoDetailController = Get.put(VideoDetailController(), tag: heroTag);
@@ -319,6 +328,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
 
   @override
   void dispose() {
+    Get.find<GlobalMenuManager>().updateFocus(null);
     plPlayerController
       ?..removeStatusLister(playerListener)
       ..removePositionListener(positionListener);

@@ -26,6 +26,7 @@ abstract class SettingBoxKey {
       enableOnlineTotal = 'enableOnlineTotal',
       showSuperChat = 'showSuperChat',
       keyboardControl = 'keyboardControl',
+      enableRemoteMenu = 'enableRemoteMenu',
       pauseOnMinimize = 'pauseOnMinimize',
       pgcSkipType = 'pgcSkipType',
       audioPlayMode = 'audioPlayMode',
