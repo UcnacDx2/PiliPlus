@@ -5,9 +5,9 @@ import 'package:PiliPlus/models/tv_menu_context.dart';
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/common/widgets/tv_popup_menu.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
-import 'package:PiliPlus/utils/tv_menu_manager.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
@@ -47,12 +47,6 @@ class PlayerFocus extends StatelessWidget {
   Widget build(BuildContext context) {
     return Focus(
       autofocus: true,
-      onFocusChange: (hasFocus) {
-        if (hasFocus) {
-          TvMenuManager().currentContext.value =
-              const TvMenuContext(type: TvMenuContextType.player);
-        }
-      },
       onKeyEvent: (node, event) {
         final handled = _handleKey(context, event);
         if (handled || _shouldHandle(event.logicalKey)) {
@@ -227,7 +221,22 @@ class PlayerFocus extends StatelessWidget {
           }
           return true;
         case LogicalKeyboardKey.contextMenu:
-          TvMenuManager().showTvMenu(context);
+          if (plPlayerController.isLive || (canPlay?.call() ?? false)) {
+            if (hasPlayer) {
+              if (GetPlatform.isAndroid) {
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return TvPopupMenu(
+                        focusData: plPlayerController,
+                        contextType: 'videoPlayer',
+                      );
+                    });
+              } else {
+                onShowMenu?.call();
+              }
+            }
+          }
           return true;
       }
 
