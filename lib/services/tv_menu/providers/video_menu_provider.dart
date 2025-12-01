@@ -27,8 +27,8 @@ class VideoMenuProvider implements MenuProvider {
     return [
       // Play/Pause
       TvMenuItem(
-        label: player.playerStatus.playing ? '暂停' : '播放',
-        icon: player.playerStatus.playing ? Icons.pause : Icons.play_arrow,
+        label: player.playerStatus.value.playing ? '暂停' : '播放',
+        icon: player.playerStatus.value.playing ? Icons.pause : Icons.play_arrow,
         onTap: () => player.onDoubleTapCenter(),
       ),
 

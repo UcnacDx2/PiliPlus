@@ -351,7 +351,7 @@ class MyApp extends StatelessWidget {
                         onBack();
                         return KeyEventResult.handled;
                       }
-                      // Handle MENU key for Android TV
+                      // Handle MENU key for Android TV (represented as LogicalKeyboardKey.contextMenu in Flutter)
                       if (event.logicalKey == LogicalKeyboardKey.contextMenu) {
                         // Check if TV menu is visible, if so hide it
                         if (TvMenuService.hasInstance &&
