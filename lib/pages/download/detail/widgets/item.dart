@@ -210,15 +210,20 @@ class DetailItem extends StatelessWidget {
                       type: PBadgeType.gray,
                     ),
                   if (progress != null)
-                    ValueListenableBuilder(
-                      valueListenable: progress!,
-                      builder: (_, _, _) {
-                        final progress = GStorage.watchProgress.get(
-                          cid.toString(),
-                        );
-                        if (progress != null) {
-                          return Positioned(
-                            left: 0,
+                    FutureBuilder<Box<int>>(
+                      future: Accounts.openWatchProgress(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          final box = snapshot.data!;
+                          return ValueListenableBuilder(
+                            valueListenable: box.listenable(
+                              keys: [entry.cid.toString()],
+                            ),
+                            builder: (_, _, __) {
+                              final progress = box.get(entry.cid.toString());
+                              if (progress != null) {
+                                return Positioned(
+                                  left: 0,
                             right: 0,
                             bottom: 0,
                             child: Stack(
@@ -243,17 +248,22 @@ class DetailItem extends StatelessWidget {
                               ],
                             ),
                           );
+                                );
+                              }
+                              return PBadge(
+                                text: DurationUtils.formatDuration(
+                                  entry.totalTimeMilli ~/ 1000,
+                                ),
+                                right: 6.0,
+                                bottom: 7.0,
+                                type: PBadgeType.gray,
+                              );
+                            },
+                          );
                         }
-                        return PBadge(
-                          text: DurationUtils.formatDuration(
-                            entry.totalTimeMilli ~/ 1000,
-                          ),
-                          right: 6.0,
-                          bottom: 7.0,
-                          type: PBadgeType.gray,
-                        );
+                        return const SizedBox.shrink();
                       },
-                    )
+                    ),
                   else if (entry.totalTimeMilli != 0)
                     PBadge(
                       text: DurationUtils.formatDuration(

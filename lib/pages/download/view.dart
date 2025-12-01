@@ -193,9 +193,8 @@ class _DownloadPageState extends State<DownloadPage> {
                                     entry: entry,
                                     removeList: true,
                                   );
-                                  GStorage.watchProgress.delete(
-                                    entry.cid.toString(),
-                                  );
+                                  Accounts.openWatchProgress().then((box) =>
+                                      box.delete(entry.cid.toString()));
                                 },
                                 checked: item.checked ?? false,
                                 onSelect: (_) => _controller.onSelect(item),
@@ -247,9 +246,11 @@ class _DownloadPageState extends State<DownloadPage> {
                         showConfirmDialog(
                           context: context,
                           title: '确定删除？',
-                          onConfirm: () async {
-                            await GStorage.watchProgress.deleteAll(
-                              pageInfo.entrys.map((e) => e.cid.toString()),
+                          onConfirm: () {
+                            Accounts.openWatchProgress().then(
+                              (box) => box.deleteAll(
+                                pageInfo.entrys.map((e) => e.cid.toString()),
+                              ),
                             );
                             _downloadService.deletePage(
                               pageDirPath: pageInfo.dirPath,

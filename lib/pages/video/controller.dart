@@ -271,7 +271,7 @@ class VideoDetailController extends GetxController
 
   final isLoginVideo = Accounts.get(AccountType.video).isLogin;
 
-  late final watchProgress = GStorage.watchProgress;
+  late Box<int> watchProgress;
   void cacheLocalProgress() {
     if (plPlayerController.playerStatus.completed) {
       watchProgress.put(cid.value.toString(), entry.totalTimeMilli);
@@ -305,8 +305,9 @@ class VideoDetailController extends GetxController
   }
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
+    watchProgress = await Accounts.openWatchProgress();
     args = Get.arguments;
     videoType = args['videoType'];
     if (videoType == VideoType.pgc) {

@@ -45,7 +45,8 @@ class DownloadSearchController
       entry: entry,
       removeList: true,
     );
-    GStorage.watchProgress.delete(entry.cid.toString());
+    Accounts.openWatchProgress()
+        .then((box) => box.delete(entry.cid.toString()));
   }
 
   @override
@@ -56,8 +57,11 @@ class DownloadSearchController
       onConfirm: () async {
         SmartDialog.showLoading();
         final allChecked = this.allChecked.toList();
+        final watchProgress = await Accounts.openWatchProgress();
+        await watchProgress.deleteAll(
+          allChecked.map((e) => e.cid.toString()),
+        );
         for (var entry in allChecked) {
-          await GStorage.watchProgress.delete(entry.cid.toString());
           await _downloadService.deleteDownload(
             entry: entry,
             removeList: true,

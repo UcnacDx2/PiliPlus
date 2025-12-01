@@ -128,4 +128,8 @@ abstract class Accounts {
   static Account get(AccountType key) {
     return accountMode[key.index];
   }
+
+  static Future<Box<int>> openWatchProgress() => Hive.openBox<int>(
+        'watchProgress_${history.isLogin ? history.mid : 0}',
+      );
 }

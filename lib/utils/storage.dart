@@ -1,9 +1,14 @@
 import 'dart:convert';
 
 import 'package:PiliPlus/models/model_owner.dart';
+import 'dart:convert';
+
+import 'package:PiliPlus/models/common/account_type.dart';
+import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models/user/danmaku_rule_adapter.dart';
 import 'package:PiliPlus/models/user/info.dart';
 import 'package:PiliPlus/utils/accounts.dart';
+import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/utils/accounts/account_adapter.dart';
 import 'package:PiliPlus/utils/accounts/account_type_adapter.dart';
 import 'package:PiliPlus/utils/accounts/cookie_jar_adapter.dart';
@@ -19,11 +24,29 @@ abstract class GStorage {
   static late final Box<dynamic> localCache;
   static late final Box<dynamic> setting;
   static late final Box<dynamic> video;
-  static late final Box<int> watchProgress;
+
+  static Future<void> _migrate() async {
+    if (await Hive.boxExists('watchProgress')) {
+      final box = await Hive.openBox('watchProgress');
+      if (box.isNotEmpty) {
+        final history = Accounts.history;
+        if (history.isLogin) {
+          final targetBox =
+              await Hive.openBox('watchProgress_${history.mid}');
+          await targetBox.putAll(box.toMap());
+          await targetBox.close();
+        }
+      }
+      await box.deleteFromDisk();
+    }
+  }
 
   static Future<void> init() async {
     await Hive.initFlutter(path.join(appSupportDirPath, 'hive'));
     regAdapter();
+
+    await Accounts.init();
+    await _migrate();
 
     await Future.wait([
       // 登录用户信息
@@ -51,13 +74,6 @@ abstract class GStorage {
       ).then((res) => historyWord = res),
       // 视频设置
       Hive.openBox('video').then((res) => video = res),
-      Accounts.init(),
-      Hive.openBox<int>(
-        'watchProgress',
-        compactionStrategy: (entries, deletedEntries) {
-          return deletedEntries > 4;
-        },
-      ).then((res) => watchProgress = res),
     ]);
   }
 
@@ -99,7 +115,6 @@ abstract class GStorage {
       setting.compact(),
       video.compact(),
       Accounts.account.compact(),
-      watchProgress.compact(),
     ]);
   }
 
@@ -111,7 +126,7 @@ abstract class GStorage {
       setting.close(),
       video.close(),
       Accounts.account.close(),
-      watchProgress.close(),
+      if (Hive.isBoxOpen('watchProgress_0')) Hive.box('watchProgress_0').close(),
     ]);
   }
 }

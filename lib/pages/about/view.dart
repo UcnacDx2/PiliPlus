@@ -302,7 +302,8 @@ Commit Hash: ${BuildConfig.commitHash}''',
                           GStorage.video.clear(),
                           GStorage.historyWord.clear(),
                           Accounts.clear(),
-                          GStorage.watchProgress.clear(),
+                          Accounts.openWatchProgress()
+                              .then((box) => box.clear()),
                         ]);
                         SmartDialog.showToast('重置成功');
                       },
