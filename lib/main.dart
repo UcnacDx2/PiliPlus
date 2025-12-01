@@ -4,12 +4,14 @@ import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/custom_toast.dart';
 import 'package:PiliPlus/common/widgets/mouse_back.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/router/app_pages.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
+import 'package:PiliPlus/services/focus_service.dart';
 import 'package:PiliPlus/services/logger.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
@@ -84,6 +86,7 @@ void main() async {
   }
   Get
     ..lazyPut(AccountService.new)
+    ..lazyPut(FocusService.new)
     ..lazyPut(DownloadService.new);
   HttpOverrides.global = _CustomHttpOverrides();
 
@@ -297,59 +300,72 @@ class MyApp extends StatelessWidget {
                 ),
                 child: child!,
               );
-              if (Utils.isDesktop) {
-                void onBack() {
-                  if (SmartDialog.checkExist()) {
-                    SmartDialog.dismiss();
-                    return;
-                  }
 
-                  if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
-                    Get.back();
-                    return;
-                  }
-
-                  final plCtr = PlPlayerController.instance;
-                  if (plCtr != null) {
-                    if (plCtr.isFullScreen.value) {
-                      plCtr
-                        ..triggerFullScreen(status: false)
-                        ..controlsLock.value = false
-                        ..showControls.value = false;
-                      return;
-                    }
-
-                    if (plCtr.isDesktopPip) {
-                      plCtr
-                        ..exitDesktopPip().whenComplete(
-                          () => plCtr.initialFocalPoint = Offset.zero,
-                        )
-                        ..controlsLock.value = false
-                        ..showControls.value = false;
-                      return;
-                    }
-                  }
-
-                  Get.back();
+              void onBack() {
+                if (SmartDialog.checkExist()) {
+                  SmartDialog.dismiss();
+                  return;
                 }
+                if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
+                  Get.back();
+                  return;
+                }
+                final plCtr = PlPlayerController.instance;
+                if (plCtr != null) {
+                  if (plCtr.isFullScreen.value) {
+                    plCtr
+                      ..triggerFullScreen(status: false)
+                      ..controlsLock.value = false
+                      ..showControls.value = false;
+                    return;
+                  }
+                  if (plCtr.isDesktopPip) {
+                    plCtr
+                      ..exitDesktopPip().whenComplete(
+                        () => plCtr.initialFocalPoint = Offset.zero,
+                      )
+                      ..controlsLock.value = false
+                      ..showControls.value = false;
+                    return;
+                  }
+                }
+                Get.back();
+              }
 
-                return Focus(
-                  canRequestFocus: false,
-                  onKeyEvent: (_, event) {
-                    if (event.logicalKey == LogicalKeyboardKey.escape &&
-                        event is KeyDownEvent) {
+              return Focus(
+                autofocus: true,
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent) {
+                    if (Utils.isDesktop &&
+                        event.logicalKey == LogicalKeyboardKey.escape) {
                       onBack();
                       return KeyEventResult.handled;
                     }
-                    return KeyEventResult.ignored;
-                  },
-                  child: MouseBackDetector(
-                    onTapDown: onBack,
-                    child: child,
-                  ),
-                );
-              }
-              return child;
+                    final isShiftPressed = HardwareKeyboard.instance.isShiftPressed;
+                    if (event.logicalKey == LogicalKeyboardKey.menu ||
+                        (isShiftPressed &&
+                            event.logicalKey == LogicalKeyboardKey.keyT)) {
+                      final focusService = Get.find<FocusService>();
+                      final focusContext = focusService.currentFocus;
+                      showDialog(
+                        context: context,
+                        builder: (dialogContext) => TvPopupMenu(
+                          focusData: focusContext?.focusData,
+                          contextType: focusContext?.contextType ?? 'default',
+                        ),
+                      );
+                      return KeyEventResult.handled;
+                    }
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: Utils.isDesktop
+                    ? MouseBackDetector(
+                        onTapDown: onBack,
+                        child: child,
+                      )
+                    : child,
+              );
             },
           ),
           navigatorObservers: [

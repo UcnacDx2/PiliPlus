@@ -34,6 +34,7 @@ import 'package:PiliPlus/pages/video/introduction/ugc/widgets/menu_row.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
+import 'package:PiliPlus/services/focus_service.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
@@ -58,6 +59,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:flutter/services.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 mixin TimeBatteryMixin<T extends StatefulWidget> on State<T> {
@@ -956,6 +958,9 @@ class HeaderControlState extends State<HeaderControl>
   @override
   void initState() {
     super.initState();
+    final FocusService focusService = Get.find<FocusService>();
+    focusService.setFocus('videoPlayer', focusData: videoDetailCtr.data);
+
     if (isFileSource) {
       introController = Get.find<LocalIntroController>(tag: heroTag);
     } else if (videoDetailCtr.isUgc) {
@@ -963,6 +968,13 @@ class HeaderControlState extends State<HeaderControl>
     } else {
       introController = Get.find<PgcIntroController>(tag: heroTag);
     }
+  }
+
+  @override
+  void dispose() {
+    final FocusService focusService = Get.find<FocusService>();
+    focusService.clearFocus();
+    super.dispose();
   }
 
   /// 设置面板
