@@ -995,6 +995,7 @@ class HeaderControlState extends State<HeaderControl>
       context: context,
       contextType: 'videoPlayer',
       focusData: videoDetailCtr.data,
+      headerState: this,
     );
   }
 

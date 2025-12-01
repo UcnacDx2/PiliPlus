@@ -60,7 +60,7 @@ class _VideoCardVState extends State<VideoCardV> {
     TvMenuManager().showTvMenu(
       context: context,
       contextType: 'videoCard',
-      focusData: widget.videoItem,
+      focusData: widget.videoItem as BaseRecVideoItemModel,
     );
   }
 
