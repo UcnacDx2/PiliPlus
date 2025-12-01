@@ -1,21 +1,11 @@
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
+import 'package:PiliPlus/services/tv_menu/menu_builder.dart';
 import 'package:PiliPlus/services/tv_menu/menu_provider.dart';
 import 'package:PiliPlus/services/tv_menu/models/menu_item.dart';
 import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-
-class MenuBuilder {
-  final List<MenuItem> _items = [];
-
-  MenuBuilder addItem(String label, IconData icon, VoidCallback onTap) {
-    _items.add(MenuItem(label: label, icon: icon, onTap: onTap));
-    return this;
-  }
-
-  List<MenuItem> build() => _items;
-}
 
 class VideoMenuProvider implements MenuProvider {
   @override

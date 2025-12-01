@@ -33,33 +33,35 @@ class _TVMenuOverlayState extends State<TVMenuOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned.fill(
+    return Material(
+      color: Colors.transparent,
       child: Container(
         color: Colors.black.withOpacity(0.7),
         child: Center(
           child: Focus(
             focusNode: _focusNode,
             onKeyEvent: (node, event) {
+              if (event is! KeyDownEvent) return KeyEventResult.ignored;
               final menuItems = widget.provider.getMenuItems(context);
-              if (event is KeyDownEvent) {
-                if (event.logicalKey == LogicalKeyboardKey.escape) {
-                  TVMenuService.instance.hideMenu();
-                  return KeyEventResult.handled;
-                } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-                  setState(() {
-                    _focusedIndex = (_focusedIndex - 1 + menuItems.length) % menuItems.length;
-                  });
-                  return KeyEventResult.handled;
-                } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                  setState(() {
-                    _focusedIndex = (_focusedIndex + 1) % menuItems.length;
-                  });
-                  return KeyEventResult.handled;
-                } else if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
-                  menuItems[_focusedIndex].onTap();
-                  return KeyEventResult.handled;
-                }
+
+              if (event.logicalKey == LogicalKeyboardKey.escape) {
+                TVMenuService.instance.hideMenu();
+                return KeyEventResult.handled;
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                setState(() {
+                  _focusedIndex = (_focusedIndex - 1 + menuItems.length) % menuItems.length;
+                });
+                return KeyEventResult.handled;
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                setState(() {
+                  _focusedIndex = (_focusedIndex + 1) % menuItems.length;
+                });
+                return KeyEventResult.handled;
+              } else if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+                menuItems[_focusedIndex].onTap();
+                return KeyEventResult.handled;
               }
+
               return KeyEventResult.ignored;
             },
             child: Container(
