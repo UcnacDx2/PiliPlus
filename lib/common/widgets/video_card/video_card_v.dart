@@ -2,9 +2,11 @@ import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
 import 'package:PiliPlus/http/search.dart';
+import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/stat_type.dart';
@@ -15,9 +17,11 @@ import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/utils/tv_menu_manager.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart'; // 必须导入
 
@@ -119,14 +123,26 @@ class _VideoCardVState extends State<VideoCardV> {
       bvid: widget.videoItem.bvid,
     );
     // [Feat] Focus 包裹
+    void _showTvPopupMenu() {
+      TvMenuManager().showTvMenu(
+        context: context,
+        contextType: 'videoCard',
+        focusData: widget.videoItem,
+      );
+    }
+
     return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
+      autofocus: false,
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.contextMenu) {
-          _menuKey.currentState?.showButtonMenu();
-          return KeyEventResult.handled;
+        if (event is KeyDownEvent) {
+          if (GetPlatform.isAndroid &&
+              event.logicalKey == LogicalKeyboardKey.menu) {
+            _showTvPopupMenu();
+            return KeyEventResult.handled;
+          } else if (event.logicalKey == LogicalKeyboardKey.contextMenu) {
+            _menuKey.currentState?.showButtonMenu();
+            return KeyEventResult.handled;
+          }
         }
         return KeyEventResult.ignored;
       },

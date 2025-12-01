@@ -51,8 +51,11 @@ import 'package:dio/dio.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:floating/floating.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
+import 'package:PiliPlus/utils/tv_menu_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide showBottomSheet;
+import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -963,6 +966,33 @@ class HeaderControlState extends State<HeaderControl>
     } else {
       introController = Get.find<PgcIntroController>(tag: heroTag);
     }
+    if (GetPlatform.isAndroid) {
+      RawKeyboard.instance.addListener(_handleMenuKey);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (GetPlatform.isAndroid) {
+      RawKeyboard.instance.removeListener(_handleMenuKey);
+    }
+    super.dispose();
+  }
+
+  void _handleMenuKey(RawKeyEvent event) {
+    if (event is RawKeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.menu) {
+      if (ModalRoute.of(context)?.isCurrent != true) return;
+      _showTvPlayerMenu();
+    }
+  }
+
+  void _showTvPlayerMenu() {
+    TvMenuManager().showTvMenu(
+      context: context,
+      contextType: 'videoPlayer',
+      focusData: videoDetailCtr.data,
+    );
   }
 
   /// 设置面板
