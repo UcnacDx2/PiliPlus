@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
 import 'package:flutter/material.dart';
@@ -20,8 +21,10 @@ class TvMenuManager {
     required String contextType,
     required dynamic focusData,
     dynamic headerState,
+    GlobalKey<VideoPopupMenuState>? videoCardMenuKey,
   }) {
-    final items = _buildMenuItems(context, contextType, focusData, headerState);
+    final items = _buildMenuItems(
+        context, contextType, focusData, headerState, videoCardMenuKey);
     showDialog(
       context: context,
       builder: (context) => TvPopupMenu(
@@ -35,10 +38,11 @@ class TvMenuManager {
     String contextType,
     dynamic focusData,
     dynamic headerState,
+    GlobalKey<VideoPopupMenuState>? videoCardMenuKey,
   ) {
     switch (contextType) {
       case 'videoCard':
-        return _buildVideoCardMenu(context, focusData);
+        return _buildVideoCardMenu(context, focusData, videoCardMenuKey);
       case 'videoPlayer':
         return _buildVideoPlayerMenu(context, focusData, headerState);
       default:
@@ -49,38 +53,15 @@ class TvMenuManager {
   List<TvPopupMenuItem> _buildVideoCardMenu(
     BuildContext context,
     dynamic focusData,
+    GlobalKey<VideoPopupMenuState>? videoCardMenuKey,
   ) {
-    final videoItem = focusData as BaseRecVideoItemModel;
     return [
       TvPopupMenuItem(
-        icon: Icons.play_arrow_outlined,
-        title: '立即播放',
+        icon: Icons.more_vert_outlined,
+        title: '更多选项',
         onTap: () {
-          try {
-            Navigator.of(context).pop();
-            PageUtils.toVideoPage(
-              bvid: videoItem.bvid,
-              cid: videoItem.cid!,
-              aid: videoItem.aid,
-              cover: videoItem.cover,
-              title: videoItem.title,
-            );
-          } catch (e) {
-            SmartDialog.showToast('播放失败: $e');
-          }
-        },
-      ),
-      TvPopupMenuItem(
-        icon: Icons.watch_later_outlined,
-        title: '稍后再看',
-        onTap: () async {
-          try {
-            Navigator.of(context).pop();
-            var res = await UserHttp.toViewLater(bvid: videoItem.bvid);
-            SmartDialog.showToast(res['msg']);
-          } catch (e) {
-            SmartDialog.showToast('操作失败: $e');
-          }
+          Navigator.of(context).pop();
+          videoCardMenuKey?.currentState?.showButtonMenu();
         },
       ),
     ];
@@ -95,23 +76,11 @@ class TvMenuManager {
     return [
       TvPopupMenuItem(
         icon: Icons.settings_outlined,
-        title: '播放设置',
+        title: '更多选项',
         onTap: () {
           try {
             Navigator.of(context).pop();
             state.showSettingSheet();
-          } catch (e) {
-            SmartDialog.showToast('操作失败: $e');
-          }
-        },
-      ),
-      TvPopupMenuItem(
-        icon: Icons.subtitles_outlined,
-        title: '字幕设置',
-        onTap: () {
-          try {
-            Navigator.of(context).pop();
-            state.showSetSubtitle();
           } catch (e) {
             SmartDialog.showToast('操作失败: $e');
           }

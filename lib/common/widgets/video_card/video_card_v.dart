@@ -61,6 +61,7 @@ class _VideoCardVState extends State<VideoCardV> {
       context: context,
       contextType: 'videoCard',
       focusData: widget.videoItem as BaseRecVideoItemModel,
+      videoCardMenuKey: _menuKey,
     );
   }
 
