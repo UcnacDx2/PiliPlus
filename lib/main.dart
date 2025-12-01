@@ -12,6 +12,9 @@ import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
 import 'package:PiliPlus/services/logger.dart';
 import 'package:PiliPlus/services/service_locator.dart';
+import 'package:PiliPlus/services/tv_menu/providers/default_menu_provider.dart';
+import 'package:PiliPlus/services/tv_menu/providers/video_menu_provider.dart';
+import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/calc_window_position.dart';
@@ -84,7 +87,14 @@ void main() async {
   }
   Get
     ..lazyPut(AccountService.new)
-    ..lazyPut(DownloadService.new);
+    ..lazyPut(DownloadService.new)
+    ..put(TvMenuService());
+
+  // Register TV menu providers
+  final tvMenuService = Get.find<TvMenuService>();
+  tvMenuService.registerProvider(VideoMenuProvider());
+  tvMenuService.registerProvider(DefaultMenuProvider());
+
   HttpOverrides.global = _CustomHttpOverrides();
 
   CacheManager.autoClearCache();
@@ -336,10 +346,26 @@ class MyApp extends StatelessWidget {
                 return Focus(
                   canRequestFocus: false,
                   onKeyEvent: (_, event) {
-                    if (event.logicalKey == LogicalKeyboardKey.escape &&
-                        event is KeyDownEvent) {
-                      onBack();
-                      return KeyEventResult.handled;
+                    if (event is KeyDownEvent) {
+                      if (event.logicalKey == LogicalKeyboardKey.escape) {
+                        onBack();
+                        return KeyEventResult.handled;
+                      }
+                      // Handle MENU key for Android TV
+                      if (event.logicalKey == LogicalKeyboardKey.contextMenu) {
+                        // Check if TV menu is visible, if so hide it
+                        if (TvMenuService.hasInstance &&
+                            TvMenuService.instance.isMenuVisible.value) {
+                          TvMenuService.instance.hideMenu();
+                          return KeyEventResult.handled;
+                        }
+                        // Otherwise, show TV menu
+                        final ctx = Get.context;
+                        if (ctx != null) {
+                          Get.find<TvMenuService>().showMenu(ctx);
+                          return KeyEventResult.handled;
+                        }
+                      }
                     }
                     return KeyEventResult.ignored;
                   },
