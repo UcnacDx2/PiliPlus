@@ -342,7 +342,7 @@ class MyApp extends StatelessWidget {
                       return KeyEventResult.handled;
                     }
                     final isShiftPressed = HardwareKeyboard.instance.isShiftPressed;
-                    if (event.logicalKey == LogicalKeyboardKey.menu ||
+                    if (event.logicalKey == LogicalKeyboardKey.contextMenu ||
                         (isShiftPressed &&
                             event.logicalKey == LogicalKeyboardKey.keyT)) {
                       final focusService = Get.find<FocusService>();
