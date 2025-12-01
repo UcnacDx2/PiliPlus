@@ -11,8 +11,10 @@ import 'package:PiliPlus/router/app_pages.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
 import 'package:PiliPlus/services/logger.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_menu_overlay.dart';
 import 'package:PiliPlus/services/service_locator.dart';
-import 'package:PiliPlus/utils/app_scheme.dart';
+import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
+import 'package.PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/calc_window_position.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
@@ -84,7 +86,8 @@ void main() async {
   }
   Get
     ..lazyPut(AccountService.new)
-    ..lazyPut(DownloadService.new);
+    ..lazyPut(DownloadService.new)
+    ..lazyPut(TVMenuService.new);
   HttpOverrides.global = _CustomHttpOverrides();
 
   CacheManager.autoClearCache();
@@ -203,10 +206,27 @@ Commit Hash: ${BuildConfig.commitHash}''';
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   static ThemeData? darkThemeData;
+
+  @override
+  void initState() {
+    super.initState();
+    ever(TVMenuService.instance.isMenuVisible, (bool isVisible) {
+      if (isVisible) {
+        showTvMenu();
+      } else {
+        SmartDialog.dismiss();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -336,10 +356,15 @@ class MyApp extends StatelessWidget {
                 return Focus(
                   canRequestFocus: false,
                   onKeyEvent: (_, event) {
-                    if (event.logicalKey == LogicalKeyboardKey.escape &&
-                        event is KeyDownEvent) {
-                      onBack();
-                      return KeyEventResult.handled;
+                    if (event is KeyDownEvent) {
+                      if (event.logicalKey == LogicalKeyboardKey.escape) {
+                        onBack();
+                        return KeyEventResult.handled;
+                      } else if (event.logicalKey ==
+                          LogicalKeyboardKey.menu) {
+                        TVMenuService.instance.toggleMenu();
+                        return KeyEventResult.handled;
+                      }
                     }
                     return KeyEventResult.ignored;
                   },

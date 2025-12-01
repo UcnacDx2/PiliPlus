@@ -55,6 +55,8 @@ import 'package:PiliPlus/plugin/pl_player/models/data_source.dart';
 import 'package:PiliPlus/plugin/pl_player/models/heart_beat_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
+import 'package:PiliPlus/services/tv_menu/providers/video_menu_provider.dart';
+import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/context_ext.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
@@ -271,6 +273,8 @@ class VideoDetailController extends GetxController
 
   final isLoginVideo = Accounts.get(AccountType.video).isLogin;
 
+  final VideoMenuProvider _videoMenuProvider = VideoMenuProvider();
+
   late final watchProgress = GStorage.watchProgress;
   void cacheLocalProgress() {
     if (plPlayerController.playerStatus.completed) {
@@ -342,6 +346,7 @@ class VideoDetailController extends GetxController
       vsync: this,
       initialIndex: Pref.defaultShowComment ? 1 : 0,
     );
+    TVMenuService.instance.registerProvider(_videoMenuProvider);
   }
 
   Future<void> getMediaList({
@@ -1661,6 +1666,7 @@ class VideoDetailController extends GetxController
     if (isFileSource) {
       cacheLocalProgress();
     }
+    TVMenuService.instance.unregisterProvider(_videoMenuProvider);
     introScrollCtr?.dispose();
     introScrollCtr = null;
     tabCtr.dispose();

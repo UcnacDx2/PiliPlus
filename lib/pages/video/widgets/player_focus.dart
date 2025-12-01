@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
@@ -46,6 +47,9 @@ class PlayerFocus extends StatelessWidget {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
+        if (TVMenuService.instance.isMenuVisible.value) {
+          return KeyEventResult.ignored;
+        }
         final handled = _handleKey(event);
         if (handled || _shouldHandle(event.logicalKey)) {
           return KeyEventResult.handled;
