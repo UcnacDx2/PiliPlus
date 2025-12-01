@@ -85,6 +85,7 @@ class VideoDetailController extends GetxController
   late String bvid;
   late int aid;
   late final RxInt cid;
+  final VideoMenuProvider _videoMenuProvider = VideoMenuProvider();
   int? epId;
   int? seasonId;
   int? pgcType;
@@ -273,8 +274,6 @@ class VideoDetailController extends GetxController
 
   final isLoginVideo = Accounts.get(AccountType.video).isLogin;
 
-  final VideoMenuProvider _videoMenuProvider = VideoMenuProvider();
-
   late final watchProgress = GStorage.watchProgress;
   void cacheLocalProgress() {
     if (plPlayerController.playerStatus.completed) {
@@ -311,6 +310,7 @@ class VideoDetailController extends GetxController
   @override
   void onInit() {
     super.onInit();
+    TVMenuService.to.registerProvider(_videoMenuProvider);
     args = Get.arguments;
     videoType = args['videoType'];
     if (videoType == VideoType.pgc) {
@@ -346,7 +346,6 @@ class VideoDetailController extends GetxController
       vsync: this,
       initialIndex: Pref.defaultShowComment ? 1 : 0,
     );
-    TVMenuService.instance.registerProvider(_videoMenuProvider);
   }
 
   Future<void> getMediaList({
@@ -1666,7 +1665,7 @@ class VideoDetailController extends GetxController
     if (isFileSource) {
       cacheLocalProgress();
     }
-    TVMenuService.instance.unregisterProvider(_videoMenuProvider);
+    TVMenuService.to.unregisterProvider(_videoMenuProvider);
     introScrollCtr?.dispose();
     introScrollCtr = null;
     tabCtr.dispose();

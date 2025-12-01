@@ -1,9 +1,9 @@
-import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:flutter/material.dart';
-import 'package:PiliPlus/services/tv_menu/menu_provider.dart';
-import 'package:PiliPlus/services/tv_menu/models/menu_item.dart';
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
+import 'package:pili_plus/plugin/pl_player/controller.dart';
+import 'package:pili_plus/services/tv_menu/menu_provider.dart';
+import 'package:pili_plus/services/tv_menu/models/menu_item.dart';
+import 'package:pili_plus/services/tv_menu/tv_menu_service.dart';
 
 class VideoMenuProvider implements MenuProvider {
   @override
@@ -14,68 +14,35 @@ class VideoMenuProvider implements MenuProvider {
     final player = PlPlayerController.instance!;
     return [
       MenuItem(
-        label: player.isPlaying.value ? 'Pause' : 'Play',
-        icon: player.isPlaying.value ? Icons.pause : Icons.play_arrow,
-        onTap: () => player.onDoubleTapCenter(),
+        title: Obx(() => Text(player.playerStatus.playing ? 'Pause' : 'Play')),
+        icon: Icons.play_arrow,
+        onTap: () {
+          player.onDoubleTapCenter();
+          TVMenuService.to.hideMenu();
+        },
       ),
       MenuItem(
-        label: 'Speed: ${player.playbackSpeed}x',
+        title: Obx(() => Text('Speed: ${player.playbackSpeed}x')),
         icon: Icons.speed,
-        onTap: () => _showSpeedDialog(context),
+        onTap: () {
+          // TODO: Implement speed dialog
+          TVMenuService.to.hideMenu();
+        },
       ),
       MenuItem(
-        label: 'Danmaku: ${player.enableShowDanmaku.value ? "On" : "Off"}',
+        title: Obx(() =>
+            Text('Danmaku: ${player.enableShowDanmaku.value ? "On" : "Off"}')),
         icon: Icons.subtitles,
-        onTap: () =>
-            player.enableShowDanmaku.value = !player.enableShowDanmaku.value,
+        onTap: () {
+          player.enableShowDanmaku.value = !player.enableShowDanmaku.value;
+          TVMenuService.to.hideMenu();
+        },
       ),
     ];
   }
 
-  void _showSpeedDialog(BuildContext context) {
-    final speeds = [0.5, 1.0, 1.5, 2.0];
-    SmartDialog.show(
-      builder: (context) {
-        return Material(
-          color: Colors.transparent,
-          child: Center(
-            child: Container(
-              width: 200,
-              decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: speeds.length,
-                itemBuilder: (context, index) {
-                  final speed = speeds[index];
-                  return InkWell(
-                    autofocus: PlPlayerController.instance!.playbackSpeed == speed,
-                    onTap: () {
-                      PlPlayerController.instance!.setPlaybackSpeed(speed);
-                      SmartDialog.dismiss();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12.0, horizontal: 16.0),
-                      child: Text(
-                        '${speed}x',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   bool canHandle(BuildContext context) {
-    return PlPlayerController.instance != null;
+    return Get.isRegistered<PlPlayerController>();
   }
 }

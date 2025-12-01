@@ -47,7 +47,7 @@ class PlayerFocus extends StatelessWidget {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
-        if (TVMenuService.instance.isMenuVisible.value) {
+        if (TVMenuService.to.isMenuVisible.value) {
           return KeyEventResult.ignored;
         }
         final handled = _handleKey(event);

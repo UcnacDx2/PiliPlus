@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:PiliPlus/services/tv_menu/models/menu_item.dart';
+import 'package:pili_plus/services/tv_menu/models/menu_item.dart';
 
 abstract class MenuProvider {
   String get sceneName;

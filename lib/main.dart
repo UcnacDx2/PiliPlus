@@ -9,12 +9,14 @@ import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/router/app_pages.dart';
 import 'package:PiliPlus/services/account_service.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_menu_overlay.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
 import 'package:PiliPlus/services/logger.dart';
-import 'package:PiliPlus/common/widgets/tv_menu/tv_menu_overlay.dart';
 import 'package:PiliPlus/services/service_locator.dart';
+import 'package:PiliPlus/services/tv_menu/providers/browse_menu_provider.dart';
+import 'package:PiliPlus/services/tv_menu/providers/default_menu_provider.dart';
 import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
-import 'package.PiliPlus/utils/app_scheme.dart';
+import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/calc_window_position.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
@@ -87,7 +89,9 @@ void main() async {
   Get
     ..lazyPut(AccountService.new)
     ..lazyPut(DownloadService.new)
-    ..lazyPut(TVMenuService.new);
+    ..lazyPut(() => TVMenuService());
+  TVMenuService.to.registerProvider(DefaultMenuProvider());
+  TVMenuService.to.registerProvider(BrowseMenuProvider());
   HttpOverrides.global = _CustomHttpOverrides();
 
   CacheManager.autoClearCache();
@@ -193,7 +197,14 @@ Commit Hash: ${BuildConfig.commitHash}''';
         'BuildConfig': buildConfig,
       },
     );
-
+    // 监听TV菜单的显示和隐藏
+    ever(TVMenuService.to.isMenuVisible, (isVisible) {
+      if (isVisible) {
+        showTVMenu();
+      } else {
+        SmartDialog.dismiss(tag: 'tv_menu');
+      }
+    });
     Catcher2(
       debugConfig: debugConfig,
       releaseConfig: releaseConfig,
@@ -206,27 +217,10 @@ Commit Hash: ${BuildConfig.commitHash}''';
   }
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
   static ThemeData? darkThemeData;
-
-  @override
-  void initState() {
-    super.initState();
-    ever(TVMenuService.instance.isMenuVisible, (bool isVisible) {
-      if (isVisible) {
-        showTvMenu();
-      } else {
-        SmartDialog.dismiss();
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -319,6 +313,11 @@ class _MyAppState extends State<MyApp> {
               );
               if (Utils.isDesktop) {
                 void onBack() {
+                  if (SmartDialog.checkExist(tag: 'tv_menu')) {
+                    SmartDialog.dismiss(tag: 'tv_menu');
+                    return;
+                  }
+
                   if (SmartDialog.checkExist()) {
                     SmartDialog.dismiss();
                     return;
@@ -362,7 +361,7 @@ class _MyAppState extends State<MyApp> {
                         return KeyEventResult.handled;
                       } else if (event.logicalKey ==
                           LogicalKeyboardKey.menu) {
-                        TVMenuService.instance.toggleMenu();
+                        TVMenuService.to.toggleMenu(context);
                         return KeyEventResult.handled;
                       }
                     }
