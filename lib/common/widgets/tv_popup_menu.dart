@@ -82,7 +82,7 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
       contentPadding: EdgeInsets.zero,
       content: FocusScope(
         onKeyEvent: (node, event) {
-          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.escape || event.logicalKey == LogicalKeyboardKey.back)) {
+          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.escape)) {
             Navigator.of(context).pop();
             return KeyEventResult.handled;
           }
