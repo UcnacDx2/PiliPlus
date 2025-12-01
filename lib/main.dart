@@ -344,7 +344,7 @@ class MyApp extends StatelessWidget {
                     return KeyEventResult.handled;
                   }
                   if (IsTvPlatform &&
-                      event is RawKeyDownEvent &&
+                      event is KeyDownEvent &&
                       event.logicalKey == LogicalKeyboardKey.contextMenu) {
                     TvMenuManager().showTvMenu(
                       context: context,
