@@ -58,6 +58,7 @@ class _VideoCardVState extends State<VideoCardV> {
         return TvPopupMenu(
           focusData: widget.videoItem,
           contextType: 'videoCard',
+          bvid: widget.videoItem.bvid,
         );
       },
     );

@@ -1,15 +1,20 @@
 // lib/common/widgets/tv_menu/tv_popup_menu.dart
+import 'package:PiliPlus/http/user.dart';
+import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 class TvPopupMenu extends StatefulWidget {
   final dynamic focusData; // 焦点对象数据，例如视频项
   final String contextType; // 上下文类型: 'videoCard' 或 'videoPlayer'
   final VoidCallback? onMoreOptions; // “更多选项”的回调
+  final String? bvid; // bvid
 
   const TvPopupMenu({
     required this.focusData,
     required this.contextType,
     this.onMoreOptions,
+    this.bvid,
     super.key,
   });
 
@@ -41,7 +46,9 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
         leading: const Icon(Icons.play_arrow_outlined, size: 22),
         title: const Text('立即播放', style: TextStyle(fontSize: 16)),
         onTap: () {
-          // TODO: 实现播放逻辑
+          if (widget.bvid != null) {
+            PageUtils.toVideoPage(bvid: widget.bvid!);
+          }
           Navigator.of(context).pop();
         },
       ),
@@ -50,8 +57,9 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         leading: const Icon(Icons.watch_later_outlined, size: 22),
         title: const Text('稍后再看', style: TextStyle(fontSize: 16)),
-        onTap: () {
-          // TODO: 实现添加到“稍后再看”的逻辑
+        onTap: () async {
+          var res = await UserHttp.toViewLater(bvid: widget.bvid);
+          SmartDialog.showToast(res['msg']);
           Navigator.of(context).pop();
         },
       ),

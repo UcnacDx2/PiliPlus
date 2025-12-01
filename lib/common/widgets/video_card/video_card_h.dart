@@ -17,6 +17,8 @@ import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
+import 'package:PiliPlus/utils/is_tv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter/services.dart'; // 必须导入，用于 LogicalKeyboardKey
@@ -41,9 +43,27 @@ class VideoCardH extends StatefulWidget {
 
 class _VideoCardHState extends State<VideoCardH> {
   // [Feat] TV 菜单键支持
-  final GlobalKey<VideoPopupMenuState> _menuKey =
-      GlobalKey<VideoPopupMenuState>();
-  
+  void _handleMenuKey(RawKeyEvent event) {
+    if (IsTvPlatform &&
+        event is RawKeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.contextMenu) {
+      _showTvPopupMenu();
+    }
+  }
+
+  void _showTvPopupMenu() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return TvPopupMenu(
+          focusData: widget.videoItem,
+          contextType: 'videoCard',
+          bvid: widget.videoItem.bvid,
+        );
+      },
+    );
+  }
+
   // [Main] 首帧图支持
   String? _firstFrame;
 
@@ -51,6 +71,12 @@ class _VideoCardHState extends State<VideoCardH> {
   void initState() {
     super.initState();
     _fetchFirstFrame();
+  }
+
+  @override
+  void dispose() {
+    RawKeyboard.instance.removeListener(_handleMenuKey);
+    super.dispose();
   }
 
   @override
@@ -163,15 +189,12 @@ class _VideoCardHState extends State<VideoCardH> {
       type: MaterialType.transparency,
       // [Feat] Focus 监听逻辑
       child: Focus(
-        canRequestFocus: false,
-        skipTraversal: true,
-        onKeyEvent: (node, event) {
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.contextMenu) {
-            _menuKey.currentState?.showButtonMenu();
-            return KeyEventResult.handled;
+        onFocusChange: (hasFocus) {
+          if (hasFocus) {
+            RawKeyboard.instance.addListener(_handleMenuKey);
+          } else {
+            RawKeyboard.instance.removeListener(_handleMenuKey);
           }
-          return KeyEventResult.ignored;
         },
         child: Stack(
           clipBehavior: Clip.none,
@@ -257,20 +280,6 @@ class _VideoCardHState extends State<VideoCardH> {
                     const SizedBox(width: 10),
                     content(context),
                   ],
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 12,
-              child: ExcludeFocus(
-                child: VideoPopupMenu(
-                  // [Feat] 绑定 Key
-                  key: _menuKey,
-                  size: 29,
-                  iconSize: 17,
-                  videoItem: widget.videoItem,
-                  onRemove: widget.onRemove,
                 ),
               ),
             ),
