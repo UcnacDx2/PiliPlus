@@ -56,6 +56,8 @@ import 'package:flutter/material.dart' hide showBottomSheet;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_menu_adapter.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -952,6 +954,7 @@ class HeaderControlState extends State<HeaderControl>
   late final horizontalScreen = videoDetailCtr.horizontalScreen;
 
   Box setting = GStorage.setting;
+  bool _isTV = false;
 
   @override
   void initState() {
@@ -963,6 +966,18 @@ class HeaderControlState extends State<HeaderControl>
     } else {
       introController = Get.find<PgcIntroController>(tag: heroTag);
     }
+    if (Utils.isTV) {
+      _isTV = true;
+      TvMenuManager().setFocusedAdapter(VideoPlayerMenuAdapter(videoDetailCtr.data));
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_isTV) {
+      TvMenuManager().setFocusedAdapter(null);
+    }
+    super.dispose();
   }
 
   /// 设置面板

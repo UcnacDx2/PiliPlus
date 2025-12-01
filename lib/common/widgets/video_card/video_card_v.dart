@@ -3,7 +3,8 @@ import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
-import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_menu_adapter.dart';
 import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
@@ -41,12 +42,16 @@ class VideoCardV extends StatefulWidget {
 }
 
 class _VideoCardVState extends State<VideoCardV> {
-  // [Feat] TV 菜单键支持
-  final GlobalKey<VideoPopupMenuState> _menuKey =
-      GlobalKey<VideoPopupMenuState>();
-  
   // [Main] 首帧图支持
   String? _firstFrame;
+
+  void _handleFocusChange(bool hasFocus) {
+    if (hasFocus) {
+      TvMenuManager().setFocusedAdapter(VideoCardMenuAdapter(widget.videoItem));
+    } else {
+      TvMenuManager().setFocusedAdapter(null);
+    }
+  }
 
   @override
   void initState() {
@@ -61,6 +66,11 @@ class _VideoCardVState extends State<VideoCardV> {
       _firstFrame = null;
       _fetchFirstFrame();
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   Future<void> _fetchFirstFrame() async {
@@ -120,82 +130,53 @@ class _VideoCardVState extends State<VideoCardV> {
     );
     // [Feat] Focus 包裹
     return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.contextMenu) {
-          _menuKey.currentState?.showButtonMenu();
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Card(
-            clipBehavior: Clip.hardEdge,
-            child: InkWell(
-              onTap: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
-              onLongPress: onLongPress,
-              onSecondaryTap: Utils.isMobile ? null : onLongPress,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AspectRatio(
-                    aspectRatio: StyleString.aspectRatio,
-                    child: LayoutBuilder(
-                      builder: (context, boxConstraints) {
-                        double maxWidth = boxConstraints.maxWidth;
-                        double maxHeight = boxConstraints.maxHeight;
-                        return Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            // [Main] 首帧图逻辑
-                            NetworkImgLayer(
-                              src: _firstFrame ??
-                                  widget.videoItem.firstFrame ??
-                                  widget.videoItem.cover,
-                              width: maxWidth,
-                              height: maxHeight,
-                              radius: 0,
+      onFocusChange: _handleFocusChange,
+      child: Card(
+        clipBehavior: Clip.hardEdge,
+        child: InkWell(
+          onTap: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
+          onLongPress: onLongPress,
+          onSecondaryTap: Utils.isMobile ? null : onLongPress,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AspectRatio(
+                aspectRatio: StyleString.aspectRatio,
+                child: LayoutBuilder(
+                  builder: (context, boxConstraints) {
+                    double maxWidth = boxConstraints.maxWidth;
+                    double maxHeight = boxConstraints.maxHeight;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // [Main] 首帧图逻辑
+                        NetworkImgLayer(
+                          src: _firstFrame ??
+                              widget.videoItem.firstFrame ??
+                              widget.videoItem.cover,
+                          width: maxWidth,
+                          height: maxHeight,
+                          radius: 0,
+                        ),
+                        if ((widget.videoItem.duration ?? 0) > 0)
+                          PBadge(
+                            bottom: 6,
+                            right: 7,
+                            size: PBadgeSize.small,
+                            type: PBadgeType.gray,
+                            text: DurationUtils.formatDuration(
+                              widget.videoItem.duration,
                             ),
-                            if ((widget.videoItem.duration ?? 0) > 0)
-                              PBadge(
-                                bottom: 6,
-                                right: 7,
-                                size: PBadgeSize.small,
-                                type: PBadgeType.gray,
-                                text: DurationUtils.formatDuration(
-                                  widget.videoItem.duration,
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                  content(context),
-                ],
-              ),
-            ),
-          ),
-          if (widget.videoItem.goto == 'av')
-            Positioned(
-              right: -5,
-              bottom: -2,
-              child: ExcludeFocus(
-                child: VideoPopupMenu(
-                  // [Feat] 绑定 Key
-                  key: _menuKey,
-                  size: 29,
-                  iconSize: 17,
-                  videoItem: widget.videoItem,
-                  onRemove: widget.onRemove,
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ),
-            ),
-        ],
+              content(context),
+            ],
+          ),
+        ),
       ),
     );
   }

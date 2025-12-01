@@ -25,6 +25,14 @@ abstract class Utils {
   static final bool isDesktop =
       Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
+  static bool isTV = false;
+  static Future<void> initIsTV() async {
+    if (Platform.isAndroid) {
+      final deviceInfo = await DeviceInfoPlugin().androidInfo;
+      isTV = deviceInfo.systemFeatures.contains('android.software.leanback');
+    }
+  }
+
   static const jsonEncoder = JsonEncoder.withIndent('    ');
 
   static Future<void> saveBytes2File({
