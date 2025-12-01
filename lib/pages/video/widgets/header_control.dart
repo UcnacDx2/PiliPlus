@@ -51,17 +51,17 @@ import 'package:dio/dio.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:floating/floating.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu_item.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide showBottomSheet;
+import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
-import 'package:PiliPlus/utils/is_tv.dart';
-import 'package:flutter/services.dart';
 
 mixin TimeBatteryMixin<T extends StatefulWidget> on State<T> {
   PlPlayerController get plPlayerController;
@@ -966,16 +966,14 @@ class HeaderControlState extends State<HeaderControl>
     } else {
       introController = Get.find<PgcIntroController>(tag: heroTag);
     }
-    // 仅在 TV 平台添加监听
-    if (IsTvPlatform) {
+    if (GetPlatform.isAndroid) {
       RawKeyboard.instance.addListener(_handleMenuKey);
     }
   }
 
   @override
   void dispose() {
-    // 移除监听器以防止内存泄漏
-    if (IsTvPlatform) {
+    if (GetPlatform.isAndroid) {
       RawKeyboard.instance.removeListener(_handleMenuKey);
     }
     super.dispose();
@@ -984,19 +982,33 @@ class HeaderControlState extends State<HeaderControl>
   void _handleMenuKey(RawKeyEvent event) {
     if (event is RawKeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.menu) {
-      // 防止在已显示其他弹窗时重复触发
       if (ModalRoute.of(context)?.isCurrent != true) return;
       _showTvPlayerMenu();
     }
   }
 
   void _showTvPlayerMenu() {
+    final items = [
+      TvPopupMenuItem(
+        icon: Icons.settings_outlined,
+        title: '播放设置',
+        onTap: () {
+          Get.back();
+          showSettingSheet();
+        },
+      ),
+      TvPopupMenuItem(
+        icon: Icons.subtitles_outlined,
+        title: '字幕设置',
+        onTap: () {
+          Get.back();
+          showSetSubtitle();
+        },
+      ),
+    ];
     showDialog(
       context: context,
-      builder: (context) => TvPopupMenu(
-        focusData: videoDetailCtr.data, // 传入视频详情数据
-        contextType: 'videoPlayer',
-      ),
+      builder: (context) => TvPopupMenu(items: items),
     );
   }
 
