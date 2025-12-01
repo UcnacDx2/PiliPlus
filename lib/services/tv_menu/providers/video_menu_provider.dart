@@ -16,7 +16,20 @@ class VideoMenuProvider implements MenuProvider {
 
   @override
   List<MenuItem> getMenuItems(BuildContext context) {
-    final player = PlPlayerController.instance!;
+    final player = PlPlayerController.instance;
+    
+    // If player is not available, return minimal menu
+    if (player == null || player.videoPlayerController == null) {
+      return MenuBuilder()
+          .addItem(
+            '关闭菜单',
+            Icons.close,
+            () {
+              TVMenuService.instance.hideMenu();
+            },
+          )
+          .build();
+    }
 
     return MenuBuilder()
         .addItem(
@@ -85,7 +98,6 @@ class VideoMenuProvider implements MenuProvider {
 
   @override
   bool canHandle(BuildContext context) {
-    final instance = PlPlayerController.instance;
-    return instance != null && instance.videoPlayerController != null;
+    return PlPlayerController.instanceExists();
   }
 }
