@@ -51,7 +51,7 @@ class _VideoCardVState extends State<VideoCardV> {
     // 确保是 TV 平台且为菜单键按下事件
     if (IsTvPlatform &&
         event is RawKeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.menu) {
+        event.logicalKey == LogicalKeyboardKey.contextMenu) {
       _showTvPopupMenu();
     }
   }

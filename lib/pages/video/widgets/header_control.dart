@@ -983,7 +983,7 @@ class HeaderControlState extends State<HeaderControl>
 
   void _handleMenuKey(RawKeyEvent event) {
     if (event is RawKeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.menu) {
+        event.logicalKey == LogicalKeyboardKey.contextMenu) {
       // 防止在已显示其他弹窗时重复触发
       if (ModalRoute.of(context)?.isCurrent != true) return;
       _showTvPlayerMenu();
