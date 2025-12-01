@@ -9,12 +9,14 @@ class TvPopupMenu extends StatefulWidget {
   final String contextType; // 上下文类型: 'videoCard' 或 'videoPlayer'
   final VoidCallback? onMoreOptions; // “更多选项”的回调
   final String? bvid; // bvid
+  final int? cid; // cid
 
   const TvPopupMenu({
     required this.focusData,
     required this.contextType,
     this.onMoreOptions,
     this.bvid,
+    this.cid,
     super.key,
   });
 
@@ -46,8 +48,8 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
         leading: const Icon(Icons.play_arrow_outlined, size: 22),
         title: const Text('立即播放', style: TextStyle(fontSize: 16)),
         onTap: () {
-          if (widget.bvid != null) {
-            PageUtils.toVideoPage(bvid: widget.bvid!);
+          if (widget.bvid != null && widget.cid != null) {
+            PageUtils.toVideoPage(bvid: widget.bvid!, cid: widget.cid!);
           }
           Navigator.of(context).pop();
         },
@@ -58,8 +60,10 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
         leading: const Icon(Icons.watch_later_outlined, size: 22),
         title: const Text('稍后再看', style: TextStyle(fontSize: 16)),
         onTap: () async {
-          var res = await UserHttp.toViewLater(bvid: widget.bvid);
-          SmartDialog.showToast(res['msg']);
+          if (widget.bvid != null) {
+            var res = await UserHttp.toViewLater(bvid: widget.bvid);
+            SmartDialog.showToast(res['msg']);
+          }
           Navigator.of(context).pop();
         },
       ),

@@ -59,6 +59,7 @@ class _VideoCardVState extends State<VideoCardV> {
           focusData: widget.videoItem,
           contextType: 'videoCard',
           bvid: widget.videoItem.bvid,
+          cid: widget.videoItem.cid,
         );
       },
     );
