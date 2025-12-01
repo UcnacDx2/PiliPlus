@@ -225,7 +225,6 @@ class VideoHttp {
       var res = await Request().get(
         videoType.api,
         queryParameters: params,
-        options: Options(extra: {'account': Accounts.history}),
       );
 
       if (res.data['code'] == 0) {
@@ -272,6 +271,47 @@ class VideoHttp {
       87008 => '当前视频可能是专属视频，可能需包月充电观看($msg})',
       _ => '错误($code): $msg',
     };
+  }
+
+  static Future<int?> getVideoHistory({
+    int? avid,
+    String? bvid,
+    required int cid,
+    dynamic epid,
+    dynamic seasonId,
+    required VideoType videoType,
+  }) async {
+    final params = await WbiSign.makSign({
+      'avid': ?avid,
+      'bvid': ?bvid,
+      'ep_id': ?epid,
+      'season_id': ?seasonId,
+      'cid': cid,
+    });
+
+    try {
+      var res = await Request().get(
+        videoType.api,
+        queryParameters: params,
+        options: Options(extra: {'account': Accounts.history}),
+      );
+
+      if (res.data['code'] == 0) {
+        switch (videoType) {
+          case VideoType.ugc:
+            return res.data['data']?['last_play_time'];
+          case VideoType.pugv:
+            return res.data['data']?['play_view_business_info']?['user_status']
+                ?['watch_progress']?['current_watch_progress'];
+          case VideoType.pgc:
+            return res.data['result']?['play_view_business_info']
+                ?['user_status']?['watch_progress']?['current_watch_progress'];
+        }
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
   }
 
   // 视频信息 标题、简介

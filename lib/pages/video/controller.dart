@@ -1263,6 +1263,17 @@ class VideoDetailController extends GetxController
 
       volume = data.volume;
 
+      final historyProgress = await VideoHttp.getVideoHistory(
+          cid: cid.value,
+          bvid: bvid,
+          epid: epId,
+          seasonId: seasonId,
+          videoType: _actualVideoType ?? videoType);
+
+      if (historyProgress != null) {
+        data.lastPlayTime = historyProgress;
+      }
+
       final progress = args['progress'];
       if (progress != null) {
         this.defaultST = Duration(milliseconds: progress);
