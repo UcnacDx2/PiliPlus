@@ -41,6 +41,7 @@ class AccountManager extends Interceptor {
       // progress
       Api.pgcInfo,
       Api.pugvInfo,
+      Api.playInfo,
 
       Api.ab2c,
       Api.liveRoomInfo,
