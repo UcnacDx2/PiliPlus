@@ -4,6 +4,7 @@ import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/custom_toast.dart';
 import 'package:PiliPlus/common/widgets/mouse_back.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_menu_overlay.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
@@ -12,6 +13,7 @@ import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
 import 'package:PiliPlus/services/logger.dart';
 import 'package:PiliPlus/services/service_locator.dart';
+import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/calc_window_position.dart';
@@ -84,7 +86,8 @@ void main() async {
   }
   Get
     ..lazyPut(AccountService.new)
-    ..lazyPut(DownloadService.new);
+    ..lazyPut(DownloadService.new)
+    ..put(TVMenuService());
   HttpOverrides.global = _CustomHttpOverrides();
 
   CacheManager.autoClearCache();
@@ -203,10 +206,29 @@ Commit Hash: ${BuildConfig.commitHash}''';
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   static ThemeData? darkThemeData;
+
+  @override
+  void initState() {
+    super.initState();
+    // TV menu overlay
+    ever(TVMenuService.instance.isMenuVisible, (isVisible) {
+      if (isVisible) {
+          TVMenuOverlay.show(context);
+        } else {
+          SmartDialog.dismiss();
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -297,59 +319,60 @@ class MyApp extends StatelessWidget {
                 ),
                 child: child!,
               );
-              if (Utils.isDesktop) {
-                void onBack() {
-                  if (SmartDialog.checkExist()) {
-                    SmartDialog.dismiss();
-                    return;
-                  }
-
-                  if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
-                    Get.back();
-                    return;
-                  }
-
-                  final plCtr = PlPlayerController.instance;
-                  if (plCtr != null) {
-                    if (plCtr.isFullScreen.value) {
-                      plCtr
-                        ..triggerFullScreen(status: false)
-                        ..controlsLock.value = false
-                        ..showControls.value = false;
-                      return;
-                    }
-
-                    if (plCtr.isDesktopPip) {
-                      plCtr
-                        ..exitDesktopPip().whenComplete(
-                          () => plCtr.initialFocalPoint = Offset.zero,
-                        )
-                        ..controlsLock.value = false
-                        ..showControls.value = false;
-                      return;
-                    }
-                  }
-
-                  Get.back();
+              void onBack() {
+                if (SmartDialog.checkExist()) {
+                  SmartDialog.dismiss();
+                  return;
                 }
 
-                return Focus(
-                  canRequestFocus: false,
-                  onKeyEvent: (_, event) {
-                    if (event.logicalKey == LogicalKeyboardKey.escape &&
-                        event is KeyDownEvent) {
+                if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
+                  Get.back();
+                  return;
+                }
+
+                final plCtr = PlPlayerController.instance;
+                if (plCtr != null) {
+                  if (plCtr.isFullScreen.value) {
+                    plCtr
+                      ..triggerFullScreen(status: false)
+                      ..controlsLock.value = false
+                      ..showControls.value = false;
+                    return;
+                  }
+
+                  if (plCtr.isDesktopPip) {
+                    plCtr
+                      ..exitDesktopPip().whenComplete(
+                        () => plCtr.initialFocalPoint = Offset.zero,
+                      )
+                      ..controlsLock.value = false
+                      ..showControls.value = false;
+                    return;
+                  }
+                }
+
+                Get.back();
+              }
+
+              return Focus(
+                canRequestFocus: false,
+                onKeyEvent: (_, event) {
+                  if (event is KeyDownEvent) {
+                    if (event.logicalKey == LogicalKeyboardKey.escape) {
                       onBack();
                       return KeyEventResult.handled;
+                    } else if (event.logicalKey == LogicalKeyboardKey.menu) {
+                      TVMenuService.instance.toggleMenu(context);
+                      return KeyEventResult.handled;
                     }
-                    return KeyEventResult.ignored;
-                  },
-                  child: MouseBackDetector(
-                    onTapDown: onBack,
-                    child: child,
-                  ),
-                );
-              }
-              return child;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: MouseBackDetector(
+                  onTapDown: onBack,
+                  child: child,
+                ),
+              );
             },
           ),
           navigatorObservers: [

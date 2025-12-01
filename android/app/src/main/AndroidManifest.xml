@@ -72,6 +72,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+                 <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
             </intent-filter>
             <intent-filter android:label="PiliPlus">
                 <action android:name="android.intent.action.VIEW" />
@@ -211,4 +212,6 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 </manifest>

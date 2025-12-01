@@ -55,6 +55,8 @@ import 'package:PiliPlus/plugin/pl_player/models/data_source.dart';
 import 'package:PiliPlus/plugin/pl_player/models/heart_beat_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
+import 'package:PiliPlus/services/tv_menu/providers/video_menu_provider.dart';
+import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/context_ext.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
@@ -78,6 +80,8 @@ import 'package:media_kit/media_kit.dart';
 
 class VideoDetailController extends GetxController
     with GetTickerProviderStateMixin {
+  final _videoMenuProvider = VideoMenuProvider();
+
   /// 路由传参
   late final Map args;
   late String bvid;
@@ -342,6 +346,7 @@ class VideoDetailController extends GetxController
       vsync: this,
       initialIndex: Pref.defaultShowComment ? 1 : 0,
     );
+    TVMenuService.instance.registerProvider(_videoMenuProvider);
   }
 
   Future<void> getMediaList({
@@ -1668,6 +1673,7 @@ class VideoDetailController extends GetxController
       ..removeListener(scrollListener)
       ..dispose();
     animController?.dispose();
+    TVMenuService.instance.unregisterProvider(_videoMenuProvider);
     super.onClose();
   }
 
