@@ -264,7 +264,7 @@ class DetailItem extends StatelessWidget {
                         return const SizedBox.shrink();
                       },
                     ),
-                  else if (entry.totalTimeMilli != 0)
+                  if (entry.totalTimeMilli != 0)
                     PBadge(
                       text: DurationUtils.formatDuration(
                         entry.totalTimeMilli ~/ 1000,
