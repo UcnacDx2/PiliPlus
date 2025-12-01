@@ -208,6 +208,8 @@ Commit Hash: ${BuildConfig.commitHash}''';
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  static ThemeData? darkThemeData;
+
   @override
   State<MyApp> createState() => _MyAppState();
 }

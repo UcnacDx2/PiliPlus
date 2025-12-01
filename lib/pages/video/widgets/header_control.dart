@@ -58,6 +58,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
 import 'package:PiliPlus/common/widgets/tv_menu/tv_menu_adapter.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_menu_manager.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
