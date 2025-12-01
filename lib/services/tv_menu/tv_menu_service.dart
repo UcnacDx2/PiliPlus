@@ -19,7 +19,7 @@ class TVMenuService extends GetxService {
   }
 
   MenuProvider? getProviderForContext(BuildContext context) {
-    for (final provider in _providers) {
+    for (final provider in _providers.reversed) {
       if (provider.canHandle(context)) {
         return provider;
       }

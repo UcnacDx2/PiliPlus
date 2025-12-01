@@ -13,6 +13,7 @@ import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
 import 'package:PiliPlus/services/logger.dart';
 import 'package:PiliPlus/services/service_locator.dart';
+import 'package:PiliPlus/services/tv_menu/providers/default_menu_provider.dart';
 import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
@@ -88,6 +89,7 @@ void main() async {
     ..lazyPut(AccountService.new)
     ..lazyPut(DownloadService.new)
     ..lazyPut(TVMenuService.new);
+  TVMenuService.instance.registerProvider(DefaultMenuProvider());
   HttpOverrides.global = _CustomHttpOverrides();
 
   CacheManager.autoClearCache();
