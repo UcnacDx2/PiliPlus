@@ -6,6 +6,7 @@ import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
+import 'package:PiliPlus/http/search.dart';
 
 class TvMenuManager {
   TvMenuManager._privateConstructor();
@@ -52,8 +53,15 @@ class TvMenuManager {
       TvPopupMenuItem(
         icon: Icons.play_arrow_outlined,
         title: '立即播放',
-        onTap: () {
-          PageUtils.toVideoPageWithTitle(videoItem);
+        onTap: () async {
+          int? cid = await SearchHttp.ab2c(bvid: videoItem.bvid!);
+          if (cid != null) {
+            PageUtils.toVideoPage(
+              bvid: videoItem.bvid!,
+              cid: cid,
+              cover: videoItem.cover,
+            );
+          }
           Navigator.of(context).pop();
         },
       ),
@@ -61,9 +69,7 @@ class TvMenuManager {
         icon: Icons.watch_later_outlined,
         title: '稍后再看',
         onTap: () {
-          VideoHttp.toViewLater(bvid: videoItem.bvid!).then((res) {
-            SmartDialog.showToast(res.data['message']);
-          });
+          VideoHttp.historyReport(bvid: videoItem.bvid!, type: 'later');
           Navigator.of(context).pop();
         },
       ),
