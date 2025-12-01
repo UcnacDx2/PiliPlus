@@ -20,6 +20,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart'; // 必须导入
+import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
+import 'package:PiliPlus/utils/is_tv.dart';
 
 // 视频卡片 - 垂直布局
 class VideoCardV extends StatefulWidget {
@@ -45,6 +47,25 @@ class _VideoCardVState extends State<VideoCardV> {
   final GlobalKey<VideoPopupMenuState> _menuKey =
       GlobalKey<VideoPopupMenuState>();
   
+  void _handleMenuKey(RawKeyEvent event) {
+    // 确保是 TV 平台且为菜单键按下事件
+    if (IsTvPlatform &&
+        event is RawKeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.menu) {
+      _showTvPopupMenu();
+    }
+  }
+
+  void _showTvPopupMenu() {
+    showDialog(
+      context: context,
+      builder: (context) => TvPopupMenu(
+        focusData: widget.videoItem, // 传入视频数据
+        contextType: 'videoCard',
+      ),
+    );
+  }
+
   // [Main] 首帧图支持
   String? _firstFrame;
 
@@ -73,6 +94,12 @@ class _VideoCardVState extends State<VideoCardV> {
         });
       }
     }
+  }
+
+  @override
+  void dispose() {
+    RawKeyboard.instance.removeListener(_handleMenuKey);
+    super.dispose();
   }
 
   Future<void> onPushDetail(String heroTag) async {
@@ -120,15 +147,14 @@ class _VideoCardVState extends State<VideoCardV> {
     );
     // [Feat] Focus 包裹
     return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.contextMenu) {
-          _menuKey.currentState?.showButtonMenu();
-          return KeyEventResult.handled;
+      onFocusChange: (hasFocus) {
+        if (hasFocus) {
+          // 当此卡片获得焦点时，开始监听菜单键
+          RawKeyboard.instance.addListener(_handleMenuKey);
+        } else {
+          // 失去焦点时，移除监听，避免响应非焦点状态下的按键
+          RawKeyboard.instance.removeListener(_handleMenuKey);
         }
-        return KeyEventResult.ignored;
       },
       child: Stack(
         clipBehavior: Clip.none,
