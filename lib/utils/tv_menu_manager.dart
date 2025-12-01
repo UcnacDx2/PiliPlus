@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
+import 'package:PiliPlus/pages/video/widgets/header_control.dart';
 
 class TvMenuManager {
   TvMenuManager._privateConstructor();
@@ -66,22 +67,22 @@ class TvMenuManager {
     BuildContext context,
     dynamic focusData,
   ) {
-    // final videoDetail = focusData;
+    final headerState = focusData as HeaderControlState;
     return [
       TvPopupMenuItem(
         icon: Icons.settings_outlined,
         title: '播放设置',
         onTap: () {
-          // TODO: Show player settings
           Navigator.of(context).pop();
+          headerState.showSetDanmaku();
         },
       ),
       TvPopupMenuItem(
         icon: Icons.subtitles_outlined,
         title: '字幕设置',
         onTap: () {
-          // TODO: Show subtitle settings
           Navigator.of(context).pop();
+          headerState.showSetSubtitle();
         },
       ),
     ];

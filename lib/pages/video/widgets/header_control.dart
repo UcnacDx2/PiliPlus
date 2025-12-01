@@ -994,7 +994,7 @@ class HeaderControlState extends State<HeaderControl>
     TvMenuManager().showTvMenu(
       context: context,
       contextType: 'videoPlayer',
-      focusData: videoDetailCtr.data,
+      focusData: this,
     );
   }
 
