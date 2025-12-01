@@ -986,11 +986,11 @@ class HeaderControlState extends State<HeaderControl>
         event.logicalKey == LogicalKeyboardKey.contextMenu) {
       // 防止在已显示其他弹窗时重复触发
       if (ModalRoute.of(context)?.isCurrent != true) return;
-      _showTvPlayerMenu();
+      showTvPlayerMenu();
     }
   }
 
-  void _showTvPlayerMenu() {
+  void showTvPlayerMenu() {
     showDialog(
       context: context,
       builder: (BuildContext context) {

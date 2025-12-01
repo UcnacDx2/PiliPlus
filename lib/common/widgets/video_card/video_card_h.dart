@@ -43,14 +43,6 @@ class VideoCardH extends StatefulWidget {
 
 class _VideoCardHState extends State<VideoCardH> {
   // [Feat] TV 菜单键支持
-  void _handleMenuKey(RawKeyEvent event) {
-    if (IsTvPlatform &&
-        event is RawKeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.contextMenu) {
-      _showTvPopupMenu();
-    }
-  }
-
   void _showTvPopupMenu() {
     showDialog(
       context: context,
@@ -74,11 +66,6 @@ class _VideoCardHState extends State<VideoCardH> {
     _fetchFirstFrame();
   }
 
-  @override
-  void dispose() {
-    RawKeyboard.instance.removeListener(_handleMenuKey);
-    super.dispose();
-  }
 
   @override
   void didUpdateWidget(covariant VideoCardH oldWidget) {
@@ -190,12 +177,14 @@ class _VideoCardHState extends State<VideoCardH> {
       type: MaterialType.transparency,
       // [Feat] Focus 监听逻辑
       child: Focus(
-        onFocusChange: (hasFocus) {
-          if (hasFocus) {
-            RawKeyboard.instance.addListener(_handleMenuKey);
-          } else {
-            RawKeyboard.instance.removeListener(_handleMenuKey);
+        onKeyEvent: (node, event) {
+          if (IsTvPlatform &&
+              event is RawKeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.contextMenu) {
+            _showTvPopupMenu();
+            return KeyEventResult.handled;
           }
+          return KeyEventResult.ignored;
         },
         child: Stack(
           clipBehavior: Clip.none,

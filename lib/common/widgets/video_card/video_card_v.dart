@@ -42,15 +42,6 @@ class VideoCardV extends StatefulWidget {
 }
 
 class _VideoCardVState extends State<VideoCardV> {
-  void _handleMenuKey(RawKeyEvent event) {
-    // 确保是 TV 平台且为菜单键按下事件
-    if (IsTvPlatform &&
-        event is RawKeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.contextMenu) {
-      _showTvPopupMenu();
-    }
-  }
-
   void _showTvPopupMenu() {
     showDialog(
       context: context,
@@ -95,11 +86,6 @@ class _VideoCardVState extends State<VideoCardV> {
     }
   }
 
-  @override
-  void dispose() {
-    RawKeyboard.instance.removeListener(_handleMenuKey);
-    super.dispose();
-  }
 
   Future<void> onPushDetail(String heroTag) async {
     String? goto = widget.videoItem.goto;
@@ -146,14 +132,14 @@ class _VideoCardVState extends State<VideoCardV> {
     );
     // [Feat] Focus 包裹
     return Focus(
-      onFocusChange: (hasFocus) {
-        if (hasFocus) {
-          // 当此卡片获得焦点时，开始监听菜单键
-          RawKeyboard.instance.addListener(_handleMenuKey);
-        } else {
-          // 失去焦点时，移除监听，避免响应非焦点状态下的按键
-          RawKeyboard.instance.removeListener(_handleMenuKey);
+      onKeyEvent: (node, event) {
+        if (IsTvPlatform &&
+            event is RawKeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.contextMenu) {
+          _showTvPopupMenu();
+          return KeyEventResult.handled;
         }
+        return KeyEventResult.ignored;
       },
       child: Stack(
         clipBehavior: Clip.none,

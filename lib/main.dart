@@ -29,6 +29,8 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
+import 'package:PiliPlus/common/widgets/tv_menu/global_tv_menu.dart';
+import 'package:PiliPlus/utils/is_tv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -203,10 +205,23 @@ Commit Hash: ${BuildConfig.commitHash}''';
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   static ThemeData? darkThemeData;
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -333,23 +348,51 @@ class MyApp extends StatelessWidget {
                   Get.back();
                 }
 
-                return Focus(
-                  canRequestFocus: false,
-                  onKeyEvent: (_, event) {
-                    if (event.logicalKey == LogicalKeyboardKey.escape &&
-                        event is KeyDownEvent) {
-                      onBack();
-                      return KeyEventResult.handled;
+                return RawKeyboardListener(
+                  focusNode: FocusNode(),
+                  onKey: (event) {
+                    if (IsTvPlatform &&
+                        event is RawKeyDownEvent &&
+                        event.logicalKey == LogicalKeyboardKey.contextMenu) {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const GlobalTvMenu(),
+                      );
                     }
-                    return KeyEventResult.ignored;
                   },
-                  child: MouseBackDetector(
-                    onTapDown: onBack,
-                    child: child,
+                  child: Focus(
+                    canRequestFocus: false,
+                    onKeyEvent: (_, event) {
+                      if (event.logicalKey == LogicalKeyboardKey.escape &&
+                          event is KeyDownEvent) {
+                        onBack();
+                        return KeyEventResult.handled;
+                      }
+                      return KeyEventResult.ignored;
+                    },
+                    child: MouseBackDetector(
+                      onTapDown: onBack,
+                      child: child,
+                    ),
                   ),
                 );
               }
-              return child;
+              return Focus(
+                focusNode: _focusNode,
+                onKeyEvent: (node, event) {
+                  if (IsTvPlatform &&
+                      event is RawKeyDownEvent &&
+                      event.logicalKey == LogicalKeyboardKey.contextMenu) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => const GlobalTvMenu(),
+                    );
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: child,
+              );
             },
           ),
           navigatorObservers: [
