@@ -342,6 +342,9 @@ class MyApp extends StatelessWidget {
                   canRequestFocus: false,
                   onKeyEvent: (_, event) {
                     if (event is KeyDownEvent) {
+                      // Temporary logging to identify the menu key
+                      print('Key pressed: ${event.logicalKey}');
+
                       if (event.logicalKey == LogicalKeyboardKey.escape) {
                         onBack();
                         return KeyEventResult.handled;
