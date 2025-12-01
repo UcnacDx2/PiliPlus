@@ -2827,23 +2827,25 @@ class HeaderControlState extends State<HeaderControl>
                     ),
                   ),
                 ),
-              if (!IsTvPlatform)
-                SizedBox(
-                  width: 42,
-                  height: 34,
-                  child: IconButton(
-                    tooltip: "更多设置",
-                    style: const ButtonStyle(
-                      padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                    ),
-                    onPressed: showSettingSheet,
-                    icon: const Icon(
-                      Icons.more_vert_outlined,
-                      size: 19,
-                      color: Colors.white,
-                    ),
+              SizedBox(
+                width: 42,
+                height: 34,
+                child: IconButton(
+                  tooltip: "更多设置",
+                  style: const ButtonStyle(
+                    padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                  ),
+                  onPressed: () {
+                    if (IsTvPlatform) return;
+                    showSettingSheet();
+                  },
+                  icon: const Icon(
+                    Icons.more_vert_outlined,
+                    size: 19,
+                    color: Colors.white,
                   ),
                 ),
+              ),
             ],
           ),
           if (showFSActionItem)

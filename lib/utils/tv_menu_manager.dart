@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
 import 'package:PiliPlus/pages/video/widgets/header_control.dart';
+import 'package:PiliPlus/models/model_rec_video_item.dart';
+import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/http/video.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:get/get.dart';
 
 class TvMenuManager {
   TvMenuManager._privateConstructor();
@@ -42,13 +47,13 @@ class TvMenuManager {
     BuildContext context,
     dynamic focusData,
   ) {
-    // final videoItem = focusData;
+    final videoItem = focusData as BaseRecVideoItemModel;
     return [
       TvPopupMenuItem(
         icon: Icons.play_arrow_outlined,
         title: '立即播放',
         onTap: () {
-          // TODO: Implement play logic
+          PageUtils.toVideoPageWithTitle(videoItem);
           Navigator.of(context).pop();
         },
       ),
@@ -56,7 +61,9 @@ class TvMenuManager {
         icon: Icons.watch_later_outlined,
         title: '稍后再看',
         onTap: () {
-          // TODO: Implement add to watch later logic
+          VideoHttp.toViewLater(bvid: videoItem.bvid!).then((res) {
+            SmartDialog.showToast(res.data['message']);
+          });
           Navigator.of(context).pop();
         },
       ),
