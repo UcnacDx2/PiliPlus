@@ -2,6 +2,7 @@ import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
@@ -19,7 +20,7 @@ class TvMenuManager {
   void showTvMenu({
     required BuildContext context,
     required String contextType,
-    required dynamic focusData,
+    dynamic focusData,
     dynamic headerState,
     GlobalKey<VideoPopupMenuState>? videoCardMenuKey,
   }) {
@@ -45,6 +46,8 @@ class TvMenuManager {
         return _buildVideoCardMenu(context, focusData, videoCardMenuKey);
       case 'videoPlayer':
         return _buildVideoPlayerMenu(context, focusData, headerState);
+      case 'global':
+        return _buildGlobalMenu(context);
       default:
         return [];
     }
@@ -84,6 +87,27 @@ class TvMenuManager {
           } catch (e) {
             SmartDialog.showToast('操作失败: $e');
           }
+        },
+      ),
+    ];
+  }
+
+  List<TvPopupMenuItem> _buildGlobalMenu(BuildContext context) {
+    return [
+      TvPopupMenuItem(
+        icon: Icons.person_add_alt_1_outlined,
+        title: '添加账户',
+        onTap: () {
+          Navigator.of(context).pop();
+          Get.toNamed('/loginPage');
+        },
+      ),
+      TvPopupMenuItem(
+        icon: Icons.exit_to_app_outlined,
+        title: '退出程序',
+        onTap: () {
+          Navigator.of(context).pop();
+          SystemNavigator.pop();
         },
       ),
     ];

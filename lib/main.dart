@@ -23,6 +23,8 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
+import 'package:PiliPlus/utils/is_tv.dart';
+import 'package:PiliPlus/utils/tv_menu_manager.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -339,6 +341,16 @@ class MyApp extends StatelessWidget {
                     if (event.logicalKey == LogicalKeyboardKey.escape &&
                         event is KeyDownEvent) {
                       onBack();
+                      return KeyEventResult.handled;
+                    }
+                    if (IsTvPlatform &&
+                        event is RawKeyDownEvent &&
+                        event.logicalKey == LogicalKeyboardKey.contextMenu) {
+                      TvMenuManager().showTvMenu(
+                        context: context,
+                        contextType: 'global',
+                        focusData: null,
+                      );
                       return KeyEventResult.handled;
                     }
                     return KeyEventResult.ignored;
