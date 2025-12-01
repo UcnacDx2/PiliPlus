@@ -67,6 +67,7 @@ import 'package:PiliPlus/utils/video_utils.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
@@ -77,9 +78,6 @@ import 'package:media_kit/media_kit.dart';
 
 class VideoDetailController extends GetxController
     with GetTickerProviderStateMixin {
-  final GlobalKey<HeaderControlState> headerKey =
-      GlobalKey<HeaderControlState>();
-
   /// 路由传参
   late final Map args;
   late String bvid;
@@ -135,6 +133,8 @@ class VideoDetailController extends GetxController
 
   // 亮度
   double? brightness;
+
+  late final headerCtrKey = GlobalKey<TimeBatteryMixin>();
 
   Box setting = GStorage.setting;
 

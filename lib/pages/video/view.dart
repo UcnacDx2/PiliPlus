@@ -766,9 +766,10 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                                       ),
                                                 ),
                                                 onPressed: () =>
-                                                    videoDetailController
-                                                        .headerKey
-                                                        .currentState
+                                                    (videoDetailController
+                                                                .headerCtrKey
+                                                                .currentState
+                                                            as HeaderControlState?)
                                                         ?.showSettingSheet(),
                                                 icon: Icon(
                                                   Icons.more_vert_outlined,
@@ -1354,7 +1355,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
             videoDetailController: videoDetailController,
             introController: introController,
             headerControl: HeaderControl(
-              key: videoDetailController.headerKey,
+              key: videoDetailController.headerCtrKey,
               isPortrait: isPortrait,
               controller: videoDetailController.plPlayerController,
               videoDetailCtr: videoDetailController,
@@ -1410,8 +1411,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
           return false;
         },
         onSkipSegment: videoDetailController.onSkipSegment,
-        onShowMenu: () =>
-            videoDetailController.headerKey.currentState?.showSettingSheet(),
+        onShowMenu: () => (videoDetailController.headerCtrKey.currentState
+                as HeaderControlState?)
+            ?.showSettingSheet(),
         child: child,
       );
     }

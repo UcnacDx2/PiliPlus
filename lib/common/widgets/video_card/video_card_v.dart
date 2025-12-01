@@ -2,12 +2,9 @@ import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
-import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
-import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu_item.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
 import 'package:PiliPlus/http/search.dart';
-import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/stat_type.dart';
@@ -18,13 +15,13 @@ import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
-import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart'; // 必须导入
+import 'package:PiliPlus/utils/is_tv.dart';
+import 'package:PiliPlus/utils/tv_menu_manager.dart';
 
 // 视频卡片 - 垂直布局
 class VideoCardV extends StatefulWidget {
@@ -50,6 +47,23 @@ class _VideoCardVState extends State<VideoCardV> {
   final GlobalKey<VideoPopupMenuState> _menuKey =
       GlobalKey<VideoPopupMenuState>();
   
+  void _handleMenuKey(RawKeyEvent event) {
+    // 确保是 TV 平台且为菜单键按下事件
+    if (IsTvPlatform &&
+        event is RawKeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.menu) {
+      _showTvPopupMenu();
+    }
+  }
+
+  void _showTvPopupMenu() {
+    TvMenuManager().showTvMenu(
+      context: context,
+      contextType: 'videoCard',
+      focusData: widget.videoItem,
+    );
+  }
+
   // [Main] 首帧图支持
   String? _firstFrame;
 
@@ -78,6 +92,12 @@ class _VideoCardVState extends State<VideoCardV> {
         });
       }
     }
+  }
+
+  @override
+  void dispose() {
+    RawKeyboard.instance.removeListener(_handleMenuKey);
+    super.dispose();
   }
 
   Future<void> onPushDetail(String heroTag) async {
@@ -124,46 +144,15 @@ class _VideoCardVState extends State<VideoCardV> {
       bvid: widget.videoItem.bvid,
     );
     // [Feat] Focus 包裹
-    void _showTvPopupMenu() {
-      final items = [
-        TvPopupMenuItem(
-          icon: Icons.play_arrow_outlined,
-          title: '立即播放',
-          onTap: () {
-            Get.back();
-            onPushDetail(Utils.makeHeroTag(widget.videoItem.aid));
-          },
-        ),
-        TvPopupMenuItem(
-          icon: Icons.watch_later_outlined,
-          title: '稍后再看',
-          onTap: () async {
-            Get.back();
-            final res = await UserHttp.toViewLater(bvid: widget.videoItem.bvid);
-            SmartDialog.showToast(res['msg']);
-          },
-        ),
-      ];
-      showDialog(
-        context: context,
-        builder: (context) => TvPopupMenu(items: items),
-      );
-    }
-
     return Focus(
-      autofocus: false,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent) {
-          if (GetPlatform.isAndroid &&
-              event.logicalKey == LogicalKeyboardKey.menu) {
-            _showTvPopupMenu();
-            return KeyEventResult.handled;
-          } else if (event.logicalKey == LogicalKeyboardKey.contextMenu) {
-            _menuKey.currentState?.showButtonMenu();
-            return KeyEventResult.handled;
-          }
+      onFocusChange: (hasFocus) {
+        if (hasFocus) {
+          // 当此卡片获得焦点时，开始监听菜单键
+          RawKeyboard.instance.addListener(_handleMenuKey);
+        } else {
+          // 失去焦点时，移除监听，避免响应非焦点状态下的按键
+          RawKeyboard.instance.removeListener(_handleMenuKey);
         }
-        return KeyEventResult.ignored;
       },
       child: Stack(
         clipBehavior: Clip.none,

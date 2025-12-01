@@ -1,5 +1,17 @@
-import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu_item.dart';
+// lib/common/widgets/tv_menu/tv_popup_menu.dart
 import 'package:flutter/material.dart';
+
+class TvPopupMenuItem {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  const TvPopupMenuItem({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+}
 
 class TvPopupMenu extends StatelessWidget {
   final List<TvPopupMenuItem> items;
@@ -12,22 +24,19 @@ class TvPopupMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    bool autofocusSet = false;
-
     return AlertDialog(
+      clipBehavior: Clip.hardEdge,
       backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12))),
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+      ),
       contentPadding: const EdgeInsets.symmetric(vertical: 12),
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        children: items.map((item) {
-          final bool shouldAutofocus = !autofocusSet;
-          if (shouldAutofocus) {
-            autofocusSet = true;
-          }
+        children: List.generate(items.length, (index) {
+          final item = items[index];
           return ListTile(
-            autofocus: shouldAutofocus,
+            autofocus: index == 0,
             dense: true,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -35,7 +44,7 @@ class TvPopupMenu extends StatelessWidget {
             title: Text(item.title, style: const TextStyle(fontSize: 16)),
             onTap: item.onTap,
           );
-        }).toList(),
+        }),
       ),
     );
   }
