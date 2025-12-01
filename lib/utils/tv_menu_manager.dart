@@ -1,5 +1,11 @@
+import 'package:PiliPlus/http/user.dart';
+import 'package:PiliPlus/models/video/video_item.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:get/get.dart';
 import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
+import 'package:PiliPlus/pages/video/controller.dart';
+import 'package:PiliPlus/utils/page_utils.dart';
 
 class TvMenuManager {
   TvMenuManager._privateConstructor();
@@ -41,22 +47,39 @@ class TvMenuManager {
     BuildContext context,
     dynamic focusData,
   ) {
-    // final videoItem = focusData;
+    final videoItem = focusData as VideoItem;
+    final heroTag = 'tvMenu_${videoItem.bvid}';
     return [
       TvPopupMenuItem(
         icon: Icons.play_arrow_outlined,
         title: '立即播放',
         onTap: () {
-          // TODO: Implement play logic
-          Navigator.of(context).pop();
+          try {
+            Navigator.of(context).pop();
+            PageUtils.toVideoPage(
+              bvid: videoItem.bvid,
+              cid: videoItem.cid,
+              aid: videoItem.aid,
+              cover: videoItem.cover,
+              heroTag: heroTag,
+              title: videoItem.title,
+            );
+          } catch (e) {
+            SmartDialog.showToast('播放失败: $e');
+          }
         },
       ),
       TvPopupMenuItem(
         icon: Icons.watch_later_outlined,
         title: '稍后再看',
-        onTap: () {
-          // TODO: Implement add to watch later logic
-          Navigator.of(context).pop();
+        onTap: () async {
+          try {
+            Navigator.of(context).pop();
+            var res = await UserHttp.toViewLater(bvid: videoItem.bvid);
+            SmartDialog.showToast(res['msg']);
+          } catch (e) {
+            SmartDialog.showToast('操作失败: $e');
+          }
         },
       ),
     ];
@@ -72,16 +95,26 @@ class TvMenuManager {
         icon: Icons.settings_outlined,
         title: '播放设置',
         onTap: () {
-          // TODO: Show player settings
-          Navigator.of(context).pop();
+          try {
+            Navigator.of(context).pop();
+            final controller = Get.find<VideoDetailController>();
+            controller.showSettingSheet();
+          } catch (e) {
+            SmartDialog.showToast('操作失败: $e');
+          }
         },
       ),
       TvPopupMenuItem(
         icon: Icons.subtitles_outlined,
         title: '字幕设置',
         onTap: () {
-          // TODO: Show subtitle settings
-          Navigator.of(context).pop();
+          try {
+            Navigator.of(context).pop();
+            final controller = Get.find<VideoDetailController>();
+            controller.showSetSubtitle();
+          } catch (e) {
+            SmartDialog.showToast('操作失败: $e');
+          }
         },
       ),
     ];
