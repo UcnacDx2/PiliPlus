@@ -5,9 +5,9 @@ import 'package:PiliPlus/models/tv_menu_context.dart';
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
-import 'package:PiliPlus/common/widgets/tv_popup_menu.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
+import 'package:PiliPlus/utils/tv_menu_manager.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
@@ -48,7 +48,15 @@ class PlayerFocus extends StatelessWidget {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
-        final handled = _handleKey(context, event);
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.contextMenu) {
+          TvMenuManager().currentContext.value =
+              const TvMenuContext(type: TvMenuContextType.player);
+          TvMenuManager().showTvMenu(context);
+          return KeyEventResult.handled;
+        }
+
+        final handled = _handleKey(event);
         if (handled || _shouldHandle(event.logicalKey)) {
           return KeyEventResult.handled;
         }
@@ -61,7 +69,7 @@ class PlayerFocus extends StatelessWidget {
   bool get isFullScreen => plPlayerController.isFullScreen.value;
   bool get hasPlayer => plPlayerController.videoPlayerController != null;
 
-  bool _handleKey(BuildContext context, KeyEvent event) {
+  bool _handleKey(KeyEvent event) {
     final key = event.logicalKey;
 
     final isKeyQ = key == LogicalKeyboardKey.keyQ;
@@ -217,24 +225,6 @@ class PlayerFocus extends StatelessWidget {
           if (plPlayerController.isLive || canPlay!()) {
             if (hasPlayer) {
               plPlayerController.onDoubleTapCenter();
-            }
-          }
-          return true;
-        case LogicalKeyboardKey.contextMenu:
-          if (plPlayerController.isLive || (canPlay?.call() ?? false)) {
-            if (hasPlayer) {
-              if (GetPlatform.isAndroid) {
-                showDialog(
-                    context: context,
-                    builder: (context) {
-                      return TvPopupMenu(
-                        focusData: plPlayerController,
-                        contextType: 'videoPlayer',
-                      );
-                    });
-              } else {
-                onShowMenu?.call();
-              }
             }
           }
           return true;

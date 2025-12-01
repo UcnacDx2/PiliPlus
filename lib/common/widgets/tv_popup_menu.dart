@@ -1,23 +1,27 @@
-import 'package:PiliPlus/common/widgets/custom_icon.dart';
-import 'package:PiliPlus/models/model_rec_video_item.dart';
-import 'package:PiliPlus/pages/common/common_intro_controller.dart';
-import 'package:PiliPlus/pages/video/controller.dart';
-import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
-import 'package:PiliPlus/plugin/pl_player/controller.dart';
-import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
-import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:get/get.dart';
 
+/// Data class for an item in the [TvPopupMenu].
+class TvPopupMenuItem {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  TvPopupMenuItem({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+}
+
+/// A TV-friendly popup menu that can be navigated with a D-pad.
+///
+/// It is implemented as an [AlertDialog] and manages its own focus scope.
 class TvPopupMenu extends StatefulWidget {
-  final dynamic focusData;
-  final String contextType;
+  final List<TvPopupMenuItem> items;
 
   const TvPopupMenu({
-    required this.focusData,
-    required this.contextType,
+    required this.items,
     super.key,
   });
 
@@ -26,119 +30,45 @@ class TvPopupMenu extends StatefulWidget {
 }
 
 class _TvPopupMenuState extends State<TvPopupMenu> {
-  List<Widget> _buildMenuItems() {
-    switch (widget.contextType) {
-      case 'videoCard':
-        return _buildVideoCardMenu();
-      case 'videoPlayer':
-        return _buildVideoPlayerMenu();
-      default:
-        return [
-          ListTile(
-            autofocus: true,
-            leading: const Icon(Icons.exit_to_app),
-            title: const Text('退出'),
-            onTap: () => SystemNavigator.pop(),
-          )
-        ];
+  int _focusIndex = 0;
+  late final List<FocusNode> _focusNodes;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNodes = List.generate(widget.items.length, (index) => FocusNode());
+
+    // After the frame is built, request focus for the first item.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _focusNodes.isNotEmpty) {
+        FocusScope.of(context).requestFocus(_focusNodes[0]);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    for (var node in _focusNodes) {
+      node.dispose();
     }
+    super.dispose();
   }
 
-  List<Widget> _buildVideoCardMenu() {
-    final videoItem = widget.focusData as BaseRecVideoItemModel;
-    final UgcIntroController introController = Get.find<UgcIntroController>();
-    return [
-      ListTile(
-        autofocus: true,
-        leading: const Icon(Icons.play_arrow_outlined),
-        title: const Text('立即播放'),
-        onTap: () {
-          Get.back();
-          PageUtils.toVideoPage(
-            bvid: videoItem.bvid,
-            cid: videoItem.cid ?? 0,
-            aid: videoItem.aid,
-            cover: videoItem.cover,
-            title: videoItem.title,
-          );
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.watch_later_outlined),
-        title: const Text('稍后再看'),
-        onTap: () {
-          Get.back();
-          introController.viewLater();
-        },
-      ),
-    ];
-  }
+  /// Handles up/down arrow key events to navigate the menu.
+  void _handleKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent) return;
 
-  List<Widget> _buildVideoPlayerMenu() {
-    final plPlayerController = widget.focusData as PlPlayerController;
-    final introController = Get.find<CommonIntroController>();
-    return [
-      ListTile(
-        autofocus: true,
-        leading: const Icon(Icons.speed_outlined),
-        title: const Text('倍速播放'),
-        onTap: () {
-          Get.back();
-          // Simple cycle for playback speed
-          final currentSpeed = plPlayerController.playbackSpeed;
-          double newSpeed = 1.0;
-          if (currentSpeed == 1.0) {
-            newSpeed = 1.5;
-          } else if (currentSpeed == 1.5) {
-            newSpeed = 2.0;
-          } else if (currentSpeed == 2.0) {
-            newSpeed = 0.5;
-          } else {
-            newSpeed = 1.0;
-          }
-          plPlayerController.setPlaybackSpeed(newSpeed);
-          SmartDialog.showToast('${newSpeed}x');
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.repeat),
-        title: const Text('播放顺序'),
-        onTap: () {
-          Get.back();
-          plPlayerController.setPlayRepeat(
-              plPlayerController.playRepeat.next);
-        },
-      ),
-      ListTile(
-        leading: plPlayerController.enableShowDanmaku.value
-            ? const Icon(CustomIcons.dm_on)
-            : const Icon(CustomIcons.dm_off),
-        title: Text(
-            '${plPlayerController.enableShowDanmaku.value ? "关闭" : "显示"}弹幕'),
-        onTap: () {
-          Get.back();
-          plPlayerController.enableShowDanmaku.value =
-              !plPlayerController.enableShowDanmaku.value;
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.watch_later_outlined),
-        title: const Text('稍后再看'),
-        onTap: () {
-          Get.back();
-          introController.viewLater();
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.refresh_outlined),
-        title: const Text('重载视频'),
-        onTap: () {
-          Get.back();
-          Get.find<VideoDetailController>()
-              .queryVideoUrl(fromReset: true);
-        },
-      ),
-    ];
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      setState(() {
+        _focusIndex = (_focusIndex + 1) % widget.items.length;
+        FocusScope.of(context).requestFocus(_focusNodes[_focusIndex]);
+      });
+    } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      setState(() {
+        _focusIndex = (_focusIndex - 1 + widget.items.length) % widget.items.length;
+        FocusScope.of(context).requestFocus(_focusNodes[_focusIndex]);
+      });
+    }
   }
 
   @override
@@ -147,14 +77,51 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
     return AlertDialog(
       backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12))),
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+      ),
       contentPadding: EdgeInsets.zero,
-      content: SizedBox(
-        width: 250, // Set a fixed width for the menu
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          children: _buildMenuItems(),
+      content: FocusScope(
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.escape || event.logicalKey == LogicalKeyboardKey.back)) {
+            Navigator.of(context).pop();
+            return KeyEventResult.handled;
+          }
+          _handleKeyEvent(event);
+          return KeyEventResult.handled;
+        },
+        child: SizedBox(
+          width: 250, // Fixed width for the menu
+          child: ListView.builder(
+            shrinkWrap: true,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            itemCount: widget.items.length,
+            itemBuilder: (context, index) {
+              final item = widget.items[index];
+              return Focus(
+                focusNode: _focusNodes[index],
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent &&
+                      (event.logicalKey == LogicalKeyboardKey.select ||
+                          event.logicalKey == LogicalKeyboardKey.enter)) {
+                    item.onTap();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: Builder(builder: (context) {
+                  final bool hasFocus = Focus.of(context).hasFocus;
+                  return ListTile(
+                    autofocus: index == 0,
+                    selected: hasFocus,
+                    selectedTileColor: theme.colorScheme.onSurface.withOpacity(0.1),
+                    leading: Icon(item.icon),
+                    title: Text(item.title),
+                    onTap: item.onTap,
+                  );
+                }),
+              );
+            },
+          ),
         ),
       ),
     );
