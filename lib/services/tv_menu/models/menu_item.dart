@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 
 class MenuItem {
-  final Widget title;
+  final String label;
   final IconData icon;
   final VoidCallback onTap;
 
-  MenuItem({
-    required this.title,
-    required this.icon,
-    required this.onTap,
-  });
+  MenuItem({required this.label, required this.icon, required this.onTap});
 }

@@ -59,9 +59,6 @@ import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:PiliPlus/utils/is_tv.dart';
-import 'package:flutter/services.dart';
-import 'package:PiliPlus/utils/tv_menu_manager.dart';
 
 mixin TimeBatteryMixin<T extends StatefulWidget> on State<T> {
   PlPlayerController get plPlayerController;
@@ -966,36 +963,6 @@ class HeaderControlState extends State<HeaderControl>
     } else {
       introController = Get.find<PgcIntroController>(tag: heroTag);
     }
-    // 仅在 TV 平台添加监听
-    if (IsTvPlatform) {
-      RawKeyboard.instance.addListener(_handleMenuKey);
-    }
-  }
-
-  @override
-  void dispose() {
-    // 移除监听器以防止内存泄漏
-    if (IsTvPlatform) {
-      RawKeyboard.instance.removeListener(_handleMenuKey);
-    }
-    super.dispose();
-  }
-
-  void _handleMenuKey(RawKeyEvent event) {
-    if (event is RawKeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.contextMenu) {
-      // 防止在已显示其他弹窗时重复触发
-      if (ModalRoute.of(context)?.isCurrent != true) return;
-      _showTvPlayerMenu();
-    }
-  }
-
-  void _showTvPlayerMenu() {
-    TvMenuManager().showTvMenu(
-      context: context,
-      contextType: 'videoPlayer',
-      focusData: videoDetailCtr.data,
-    );
   }
 
   /// 设置面板

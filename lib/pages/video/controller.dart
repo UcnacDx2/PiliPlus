@@ -85,7 +85,6 @@ class VideoDetailController extends GetxController
   late String bvid;
   late int aid;
   late final RxInt cid;
-  final VideoMenuProvider _videoMenuProvider = VideoMenuProvider();
   int? epId;
   int? seasonId;
   int? pgcType;
@@ -310,7 +309,7 @@ class VideoDetailController extends GetxController
   @override
   void onInit() {
     super.onInit();
-    TVMenuService.to.registerProvider(_videoMenuProvider);
+    TVMenuService.to.registerProvider(VideoMenuProvider());
     args = Get.arguments;
     videoType = args['videoType'];
     if (videoType == VideoType.pgc) {
@@ -1662,10 +1661,10 @@ class VideoDetailController extends GetxController
 
   @override
   void onClose() {
+    TVMenuService.to.unregisterProvider(VideoMenuProvider);
     if (isFileSource) {
       cacheLocalProgress();
     }
-    TVMenuService.to.unregisterProvider(_videoMenuProvider);
     introScrollCtr?.dispose();
     introScrollCtr = null;
     tabCtr.dispose();

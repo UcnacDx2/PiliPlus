@@ -1,47 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:pili_plus/services/tv_menu/tv_menu_service.dart';
-import 'package:pili_plus/common/widgets/tv_menu/menu_item_widget.dart';
+import 'package:piliplus/services/tv_menu/models/menu_item.dart';
+import 'package:piliplus/services/tv_menu/tv_menu_service.dart';
 
-void showTVMenu() {
-  final service = TVMenuService.to;
-  if (service.currentProvider.value == null) return;
+class TVMenuOverlay extends StatefulWidget {
+  const TVMenuOverlay({Key? key}) : super(key: key);
 
-  final items = service.currentProvider.value!.getMenuItems(Get.context!);
+  @override
+  State<TVMenuOverlay> createState() => _TVMenuOverlayState();
+}
 
-  SmartDialog.show(
-    tag: 'tv_menu',
-    onDismiss: () {
-      final service = TVMenuService.to;
-      if (service.isMenuVisible.value) {
-        service.hideMenu();
-      }
-    },
-    builder: (context) {
-      return Material(
-        color: Colors.black.withOpacity(0.5),
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: Container(
-            width: 200,
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              color: Colors.grey[800],
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                return MenuItemWidget(
-                  item: items[index],
-                  autoFocus: index == 0,
-                );
-              },
+class _TVMenuOverlayState extends State<TVMenuOverlay> {
+  int _selectedIndex = 0;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    FocusScope.of(context).requestFocus(_focusNode);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final provider = TVMenuService.to.getProviderForContext(context);
+      final menuItems = provider?.getMenuItems(context) ?? [];
+
+      return RawKeyboardListener(
+        focusNode: _focusNode,
+        onKey: (event) {
+          if (event is RawKeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              setState(() {
+                _selectedIndex = (_selectedIndex - 1 + menuItems.length) % menuItems.length;
+              });
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+              setState(() {
+                _selectedIndex = (_selectedIndex + 1) % menuItems.length;
+              });
+            } else if (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.select) {
+              menuItems[_selectedIndex].onTap();
+              TVMenuService.to.toggleMenu(context);
+            } else if (event.logicalKey == LogicalKeyboardKey.escape || event.logicalKey == LogicalKeyboardKey.menu) {
+              TVMenuService.to.toggleMenu(context);
+            }
+          }
+        },
+        child: Container(
+          alignment: Alignment.center,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: 300,
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: menuItems.length,
+                itemBuilder: (context, index) {
+                  final item = menuItems[index];
+                  final isSelected = index == _selectedIndex;
+                  return Container(
+                    color: isSelected ? Colors.grey.withOpacity(0.5) : Colors.transparent,
+                    child: ListTile(
+                      leading: Icon(item.icon, color: Colors.white),
+                      title: Text(item.label, style: const TextStyle(color: Colors.white)),
+                      onTap: () {
+                        item.onTap();
+                        TVMenuService.to.toggleMenu(context);
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
       );
-    },
-  );
+    });
+  }
 }

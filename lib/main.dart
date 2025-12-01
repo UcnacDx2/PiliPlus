@@ -4,18 +4,16 @@ import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/custom_toast.dart';
 import 'package:PiliPlus/common/widgets/mouse_back.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_menu_overlay.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/router/app_pages.dart';
 import 'package:PiliPlus/services/account_service.dart';
-import 'package:PiliPlus/common/widgets/tv_menu/tv_menu_overlay.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
+import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:PiliPlus/services/logger.dart';
 import 'package:PiliPlus/services/service_locator.dart';
-import 'package:PiliPlus/services/tv_menu/providers/browse_menu_provider.dart';
-import 'package:PiliPlus/services/tv_menu/providers/default_menu_provider.dart';
-import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/calc_window_position.dart';
@@ -90,8 +88,6 @@ void main() async {
     ..lazyPut(AccountService.new)
     ..lazyPut(DownloadService.new)
     ..lazyPut(() => TVMenuService());
-  TVMenuService.to.registerProvider(DefaultMenuProvider());
-  TVMenuService.to.registerProvider(BrowseMenuProvider());
   HttpOverrides.global = _CustomHttpOverrides();
 
   CacheManager.autoClearCache();
@@ -197,14 +193,7 @@ Commit Hash: ${BuildConfig.commitHash}''';
         'BuildConfig': buildConfig,
       },
     );
-    // 监听TV菜单的显示和隐藏
-    ever(TVMenuService.to.isMenuVisible, (isVisible) {
-      if (isVisible) {
-        showTVMenu();
-      } else {
-        SmartDialog.dismiss(tag: 'tv_menu');
-      }
-    });
+
     Catcher2(
       debugConfig: debugConfig,
       releaseConfig: releaseConfig,
@@ -313,11 +302,6 @@ class MyApp extends StatelessWidget {
               );
               if (Utils.isDesktop) {
                 void onBack() {
-                  if (SmartDialog.checkExist(tag: 'tv_menu')) {
-                    SmartDialog.dismiss(tag: 'tv_menu');
-                    return;
-                  }
-
                   if (SmartDialog.checkExist()) {
                     SmartDialog.dismiss();
                     return;
@@ -359,8 +343,7 @@ class MyApp extends StatelessWidget {
                       if (event.logicalKey == LogicalKeyboardKey.escape) {
                         onBack();
                         return KeyEventResult.handled;
-                      } else if (event.logicalKey ==
-                          LogicalKeyboardKey.menu) {
+                      } else if (event.logicalKey == LogicalKeyboardKey.menu) {
                         TVMenuService.to.toggleMenu(context);
                         return KeyEventResult.handled;
                       }
