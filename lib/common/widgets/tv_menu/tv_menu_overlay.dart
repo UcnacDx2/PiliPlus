@@ -17,23 +17,21 @@ class TVMenuOverlay {
       animationType: SmartAnimationType.fade,
       maskColor: Colors.black54,
       builder: (context) {
-        return TVMenuWidget(menuItems: menuItems);
+        return const TVMenuWidget();
       },
     );
   }
 }
 
 class TVMenuWidget extends StatefulWidget {
-  final List<MenuItem> menuItems;
-
-  const TVMenuWidget({super.key, required this.menuItems});
+  const TVMenuWidget({super.key});
 
   @override
   State<TVMenuWidget> createState() => _TVMenuWidgetState();
 }
 
 class _TVMenuWidgetState extends State<TVMenuWidget> {
-  final FocusNode _focusNode = FocusNode();
+  final FocusScopeNode _focusNode = FocusScopeNode();
   int _selectedIndex = 0;
 
   @override
@@ -65,27 +63,31 @@ class _TVMenuWidgetState extends State<TVMenuWidget> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.white24),
           ),
-          child: ListView.builder(
-            itemCount: widget.menuItems.length,
-            itemBuilder: (context, index) {
-              final item = widget.menuItems[index];
-              return Obx(() => MenuItemWidget(
-                    item: item,
-                    isSelected: _selectedIndex == index,
-                onTap: () {
-                  SmartDialog.dismiss();
-                  item.onTap();
-                },
-                onFocusChange: (hasFocus) {
-                  if (hasFocus) {
-                    setState(() {
-                      _selectedIndex = index;
-                    });
-                  }
-                },
-              ));
-            },
-          ),
+          child: Obx(() {
+            final menuItems =
+                TVMenuService.instance.activeProvider!.getMenuItems(context);
+            return ListView.builder(
+              itemCount: menuItems.length,
+              itemBuilder: (context, index) {
+                final item = menuItems[index];
+                return MenuItemWidget(
+                  item: item,
+                  isSelected: _selectedIndex == index,
+                  onTap: () {
+                    SmartDialog.dismiss();
+                    item.onTap();
+                  },
+                  onFocusChange: (hasFocus) {
+                    if (hasFocus) {
+                      setState(() {
+                        _selectedIndex = index;
+                      });
+                    }
+                  },
+                );
+              },
+            );
+          }),
         ),
       ),
     );

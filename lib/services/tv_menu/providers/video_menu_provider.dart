@@ -1,4 +1,5 @@
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/services/tv_menu/menu_provider.dart';
 import 'package:PiliPlus/services/tv_menu/models/menu_item.dart';
 import 'package:flutter/material.dart';
@@ -17,11 +18,12 @@ class VideoMenuProvider implements MenuProvider {
   @override
   List<MenuItem> getMenuItems(BuildContext context) {
     final player = PlPlayerController.instance!;
+    final isPlaying = player.playerStatus.value == PlayerStatus.playing;
 
     return [
       MenuItem(
-        label: player.playerStatus.playing ? 'Pause' : 'Play',
-        icon: player.playerStatus.playing ? Icons.pause : Icons.play_arrow,
+        label: isPlaying ? 'Pause' : 'Play',
+        icon: isPlaying ? Icons.pause : Icons.play_arrow,
         onTap: () => player.onDoubleTapCenter(),
       ),
       MenuItem(
