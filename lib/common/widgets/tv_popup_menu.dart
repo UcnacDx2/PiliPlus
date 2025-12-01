@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 /// Data class for an item in the [TvPopupMenu].
 class TvPopupMenuItem {
@@ -82,9 +83,13 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
       contentPadding: EdgeInsets.zero,
       content: FocusScope(
         onKeyEvent: (node, event) {
-          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.escape)) {
-            Navigator.of(context).pop();
-            return KeyEventResult.handled;
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.escape ||
+                (GetPlatform.isAndroid &&
+                    event.logicalKey == LogicalKeyboardKey.back)) {
+              Navigator.of(context).pop();
+              return KeyEventResult.handled;
+            }
           }
           _handleKeyEvent(event);
           return KeyEventResult.handled;

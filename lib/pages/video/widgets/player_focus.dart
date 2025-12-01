@@ -48,14 +48,6 @@ class PlayerFocus extends StatelessWidget {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.contextMenu) {
-          TvMenuManager().currentContext.value =
-              const TvMenuContext(type: TvMenuContextType.player);
-          TvMenuManager().showTvMenu(context);
-          return KeyEventResult.handled;
-        }
-
         final handled = _handleKey(context, event);
         if (handled || _shouldHandle(event.logicalKey)) {
           return KeyEventResult.handled;
@@ -227,6 +219,11 @@ class PlayerFocus extends StatelessWidget {
               plPlayerController.onDoubleTapCenter();
             }
           }
+          return true;
+        case LogicalKeyboardKey.contextMenu:
+          TvMenuManager().currentContext.value =
+              const TvMenuContext(type: TvMenuContextType.player);
+          TvMenuManager().showTvMenu(context);
           return true;
       }
 
