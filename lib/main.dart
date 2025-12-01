@@ -344,7 +344,7 @@ class MyApp extends StatelessWidget {
                         onBack();
                         return KeyEventResult.handled;
                       } else if (event.logicalKey ==
-                          LogicalKeyboardKey.menu) {
+                          LogicalKeyboardKey.contextMenu) {
                         TVMenuService.instance.toggleMenu(context);
                         return KeyEventResult.handled;
                       }
