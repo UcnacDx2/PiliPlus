@@ -55,6 +55,8 @@ import 'package:PiliPlus/plugin/pl_player/models/data_source.dart';
 import 'package:PiliPlus/plugin/pl_player/models/heart_beat_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
+import 'package:PiliPlus/services/tv_menu/providers/video_menu_provider.dart';
+import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/context_ext.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
@@ -88,6 +90,7 @@ class VideoDetailController extends GetxController
   int? pgcType;
   late final String heroTag;
   late final RxString cover;
+  final VideoMenuProvider _videoMenuProvider = VideoMenuProvider();
 
   // 视频类型 默认投稿视频
   late final VideoType videoType;
@@ -307,6 +310,7 @@ class VideoDetailController extends GetxController
   @override
   void onInit() {
     super.onInit();
+    TVMenuService.instance.registerProvider(_videoMenuProvider);
     args = Get.arguments;
     videoType = args['videoType'];
     if (videoType == VideoType.pgc) {
@@ -1658,6 +1662,7 @@ class VideoDetailController extends GetxController
 
   @override
   void onClose() {
+    TVMenuService.instance.unregisterProvider(_videoMenuProvider);
     if (isFileSource) {
       cacheLocalProgress();
     }
