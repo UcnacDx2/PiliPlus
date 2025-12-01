@@ -226,6 +226,21 @@ class _MyAppState extends State<MyApp> {
         SmartDialog.dismiss();
       }
     });
+    RawKeyboard.instance.addListener(_handleRawKeyEvent);
+  }
+
+  @override
+  void dispose() {
+    RawKeyboard.instance.removeListener(_handleRawKeyEvent);
+    super.dispose();
+  }
+
+  void _handleRawKeyEvent(RawKeyEvent event) {
+    if (event is RawKeyDownEvent &&
+        event.data is RawKeyEventDataAndroid &&
+        (event.data as RawKeyEventDataAndroid).keyCode == 82) {
+      TVMenuService.instance.toggleMenu(Get.context!);
+    }
   }
 
   @override
@@ -358,10 +373,6 @@ class _MyAppState extends State<MyApp> {
                   if (event is KeyDownEvent) {
                     if (event.logicalKey == LogicalKeyboardKey.escape) {
                       onBack();
-                      return KeyEventResult.handled;
-                      } else if (event.logicalKey ==
-                          LogicalKeyboardKey.contextMenu) {
-                      TVMenuService.instance.toggleMenu(context);
                       return KeyEventResult.handled;
                     }
                   }
