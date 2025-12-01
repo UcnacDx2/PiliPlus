@@ -6,6 +6,7 @@ import 'package:PiliPlus/services/tv_menu/models/menu_item.dart';
 import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:get/get.dart';
 
 class VideoMenuProvider implements MenuProvider {
   @override
@@ -85,7 +86,6 @@ class VideoMenuProvider implements MenuProvider {
 
   @override
   bool canHandle(BuildContext context) {
-    final instance = PlPlayerController.instance;
-    return instance != null && instance.videoPlayerController != null;
+    return Get.currentRoute.startsWith('/video');
   }
 }
