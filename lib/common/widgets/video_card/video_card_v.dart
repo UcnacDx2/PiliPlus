@@ -3,7 +3,7 @@ import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
-import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
 import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
@@ -21,7 +21,6 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart'; // 必须导入
 import 'package:PiliPlus/utils/is_tv.dart';
-import 'package:PiliPlus/utils/tv_menu_manager.dart';
 
 // 视频卡片 - 垂直布局
 class VideoCardV extends StatefulWidget {
@@ -43,10 +42,6 @@ class VideoCardV extends StatefulWidget {
 }
 
 class _VideoCardVState extends State<VideoCardV> {
-  // [Feat] TV 菜单键支持
-  final GlobalKey<VideoPopupMenuState> _menuKey =
-      GlobalKey<VideoPopupMenuState>();
-  
   void _handleMenuKey(RawKeyEvent event) {
     // 确保是 TV 平台且为菜单键按下事件
     if (IsTvPlatform &&
@@ -57,10 +52,14 @@ class _VideoCardVState extends State<VideoCardV> {
   }
 
   void _showTvPopupMenu() {
-    TvMenuManager().showTvMenu(
+    showDialog(
       context: context,
-      contextType: 'videoCard',
-      focusData: widget.videoItem,
+      builder: (BuildContext context) {
+        return TvPopupMenu(
+          focusData: widget.videoItem,
+          contextType: 'videoCard',
+        );
+      },
     );
   }
 
@@ -204,21 +203,6 @@ class _VideoCardVState extends State<VideoCardV> {
               ),
             ),
           ),
-          if (widget.videoItem.goto == 'av')
-            Positioned(
-              right: -5,
-              bottom: -2,
-              child: ExcludeFocus(
-                child: VideoPopupMenu(
-                  // [Feat] 绑定 Key
-                  key: _menuKey,
-                  size: 29,
-                  iconSize: 17,
-                  videoItem: widget.videoItem,
-                  onRemove: widget.onRemove,
-                ),
-              ),
-            ),
         ],
       ),
     );

@@ -61,7 +61,7 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:PiliPlus/utils/is_tv.dart';
 import 'package:flutter/services.dart';
-import 'package:PiliPlus/utils/tv_menu_manager.dart';
+import 'package:PiliPlus/common/widgets/tv_menu/tv_popup_menu.dart';
 
 mixin TimeBatteryMixin<T extends StatefulWidget> on State<T> {
   PlPlayerController get plPlayerController;
@@ -991,10 +991,14 @@ class HeaderControlState extends State<HeaderControl>
   }
 
   void _showTvPlayerMenu() {
-    TvMenuManager().showTvMenu(
+    showDialog(
       context: context,
-      contextType: 'videoPlayer',
-      focusData: videoDetailCtr.data,
+      builder: (BuildContext context) {
+        return TvPopupMenu(
+          focusData: videoDetailCtr.data,
+          contextType: 'videoPlayer',
+        );
+      },
     );
   }
 
