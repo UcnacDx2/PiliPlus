@@ -225,6 +225,7 @@ class VideoHttp {
       var res = await Request().get(
         videoType.api,
         queryParameters: params,
+        options: Options(extra: {'account': Accounts.history}),
       );
 
       if (res.data['code'] == 0) {
