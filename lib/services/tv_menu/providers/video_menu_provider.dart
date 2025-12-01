@@ -3,6 +3,7 @@ import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/services/tv_menu/menu_provider.dart';
 import 'package:PiliPlus/services/tv_menu/models/menu_item.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
 class VideoMenuProvider implements MenuProvider {
@@ -40,21 +41,21 @@ class VideoMenuProvider implements MenuProvider {
         label: 'Speed: ${player.playbackSpeed}x',
         icon: Icons.speed,
         onTap: () {
-          // TODO: Implement speed selection dialog
+          SmartDialog.showToast('Not implemented yet');
         },
       ),
       MenuItem(
         label: 'Quality',
         icon: Icons.high_quality,
         onTap: () {
-          // TODO: Implement quality selection dialog
+          SmartDialog.showToast('Not implemented yet');
         },
       ),
       MenuItem(
         label: 'Subtitles',
         icon: Icons.closed_caption,
         onTap: () {
-          // TODO: Implement subtitle selection dialog
+          SmartDialog.showToast('Not implemented yet');
         },
       ),
     ];
