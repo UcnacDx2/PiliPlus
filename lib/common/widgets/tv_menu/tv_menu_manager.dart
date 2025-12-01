@@ -18,7 +18,7 @@ class TvMenuManager {
 
   void _handleMenuKey(RawKeyEvent event) {
     if (event is RawKeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.menu) {
+        event.logicalKey == LogicalKeyboardKey.contextMenu) {
       if (Get.isDialogOpen ?? false) return;
       show();
     }
