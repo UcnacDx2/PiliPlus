@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/widgets/tv_menu/menu_item_widget.dart';
+import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/services/tv_menu/menu_provider.dart';
 import 'package:PiliPlus/services/tv_menu/models/menu_item.dart';
 import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
@@ -59,6 +60,7 @@ class _TVMenuOverlayState extends State<TVMenuOverlay> {
                 return KeyEventResult.handled;
               } else if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
                 menuItems[_focusedIndex].onTap();
+                TVMenuService.instance.hideMenu();
                 return KeyEventResult.handled;
               }
 
@@ -71,19 +73,33 @@ class _TVMenuOverlayState extends State<TVMenuOverlay> {
                 color: Colors.grey[900],
                 borderRadius: BorderRadius.circular(12.0),
               ),
-              child: Obx(() {
-                final menuItems = widget.provider.getMenuItems(context);
-                return ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: menuItems.length,
-                  itemBuilder: (context, index) {
-                    return MenuItemWidget(
-                      item: menuItems[index],
-                      isFocused: index == _focusedIndex,
-                    );
-                  },
-                );
-              }),
+              child: widget.provider.isReactive
+                  ? Obx(() {
+                      final menuItems = widget.provider.getMenuItems(context);
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: menuItems.length,
+                        itemBuilder: (context, index) {
+                          return MenuItemWidget(
+                            item: menuItems[index],
+                            isFocused: index == _focusedIndex,
+                          );
+                        },
+                      );
+                    })
+                  : Builder(builder: (context) {
+                      final menuItems = widget.provider.getMenuItems(context);
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: menuItems.length,
+                        itemBuilder: (context, index) {
+                          return MenuItemWidget(
+                            item: menuItems[index],
+                            isFocused: index == _focusedIndex,
+                          );
+                        },
+                      );
+                    }),
             ),
           ),
         ),

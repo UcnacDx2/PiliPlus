@@ -12,6 +12,9 @@ class VideoMenuProvider implements MenuProvider {
   String get sceneName => 'video';
 
   @override
+  bool get isReactive => true;
+
+  @override
   List<MenuItem> getMenuItems(BuildContext context) {
     final player = PlPlayerController.instance!;
 
@@ -21,11 +24,10 @@ class VideoMenuProvider implements MenuProvider {
           player.playerStatus.value == PlayerStatus.playing ? Icons.pause : Icons.play_arrow,
           () {
             player.onDoubleTapCenter();
-            TVMenuService.instance.hideMenu();
           }
         )
         .addItem(
-          '倍速: ${player.playbackSpeed}x',
+          '倍速: ${player.playbackSpeed.value}x',
           Icons.speed,
           () => _showSpeedDialog(context, player),
         )
@@ -34,7 +36,6 @@ class VideoMenuProvider implements MenuProvider {
           Icons.subtitles,
           () {
             player.enableShowDanmaku.value = !player.enableShowDanmaku.value;
-            TVMenuService.instance.hideMenu();
           },
         )
         .addItem(
@@ -44,13 +45,11 @@ class VideoMenuProvider implements MenuProvider {
                 : Icons.fullscreen,
             () {
               player.triggerFullScreen(status: !player.isFullScreen.value);
-              TVMenuService.instance.hideMenu();
             })
         .build();
   }
 
   void _showSpeedDialog(BuildContext context, PlPlayerController player) {
-    TVMenuService.instance.hideMenu(); // Hide the main menu
     SmartDialog.show(
       builder: (_) {
         return Material(

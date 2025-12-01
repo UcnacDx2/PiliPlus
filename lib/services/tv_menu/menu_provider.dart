@@ -6,4 +6,5 @@ abstract class MenuProvider {
   String get sceneName;
   List<MenuItem> getMenuItems(BuildContext context);
   bool canHandle(BuildContext context);
+  bool get isReactive => false;
 }
