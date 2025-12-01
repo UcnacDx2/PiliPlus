@@ -1270,6 +1270,11 @@ class VideoDetailController extends GetxController
       } else if (defaultST != null) {
         this.defaultST = defaultST;
       } else {
+        // Default progress from videoUrl API
+        Duration getDefaultProgress() => data.lastPlayTime == null
+            ? Duration.zero
+            : Duration(milliseconds: data.lastPlayTime!);
+
         // When video account differs from heartbeat account, get progress from playInfo API
         // which uses the heartbeat account for accurate progress tracking
         final videoAccount = Accounts.get(AccountType.video);
@@ -1287,14 +1292,10 @@ class VideoDetailController extends GetxController
                 ? Duration.zero
                 : Duration(milliseconds: playInfo.lastPlayTime!);
           } else {
-            this.defaultST = data.lastPlayTime == null
-                ? Duration.zero
-                : Duration(milliseconds: data.lastPlayTime!);
+            this.defaultST = getDefaultProgress();
           }
         } else {
-          this.defaultST = data.lastPlayTime == null
-              ? Duration.zero
-              : Duration(milliseconds: data.lastPlayTime!);
+          this.defaultST = getDefaultProgress();
         }
       }
 
