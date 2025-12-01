@@ -342,14 +342,23 @@ class MyApp extends StatelessWidget {
                   canRequestFocus: false,
                   onKeyEvent: (_, event) {
                     if (event is KeyDownEvent) {
-                      // Temporary logging to identify the menu key
-                      print('Key pressed: ${event.logicalKey}');
+                      bool menuPressed = false;
+                      if (Utils.isDesktop) {
+                        if (HardwareKeyboard.instance.isShiftPressed &&
+                            event.logicalKey == LogicalKeyboardKey.keyT) {
+                          menuPressed = true;
+                        }
+                      } else {
+                        if (event.logicalKey ==
+                            LogicalKeyboardKey.contextMenu) {
+                          menuPressed = true;
+                        }
+                      }
 
                       if (event.logicalKey == LogicalKeyboardKey.escape) {
                         onBack();
                         return KeyEventResult.handled;
-                      } else if (event.logicalKey ==
-                          LogicalKeyboardKey.contextMenu) {
+                      } else if (menuPressed) {
                         TVMenuService.instance.toggleMenu(context);
                         return KeyEventResult.handled;
                       }
