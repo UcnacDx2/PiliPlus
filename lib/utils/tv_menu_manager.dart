@@ -7,6 +7,7 @@ import 'package:PiliPlus/http/video.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:PiliPlus/http/search.dart';
+import 'package:PiliPlus/utils/id_utils.dart';
 
 class TvMenuManager {
   TvMenuManager._privateConstructor();
@@ -69,7 +70,8 @@ class TvMenuManager {
         icon: Icons.watch_later_outlined,
         title: '稍后再看',
         onTap: () {
-          VideoHttp.historyReport(bvid: videoItem.bvid!, type: 'later');
+          VideoHttp.historyReport(
+              aid: IdUtils.bv2av(videoItem.bvid!), type: 'later');
           Navigator.of(context).pop();
         },
       ),
