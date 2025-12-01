@@ -160,7 +160,7 @@ void main() async {
   }
 
   if (Pref.enableLog) {
-    // 异常捕获 logo记录
+    // 異常捕獲 logo記錄
     String buildConfig =
         '''\n
 Build Time: ${DateFormatUtils.format(BuildConfig.buildTime, format: DateFormatUtils.longFormatDs)}
@@ -299,69 +299,69 @@ class MyApp extends StatelessWidget {
                 ),
                 child: child!,
               );
-              if (Utils.isDesktop) {
-                void onBack() {
-                  if (SmartDialog.checkExist()) {
-                    SmartDialog.dismiss();
-                    return;
-                  }
-
-                  if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
-                    Get.back();
-                    return;
-                  }
-
-                  final plCtr = PlPlayerController.instance;
-                  if (plCtr != null) {
-                    if (plCtr.isFullScreen.value) {
-                      plCtr
-                        ..triggerFullScreen(status: false)
-                        ..controlsLock.value = false
-                        ..showControls.value = false;
-                      return;
-                    }
-
-                    if (plCtr.isDesktopPip) {
-                      plCtr
-                        ..exitDesktopPip().whenComplete(
-                          () => plCtr.initialFocalPoint = Offset.zero,
-                        )
-                        ..controlsLock.value = false
-                        ..showControls.value = false;
-                      return;
-                    }
-                  }
-
-                  Get.back();
+              void onBack() {
+                if (SmartDialog.checkExist()) {
+                  SmartDialog.dismiss();
+                  return;
                 }
 
-                return Focus(
-                  canRequestFocus: false,
-                  onKeyEvent: (_, event) {
-                    if (event.logicalKey == LogicalKeyboardKey.escape &&
-                        event is KeyDownEvent) {
-                      onBack();
-                      return KeyEventResult.handled;
-                    }
-                    if (IsTvPlatform &&
-                        event is RawKeyDownEvent &&
-                        event.logicalKey == LogicalKeyboardKey.contextMenu) {
-                      TvMenuManager().showTvMenu(
-                        context: context,
-                        contextType: 'global',
-                        focusData: null,
-                      );
-                      return KeyEventResult.handled;
-                    }
-                    return KeyEventResult.ignored;
-                  },
-                  child: MouseBackDetector(
-                    onTapDown: onBack,
-                    child: child,
-                  ),
-                );
+                if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
+                  Get.back();
+                  return;
+                }
+
+                final plCtr = PlPlayerController.instance;
+                if (plCtr != null) {
+                  if (plCtr.isFullScreen.value) {
+                    plCtr
+                      ..triggerFullScreen(status: false)
+                      ..controlsLock.value = false
+                      ..showControls.value = false;
+                    return;
+                  }
+
+                  if (plCtr.isDesktopPip) {
+                    plCtr
+                      ..exitDesktopPip().whenComplete(
+                        () => plCtr.initialFocalPoint = Offset.zero,
+                      )
+                      ..controlsLock.value = false
+                      ..showControls.value = false;
+                    return;
+                  }
+                }
+
+                Get.back();
               }
-              return child;
+
+              return Focus(
+                canRequestFocus: false,
+                onKeyEvent: (_, event) {
+                  if (Utils.isDesktop &&
+                      event.logicalKey == LogicalKeyboardKey.escape &&
+                      event is KeyDownEvent) {
+                    onBack();
+                    return KeyEventResult.handled;
+                  }
+                  if (IsTvPlatform &&
+                      event is RawKeyDownEvent &&
+                      event.logicalKey == LogicalKeyboardKey.contextMenu) {
+                    TvMenuManager().showTvMenu(
+                      context: context,
+                      contextType: 'global',
+                      focusData: null,
+                    );
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: Utils.isDesktop
+                    ? MouseBackDetector(
+                        onTapDown: onBack,
+                        child: child,
+                      )
+                    : child,
+              );
             },
           ),
           navigatorObservers: [
