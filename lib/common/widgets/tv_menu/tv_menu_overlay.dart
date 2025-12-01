@@ -1,6 +1,7 @@
 import 'package:PiliPlus/common/widgets/tv_menu/menu_item_widget.dart';
 import 'package:PiliPlus/services/tv_menu/menu_provider.dart';
 import 'package:PiliPlus/services/tv_menu/models/menu_item.dart';
+import 'package:PiliPlus/services/tv_menu/tv_menu_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -41,7 +42,10 @@ class _TVMenuOverlayState extends State<TVMenuOverlay> {
             onKeyEvent: (node, event) {
               final menuItems = widget.provider.getMenuItems(context);
               if (event is KeyDownEvent) {
-                if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                if (event.logicalKey == LogicalKeyboardKey.escape) {
+                  TVMenuService.instance.hideMenu();
+                  return KeyEventResult.handled;
+                } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
                   setState(() {
                     _focusedIndex = (_focusedIndex - 1 + menuItems.length) % menuItems.length;
                   });
