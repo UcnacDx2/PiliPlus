@@ -997,6 +997,7 @@ class HeaderControlState extends State<HeaderControl>
         return TvPopupMenu(
           focusData: videoDetailCtr.data,
           contextType: 'videoPlayer',
+          onMoreOptions: showSettingSheet,
         );
       },
     );

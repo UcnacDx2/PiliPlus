@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 class TvPopupMenu extends StatefulWidget {
   final dynamic focusData; // 焦点对象数据，例如视频项
   final String contextType; // 上下文类型: 'videoCard' 或 'videoPlayer'
+  final VoidCallback? onMoreOptions; // “更多选项”的回调
 
   const TvPopupMenu({
     required this.focusData,
     required this.contextType,
+    this.onMoreOptions,
     super.key,
   });
 
@@ -82,7 +84,18 @@ class _TvPopupMenuState extends State<TvPopupMenu> {
           Navigator.of(context).pop();
         },
       ),
-      // 可根据需要添加更多选项...
+      if (widget.onMoreOptions != null)
+        ListTile(
+          dense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          leading: const Icon(Icons.more_horiz_outlined, size: 22),
+          title: const Text('更多选项', style: TextStyle(fontSize: 16)),
+          onTap: () {
+            Navigator.of(context).pop();
+            widget.onMoreOptions!();
+          },
+        ),
     ];
   }
 
