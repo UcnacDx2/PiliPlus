@@ -8,6 +8,9 @@ class DefaultMenuProvider implements MenuProvider {
   String get sceneName => 'default';
 
   @override
+  bool get isReactive => false;
+
+  @override
   List<MenuItem> getMenuItems(BuildContext context) {
     return [
       MenuItem(

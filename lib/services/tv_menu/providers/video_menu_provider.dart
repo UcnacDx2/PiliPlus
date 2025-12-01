@@ -27,7 +27,7 @@ class VideoMenuProvider implements MenuProvider {
           }
         )
         .addItem(
-          '倍速: ${player.playbackSpeed.value}x',
+          '倍速: ${player.playbackSpeed}x',
           Icons.speed,
           () => _showSpeedDialog(context, player),
         )
