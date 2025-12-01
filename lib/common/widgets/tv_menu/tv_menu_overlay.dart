@@ -71,6 +71,7 @@ class _TVMenuWidgetState extends State<TVMenuWidget> {
               itemBuilder: (context, index) {
                 final item = menuItems[index];
                 return MenuItemWidget(
+                  key: ValueKey(item.label),
                   item: item,
                   isSelected: _selectedIndex == index,
                   onTap: () {

@@ -27,7 +27,7 @@ class VideoMenuProvider implements MenuProvider {
         onTap: () => player.onDoubleTapCenter(),
       ),
       MenuItem(
-        label: 'Fullscreen',
+        label: player.isFullScreen.value ? 'Exit Fullscreen' : 'Fullscreen',
         icon: player.isFullScreen.value ? Icons.fullscreen_exit : Icons.fullscreen,
         onTap: () => player.triggerFullScreen(status: !player.isFullScreen.value),
       ),
@@ -35,6 +35,27 @@ class VideoMenuProvider implements MenuProvider {
         label: 'Danmaku: ${player.enableShowDanmaku.value ? "On" : "Off"}',
         icon: player.enableShowDanmaku.value ? Icons.subtitles : Icons.subtitles_off,
         onTap: () => player.enableShowDanmaku.value = !player.enableShowDanmaku.value,
+      ),
+      MenuItem(
+        label: 'Speed: ${player.playbackSpeed}x',
+        icon: Icons.speed,
+        onTap: () {
+          // TODO: Implement speed selection dialog
+        },
+      ),
+      MenuItem(
+        label: 'Quality',
+        icon: Icons.high_quality,
+        onTap: () {
+          // TODO: Implement quality selection dialog
+        },
+      ),
+      MenuItem(
+        label: 'Subtitles',
+        icon: Icons.closed_caption,
+        onTap: () {
+          // TODO: Implement subtitle selection dialog
+        },
       ),
     ];
   }

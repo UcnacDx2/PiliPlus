@@ -221,12 +221,11 @@ class _MyAppState extends State<MyApp> {
     // TV menu overlay
     ever(TVMenuService.instance.isMenuVisible, (isVisible) {
       if (isVisible) {
-          TVMenuOverlay.show(context);
-        } else {
-          SmartDialog.dismiss();
-        }
-      });
-    }
+        TVMenuOverlay.show(context);
+      } else {
+        SmartDialog.dismiss();
+      }
+    });
   }
 
   @override
@@ -360,7 +359,8 @@ class _MyAppState extends State<MyApp> {
                     if (event.logicalKey == LogicalKeyboardKey.escape) {
                       onBack();
                       return KeyEventResult.handled;
-                    } else if (event.logicalKey == LogicalKeyboardKey.menu) {
+                      } else if (event.logicalKey ==
+                          LogicalKeyboardKey.contextMenu) {
                       TVMenuService.instance.toggleMenu(context);
                       return KeyEventResult.handled;
                     }
