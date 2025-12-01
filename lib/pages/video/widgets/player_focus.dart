@@ -46,6 +46,9 @@ class PlayerFocus extends StatelessWidget {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
+        if (event.logicalKey == LogicalKeyboardKey.contextMenu) {
+          return KeyEventResult.ignored;
+        }
         final handled = _handleKey(event);
         if (handled || _shouldHandle(event.logicalKey)) {
           return KeyEventResult.handled;
@@ -215,13 +218,6 @@ class PlayerFocus extends StatelessWidget {
           if (plPlayerController.isLive || canPlay!()) {
             if (hasPlayer) {
               plPlayerController.onDoubleTapCenter();
-            }
-          }
-          return true;
-        case LogicalKeyboardKey.contextMenu:
-          if (plPlayerController.isLive || (canPlay?.call() ?? false)) {
-            if (hasPlayer) {
-              onShowMenu?.call();
             }
           }
           return true;
