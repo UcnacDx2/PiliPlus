@@ -249,7 +249,6 @@ class DetailItem extends StatelessWidget {
                               ],
                             ),
                           );
-                                );
                               }
                               return PBadge(
                                 text: DurationUtils.formatDuration(
