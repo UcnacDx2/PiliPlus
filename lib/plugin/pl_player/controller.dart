@@ -1052,6 +1052,8 @@ class PlPlayerController {
           for (var element in _statusListeners) {
             element(PlayerStatus.completed);
           }
+          seekTo(Duration.zero, isSeek: false);
+          pause(notify: false);
         } else {
           // playerStatus.value = PlayerStatus.playing;
         }
