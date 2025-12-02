@@ -288,7 +288,7 @@ class VideoDetailController extends GetxController
       height: entry.ep?.height ?? entry.pageData?.height ?? 1,
     );
     if (watchProgress.get(cid.value.toString()) case final int progress?) {
-      if (progress >= entry.totalTimeMilli - 400) {
+      if (progress >= entry.totalTimeMilli) {
         defaultST = Duration.zero;
       } else {
         defaultST = Duration(milliseconds: progress);
