@@ -288,7 +288,7 @@ class VideoDetailController extends GetxController
       height: entry.ep?.height ?? entry.pageData?.height ?? 1,
     );
     if (watchProgress.get(cid.value.toString()) case final int progress?) {
-      if (progress >= entry.totalTimeMilli - 400) {
+      if (progress >= entry.totalTimeMilli - 4000) {
         defaultST = Duration.zero;
       } else {
         defaultST = Duration(milliseconds: progress);
@@ -1271,9 +1271,16 @@ class VideoDetailController extends GetxController
         this.defaultST = defaultST;
       } else {
         // Default progress from videoUrl API
-        Duration getDefaultProgress() => data.lastPlayTime == null
-            ? Duration.zero
-            : Duration(milliseconds: data.lastPlayTime!);
+        Duration getDefaultProgress() {
+          if (data.lastPlayTime != null &&
+              data.timeLength != null &&
+              data.lastPlayTime! >= data.timeLength! - 4000) {
+            return Duration.zero;
+          }
+          return data.lastPlayTime == null
+              ? Duration.zero
+              : Duration(milliseconds: data.lastPlayTime!);
+        }
 
         // When video account differs from heartbeat account, get progress from playInfo API
         // which uses the heartbeat account for accurate progress tracking
