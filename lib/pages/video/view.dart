@@ -714,10 +714,11 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                                       .colorScheme
                                                       .onSurface,
                                                 ),
-                                              ),
-                                              onPressed: () {
+                                                onPressed: () {
                                                 videoDetailController
                                                     .plPlayerController
+                                              },
+                                              ),
                                                   ..isCloseAll = true
                                                   ..dispose();
                                                 Get.until(
@@ -765,6 +766,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                           : SizedBox(
                                               width: 42,
                                               height: 34,
+                                              child: DpadFocusable(
                                               child: IconButton(
                                                 tooltip: "更多设置",
                                                 style: const ButtonStyle(
@@ -779,17 +781,16 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                                                 .currentState
                                                             as HeaderControlState?)
                                                         ?.showSettingSheet(),
-                                                icon: DpadFocusable(
-                                                    child: Icon(
+                                                icon: Icon(
                                                   Icons.more_vert_outlined,
                                                   size: 19,
                                                   color: themeData
                                                       .colorScheme
                                                       .onSurface,
-                                                )),
+                                                ),
+                                              ),
                                               ),
                                             ),
-                                    ),
                                   ],
                                 ),
                               ),

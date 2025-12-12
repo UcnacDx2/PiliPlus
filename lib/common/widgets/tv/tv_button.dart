@@ -18,11 +18,22 @@ class TVButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return DpadFocusable(
       autofocus: autofocus,
-      effects: [TVFocusEffects.primary(context)],
-      child: ElevatedButton(
-        onPressed: onPressed,
-        child: child,
-      ),
+      builder: (context, isFocused) {
+        return ElevatedButton(
+          onPressed: onPressed,
+          style: ButtonStyle(
+            backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+              (Set<WidgetState> states) {
+                if (isFocused) {
+                  return Theme.of(context).colorScheme.primary;
+                }
+                return null; // Use the default color.
+              },
+            ),
+          ),
+          child: child,
+        );
+      },
     );
   }
 }

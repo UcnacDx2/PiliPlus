@@ -23,11 +23,26 @@ class TVVideoCard extends StatelessWidget {
     return DpadFocusable(
       autofocus: autofocus,
       isEntryPoint: isEntryPoint,
-      effects: [TVFocusEffects.primary(context)],
-      child: VideoCardV(
-        videoItem: videoItem,
-        onRemove: onRemove,
-      ),
+      builder: (context, isFocused) {
+        return Transform.scale(
+          scale: isFocused ? 1.05 : 1.0,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: isFocused
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.transparent,
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: VideoCardV(
+              videoItem: videoItem,
+              onRemove: onRemove,
+            ),
+          ),
+        );
+      },
     );
   }
 }
