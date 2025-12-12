@@ -168,7 +168,7 @@ class _VideoCardHState extends State<VideoCardH> {
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             color: isFocused
-                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
                 : null,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(

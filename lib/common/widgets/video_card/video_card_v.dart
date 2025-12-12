@@ -133,7 +133,7 @@ class _VideoCardVState extends State<VideoCardV> {
             boxShadow: isFocused
                 ? [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                       blurRadius: 10,
                       spreadRadius: 1,
                     ),

@@ -71,7 +71,7 @@ class DpadUtils {
           boxShadow: isFocused
               ? [
                   BoxShadow(
-                    color: focusColor.withValues(alpha: 0.6),
+                    color: focusColor.withOpacity(0.6),
                     blurRadius: blurRadius,
                     spreadRadius: spreadRadius,
                   ),
@@ -106,7 +106,7 @@ class DpadUtils {
           boxShadow: isFocused
               ? [
                   BoxShadow(
-                    color: focusColor.withValues(alpha: 0.3),
+                    color: focusColor.withOpacity(0.3),
                     blurRadius: 10,
                     spreadRadius: 1,
                   ),
