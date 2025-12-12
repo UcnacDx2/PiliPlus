@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/focus_manager.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
@@ -34,11 +34,7 @@ class PlayerFocus extends StatelessWidget {
   final bool Function()? onSkipSegment;
 
   static bool _shouldHandle(LogicalKeyboardKey logicalKey) {
-    return logicalKey == LogicalKeyboardKey.tab ||
-        logicalKey == LogicalKeyboardKey.arrowLeft ||
-        logicalKey == LogicalKeyboardKey.arrowRight ||
-        logicalKey == LogicalKeyboardKey.arrowUp ||
-        logicalKey == LogicalKeyboardKey.arrowDown;
+    return logicalKey == LogicalKeyboardKey.tab;
   }
 
   @override
@@ -46,8 +42,11 @@ class PlayerFocus extends StatelessWidget {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
-        final handled = _handleKey(event);
-        if (handled || _shouldHandle(event.logicalKey)) {
+        final result = _handleKey(event);
+        if (result != KeyEventResult.ignored) {
+          return result;
+        }
+        if (_shouldHandle(event.logicalKey)) {
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
@@ -59,13 +58,31 @@ class PlayerFocus extends StatelessWidget {
   bool get isFullScreen => plPlayerController.isFullScreen.value;
   bool get hasPlayer => plPlayerController.videoPlayerController != null;
 
-  bool _handleKey(KeyEvent event) {
+  bool _isInBottomControls() {
+    final focusedContext = FocusManager.instance.primaryFocus?.context;
+    return BottomControlsFocusMarker.isInScope(focusedContext);
+  }
+
+  KeyEventResult _handleKey(KeyEvent event) {
     final key = event.logicalKey;
+
+    if (_isInBottomControls()) {
+      // Let focus system route directional keys and activation to focused widgets.
+      if (key == LogicalKeyboardKey.arrowLeft ||
+          key == LogicalKeyboardKey.arrowRight ||
+          key == LogicalKeyboardKey.arrowUp ||
+          key == LogicalKeyboardKey.arrowDown ||
+          key == LogicalKeyboardKey.enter ||
+          key == LogicalKeyboardKey.select ||
+          key == LogicalKeyboardKey.contextMenu) {
+        return KeyEventResult.ignored;
+      }
+    }
 
     final isKeyQ = key == LogicalKeyboardKey.keyQ;
     if (isKeyQ || key == LogicalKeyboardKey.keyR) {
       if (HardwareKeyboard.instance.isMetaPressed) {
-        return true;
+        return KeyEventResult.handled;
       }
       if (!plPlayerController.isLive) {
         if (event is KeyDownEvent) {
@@ -74,12 +91,12 @@ class PlayerFocus extends StatelessWidget {
           introController!.onCancelTriple(isKeyQ);
         }
       }
-      return true;
+      return KeyEventResult.handled;
     }
 
     final isArrowUp = key == LogicalKeyboardKey.arrowUp;
     if (isArrowUp || key == LogicalKeyboardKey.arrowDown) {
-      if (event is! KeyDownEvent) return true;
+      if (event is! KeyDownEvent) return KeyEventResult.handled;
       if (isArrowUp) {
         if (introController case final introController?) {
           if (!introController.prevPlay()) {
@@ -93,7 +110,7 @@ class PlayerFocus extends StatelessWidget {
           }
         }
       }
-      return true;
+      return KeyEventResult.handled;
     }
 
     if (key == LogicalKeyboardKey.arrowRight) {
@@ -122,7 +139,7 @@ class PlayerFocus extends StatelessWidget {
           }
         }
       }
-      return true;
+      return KeyEventResult.handled;
     }
 
     if (event is KeyDownEvent) {
@@ -135,7 +152,7 @@ class PlayerFocus extends StatelessWidget {
           }
           SmartDialog.showToast('${speed}x播放');
         }
-        return true;
+        return KeyEventResult.handled;
       }
 
       switch (key) {
@@ -145,7 +162,7 @@ class PlayerFocus extends StatelessWidget {
               plPlayerController.onDoubleTapCenter();
             }
           }
-          return true;
+          return KeyEventResult.handled;
 
         case LogicalKeyboardKey.keyF:
           final isFullScreen = this.isFullScreen;
@@ -158,7 +175,7 @@ class PlayerFocus extends StatelessWidget {
             status: !isFullScreen,
             inAppFullScreen: HardwareKeyboard.instance.isShiftPressed,
           );
-          return true;
+          return KeyEventResult.handled;
 
         case LogicalKeyboardKey.keyD:
           final newVal = !plPlayerController.enableShowDanmaku.value;
@@ -171,7 +188,7 @@ class PlayerFocus extends StatelessWidget {
               newVal,
             );
           }
-          return true;
+          return KeyEventResult.handled;
 
         case LogicalKeyboardKey.keyP:
           if (Utils.isDesktop && hasPlayer && !isFullScreen) {
@@ -180,7 +197,7 @@ class PlayerFocus extends StatelessWidget {
               ..controlsLock.value = false
               ..showControls.value = false;
           }
-          return true;
+          return KeyEventResult.handled;
 
         case LogicalKeyboardKey.keyM:
           if (hasPlayer) {
@@ -191,13 +208,13 @@ class PlayerFocus extends StatelessWidget {
             plPlayerController.isMuted = isMuted;
             SmartDialog.showToast('${isMuted ? '' : '取消'}静音');
           }
-          return true;
+          return KeyEventResult.handled;
 
         case LogicalKeyboardKey.keyS:
           if (hasPlayer && isFullScreen) {
             plPlayerController.takeScreenshot();
           }
-          return true;
+          return KeyEventResult.handled;
 
         case LogicalKeyboardKey.keyL:
           if (isFullScreen || plPlayerController.isDesktopPip) {
@@ -205,26 +222,26 @@ class PlayerFocus extends StatelessWidget {
               !plPlayerController.controlsLock.value,
             );
           }
-          return true;
+          return KeyEventResult.handled;
 
         case LogicalKeyboardKey.enter:
         case LogicalKeyboardKey.select:
           if (onSkipSegment?.call() ?? false) {
-            return true;
+            return KeyEventResult.handled;
           }
           if (plPlayerController.isLive || canPlay!()) {
             if (hasPlayer) {
               plPlayerController.onDoubleTapCenter();
             }
           }
-          return true;
+          return KeyEventResult.handled;
         case LogicalKeyboardKey.contextMenu:
           if (plPlayerController.isLive || (canPlay?.call() ?? false)) {
             if (hasPlayer) {
               onShowMenu?.call();
             }
           }
-          return true;
+          return KeyEventResult.handled;
       }
 
       if (!plPlayerController.isLive) {
@@ -235,28 +252,28 @@ class PlayerFocus extends StatelessWidget {
                 plPlayerController.fastForBackwardDuration,
               );
             }
-            return true;
+            return KeyEventResult.handled;
 
           case LogicalKeyboardKey.keyW:
             if (HardwareKeyboard.instance.isMetaPressed) {
-              return true;
+              return KeyEventResult.handled;
             }
             introController?.actionCoinVideo();
-            return true;
+            return KeyEventResult.handled;
 
           case LogicalKeyboardKey.keyE:
             introController?.actionFavVideo(isQuick: true);
-            return true;
+            return KeyEventResult.handled;
 
           case LogicalKeyboardKey.keyT || LogicalKeyboardKey.keyV:
             introController?.viewLater();
-            return true;
+            return KeyEventResult.handled;
 
           case LogicalKeyboardKey.keyG:
             if (introController case UgcIntroController ugcCtr) {
               ugcCtr.actionRelationMod(Get.context!);
             }
-            return true;
+            return KeyEventResult.handled;
 
           case LogicalKeyboardKey.bracketLeft:
             if (introController case final introController?) {
@@ -264,7 +281,7 @@ class PlayerFocus extends StatelessWidget {
                 SmartDialog.showToast('已经是第一集了');
               }
             }
-            return true;
+            return KeyEventResult.handled;
 
           case LogicalKeyboardKey.bracketRight:
             if (introController case final introController?) {
@@ -272,11 +289,11 @@ class PlayerFocus extends StatelessWidget {
                 SmartDialog.showToast('已经是最后一集了');
               }
             }
-            return true;
+            return KeyEventResult.handled;
         }
       }
     }
 
-    return false;
+    return KeyEventResult.ignored;
   }
 }

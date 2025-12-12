@@ -2,14 +2,22 @@ import 'package:PiliPlus/common/widgets/progress_bar/audio_video_progress_bar.da
 import 'package:PiliPlus/common/widgets/progress_bar/segment_progress_bar.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/focus_manager.dart';
 import 'package:PiliPlus/plugin/pl_player/view.dart';
 import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-class BottomControl extends StatelessWidget {
+class ControlRows {
+  const ControlRows({required this.top, required this.bottom});
+  final Widget top;
+  final Widget bottom;
+}
+
+class BottomControl extends StatefulWidget {
   const BottomControl({
     super.key,
     required this.maxWidth,
@@ -22,8 +30,28 @@ class BottomControl extends StatelessWidget {
   final double maxWidth;
   final bool isFullScreen;
   final PlPlayerController controller;
-  final Widget Function() buildBottomControl;
+  final ControlRows Function(BottomControlsFocusManager focusManager)
+  buildBottomControl;
   final VideoDetailController videoDetailController;
+
+  @override
+  State<BottomControl> createState() => _BottomControlState();
+}
+
+class _BottomControlState extends State<BottomControl> {
+  late final BottomControlsFocusManager focusManager =
+      BottomControlsFocusManager();
+  bool _progressFocused = false;
+  int _lastPrimaryIndex = 0;
+  int _lastSecondaryIndex = 0;
+
+  PlPlayerController get controller => widget.controller;
+
+  @override
+  void dispose() {
+    focusManager.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +61,8 @@ class BottomControl extends StatelessWidget {
         : colorScheme.primary;
     final thumbGlowColor = primary.withAlpha(80);
     final bufferedBarColor = primary.withValues(alpha: 0.4);
+    final Color focusColor = colorScheme.primary.withAlpha(90);
+
     void onDragStart(ThumbDragDetails duration) {
       feedBack();
       controller.onChangedSliderStart(duration.timeStamp);
@@ -55,8 +85,22 @@ class BottomControl extends StatelessWidget {
         ..seekTo(Duration(seconds: duration.inSeconds), isSeek: false);
     }
 
+    KeyEventResult handleProgressKey(KeyEvent event) {
+      if (event is! KeyDownEvent) return KeyEventResult.ignored;
+      final key = event.logicalKey;
+      if (key == LogicalKeyboardKey.arrowLeft) {
+        controller.onBackward(controller.fastForBackwardDuration);
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.arrowRight) {
+        controller.onForward(controller.fastForBackwardDuration);
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
+
     Widget progressBar() {
-      final child = Obx(() {
+      final Widget bar = Obx(() {
         final int value = controller.sliderPositionSeconds.value;
         final int max = controller.durationSeconds.value.inSeconds;
         if (value > max || max <= 0) {
@@ -79,6 +123,28 @@ class BottomControl extends StatelessWidget {
           onSeek: (e) => onSeek(e, max),
         );
       });
+
+      final Widget child = Focus(
+        focusNode: focusManager.progressNode,
+        onFocusChange: (focused) {
+          if (_progressFocused != focused) {
+            setState(() => _progressFocused = focused);
+          }
+        },
+        onKeyEvent: (node, event) => handleProgressKey(event),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: _progressFocused
+                ? Border.all(color: focusColor, width: 1.1)
+                : null,
+          ),
+          child: bar,
+        ),
+      );
+
       if (Utils.isDesktop) {
         return MouseRegion(
           cursor: SystemMouseCursors.click,
@@ -90,74 +156,171 @@ class BottomControl extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
-            child: Obx(
-              () => Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.bottomCenter,
+      child: BottomControlsFocusMarker(
+        child: Focus(
+          // Custom navigation to keep vertical movement aligned by index and
+          // prevent focus loss on left at row start.
+          onKeyEvent: (node, event) {
+            if (event is! KeyDownEvent) return KeyEventResult.ignored;
+            final logicalKey = event.logicalKey;
+            final primaryNodes = focusManager.primaryNodesList;
+            final secondaryNodes = focusManager.secondaryNodesList;
+            final current = FocusManager.instance.primaryFocus;
+            final int primaryIndex = primaryNodes.indexWhere((n) => n.hasFocus);
+            final int secondaryIndex = secondaryNodes.indexWhere(
+              (n) => n.hasFocus,
+            );
+            // Remember last visited indices for mapping through progress bar.
+            if (primaryIndex >= 0) {
+              _lastPrimaryIndex = primaryIndex;
+            }
+            if (secondaryIndex >= 0) {
+              _lastSecondaryIndex = secondaryIndex;
+            }
+
+            if (logicalKey == LogicalKeyboardKey.arrowDown) {
+              if (current == focusManager.progressNode) {
+                if (secondaryNodes.isNotEmpty) {
+                  FocusScope.of(context).requestFocus(secondaryNodes.first);
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              }
+              return KeyEventResult.ignored;
+            }
+
+            if (logicalKey == LogicalKeyboardKey.arrowUp) {
+              if (current == focusManager.progressNode) {
+                if (primaryNodes.isNotEmpty) {
+                  FocusScope.of(context).requestFocus(primaryNodes.first);
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              }
+              return KeyEventResult.ignored;
+            }
+
+            if (logicalKey == LogicalKeyboardKey.arrowLeft &&
+                secondaryNodes.isNotEmpty &&
+                secondaryIndex >= 0) {
+              if (secondaryIndex <= 0) {
+                FocusScope.of(context).requestFocus(secondaryNodes.first);
+                return KeyEventResult.handled;
+              }
+              FocusScope.of(
+                context,
+              ).requestFocus(secondaryNodes[secondaryIndex - 1]);
+              return KeyEventResult.handled;
+            }
+
+            return KeyEventResult.ignored;
+          },
+          child: FocusTraversalGroup(
+            policy: WidgetOrderTraversalPolicy(),
+            child: FocusScope(
+              node: focusManager.scopeNode,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  progressBar(),
-                  if (controller.enableBlock &&
-                      videoDetailController.segmentProgressList.isNotEmpty)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 5.25,
-                      child: IgnorePointer(
-                        child: RepaintBoundary(
-                          child: CustomPaint(
-                            key: const Key('segmentList'),
-                            size: const Size(double.infinity, 3.5),
-                            painter: SegmentProgressBar(
-                              segmentColors:
-                                  videoDetailController.segmentProgressList,
-                            ),
+                  Builder(
+                    builder: (context) {
+                      final rows = widget.buildBottomControl(focusManager);
+                      return Column(
+                        children: [
+                          rows.top,
+                          const SizedBox(height: 6),
+                          Stack(
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.bottomCenter,
+                            children: [
+                              progressBar(),
+                              if (controller.enableBlock &&
+                                  widget
+                                      .videoDetailController
+                                      .segmentProgressList
+                                      .isNotEmpty)
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 5.25,
+                                  child: IgnorePointer(
+                                    child: RepaintBoundary(
+                                      child: CustomPaint(
+                                        key: const Key('segmentList'),
+                                        size: const Size(double.infinity, 3.5),
+                                        painter: SegmentProgressBar(
+                                          segmentColors: widget
+                                              .videoDetailController
+                                              .segmentProgressList,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (controller.showViewPoints &&
+                                  widget
+                                      .videoDetailController
+                                      .viewPointList
+                                      .isNotEmpty &&
+                                  widget
+                                      .videoDetailController
+                                      .showVP
+                                      .value) ...[
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 5.25,
+                                  child: IgnorePointer(
+                                    child: RepaintBoundary(
+                                      child: CustomPaint(
+                                        key: const Key('viewPointList'),
+                                        size: const Size(double.infinity, 3.5),
+                                        painter: SegmentProgressBar(
+                                          segmentColors: widget
+                                              .videoDetailController
+                                              .viewPointList,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                if (!Utils.isMobile)
+                                  buildViewPointWidget(
+                                    widget.videoDetailController,
+                                    controller,
+                                    8.75,
+                                    widget.maxWidth - 40,
+                                  ),
+                              ],
+                              if (widget
+                                  .videoDetailController
+                                  .showDmTrendChart
+                                  .value)
+                                if (widget
+                                        .videoDetailController
+                                        .dmTrend
+                                        .value
+                                        ?.dataOrNull
+                                    case final list?)
+                                  buildDmChart(
+                                    primary,
+                                    list,
+                                    widget.videoDetailController,
+                                    4.5,
+                                  ),
+                            ],
                           ),
-                        ),
-                      ),
-                    ),
-                  if (controller.showViewPoints &&
-                      videoDetailController.viewPointList.isNotEmpty &&
-                      videoDetailController.showVP.value) ...[
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 5.25,
-                      child: IgnorePointer(
-                        child: RepaintBoundary(
-                          child: CustomPaint(
-                            key: const Key('viewPointList'),
-                            size: const Size(double.infinity, 3.5),
-                            painter: SegmentProgressBar(
-                              segmentColors:
-                                  videoDetailController.viewPointList,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (!Utils.isMobile)
-                      buildViewPointWidget(
-                        videoDetailController,
-                        controller,
-                        8.75,
-                        maxWidth - 40,
-                      ),
-                  ],
-                  if (videoDetailController.showDmTrendChart.value)
-                    if (videoDetailController.dmTrend.value?.dataOrNull
-                        case final list?)
-                      buildDmChart(primary, list, videoDetailController, 4.5),
+                          const SizedBox(height: 8),
+                          rows.bottom,
+                        ],
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
           ),
-          buildBottomControl(),
-        ],
+        ),
       ),
     );
   }

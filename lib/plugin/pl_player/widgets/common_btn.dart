@@ -1,3 +1,4 @@
+import 'package:PiliPlus/plugin/pl_player/widgets/focusable_btn.dart';
 import 'package:flutter/material.dart';
 
 class ComBtn extends StatelessWidget {
@@ -8,6 +9,8 @@ class ComBtn extends StatelessWidget {
   final double width;
   final double height;
   final String? tooltip;
+  final FocusNode? focusNode;
+  final bool autofocus;
 
   const ComBtn({
     super.key,
@@ -18,24 +21,22 @@ class ComBtn extends StatelessWidget {
     this.width = 34,
     this.height = 34,
     this.tooltip,
+    this.focusNode,
+    this.autofocus = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final child = SizedBox(
+    return FocusableBtn(
       width: width,
       height: height,
-      child: GestureDetector(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        onSecondaryTap: onSecondaryTap,
-        behavior: HitTestBehavior.opaque,
-        child: icon,
-      ),
+      focusNode: focusNode,
+      autofocus: autofocus,
+      onPressed: onTap,
+      onLongPress: onLongPress,
+      onSecondaryTap: onSecondaryTap,
+      tooltip: tooltip,
+      child: icon,
     );
-    if (tooltip != null) {
-      return Tooltip(message: tooltip, child: child);
-    }
-    return child;
   }
 }
