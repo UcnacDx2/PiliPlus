@@ -1180,7 +1180,9 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final bool flag =
         isFullScreen || plPlayerController.isDesktopPip || maxWidth >= 500;
     final bool showDanmakuActions =
-        isFullScreen || plPlayerController.isDesktopPip || isPipMode ||
+        isFullScreen ||
+        plPlayerController.isDesktopPip ||
+        isPipMode ||
         isDesktop;
     final bool showPipButton =
         Platform.isAndroid || (Utils.isDesktop && !isFullScreen);
