@@ -30,6 +30,36 @@ import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'dart:convert';
+import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/widgets/button/icon_button.dart';
+import 'package:PiliPlus/common/widgets/custom_sliver_persistent_header_delegate.dart';
+import 'package:PiliPlus/common/widgets/dialog/report.dart';
+import 'package:PiliPlus/http/danmaku.dart';
+import 'package:PiliPlus/http/danmaku_block.dart';
+import 'package:PiliPlus/http/init.dart';
+import 'package:PiliPlus/http/live.dart';
+import 'package:PiliPlus/http/video.dart';
+import 'package:PiliPlus/models/common/video/audio_quality.dart';
+import 'package:PiliPlus/models/common/video/cdn_type.dart';
+import 'package:PiliPlus/models/common/video/video_decode_type.dart';
+import 'package:PiliPlus/models_new/video/video_play_info/subtitle.dart';
+import 'package:PiliPlus/pages/danmaku/dnamaku_model.dart';
+import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
+import 'package:PiliPlus/pages/setting/widgets/switch_item.dart';
+import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
+import 'package:PiliPlus/services/service_locator.dart';
+import 'package:PiliPlus/utils/accounts.dart';
+import 'package:PiliPlus/utils/accounts/account.dart';
+import 'package:PiliPlus/utils/image_utils.dart';
+import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/video_utils.dart';
+import 'package:canvas_danmaku/canvas_danmaku.dart';
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hive/hive.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
@@ -1067,6 +1097,128 @@ class BottomControlState extends State<BottomControl> with HeaderMixin {
                     title: const Text('重载视频', style: TextStyle(fontSize: 14)),
                   ),
                 ],
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                    showSetRepeat();
+                  },
+                  leading: const Icon(Icons.repeat, size: 20),
+                  title: const Text('播放顺序', style: TextStyle(fontSize: 14)),
+                  subtitle: Text(
+                    plPlayerController.playRepeat.desc,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                    showDanmakuPool();
+                  },
+                  leading: const Icon(CustomIcons.dm_on, size: 20),
+                  title: const Text('弹幕列表', style: TextStyle(fontSize: 14)),
+                ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                    showSetDanmaku();
+                  },
+                  leading: const Icon(CustomIcons.dm_settings, size: 20),
+                  title: const Text('弹幕设置', style: TextStyle(fontSize: 14)),
+                ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                    showSetSubtitle();
+                  },
+                  leading: const Icon(Icons.subtitles_outlined, size: 20),
+                  title: const Text('字幕设置', style: TextStyle(fontSize: 14)),
+                ),
+                ListTile(
+                  dense: true,
+                  onTap: () async {
+                    Get.back();
+                    try {
+                      final FilePickerResult? file = await FilePicker.platform
+                          .pickFiles();
+                      if (file != null) {
+                        final first = file.files.first;
+                        final path = first.path;
+                        if (path != null) {
+                          final file = File(path);
+                          final stream = file.openRead().transform(
+                            utf8.decoder,
+                          );
+                          final buffer = StringBuffer();
+                          await for (final chunk in stream) {
+                            if (!mounted) return;
+                            buffer.write(chunk);
+                          }
+                          if (!mounted) return;
+                          String sub = buffer.toString();
+                          final name = first.name;
+                          if (name.endsWith('.json')) {
+                            sub = await compute<List, String>(
+                              VideoHttp.processList,
+                              jsonDecode(sub)['body'],
+                            );
+                            if (!mounted) return;
+                          }
+                          final length = widget.videoDetailController.subtitles.length;
+                          widget.videoDetailController
+                            ..subtitles.add(
+                              Subtitle(
+                                lan: '',
+                                lanDoc: name.split('.').firstOrNull ?? name,
+                              ),
+                            )
+                            ..vttSubtitles[length] = sub;
+                          await widget.videoDetailController.setSubtitle(length + 1);
+                        }
+                      }
+                    } catch (e) {
+                      SmartDialog.showToast('加载失败: $e');
+                    }
+                  },
+                  leading: const Icon(Icons.file_open_outlined, size: 20),
+                  title: const Text('加载字幕', style: TextStyle(fontSize: 14)),
+                ),
+                if (!widget.videoDetailController.isFileSource &&
+                    widget.videoDetailController.subtitles.isNotEmpty)
+                  ListTile(
+                    dense: true,
+                    onTap: () {
+                      Get.back();
+                      onExportSubtitle();
+                    },
+                    leading: const Icon(Icons.download_outlined, size: 20),
+                    title: const Text('保存字幕', style: TextStyle(fontSize: 14)),
+                  ),
+                ListTile(
+                  dense: true,
+                  title: const Text('播放信息', style: TextStyle(fontSize: 14)),
+                  leading: const Icon(Icons.info_outline, size: 20),
+                  onTap: () => HeaderControlState.showPlayerInfo(
+                    context,
+                    plPlayerController: plPlayerController,
+                  ),
+                ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    if (!Accounts.main.isLogin) {
+                      SmartDialog.showToast('账号未登录');
+                      return;
+                    }
+                    Get.back();
+                    PageUtils.reportVideo(widget.videoDetailController.aid);
+                  },
+                  leading: const Icon(Icons.error_outline, size: 20),
+                  title: const Text('举报', style: TextStyle(fontSize: 14)),
+                ),
               ],
             ),
           ),
@@ -1169,9 +1321,12 @@ class BottomControlState extends State<BottomControl> with HeaderMixin {
                   bgColor: theme.colorScheme.surface,
                 ),
               ),
-              ?_buildDanmakuList(ctr.staticDanmaku),
-              ?_buildDanmakuList(ctr.scrollDanmaku),
-              ?_buildDanmakuList(ctr.specialDanmaku),
+              if (ctr.staticDanmaku.isNotEmpty)
+                _buildDanmakuList(ctr.staticDanmaku)!,
+              if (ctr.scrollDanmaku.isNotEmpty)
+                _buildDanmakuList(ctr.scrollDanmaku)!,
+              if (ctr.specialDanmaku.isNotEmpty)
+                _buildDanmakuList(ctr.specialDanmaku)!,
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
             ],
           ),
@@ -1180,7 +1335,7 @@ class BottomControlState extends State<BottomControl> with HeaderMixin {
     });
   }
 
-  Widget? _buildDanmakuList(List<DanmakuItem<DanmakuExtra>> list) {
+  Sliver? _buildDanmakuList(List<DanmakuItem<DanmakuExtra>> list) {
     if (list.isEmpty) return null;
     list = List.of(list);
 
