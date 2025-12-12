@@ -89,7 +89,7 @@ class _PlayerFocusState extends State<PlayerFocus> {
             widget.plPlayerController.play();
           }
           SmartDialog.showToast('确认');
-        } else if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.back) {
+        } else if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.goBack) {
           // Cancel seek
           final originalPosition = _positionBeforeSeek;
           setState(() {
@@ -165,7 +165,7 @@ class _PlayerFocusState extends State<PlayerFocus> {
               _positionBeforeSeek = widget.plPlayerController
                   .videoPlayerController!.value.position;
               _wasPlayingBeforeSeek =
-                  widget.plPlayerController.playerStatus.playing;
+                  widget.plPlayerController.playerStatus.value.playing;
             });
             if (_wasPlayingBeforeSeek) {
               widget.plPlayerController.pause();
