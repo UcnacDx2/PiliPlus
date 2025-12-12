@@ -162,10 +162,10 @@ class _PlayerFocusState extends State<PlayerFocus> {
             // Enter seek mode
             setState(() {
               _isSeeking = true;
-              _positionBeforeSeek = widget.plPlayerController
-                  .videoPlayerController!.value.position;
+              _positionBeforeSeek = widget
+                  .plPlayerController.videoPlayerController!.state.position;
               _wasPlayingBeforeSeek =
-                  widget.plPlayerController.playerStatus.value.playing;
+                  widget.plPlayerController.playerStatus.playing;
             });
             if (_wasPlayingBeforeSeek) {
               widget.plPlayerController.pause();
