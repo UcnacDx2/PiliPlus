@@ -1281,6 +1281,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                 width: 60,
                 height: 60,
               ),
+              onPressed: handlePlay,
             ),
           ),
         ],
