@@ -41,8 +41,8 @@ import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/gesture_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
-import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/focus_manager.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/app_bar_ani.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/backward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/bottom_control.dart';
@@ -418,6 +418,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final isPlayAll = videoDetailController.isPlayAll;
     final anySeason = isSeason || isPart || isPgc || isPlayAll;
     final isFullScreen = this.isFullScreen;
+    final isPipMode = plPlayerController.isPipMode;
+    final isDesktop = Utils.isDesktop;
     final double widgetWidth = isLandscape && isFullScreen ? 42 : 35;
 
     // 辅助函数：根据 FocusNode 的状态绘制高亮背景
@@ -547,6 +549,127 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         ),
         focusNode: focusNode,
         onTap: _showSettingSheet,
+      ),
+
+      /// 听音频
+      BottomControlType.audio => ComBtn(
+        width: widgetWidth,
+        height: 30,
+        tooltip: '听音频',
+        icon: const Icon(
+          Icons.headphones_outlined,
+          size: 22,
+          color: Colors.white,
+        ),
+        focusNode: focusNode,
+        onTap: videoDetailController.toAudioPage,
+      ),
+
+      /// 投屏
+      BottomControlType.cast => ComBtn(
+        width: widgetWidth,
+        height: 30,
+        tooltip: '投屏',
+        icon: const Icon(
+          Icons.cast,
+          size: 22,
+          color: Colors.white,
+        ),
+        focusNode: focusNode,
+        onTap: videoDetailController.onCast,
+      ),
+
+      /// 提交片段
+      BottomControlType.submitSegment => ComBtn(
+        width: widgetWidth,
+        height: 30,
+        tooltip: '提交片段',
+        icon: const Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            Icon(
+              Icons.shield_outlined,
+              size: 22,
+              color: Colors.white,
+            ),
+            Icon(
+              Icons.play_arrow_rounded,
+              size: 14,
+              color: Colors.white,
+            ),
+          ],
+        ),
+        focusNode: focusNode,
+        onTap: () => videoDetailController.onBlock(context),
+      ),
+
+      /// 发弹幕
+      BottomControlType.sendDanmaku => ComBtn(
+        width: widgetWidth,
+        height: 30,
+        tooltip: '发弹幕',
+        icon: const Icon(
+          Icons.comment_outlined,
+          size: 22,
+          color: Colors.white,
+        ),
+        focusNode: focusNode,
+        onTap: videoDetailController.showShootDanmakuSheet,
+      ),
+
+      /// 开关弹幕
+      BottomControlType.toggleDanmaku => Obx(
+        () {
+          final enableShowDanmaku = plPlayerController.enableShowDanmaku.value;
+          return ComBtn(
+            width: widgetWidth,
+            height: 30,
+            tooltip: "${enableShowDanmaku ? '关闭' : '开启'}弹幕",
+            icon: enableShowDanmaku
+                ? const Icon(
+                    size: 22,
+                    CustomIcons.dm_on,
+                    color: Colors.white,
+                  )
+                : const Icon(
+                    size: 22,
+                    CustomIcons.dm_off,
+                    color: Colors.white,
+                  ),
+            focusNode: focusNode,
+            onTap: () {
+              final newVal = !enableShowDanmaku;
+              plPlayerController.enableShowDanmaku.value = newVal;
+              if (!plPlayerController.tempPlayerConf) {
+                GStorage.setting.put(
+                  SettingBoxKey.enableShowDanmaku,
+                  newVal,
+                );
+              }
+            },
+          );
+        },
+      ),
+
+      /// 画中画
+      BottomControlType.pip => ComBtn(
+        width: widgetWidth,
+        height: 30,
+        tooltip: '画中画',
+        icon: const Icon(
+          Icons.picture_in_picture_outlined,
+          size: 22,
+          color: Colors.white,
+        ),
+        focusNode: focusNode,
+        onTap: () {
+          if (Utils.isDesktop) {
+            plPlayerController.toggleDesktopPip();
+            return;
+          }
+          plPlayerController.enterPip();
+        },
       ),
 
       /// 高能进度条
@@ -1056,9 +1179,24 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
     final bool flag =
         isFullScreen || plPlayerController.isDesktopPip || maxWidth >= 500;
+    final bool showDanmakuActions =
+        isFullScreen || plPlayerController.isDesktopPip || isPipMode ||
+        isDesktop;
+    final bool showPipButton =
+        Platform.isAndroid || (Utils.isDesktop && !isFullScreen);
     final List<BottomControlType> secondaryItems = [
       BottomControlType.back,
       BottomControlType.moreSettings,
+      if (isNotFileSource && videoDetailController.isUgc)
+        BottomControlType.audio,
+      if (isNotFileSource) BottomControlType.cast,
+      if (plPlayerController.enableSponsorBlock)
+        BottomControlType.submitSegment,
+      if (showDanmakuActions) ...[
+        BottomControlType.sendDanmaku,
+        BottomControlType.toggleDanmaku,
+      ],
+      if (showPipButton) BottomControlType.pip,
       if (isNotFileSource && anySeason) BottomControlType.episode,
       if (flag) BottomControlType.fit,
       BottomControlType.subtitle,
