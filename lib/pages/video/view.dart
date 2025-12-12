@@ -714,6 +714,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                                       .colorScheme
                                                       .onSurface,
                                                 ),
+                                              ),
                                               onPressed: () {
                                                 videoDetailController
                                                     .plPlayerController
@@ -785,7 +786,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                                   color: themeData
                                                       .colorScheme
                                                       .onSurface,
-                                                ),
+                                                )),
                                               ),
                                             ),
                                     ),

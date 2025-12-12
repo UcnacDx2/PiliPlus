@@ -15,7 +15,7 @@ import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
-import 'package.PiliPlus/utils/tv/tv_detector.dart';
+import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 
@@ -38,7 +38,11 @@ class _SearchPageState extends State<SearchPage> {
     final theme = Theme.of(context);
     final isPortrait = MediaQuery.sizeOf(context).isPortrait;
     return Scaffold(
-      appBar: AppBar(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: DpadRegionScope(
+          region: 'search_input',
+          child: AppBar(
         shape: Border(
           bottom: BorderSide(
             color: theme.dividerColor.withValues(alpha: 0.08),
@@ -90,6 +94,8 @@ class _SearchPageState extends State<SearchPage> {
           onSubmitted: (value) => _searchController.submit(),
         ),
         ),
+      ),
+      ),
       ),
       body: ListView(
         padding: MediaQuery.viewPaddingOf(context).copyWith(top: 0),

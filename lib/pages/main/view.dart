@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/flutter/tabs.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
+import 'package:PiliPlus/common/widgets/tv/tv_button.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamic_badge_mode.dart';
 import 'package:PiliPlus/models/common/image_type.dart';
 import 'package:PiliPlus/models/common/nav_bar_config.dart';
@@ -21,7 +22,7 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package.PiliPlus/utils/tv/tv_detector.dart';
+import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -296,34 +297,58 @@ class _MainAppState extends State<MainApp>
                           );
                         }
                       })
-                    : Obx(
-                        () => BottomNavigationBar(
-                          currentIndex: _mainController.selectedIndex.value,
-                          onTap: _mainController.setIndex,
-                          iconSize: 16,
-                          selectedFontSize: 12,
-                          unselectedFontSize: 12,
-                          type: BottomNavigationBarType.fixed,
-                          items: _mainController.navigationBars
-                              .asMap()
-                              .entries
-                              .map(
-                                (entry) => DpadFocusable(
-                                  autofocus: entry.key == 0,
-                                  isEntryPoint: entry.key == 0,
-                                  child: BottomNavigationBarItem(
-                                    label: entry.value.label,
-                                    icon: _buildIcon(type: entry.value),
+                    : Obx(() {
+                        if (TVDetector.isTV) {
+                          return DpadRegionScope(
+                            region: 'bottom_nav',
+                            child: Container(
+                              color: theme.navigationBarTheme.backgroundColor,
+                              padding: EdgeInsets.only(bottom: padding.bottom),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: _mainController.navigationBars
+                                    .asMap()
+                                    .entries
+                                    .map((entry) {
+                                  final isSelected = _mainController.selectedIndex.value == entry.key;
+                                  return TVButton(
+                                    autofocus: entry.key == 0,
+                                    onPressed: () => _mainController.setIndex(entry.key),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _buildIcon(type: entry.value, selected: isSelected),
+                                        Text(entry.value.label),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          );
+                        } else {
+                          return BottomNavigationBar(
+                            currentIndex: _mainController.selectedIndex.value,
+                            onTap: _mainController.setIndex,
+                            iconSize: 16,
+                            selectedFontSize: 12,
+                            unselectedFontSize: 12,
+                            type: BottomNavigationBarType.fixed,
+                            items: _mainController.navigationBars
+                                .map(
+                                  (e) => BottomNavigationBarItem(
+                                    label: e.label,
+                                    icon: _buildIcon(type: e),
                                     activeIcon: _buildIcon(
-                                      type: entry.value,
+                                      type: e,
                                       selected: true,
                                     ),
                                   ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      )
+                                )
+                                .toList(),
+                          );
+                        }
+                      })
               : const SizedBox.shrink()
         : null;
     return PopScope(

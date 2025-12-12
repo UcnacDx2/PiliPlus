@@ -65,162 +65,94 @@ class _RcmdPageState extends CommonPageState<RcmdPage, RcmdController>
   );
 
   Widget _buildBody(LoadingState<List<dynamic>?> loadingState) {
-    if (TVDetector.isTV) {
-      return switch (loadingState) {
-        Loading() => _buildSkeleton,
-        Success(:var response) =>
-        response?.isNotEmpty == true
-            ? DpadRegionScope(
-          region: 'video_grid',
-          child: SliverGrid.builder(
-            gridDelegate: gridDelegate,
-            itemBuilder: (context, index) {
-              if (index == response.length - 1) {
-                controller.onLoadMore();
-              }
-              if (controller.lastRefreshAt != null) {
-                if (controller.lastRefreshAt == index) {
-                  return DpadFocusable(
-                    child: GestureDetector(
-                      onTap: () => controller
-                        ..animateToTop()
-                        ..onRefresh(),
-                      child: Card(
-                        child: Container(
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                          ),
-                          child: Text(
-                            '上次看到这里\n点击刷新',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }
-                int actualIndex = controller.lastRefreshAt == null
-                    ? index
-                    : index > controller.lastRefreshAt!
-                        ? index - 1
-                        : index;
-                return TVVideoCard(
+    return switch (loadingState) {
+      Loading() => _buildSkeleton,
+      Success(:var response) => response?.isNotEmpty == true
+          ? _buildGrid(response)
+          : HttpError(onReload: controller.onReload),
+      Error(:var errMsg) => HttpError(
+          errMsg: errMsg,
+          onReload: controller.onReload,
+        ),
+    };
+  }
+
+  Widget _buildGrid(List<dynamic> response) {
+    final isTV = TVDetector.isTV;
+    final grid = SliverGrid.builder(
+      gridDelegate: gridDelegate,
+      itemBuilder: (context, index) {
+        if (index == response.length - 1) {
+          controller.onLoadMore();
+        }
+        if (controller.lastRefreshAt != null) {
+          if (controller.lastRefreshAt == index) {
+            final card = Card(
+              child: Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  '上次看到这里\n点击刷新',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            );
+            return isTV
+                ? DpadFocusable(child: card)
+                : GestureDetector(onTap: () => controller..animateToTop()..onRefresh(), child: card);
+          }
+          int actualIndex = controller.lastRefreshAt == null
+              ? index
+              : index > controller.lastRefreshAt!
+                  ? index - 1
+                  : index;
+          return isTV
+              ? TVVideoCard(
                   videoItem: response[actualIndex],
                   autofocus: actualIndex == 0,
                   isEntryPoint: actualIndex == 0,
-                  onRemove: () {
-                    if (controller.lastRefreshAt != null &&
-                        actualIndex < controller.lastRefreshAt!) {
-                      controller.lastRefreshAt =
-                          controller.lastRefreshAt! - 1;
-                    }
-                    controller.loadingState
-                      ..value.data!.removeAt(actualIndex)
-                      ..refresh();
-                  },
+                  onRemove: () => _onRemove(actualIndex),
+                )
+              : VideoCardV(
+                  videoItem: response[actualIndex],
+                  onRemove: () => _onRemove(actualIndex),
                 );
-              } else {
-                return TVVideoCard(
+        } else {
+          return isTV
+              ? TVVideoCard(
                   videoItem: response[index],
                   autofocus: index == 0,
                   isEntryPoint: index == 0,
                   onRemove: () => controller.loadingState
                     ..value.data!.removeAt(index)
                     ..refresh(),
+                )
+              : VideoCardV(
+                  videoItem: response[index],
+                  onRemove: () => controller.loadingState
+                    ..value.data!.removeAt(index)
+                    ..refresh(),
                 );
-              }
-            },
-            itemCount: controller.lastRefreshAt != null
-                ? response!.length + 1
-                : response!.length,
-          ),
-        )
-            : HttpError(onReload: controller.onReload),
-        Error(:var errMsg) => HttpError(
-          errMsg: errMsg,
-          onReload: controller.onReload,
-        ),
-      };
-    } else {
-      return switch (loadingState) {
-        Loading() => _buildSkeleton,
-        Success(:var response) =>
-        response?.isNotEmpty == true
-            ? SliverGrid.builder(
-          gridDelegate: gridDelegate,
-          itemBuilder: (context, index) {
-            if (index == response.length - 1) {
-              controller.onLoadMore();
-            }
-            if (controller.lastRefreshAt != null) {
-              if (controller.lastRefreshAt == index) {
-                return GestureDetector(
-                  onTap: () => controller
-                    ..animateToTop()
-                    ..onRefresh(),
-                  child: Card(
-                    child: Container(
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                      ),
-                      child: Text(
-                        '上次看到这里\n点击刷新',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }
-              int actualIndex = controller.lastRefreshAt == null
-                  ? index
-                  : index > controller.lastRefreshAt!
-                  ? index - 1
-                  : index;
-              return VideoCardV(
-                videoItem: response[actualIndex],
-                onRemove: () {
-                  if (controller.lastRefreshAt != null &&
-                      actualIndex < controller.lastRefreshAt!) {
-                    controller.lastRefreshAt =
-                    controller.lastRefreshAt! - 1;
-                  }
-                  controller.loadingState
-                    ..value.data!.removeAt(actualIndex)
-                    ..refresh();
-                },
-              );
-            } else {
-              return VideoCardV(
-                videoItem: response[index],
-                onRemove: () => controller.loadingState
-                  ..value.data!.removeAt(index)
-                  ..refresh(),
-              );
-            }
-          },
-          itemCount: controller.lastRefreshAt != null
-              ? response!.length + 1
-              : response!.length,
-        )
-            : HttpError(onReload: controller.onReload),
-        Error(:var errMsg) => HttpError(
-          errMsg: errMsg,
-          onReload: controller.onReload,
-        ),
-      };
+        }
+      },
+      itemCount: controller.lastRefreshAt != null
+          ? response.length + 1
+          : response.length,
+    );
+    return isTV ? DpadRegionScope(region: 'video_grid', child: grid) : grid;
+  }
+
+  void _onRemove(int actualIndex) {
+    if (controller.lastRefreshAt != null &&
+        actualIndex < controller.lastRefreshAt!) {
+      controller.lastRefreshAt = controller.lastRefreshAt! - 1;
     }
+    controller.loadingState
+      ..value.data!.removeAt(actualIndex)
+      ..refresh();
   }
 
   Widget get _buildSkeleton => SliverGrid.builder(
