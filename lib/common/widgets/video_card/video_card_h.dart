@@ -17,6 +17,7 @@ import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter/services.dart'; // 必须导入，用于 LogicalKeyboardKey
@@ -159,44 +160,65 @@ class _VideoCardHState extends State<VideoCardH> {
       cover: widget.videoItem.cover,
     );
     
-    return Material(
-      type: MaterialType.transparency,
-      // [Feat] Focus 监听逻辑
-      child: Focus(
-        canRequestFocus: false,
-        skipTraversal: true,
-        onKeyEvent: (node, event) {
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.contextMenu) {
-            _menuKey.currentState?.showButtonMenu();
-            return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            InkWell(
-              onLongPress: onLongPress,
-              onSecondaryTap: Utils.isMobile ? null : onLongPress,
-              onTap: widget.onTap ?? _onTap, // 使用合并后的 onTap
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: StyleString.safeSpace,
-                  vertical: 5,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    AspectRatio(
-                      aspectRatio: StyleString.aspectRatio,
-                      child: LayoutBuilder(
-                        builder: (context, boxConstraints) {
-                          final double maxWidth = boxConstraints.maxWidth;
-                          final double maxHeight = boxConstraints.maxHeight;
-                          num? progress;
-                          if (widget.videoItem case HotVideoItemModel item) {
-                            progress = item.progress;
+    return DpadFocusable(
+      region: 'content',
+      onSelect: widget.onTap ?? _onTap,
+      builder: (context, isFocused, child) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: isFocused
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                : null,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isFocused
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: child,
+        );
+      },
+      child: Material(
+        type: MaterialType.transparency,
+        // [Feat] Focus 监听逻辑
+        child: Focus(
+          canRequestFocus: false,
+          skipTraversal: true,
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent &&
+                event.logicalKey == LogicalKeyboardKey.contextMenu) {
+              _menuKey.currentState?.showButtonMenu();
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
+          },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              InkWell(
+                onLongPress: onLongPress,
+                onSecondaryTap: Utils.isMobile ? null : onLongPress,
+                onTap: widget.onTap ?? _onTap, // 使用合并后的 onTap
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: StyleString.safeSpace,
+                    vertical: 5,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      AspectRatio(
+                        aspectRatio: StyleString.aspectRatio,
+                        child: LayoutBuilder(
+                          builder: (context, boxConstraints) {
+                            final double maxWidth = boxConstraints.maxWidth;
+                            final double maxHeight = boxConstraints.maxHeight;
+                            num? progress;
+                            if (widget.videoItem case HotVideoItemModel item) {
+                              progress = item.progress;
                           }
 
                           return Stack(
@@ -277,6 +299,7 @@ class _VideoCardHState extends State<VideoCardH> {
           ],
         ),
       ),
+    ),
     );
   }
 

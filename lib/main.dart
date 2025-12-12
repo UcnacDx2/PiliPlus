@@ -25,6 +25,7 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
+import 'package:dpad/dpad.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/foundation.dart';
@@ -257,87 +258,95 @@ class MyApp extends StatelessWidget {
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    return GetMaterialApp(
-      title: Constants.appName,
-      theme: ThemeUtils.getThemeData(
-        colorScheme:
-            lightColorScheme ??
-            SeedColorScheme.fromSeeds(
-              variant: variant,
-              primaryKey: brandColor,
-              brightness: Brightness.light,
-              useExpressiveOnContainerColors: false,
-            ),
-        isDynamic: lightColorScheme != null,
+    return DpadNavigator(
+      enabled: true,
+      focusMemory: const FocusMemoryOptions(
+        enabled: true,
+        maxHistory: 50,
       ),
-      darkTheme: ThemeUtils.getThemeData(
-        isDark: true,
-        colorScheme:
-            darkColorScheme ??
-            SeedColorScheme.fromSeeds(
-              variant: variant,
-              primaryKey: brandColor,
-              brightness: Brightness.dark,
-              useExpressiveOnContainerColors: false,
-            ),
-        isDynamic: darkColorScheme != null,
-      ),
-      themeMode: Pref.themeMode,
-      localizationsDelegates: const [
-        GlobalCupertinoLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      locale: const Locale("zh", "CN"),
-      fallbackLocale: const Locale("zh", "CN"),
-      supportedLocales: const [Locale("zh", "CN"), Locale("en", "US")],
-      initialRoute: '/',
-      getPages: Routes.getPages,
-      defaultTransition: Pref.pageTransition,
-      builder: FlutterSmartDialog.init(
-        toastBuilder: (String msg) => CustomToast(msg: msg),
-        loadingBuilder: (msg) => LoadingWidget(msg: msg),
-        builder: (context, child) {
-          child = MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: TextScaler.linear(Pref.defaultTextScale),
-            ),
-            child: child!,
-          );
-          if (Utils.isDesktop) {
-            return Focus(
-              canRequestFocus: false,
-              onKeyEvent: (_, event) {
-                if (event.logicalKey == LogicalKeyboardKey.escape &&
-                    event is KeyDownEvent) {
-                  _onBack();
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.ignored;
-              },
-              child: MouseBackDetector(
-                onTapDown: _onBack,
-                child: child,
+      onBackPressed: _onBack,
+      child: GetMaterialApp(
+        title: Constants.appName,
+        theme: ThemeUtils.getThemeData(
+          colorScheme:
+              lightColorScheme ??
+              SeedColorScheme.fromSeeds(
+                variant: variant,
+                primaryKey: brandColor,
+                brightness: Brightness.light,
+                useExpressiveOnContainerColors: false,
               ),
+          isDynamic: lightColorScheme != null,
+        ),
+        darkTheme: ThemeUtils.getThemeData(
+          isDark: true,
+          colorScheme:
+              darkColorScheme ??
+              SeedColorScheme.fromSeeds(
+                variant: variant,
+                primaryKey: brandColor,
+                brightness: Brightness.dark,
+                useExpressiveOnContainerColors: false,
+              ),
+          isDynamic: darkColorScheme != null,
+        ),
+        themeMode: Pref.themeMode,
+        localizationsDelegates: const [
+          GlobalCupertinoLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        locale: const Locale("zh", "CN"),
+        fallbackLocale: const Locale("zh", "CN"),
+        supportedLocales: const [Locale("zh", "CN"), Locale("en", "US")],
+        initialRoute: '/',
+        getPages: Routes.getPages,
+        defaultTransition: Pref.pageTransition,
+        builder: FlutterSmartDialog.init(
+          toastBuilder: (String msg) => CustomToast(msg: msg),
+          loadingBuilder: (msg) => LoadingWidget(msg: msg),
+          builder: (context, child) {
+            child = MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(Pref.defaultTextScale),
+              ),
+              child: child!,
             );
-          }
-          return child;
-        },
-      ),
-      navigatorObservers: [
-        PageUtils.routeObserver,
-        FlutterSmartDialog.observer,
-      ],
-      scrollBehavior: const MaterialScrollBehavior().copyWith(
-        scrollbars: false,
-        dragDevices: {
-          PointerDeviceKind.touch,
-          PointerDeviceKind.stylus,
-          PointerDeviceKind.invertedStylus,
-          PointerDeviceKind.trackpad,
-          PointerDeviceKind.unknown,
-          if (Utils.isDesktop) PointerDeviceKind.mouse,
-        },
+            if (Utils.isDesktop) {
+              return Focus(
+                canRequestFocus: false,
+                onKeyEvent: (_, event) {
+                  if (event.logicalKey == LogicalKeyboardKey.escape &&
+                      event is KeyDownEvent) {
+                    _onBack();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: MouseBackDetector(
+                  onTapDown: _onBack,
+                  child: child,
+                ),
+              );
+            }
+            return child;
+          },
+        ),
+        navigatorObservers: [
+          PageUtils.routeObserver,
+          FlutterSmartDialog.observer,
+        ],
+        scrollBehavior: const MaterialScrollBehavior().copyWith(
+          scrollbars: false,
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.stylus,
+            PointerDeviceKind.invertedStylus,
+            PointerDeviceKind.trackpad,
+            PointerDeviceKind.unknown,
+            if (Utils.isDesktop) PointerDeviceKind.mouse,
+          },
+        ),
       ),
     );
   }
