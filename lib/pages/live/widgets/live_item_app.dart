@@ -4,6 +4,7 @@ import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/models_new/live/live_feed_index/card_data_list_item.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 
 // 视频卡片 - 垂直布局
@@ -21,33 +22,56 @@ class LiveCardVApp extends StatelessWidget {
       title: item.title,
       cover: item.cover,
     );
-    return Card(
-      clipBehavior: Clip.hardEdge,
-      child: InkWell(
-        onTap: () => PageUtils.toLiveRoom(item.roomid),
-        onLongPress: onLongPress,
-        onSecondaryTap: Utils.isMobile ? null : onLongPress,
-        child: Column(
-          children: [
-            AspectRatio(
-              aspectRatio: StyleString.aspectRatio,
-              child: LayoutBuilder(
-                builder: (context, boxConstraints) {
-                  double maxWidth = boxConstraints.maxWidth;
-                  double maxHeight = boxConstraints.maxHeight;
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      NetworkImgLayer(
-                        src: item.cover!,
-                        width: maxWidth,
-                        height: maxHeight,
-                        radius: 0,
-                      ),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
+    return DpadFocusable(
+      region: 'content',
+      onSelect: () => PageUtils.toLiveRoom(item.roomid),
+      builder: (context, isFocused, child) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: Matrix4.identity()..scale(isFocused ? 1.02 : 1.0),
+          transformAlignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isFocused
+                ? [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
+          ),
+          child: child,
+        );
+      },
+      child: Card(
+        clipBehavior: Clip.hardEdge,
+        child: InkWell(
+          onTap: () => PageUtils.toLiveRoom(item.roomid),
+          onLongPress: onLongPress,
+          onSecondaryTap: Utils.isMobile ? null : onLongPress,
+          child: Column(
+            children: [
+              AspectRatio(
+                aspectRatio: StyleString.aspectRatio,
+                child: LayoutBuilder(
+                  builder: (context, boxConstraints) {
+                    double maxWidth = boxConstraints.maxWidth;
+                    double maxHeight = boxConstraints.maxHeight;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        NetworkImgLayer(
+                          src: item.cover!,
+                          width: maxWidth,
+                          height: maxHeight,
+                          radius: 0,
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
                         child: AnimatedOpacity(
                           opacity: 1,
                           duration: const Duration(milliseconds: 200),
@@ -104,6 +128,7 @@ class LiveCardVApp extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 
