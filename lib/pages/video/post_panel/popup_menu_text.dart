@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/widgets/focus_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
@@ -41,7 +42,9 @@ class _PopupMenuTextState<T> extends State<PopupMenuText<T>> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text('${widget.title}: '),
-        PopupMenuButton<T>(
+        FocusMenu(
+          builder: (key) => PopupMenuButton<T>(
+            key: key,
           initialValue: select,
           onSelected: (value) {
             if (value == select) return;
@@ -73,6 +76,7 @@ class _PopupMenuTextState<T> extends State<PopupMenuText<T>> {
                 color: secondary,
               ),
             ],
+          ),
           ),
         ),
       ],

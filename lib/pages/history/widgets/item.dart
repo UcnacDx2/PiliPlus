@@ -2,6 +2,7 @@ import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/progress_bar/video_progress_indicator.dart';
+import 'package:PiliPlus/common/widgets/focus_menu.dart';
 import 'package:PiliPlus/common/widgets/select_mask.dart';
 import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/http/user.dart';
@@ -182,7 +183,9 @@ class HistoryItem extends StatelessWidget {
               child: SizedBox(
                 width: 29,
                 height: 29,
-                child: PopupMenuButton<String>(
+                child: FocusMenu(
+                  builder: (key) => PopupMenuButton<String>(
+                    key: key,
                   padding: EdgeInsets.zero,
                   tooltip: '功能菜单',
                   icon: Icon(
@@ -246,6 +249,7 @@ class HistoryItem extends StatelessWidget {
                           ),
                         ),
                       ],
+                  ),
                 ),
               ),
             ),

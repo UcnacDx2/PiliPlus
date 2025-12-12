@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/widgets/appbar/appbar.dart';
+import 'package:PiliPlus/common/widgets/focus_menu.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/common/widgets/view_safe_area.dart';
 import 'package:PiliPlus/models/common/later_view_type.dart';
@@ -229,7 +230,9 @@ class _LaterPageState extends State<LaterPage>
               key: sortKey,
               builder: (context) {
                 final value = currCtr().asc.value;
-                return PopupMenuButton(
+                return FocusMenu(
+                  builder: (key) => PopupMenuButton(
+                    key: key,
                   initialValue: value,
                   tooltip: '排序',
                   onSelected: (value) {
@@ -270,6 +273,7 @@ class _LaterPageState extends State<LaterPage>
                       child: Text('最早添加'),
                     ),
                   ],
+                  ),
                 );
               },
             ),
@@ -278,7 +282,9 @@ class _LaterPageState extends State<LaterPage>
             clipBehavior: Clip.hardEdge,
             type: MaterialType.transparency,
             borderRadius: const BorderRadius.all(Radius.circular(20)),
-            child: PopupMenuButton(
+            child: FocusMenu(
+              builder: (key) => PopupMenuButton(
+                key: key,
               tooltip: '清空',
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -317,6 +323,7 @@ class _LaterPageState extends State<LaterPage>
                   child: const Text('清空全部'),
                 ),
               ],
+              ),
             ),
           ),
           const SizedBox(width: 8),

@@ -1,5 +1,6 @@
 import 'package:PiliPlus/common/widgets/appbar/appbar.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/focus_menu.dart';
 import 'package:PiliPlus/common/widgets/keep_alive_wrapper.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
@@ -157,7 +158,9 @@ class _HistoryPageState extends State<HistoryPage>
         onPressed: () => Get.toNamed('/historySearch'),
         icon: const Icon(Icons.search_outlined),
       ),
-      PopupMenuButton<String>(
+      FocusMenu(
+        builder: (key) => PopupMenuButton<String>(
+          key: key,
         onSelected: (String type) {
           switch (type) {
             case 'pause':
@@ -209,6 +212,7 @@ class _HistoryPageState extends State<HistoryPage>
             child: Text('删除已看记录'),
           ),
         ],
+        ),
       ),
       const SizedBox(width: 6),
     ],

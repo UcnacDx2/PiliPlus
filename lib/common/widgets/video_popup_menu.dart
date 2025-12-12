@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/widgets/focus_menu.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/account_type.dart';
@@ -23,7 +24,7 @@ class _VideoCustomAction {
   const _VideoCustomAction(this.title, this.icon, this.onTap);
 }
 
-class VideoPopupMenu extends StatefulWidget {
+class VideoPopupMenu extends StatelessWidget {
   final double? size;
   final double? iconSize;
   final double menuItemHeight;
@@ -40,385 +41,362 @@ class VideoPopupMenu extends StatefulWidget {
   });
 
   @override
-  State<VideoPopupMenu> createState() => VideoPopupMenuState();
-}
-
-class VideoPopupMenuState extends State<VideoPopupMenu> {
-  final GlobalKey<PopupMenuButtonState> _popupMenuKey =
-      GlobalKey<PopupMenuButtonState>();
-
-  void showButtonMenu() {
-    _popupMenuKey.currentState?.showButtonMenu();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return ExcludeSemantics(
-      child: SizedBox(
-        width: widget.size,
-        height: widget.size,
-        child: PopupMenuButton(
-          key: _popupMenuKey,
-          padding: EdgeInsets.zero,
-          icon: Icon(
-            Icons.more_vert_outlined,
-            color: Theme.of(context).colorScheme.outline,
-            size: widget.iconSize,
-          ),
-          position: PopupMenuPosition.under,
-          itemBuilder: (context) =>
-              [
-                    if (widget.videoItem.bvid?.isNotEmpty == true) ...[
-                      _VideoCustomAction(
-                        widget.videoItem.bvid!,
-                        const Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Icon(MdiIcons.identifier, size: 16),
-                            Icon(MdiIcons.circleOutline, size: 16),
-                          ],
-                        ),
-                        () => Utils.copyText(widget.videoItem.bvid!),
-                      ),
-                      _VideoCustomAction(
-                        '稍后再看',
-                        const Icon(MdiIcons.clockTimeEightOutline, size: 16),
-                        () async {
-                          var res = await UserHttp.toViewLater(
-                            bvid: widget.videoItem.bvid,
-                          );
-                          SmartDialog.showToast(res['msg']);
-                        },
-                      ),
-                      if (widget.videoItem.cid != null && Pref.enableAi)
-                        _VideoCustomAction(
-                          'AI总结',
-                          const Stack(
-                            alignment: Alignment.center,
-                            clipBehavior: Clip.none,
-                            children: [
-                              Icon(Icons.circle_outlined, size: 16),
-                              ExcludeSemantics(
-                                child: Text(
-                                  'AI',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    height: 1,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  strutStyle: StrutStyle(
-                                    fontSize: 10,
-                                    height: 1,
-                                    leading: 0,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  textScaler: TextScaler.noScaling,
-                                ),
-                              ),
-                            ],
-                          ),
-                          () async {
-                            final res =
-                                await UgcIntroController.getAiConclusion(
-                                  widget.videoItem.bvid!,
-                                  widget.videoItem.cid!,
-                                  widget.videoItem.owner.mid,
-                                );
-                            if (res != null && context.mounted) {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return Dialog(
-                                    child: ConstrainedBox(
-                                      constraints: const BoxConstraints(
-                                        minWidth: 280,
-                                        maxWidth: 420,
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 14,
-                                        ),
-                                        child: AiConclusionPanel.buildContent(
-                                          context,
-                                          Theme.of(context),
-                                          res,
-                                          tap: false,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                          },
-                        ),
+      child: FocusMenu(
+        builder: (key) => SizedBox(
+          width: size,
+          height: size,
+          child: PopupMenuButton(
+            key: key,
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              Icons.more_vert_outlined,
+              color: Theme.of(context).colorScheme.outline,
+              size: iconSize,
+            ),
+            position: PopupMenuPosition.under,
+            itemBuilder: (context) => [
+              if (videoItem.bvid?.isNotEmpty == true) ...[
+                _VideoCustomAction(
+                  videoItem.bvid!,
+                  const Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(MdiIcons.identifier, size: 16),
+                      Icon(MdiIcons.circleOutline, size: 16),
                     ],
-                    if (widget.videoItem is! SpaceArchiveItem) ...[
-                      _VideoCustomAction(
-                        '访问：${widget.videoItem.owner.name}',
-                        const Icon(MdiIcons.accountCircleOutline, size: 16),
-                        () => Get.toNamed('/member?mid=${widget.videoItem.owner.mid}'),
-                      ),
-                      _VideoCustomAction(
-                        '不感兴趣',
-                        const Icon(MdiIcons.thumbDownOutline, size: 16),
-                        () {
-                          String? accessKey = Accounts.get(
-                            AccountType.recommend,
-                          ).accessKey;
-                          if (accessKey == null || accessKey == "") {
-                            SmartDialog.showToast("请退出账号后重新登录");
-                            return;
-                          }
-                          if (widget.videoItem case RecVideoItemAppModel item) {
-                            ThreePoint? tp = item.threePoint;
-                            if (tp == null) {
-                              SmartDialog.showToast("未能获取threePoint");
-                              return;
-                            }
-                            if (tp.dislikeReasons == null &&
-                                tp.feedbacks == null) {
-                              SmartDialog.showToast(
-                                "未能获取dislikeReasons或feedbacks",
-                              );
-                              return;
-                            }
-                            Widget actionButton(Reason? r, Reason? f) {
-                              return SearchText(
-                                text: r?.name ?? f?.name ?? '未知',
-                                onTap: (_) async {
-                                  Get.back();
-                                  SmartDialog.showLoading(msg: '正在提交');
-                                  var res = await VideoHttp.feedDislike(
-                                    reasonId: r?.id,
-                                    feedbackId: f?.id,
-                                    id: item.param!,
-                                    goto: item.goto!,
-                                  );
-                                  SmartDialog.dismiss();
-                                  SmartDialog.showToast(
-                                    res['status']
-                                        ? (r?.toast ?? f?.toast)
-                                        : res['msg'],
-                                  );
-                                  if (res['status']) {
-                                    widget.onRemove?.call();
-                                  }
-                                },
-                              );
-                            }
-
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  content: SingleChildScrollView(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        if (tp.dislikeReasons != null) ...[
-                                          const Text('我不想看'),
-                                          const SizedBox(height: 5),
-                                          Wrap(
-                                            spacing: 8.0,
-                                            runSpacing: 8.0,
-                                            children: tp.dislikeReasons!.map((
-                                              item,
-                                            ) {
-                                              return actionButton(item, null);
-                                            }).toList(),
-                                          ),
-                                        ],
-                                        if (tp.feedbacks != null) ...[
-                                          const SizedBox(height: 5),
-                                          const Text('反馈'),
-                                          const SizedBox(height: 5),
-                                          Wrap(
-                                            spacing: 8.0,
-                                            runSpacing: 8.0,
-                                            children: tp.feedbacks!.map((item) {
-                                              return actionButton(null, item);
-                                            }).toList(),
-                                          ),
-                                        ],
-                                        const Divider(),
-                                        Center(
-                                          child: FilledButton.tonal(
-                                            onPressed: () async {
-                                              SmartDialog.showLoading(
-                                                msg: '正在提交',
-                                              );
-                                              var res =
-                                                  await VideoHttp.feedDislikeCancel(
-                                                    id: item.param!,
-                                                    goto: item.goto!,
-                                                  );
-                                              SmartDialog.dismiss();
-                                              SmartDialog.showToast(
-                                                res['status']
-                                                    ? "成功"
-                                                    : res['msg'],
-                                              );
-                                              Get.back();
-                                            },
-                                            style: FilledButton.styleFrom(
-                                              visualDensity:
-                                                  VisualDensity.compact,
-                                            ),
-                                            child: const Text("撤销"),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          } else {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  content: SingleChildScrollView(
-                                    child: Column(
-                                      children: [
-                                        const SizedBox(height: 5),
-                                        const Text("web端暂不支持精细选择"),
-                                        const SizedBox(height: 5),
-                                        Wrap(
-                                          spacing: 5.0,
-                                          runSpacing: 2.0,
-                                          children: [
-                                            FilledButton.tonal(
-                                              onPressed: () async {
-                                                Get.back();
-                                                SmartDialog.showLoading(
-                                                  msg: '正在提交',
-                                                );
-                                                var res =
-                                                    await VideoHttp.dislikeVideo(
-                                                      bvid: widget.videoItem.bvid!,
-                                                      type: true,
-                                                    );
-                                                SmartDialog.dismiss();
-                                                SmartDialog.showToast(
-                                                  res['status']
-                                                      ? "点踩成功"
-                                                      : res['msg'],
-                                                );
-                                                if (res['status']) {
-                                                  widget.onRemove?.call();
-                                                }
-                                              },
-                                              style: FilledButton.styleFrom(
-                                                visualDensity:
-                                                    VisualDensity.compact,
-                                              ),
-                                              child: const Text("点踩"),
-                                            ),
-                                            FilledButton.tonal(
-                                              onPressed: () async {
-                                                Get.back();
-                                                SmartDialog.showLoading(
-                                                  msg: '正在提交',
-                                                );
-                                                var res =
-                                                    await VideoHttp.dislikeVideo(
-                                                      bvid: widget.videoItem.bvid!,
-                                                      type: false,
-                                                    );
-                                                SmartDialog.dismiss();
-                                                SmartDialog.showToast(
-                                                  res['status']
-                                                      ? "取消踩"
-                                                      : res['msg'],
-                                                );
-                                              },
-                                              style: FilledButton.styleFrom(
-                                                visualDensity:
-                                                    VisualDensity.compact,
-                                              ),
-                                              child: const Text("撤销"),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          }
-                        },
-                      ),
-                      _VideoCustomAction(
-                        '拉黑：${widget.videoItem.owner.name}',
-                        const Icon(MdiIcons.cancel, size: 16),
-                        () => showDialog(
+                  ),
+                  () => Utils.copyText(videoItem.bvid!),
+                ),
+                _VideoCustomAction(
+                  '稍后再看',
+                  const Icon(MdiIcons.clockTimeEightOutline, size: 16),
+                  () async {
+                    var res = await UserHttp.toViewLater(
+                      bvid: videoItem.bvid,
+                    );
+                    SmartDialog.showToast(res['msg']);
+                  },
+                ),
+                if (videoItem.cid != null && Pref.enableAi)
+                  _VideoCustomAction(
+                    'AI总结',
+                    const Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(Icons.circle_outlined, size: 16),
+                        ExcludeSemantics(
+                          child: Text(
+                            'AI',
+                            style: TextStyle(
+                              fontSize: 10,
+                              height: 1,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            strutStyle: StrutStyle(
+                              fontSize: 10,
+                              height: 1,
+                              leading: 0,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            textScaler: TextScaler.noScaling,
+                          ),
+                        ),
+                      ],
+                    ),
+                    () async {
+                      final res = await UgcIntroController.getAiConclusion(
+                        videoItem.bvid!,
+                        videoItem.cid!,
+                        videoItem.owner.mid,
+                      );
+                      if (res != null && context.mounted) {
+                        showDialog(
                           context: context,
                           builder: (context) {
-                            return AlertDialog(
-                              title: const Text('提示'),
-                              content: Text(
-                                '确定拉黑:${widget.videoItem.owner.name}(${widget.videoItem.owner.mid})?'
-                                '\n\n注：被拉黑的Up可以在隐私设置-黑名单管理中解除',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: Get.back,
-                                  child: Text(
-                                    '点错了',
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.outline,
-                                    ),
+                            return Dialog(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  minWidth: 280,
+                                  maxWidth: 420,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  child: AiConclusionPanel.buildContent(
+                                    context,
+                                    Theme.of(context),
+                                    res,
+                                    tap: false,
                                   ),
                                 ),
-                                TextButton(
-                                  onPressed: () async {
-                                    Get.back();
-                                    var res = await VideoHttp.relationMod(
-                                      mid: widget.videoItem.owner.mid!,
-                                      act: 5,
-                                      reSrc: 11,
-                                    );
-                                    if (res['status']) {
-                                      widget.onRemove?.call();
-                                    }
-                                    SmartDialog.showToast(res['msg'] ?? '成功');
-                                  },
-                                  child: const Text('确认'),
-                                ),
-                              ],
+                              ),
                             );
                           },
+                        );
+                      }
+                    },
+                  ),
+              ],
+              if (videoItem is! SpaceArchiveItem) ...[
+                _VideoCustomAction(
+                  '访问：${videoItem.owner.name}',
+                  const Icon(MdiIcons.accountCircleOutline, size: 16),
+                  () => Get.toNamed('/member?mid=${videoItem.owner.mid}'),
+                ),
+                _VideoCustomAction(
+                  '不感兴趣',
+                  const Icon(MdiIcons.thumbDownOutline, size: 16),
+                  () {
+                    String? accessKey = Accounts.get(
+                      AccountType.recommend,
+                    ).accessKey;
+                    if (accessKey == null || accessKey == "") {
+                      SmartDialog.showToast("请退出账号后重新登录");
+                      return;
+                    }
+                    if (videoItem case RecVideoItemAppModel item) {
+                      ThreePoint? tp = item.threePoint;
+                      if (tp == null) {
+                        SmartDialog.showToast("未能获取threePoint");
+                        return;
+                      }
+                      if (tp.dislikeReasons == null && tp.feedbacks == null) {
+                        SmartDialog.showToast(
+                          "未能获取dislikeReasons或feedbacks",
+                        );
+                        return;
+                      }
+                      Widget actionButton(Reason? r, Reason? f) {
+                        return SearchText(
+                          text: r?.name ?? f?.name ?? '未知',
+                          onTap: (_) async {
+                            Get.back();
+                            SmartDialog.showLoading(msg: '正在提交');
+                            var res = await VideoHttp.feedDislike(
+                              reasonId: r?.id,
+                              feedbackId: f?.id,
+                              id: item.param!,
+                              goto: item.goto!,
+                            );
+                            SmartDialog.dismiss();
+                            SmartDialog.showToast(
+                              res['status']
+                                  ? (r?.toast ?? f?.toast)
+                                  : res['msg'],
+                            );
+                            if (res['status']) {
+                              onRemove?.call();
+                            }
+                          },
+                        );
+                      }
+
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            content: SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (tp.dislikeReasons != null) ...[
+                                    const Text('我不想看'),
+                                    const SizedBox(height: 5),
+                                    Wrap(
+                                      spacing: 8.0,
+                                      runSpacing: 8.0,
+                                      children: tp.dislikeReasons!.map((
+                                        item,
+                                      ) {
+                                        return actionButton(item, null);
+                                      }).toList(),
+                                    ),
+                                  ],
+                                  if (tp.feedbacks != null) ...[
+                                    const SizedBox(height: 5),
+                                    const Text('反馈'),
+                                    const SizedBox(height: 5),
+                                    Wrap(
+                                      spacing: 8.0,
+                                      runSpacing: 8.0,
+                                      children: tp.feedbacks!.map((item) {
+                                        return actionButton(null, item);
+                                      }).toList(),
+                                    ),
+                                  ],
+                                  const Divider(),
+                                  Center(
+                                    child: FilledButton.tonal(
+                                      onPressed: () async {
+                                        SmartDialog.showLoading(
+                                          msg: '正在提交',
+                                        );
+                                        var res =
+                                            await VideoHttp.feedDislikeCancel(
+                                          id: item.param!,
+                                          goto: item.goto!,
+                                        );
+                                        SmartDialog.dismiss();
+                                        SmartDialog.showToast(
+                                          res['status'] ? "成功" : res['msg'],
+                                        );
+                                        Get.back();
+                                      },
+                                      style: FilledButton.styleFrom(
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                      child: const Text("撤销"),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            content: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  const SizedBox(height: 5),
+                                  const Text("web端暂不支持精细选择"),
+                                  const SizedBox(height: 5),
+                                  Wrap(
+                                    spacing: 5.0,
+                                    runSpacing: 2.0,
+                                    children: [
+                                      FilledButton.tonal(
+                                        onPressed: () async {
+                                          Get.back();
+                                          SmartDialog.showLoading(
+                                            msg: '正在提交',
+                                          );
+                                          var res =
+                                              await VideoHttp.dislikeVideo(
+                                            bvid: videoItem.bvid!,
+                                            type: true,
+                                          );
+                                          SmartDialog.dismiss();
+                                          SmartDialog.showToast(
+                                            res['status'] ? "点踩成功" : res['msg'],
+                                          );
+                                          if (res['status']) {
+                                            onRemove?.call();
+                                          }
+                                        },
+                                        style: FilledButton.styleFrom(
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                        child: const Text("点踩"),
+                                      ),
+                                      FilledButton.tonal(
+                                        onPressed: () async {
+                                          Get.back();
+                                          SmartDialog.showLoading(
+                                            msg: '正在提交',
+                                          );
+                                          var res =
+                                              await VideoHttp.dislikeVideo(
+                                            bvid: videoItem.bvid!,
+                                            type: false,
+                                          );
+                                          SmartDialog.dismiss();
+                                          SmartDialog.showToast(
+                                            res['status'] ? "取消踩" : res['msg'],
+                                          );
+                                        },
+                                        style: FilledButton.styleFrom(
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                        child: const Text("撤销"),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  },
+                ),
+                _VideoCustomAction(
+                  '拉黑：${videoItem.owner.name}',
+                  const Icon(MdiIcons.cancel, size: 16),
+                  () => showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('提示'),
+                        content: Text(
+                          '确定拉黑:${videoItem.owner.name}(${videoItem.owner.mid})?'
+                          '\n\n注：被拉黑的Up可以在隐私设置-黑名单管理中解除',
                         ),
-                      ),
-                    ],
-                    _VideoCustomAction(
-                      "${MineController.anonymity.value ? '退出' : '进入'}无痕模式",
-                      MineController.anonymity.value
-                          ? const Icon(MdiIcons.incognitoOff, size: 16)
-                          : const Icon(MdiIcons.incognito, size: 16),
-                      MineController.onChangeAnonymity,
-                    ),
-                  ]
-                  .map(
-                    (e) => PopupMenuItem(
-                      height: widget.menuItemHeight,
-                      onTap: e.onTap,
-                      child: Row(
-                        children: [
-                          e.icon,
-                          const SizedBox(width: 6),
-                          Text(e.title, style: const TextStyle(fontSize: 13)),
+                        actions: [
+                          TextButton(
+                            onPressed: Get.back,
+                            child: Text(
+                              '点错了',
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.outline,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              Get.back();
+                              var res = await VideoHttp.relationMod(
+                                mid: videoItem.owner.mid!,
+                                act: 5,
+                                reSrc: 11,
+                              );
+                              if (res['status']) {
+                                onRemove?.call();
+                              }
+                              SmartDialog.showToast(res['msg'] ?? '成功');
+                            },
+                            child: const Text('确认'),
+                          ),
                         ],
-                      ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+              _VideoCustomAction(
+                "${MineController.anonymity.value ? '退出' : '进入'}无痕模式",
+                MineController.anonymity.value
+                    ? const Icon(MdiIcons.incognitoOff, size: 16)
+                    : const Icon(MdiIcons.incognito, size: 16),
+                MineController.onChangeAnonymity,
+              ),
+            ]
+                .map(
+                  (e) => PopupMenuItem(
+                    height: menuItemHeight,
+                    onTap: e.onTap,
+                    child: Row(
+                      children: [
+                        e.icon,
+                        const SizedBox(width: 6),
+                        Text(e.title, style: const TextStyle(fontSize: 13)),
+                      ],
                     ),
-                  )
-                  .toList(),
+                  ),
+                )
+                .toList(),
+          ),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:PiliPlus/http/ua_type.dart';
+import 'package:PiliPlus/common/widgets/focus_menu.dart';
 import 'package:PiliPlus/main.dart';
 import 'package:PiliPlus/models/common/webview_menu_type.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
@@ -95,7 +96,9 @@ class _WebviewPageState extends State<WebviewPage> {
                 ),
               ),
               actions: [
-                PopupMenuButton(
+                FocusMenu(
+                  builder: (key) => PopupMenuButton(
+                    key: key,
                   onSelected: (item) async {
                     switch (item) {
                       case WebviewMenuItem.refresh:
@@ -155,6 +158,7 @@ class _WebviewPageState extends State<WebviewPage> {
                       ),
                     ),
                   ],
+                  ),
                 ),
               ],
             ),

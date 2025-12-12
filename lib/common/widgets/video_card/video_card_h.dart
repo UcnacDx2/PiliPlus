@@ -40,10 +40,6 @@ class VideoCardH extends StatefulWidget {
 }
 
 class _VideoCardHState extends State<VideoCardH> {
-  // [Feat] TV 菜单键支持
-  final GlobalKey<VideoPopupMenuState> _menuKey =
-      GlobalKey<VideoPopupMenuState>();
-  
   // [Main] 首帧图支持
   String? _firstFrame;
 
@@ -162,22 +158,11 @@ class _VideoCardHState extends State<VideoCardH> {
     return Material(
       type: MaterialType.transparency,
       // [Feat] Focus 监听逻辑
-      child: Focus(
-        canRequestFocus: false,
-        skipTraversal: true,
-        onKeyEvent: (node, event) {
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.contextMenu) {
-            _menuKey.currentState?.showButtonMenu();
-            return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            InkWell(
-              onLongPress: onLongPress,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          InkWell(
+            onLongPress: onLongPress,
               onSecondaryTap: Utils.isMobile ? null : onLongPress,
               onTap: widget.onTap ?? _onTap, // 使用合并后的 onTap
               child: Padding(
@@ -265,8 +250,6 @@ class _VideoCardHState extends State<VideoCardH> {
               right: 12,
               child: ExcludeFocus(
                 child: VideoPopupMenu(
-                  // [Feat] 绑定 Key
-                  key: _menuKey,
                   size: 29,
                   iconSize: 17,
                   videoItem: widget.videoItem,
@@ -275,7 +258,6 @@ class _VideoCardHState extends State<VideoCardH> {
               ),
             ),
           ],
-        ),
       ),
     );
   }

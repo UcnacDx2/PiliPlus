@@ -8,6 +8,7 @@ import 'package:PiliPlus/common/widgets/button/icon_button.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/custom_sliver_persistent_header_delegate.dart';
 import 'package:PiliPlus/common/widgets/dialog/report.dart';
+import 'package:PiliPlus/common/widgets/focus_menu.dart';
 import 'package:PiliPlus/common/widgets/marquee.dart';
 import 'package:PiliPlus/http/danmaku.dart';
 import 'package:PiliPlus/http/danmaku_block.dart';
@@ -1092,7 +1093,9 @@ class HeaderControlState extends State<HeaderControl>
                       ),
                       const SizedBox(width: 10),
                       Builder(
-                        builder: (context) => PopupMenuButton(
+                        builder: (context) => FocusMenu(
+                          builder: (key) => PopupMenuButton(
+                            key: key,
                           initialValue:
                               plPlayerController.superResolutionType.value,
                           child: Padding(
@@ -1140,6 +1143,7 @@ class HeaderControlState extends State<HeaderControl>
                                 ),
                               )
                               .toList(),
+                          ),
                         ),
                       ),
                     ],

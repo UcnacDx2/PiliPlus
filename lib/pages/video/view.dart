@@ -4,6 +4,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/widgets/focus_menu.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/interactiveviewer_gallery/hero_dialog_route.dart';
@@ -1289,7 +1290,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     return const SizedBox.shrink();
   });
 
-  Widget _moreBtn(Color color, {List<Shadow>? shadows}) => PopupMenuButton(
+  Widget _moreBtn(Color color, {List<Shadow>? shadows}) => FocusMenu(
+        builder: (key) => PopupMenuButton(
+          key: key,
     icon: Icon(
       size: 22,
       Icons.more_vert,
@@ -1335,6 +1338,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         child: const Text('举报'),
       ),
     ],
+        ),
   );
 
   Widget plPlayer({

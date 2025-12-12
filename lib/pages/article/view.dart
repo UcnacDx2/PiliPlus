@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/focus_menu.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/image_preview_type.dart';
@@ -408,7 +409,9 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
         onPressed: () => PageUtils.inAppWebview(controller.url),
         icon: const Icon(Icons.open_in_browser_outlined, size: 19),
       ),
-      PopupMenuButton(
+      FocusMenu(
+        builder: (key) => PopupMenuButton(
+          key: key,
         icon: const Icon(Icons.more_vert, size: 19),
         itemBuilder: (BuildContext context) => <PopupMenuEntry>[
           PopupMenuItem(
@@ -473,6 +476,7 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
               ),
             ),
         ],
+        ),
       ),
       const SizedBox(width: 6),
     ],
