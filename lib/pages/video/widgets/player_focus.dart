@@ -165,7 +165,7 @@ class _PlayerFocusState extends State<PlayerFocus> {
               _positionBeforeSeek = widget
                   .plPlayerController.videoPlayerController!.state.position;
               _wasPlayingBeforeSeek =
-                  widget.plPlayerController.playerStatus.playing;
+                  widget.plPlayerController.playerStatus.value == PlayerStatus.playing;
             });
             if (_wasPlayingBeforeSeek) {
               widget.plPlayerController.pause();
