@@ -1,3 +1,4 @@
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 
 Widget iconButton({
@@ -9,6 +10,7 @@ Widget iconButton({
   double? iconSize,
   Color? bgColor,
   Color? iconColor,
+  bool enableDpad = true,
 }) {
   Color? backgroundColor = bgColor;
   Color? foregroundColor = iconColor;
@@ -17,7 +19,7 @@ Widget iconButton({
     backgroundColor = colorScheme.secondaryContainer;
     foregroundColor = colorScheme.onSecondaryContainer;
   }
-  return SizedBox(
+  final button = SizedBox(
     width: size,
     height: size,
     child: IconButton(
@@ -32,4 +34,27 @@ Widget iconButton({
       ),
     ),
   );
+
+  if (enableDpad && onPressed != null) {
+    return DpadFocusable(
+      onSelect: onPressed,
+      builder: (context, isFocused, child) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isFocused
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: child,
+        );
+      },
+      child: button,
+    );
+  }
+  return button;
 }

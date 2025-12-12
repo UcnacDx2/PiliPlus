@@ -5,6 +5,7 @@ import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/models_new/sub/sub/list.dart';
 import 'package:PiliPlus/pages/subscription_detail/view.dart';
 import 'package:PiliPlus/utils/utils.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
@@ -30,38 +31,61 @@ class SubItem extends StatelessWidget {
       title: item.title,
       cover: item.cover,
     );
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: () {
-          if (item.state == 1) {
-            SmartDialog.showToast('该$type已失效');
-            return;
-          }
-          if (item.type == 11) {
-            Get.toNamed(
-              '/favDetail',
-              parameters: {
-                'mediaId': item.id!.toString(),
-                'heroTag': heroTag,
-              },
-            );
-          } else {
-            SubDetailPage.toSubDetailPage(
-              item.id!,
-              heroTag: heroTag,
-              subInfo: item,
-            );
-          }
-        },
-        onLongPress: onLongPress,
-        onSecondaryTap: Utils.isMobile ? null : onLongPress,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
+    void onTapHandler() {
+      if (item.state == 1) {
+        SmartDialog.showToast('该$type已失效');
+        return;
+      }
+      if (item.type == 11) {
+        Get.toNamed(
+          '/favDetail',
+          parameters: {
+            'mediaId': item.id!.toString(),
+            'heroTag': heroTag,
+          },
+        );
+      } else {
+        SubDetailPage.toSubDetailPage(
+          item.id!,
+          heroTag: heroTag,
+          subInfo: item,
+        );
+      }
+    }
+    
+    return DpadFocusable(
+      region: 'content',
+      onSelect: onTapHandler,
+      builder: (context, isFocused, child) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: isFocused
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                : null,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isFocused
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: child,
+        );
+      },
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTapHandler,
+          onLongPress: onLongPress,
+          onSecondaryTap: Utils.isMobile ? null : onLongPress,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AspectRatio(
                 aspectRatio: StyleString.aspectRatio,
                 child: LayoutBuilder(
                   builder: (context, boxConstraints) {
@@ -154,6 +178,7 @@ class SubItem extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
