@@ -1116,6 +1116,97 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                   Get.until((route) => route.isFirst);
                 },
               ),
+            if (!isFileSource && !isDesktopPip && !isFullScreen) ...[
+              if (videoDetailCtr.isUgc)
+                ComBtn(
+                  width: widgetWidth,
+                  height: 30,
+                  tooltip: '听音频',
+                  icon: const Icon(
+                    Icons.headphones_outlined,
+                    size: 19,
+                    color: Colors.white,
+                  ),
+                  onTap: videoDetailCtr.toAudioPage,
+                ),
+              ComBtn(
+                width: widgetWidth,
+                height: 30,
+                tooltip: '投屏',
+                icon: const Icon(
+                  Icons.cast,
+                  size: 19,
+                  color: Colors.white,
+                ),
+                onTap: videoDetailCtr.onCast,
+              ),
+            ],
+            if (isDesktopPip || isFullScreen || Utils.isDesktop) ...[
+              ComBtn(
+                width: widgetWidth,
+                height: 30,
+                tooltip: '发弹幕',
+                icon: const Icon(
+                  Icons.comment_outlined,
+                  size: 19,
+                  color: Colors.white,
+                ),
+                onTap: videoDetailCtr.showShootDanmakuSheet,
+              ),
+              Obx(
+                () {
+                  final enableShowDanmaku =
+                      plPlayerController.enableShowDanmaku.value;
+                  return ComBtn(
+                    width: widgetWidth,
+                    height: 30,
+                    tooltip: "${enableShowDanmaku ? '关闭' : '开启'}弹幕",
+                    icon: enableShowDanmaku
+                        ? const Icon(
+                            size: 20,
+                            CustomIcons.dm_on,
+                            color: Colors.white,
+                          )
+                        : const Icon(
+                            size: 20,
+                            CustomIcons.dm_off,
+                            color: Colors.white,
+                          ),
+                    onTap: () {
+                      final newVal = !enableShowDanmaku;
+                      plPlayerController.enableShowDanmaku.value = newVal;
+                      if (!plPlayerController.tempPlayerConf) {
+                        GStorage.setting.put(
+                          SettingBoxKey.enableShowDanmaku,
+                          newVal,
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
+            ],
+            if (Platform.isAndroid || (Utils.isDesktop && !isFullScreen))
+              ComBtn(
+                width: widgetWidth,
+                height: 30,
+                tooltip: '画中画',
+                icon: const Icon(
+                  Icons.picture_in_picture_outlined,
+                  size: 19,
+                  color: Colors.white,
+                ),
+                onTap: () async {
+                  if (Utils.isDesktop) {
+                    plPlayerController.toggleDesktopPip();
+                    return;
+                  }
+                  if (await Floating().isPipAvailable) {
+                    plPlayerController.showControls.value = false;
+                    plPlayerController.enterPip();
+                  }
+                },
+              ),
             ComBtn(
               width: widgetWidth,
               height: 30,
