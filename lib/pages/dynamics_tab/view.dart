@@ -142,50 +142,7 @@ class _DynamicsTabPageState
     return switch (loadingState) {
       Loading() => dynSkeleton,
       Success(:var response) =>
-<<<<<<< HEAD
-        response != null && response.isNotEmpty
-            ? GlobalData().dynamicsWaterfallFlow
-                  ? SliverWaterfallFlow(
-                      gridDelegate: dynGridDelegate,
-                      delegate: SliverChildBuilderDelegate(
-                        (_, index) {
-                          if (index == response.length - 1) {
-                            controller.onLoadMore();
-                          }
-                          final item = response[index];
-                          return DynamicPanel(
-                            item: item,
-                            onRemove: (idStr) =>
-                                controller.onRemove(index, idStr),
-                            onBlock: () => controller.onBlock(index),
-                            maxWidth: maxWidth,
-                            onUnfold: () => controller.onUnfold(item, index),
-                          );
-                        },
-                        childCount: response.length,
-                      ),
-                    )
-                  : SliverList.builder(
-                      itemBuilder: (context, index) {
-                        if (index == response.length - 1) {
-                          controller.onLoadMore();
-                        }
-                        final item = response[index];
-                        return DynamicPanel(
-                          item: item,
-                          onRemove: (idStr) =>
-                              controller.onRemove(index, idStr),
-                          onBlock: () => controller.onBlock(index),
-                          maxWidth: maxWidth,
-                          onUnfold: () => controller.onUnfold(item, index),
-                        );
-                      },
-                      itemCount: response.length,
-                    )
-            : HttpError(onReload: controller.onReload),
-=======
         _buildSuccess(context, response),
->>>>>>> b85ec6680 (feat: Isolate dynamics submission tab style)
       Error(:var errMsg) => HttpError(
         errMsg: errMsg,
         onReload: controller.onReload,

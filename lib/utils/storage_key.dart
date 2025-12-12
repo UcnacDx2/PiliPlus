@@ -86,6 +86,7 @@ abstract class SettingBoxKey {
       reverseFromFirst = 'reverseFromFirst',
       badCertificateCallback = 'badCertificateCallback',
       continuePlayingPart = 'continuePlayingPart',
+      showSpecialDanmaku = 'showSpecialDanmaku',
       cdnSpeedTest = 'cdnSpeedTest',
       horizontalPreview = 'horizontalPreview',
       banWordForReply = 'banWordForReply',
@@ -146,8 +147,8 @@ abstract class SettingBoxKey {
       enableTapDm = 'enableTapDm',
       setSystemBrightness = 'setSystemBrightness',
       downloadPath = 'downloadPath',
-    followOrderType = 'followOrderType',
-    useFirstFrameAsCover = 'useFirstFrameAsCover';
+      followOrderType = 'followOrderType',
+      useFirstFrameAsCover = 'useFirstFrameAsCover';
 
   static const String minimizeOnExit = 'minimizeOnExit',
       windowSize = 'windowSize',
