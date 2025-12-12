@@ -37,6 +37,7 @@ Widget iconButton({
 
   if (enableDpad && onPressed != null) {
     return DpadFocusable(
+      region: 'buttons',
       onSelect: onPressed,
       builder: (context, isFocused, child) {
         return AnimatedContainer(
