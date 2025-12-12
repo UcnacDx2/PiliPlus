@@ -1,8 +1,10 @@
 enum BottomControlType {
+  back,
   playOrPause,
   pre,
   next,
   time,
+  moreSettings,
   episode,
   fit,
   subtitle,

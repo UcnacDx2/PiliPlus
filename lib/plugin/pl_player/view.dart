@@ -41,6 +41,7 @@ import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/gesture_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/focus_manager.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/app_bar_ani.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/backward_seek.dart';
@@ -372,6 +373,38 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     );
   }
 
+  void _handleBack() {
+    if (plPlayerController.isDesktopPip) {
+      plPlayerController.exitDesktopPip();
+      return;
+    }
+
+    if (isFullScreen) {
+      plPlayerController.triggerFullScreen(status: false);
+      return;
+    }
+
+    final bool isPortraitLayout = maxHeight >= maxWidth;
+    if (Utils.isMobile &&
+        !plPlayerController.horizontalScreen &&
+        !isPortraitLayout) {
+      verticalScreenForTwoSeconds();
+      return;
+    }
+
+    Get.back();
+  }
+
+  void _showSettingSheet() {
+    final key = widget.headerControl.key;
+    if (key is GlobalKey) {
+      final state = key.currentState;
+      if (state is HeaderControlState) {
+        state.showSettingSheet();
+      }
+    }
+  }
+
   // 动态构建底部控制条
   ControlRows buildBottomControl(
     VideoDetailController videoDetailController,
@@ -410,6 +443,20 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       FocusNode? focusNode,
       bool autofocus = false,
     }) => switch (bottomControl) {
+      /// 返回
+      BottomControlType.back => ComBtn(
+        width: widgetWidth,
+        height: 30,
+        tooltip: '返回',
+        icon: const Icon(
+          Icons.arrow_back,
+          size: 22,
+          color: Colors.white,
+        ),
+        focusNode: focusNode,
+        onTap: _handleBack,
+      ),
+
       /// 播放暂停
       BottomControlType.playOrPause => PlayOrPauseButton(
         plPlayerController: plPlayerController,
@@ -486,6 +533,20 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
             ),
           ),
         ],
+      ),
+
+      /// 更多设置
+      BottomControlType.moreSettings => ComBtn(
+        width: widgetWidth,
+        height: 30,
+        tooltip: '更多设置',
+        icon: const Icon(
+          Icons.more_vert_outlined,
+          size: 22,
+          color: Colors.white,
+        ),
+        focusNode: focusNode,
+        onTap: _showSettingSheet,
       ),
 
       /// 高能进度条
@@ -729,7 +790,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                             horizontal: 15,
                             vertical: 10,
                           ),
-                          onTap: () => videoDetailController.setLanguage(e.lang!),
+                          onTap: () =>
+                              videoDetailController.setLanguage(e.lang!),
                         ),
                       );
                     }),
@@ -995,6 +1057,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final bool flag =
         isFullScreen || plPlayerController.isDesktopPip || maxWidth >= 500;
     final List<BottomControlType> secondaryItems = [
+      BottomControlType.back,
+      BottomControlType.moreSettings,
       if (isNotFileSource && anySeason) BottomControlType.episode,
       if (flag) BottomControlType.fit,
       BottomControlType.subtitle,
