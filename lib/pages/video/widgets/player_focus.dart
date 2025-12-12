@@ -32,6 +32,7 @@ class PlayerFocus extends StatelessWidget {
   final VoidCallback? onShowMenu;
   final bool Function()? canPlay;
   final bool Function()? onSkipSegment;
+  final FocusNode? focusNode;
 
   static bool _shouldHandle(LogicalKeyboardKey logicalKey) {
     return logicalKey == LogicalKeyboardKey.tab ||
@@ -44,8 +45,24 @@ class PlayerFocus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Focus(
+      focusNode: focusNode,
       autofocus: true,
       onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          bool handled = false;
+          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+            handled = node.focusInDirection(TraversalDirection.up);
+          } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            handled = node.focusInDirection(TraversalDirection.down);
+          } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            handled = node.focusInDirection(TraversalDirection.left);
+          } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+            handled = node.focusInDirection(TraversalDirection.right);
+          }
+          if (handled) {
+            return KeyEventResult.handled;
+          }
+        }
         final handled = _handleKey(event);
         if (handled || _shouldHandle(event.logicalKey)) {
           return KeyEventResult.handled;
