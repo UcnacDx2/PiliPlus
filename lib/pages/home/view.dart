@@ -8,6 +8,7 @@ import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -81,67 +82,70 @@ class _HomePageState extends State<HomePage>
       children: [
         searchBar(theme),
         const SizedBox(width: 4),
-        Obx(
-          () => _homeController.accountService.isLogin.value
-              ? msgBadge(_mainController)
-              : const SizedBox.shrink(),
-        ),
-        const SizedBox(width: 8),
-        Semantics(
-          label: "我的",
+        DpadFocusable(
           child: Obx(
             () => _homeController.accountService.isLogin.value
-                ? Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      NetworkImgLayer(
-                        type: ImageType.avatar,
-                        width: 34,
-                        height: 34,
-                        src: _homeController.accountService.face.value,
-                      ),
-                      Positioned.fill(
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: InkWell(
-                            onTap: _mainController.toMinePage,
-                            splashColor: theme.colorScheme.primaryContainer
-                                .withValues(alpha: 0.3),
-                            customBorder: const CircleBorder(),
+                ? msgBadge(_mainController)
+                : const SizedBox.shrink(),
+          ),
+        ),
+        const SizedBox(width: 8),
+        DpadFocusable(
+          child: Semantics(
+            label: "我的",
+            child: Obx(
+              () => _homeController.accountService.isLogin.value
+                  ? Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        NetworkImgLayer(
+                          type: ImageType.avatar,
+                          width: 34,
+                          height: 34,
+                          src: _homeController.accountService.face.value,
+                        ),
+                        Positioned.fill(
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: InkWell(
+                              onTap: _mainController.toMinePage,
+                              splashColor: theme.colorScheme.primaryContainer
+                                  .withValues(alpha: 0.3),
+                              customBorder: const CircleBorder(),
+                            ),
                           ),
                         ),
-                      ),
-                      Positioned(
-                        right: -6,
-                        bottom: -6,
-                        child: Obx(
-                          () => MineController.anonymity.value
-                              ? IgnorePointer(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          theme.colorScheme.secondaryContainer,
-                                      shape: BoxShape.circle,
+                        Positioned(
+                          right: -6,
+                          bottom: -6,
+                          child: Obx(
+                            () => MineController.anonymity.value
+                                ? IgnorePointer(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: theme
+                                            .colorScheme.secondaryContainer,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        size: 16,
+                                        MdiIcons.incognito,
+                                        color: theme
+                                            .colorScheme.onSecondaryContainer,
+                                      ),
                                     ),
-                                    child: Icon(
-                                      size: 16,
-                                      MdiIcons.incognito,
-                                      color: theme
-                                          .colorScheme
-                                          .onSecondaryContainer,
-                                    ),
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
                         ),
-                      ),
-                    ],
-                  )
-                : defaultUser(
-                    theme: theme,
-                    onPressed: _mainController.toMinePage,
-                  ),
+                      ],
+                    )
+                  : defaultUser(
+                      theme: theme,
+                      onPressed: _mainController.toMinePage,
+                    ),
+            ),
           ),
         ),
       ],
@@ -179,42 +183,45 @@ class _HomePageState extends State<HomePage>
     return Expanded(
       child: SizedBox(
         height: 44,
-        child: Material(
-          borderRadius: const BorderRadius.all(Radius.circular(25)),
-          color: theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.05),
-          child: InkWell(
+        child: DpadFocusable(
+          child: Material(
             borderRadius: const BorderRadius.all(Radius.circular(25)),
-            splashColor: theme.colorScheme.primaryContainer.withValues(
-              alpha: 0.3,
-            ),
-            onTap: () => Get.toNamed(
-              '/search',
-              parameters: {
-                if (_homeController.enableSearchWord)
-                  'hintText': _homeController.defaultSearch.value,
-              },
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 14),
-                Icon(
-                  Icons.search_outlined,
-                  color: theme.colorScheme.onSecondaryContainer,
-                  semanticLabel: '搜索',
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Obx(
-                    () => Text(
-                      _homeController.defaultSearch.value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: theme.colorScheme.outline),
+            color:
+                theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.05),
+            child: InkWell(
+              borderRadius: const BorderRadius.all(Radius.circular(25)),
+              splashColor: theme.colorScheme.primaryContainer.withValues(
+                alpha: 0.3,
+              ),
+              onTap: () => Get.toNamed(
+                '/search',
+                parameters: {
+                  if (_homeController.enableSearchWord)
+                    'hintText': _homeController.defaultSearch.value,
+                },
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 14),
+                  Icon(
+                    Icons.search_outlined,
+                    color: theme.colorScheme.onSecondaryContainer,
+                    semanticLabel: '搜索',
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Obx(
+                      () => Text(
+                        _homeController.defaultSearch.value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: theme.colorScheme.outline),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 5),
-              ],
+                  const SizedBox(width: 5),
+                ],
+              ),
             ),
           ),
         ),

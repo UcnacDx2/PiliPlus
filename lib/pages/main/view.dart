@@ -18,6 +18,7 @@ import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
@@ -304,15 +305,16 @@ class _MainAppState extends State<MainApp>
           }
         }
       },
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-          systemNavigationBarColor: Colors.transparent,
-          systemNavigationBarIconBrightness: theme.brightness.reverse,
-        ),
-        child: Scaffold(
-          extendBody: true,
-          resizeToAvoidBottomInset: false,
-          appBar: AppBar(toolbarHeight: 0),
+      child: DpadContainer(
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarIconBrightness: theme.brightness.reverse,
+          ),
+          child: Scaffold(
+            extendBody: true,
+            resizeToAvoidBottomInset: false,
+            appBar: AppBar(toolbarHeight: 0),
           body: Padding(
             padding: EdgeInsets.only(
               left: useBottomNav ? padding.left : 0.0,
@@ -458,97 +460,104 @@ class _MainAppState extends State<MainApp>
     bool selected = false,
   }) {
     final icon = selected ? type.selectIcon : type.icon;
-    return type == NavigationBarType.dynamics
-        ? Obx(
-            () {
-              final dynCount = _mainController.dynCount.value;
-              return Badge(
-                isLabelVisible: dynCount > 0,
-                label:
-                    _mainController.dynamicBadgeMode == DynamicBadgeMode.number
-                    ? Text(dynCount.toString())
-                    : null,
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: icon,
-              );
-            },
-          )
-        : icon;
+    return DpadFocusable(
+      child: type == NavigationBarType.dynamics
+          ? Obx(
+              () {
+                final dynCount = _mainController.dynCount.value;
+                return Badge(
+                  isLabelVisible: dynCount > 0,
+                  label: _mainController.dynamicBadgeMode ==
+                          DynamicBadgeMode.number
+                      ? Text(dynCount.toString())
+                      : null,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: icon,
+                );
+              },
+            )
+          : icon,
+    );
   }
 
   Widget userAndSearchVertical(ThemeData theme) {
     return Column(
       children: [
-        Semantics(
-          label: "我的",
-          child: Obx(
-            () => _mainController.accountService.isLogin.value
-                ? Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      NetworkImgLayer(
-                        type: ImageType.avatar,
-                        width: 34,
-                        height: 34,
-                        src: _mainController.accountService.face.value,
-                      ),
-                      Positioned.fill(
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: InkWell(
-                            onTap: _mainController.toMinePage,
-                            splashColor: theme.colorScheme.primaryContainer
-                                .withValues(alpha: 0.3),
-                            customBorder: const CircleBorder(),
+        DpadFocusable(
+          child: Semantics(
+            label: "我的",
+            child: Obx(
+              () => _mainController.accountService.isLogin.value
+                  ? Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        NetworkImgLayer(
+                          type: ImageType.avatar,
+                          width: 34,
+                          height: 34,
+                          src: _mainController.accountService.face.value,
+                        ),
+                        Positioned.fill(
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: InkWell(
+                              onTap: _mainController.toMinePage,
+                              splashColor: theme.colorScheme.primaryContainer
+                                  .withValues(alpha: 0.3),
+                              customBorder: const CircleBorder(),
+                            ),
                           ),
                         ),
-                      ),
-                      Positioned(
-                        right: -6,
-                        bottom: -6,
-                        child: Obx(
-                          () => MineController.anonymity.value
-                              ? IgnorePointer(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          theme.colorScheme.secondaryContainer,
-                                      shape: BoxShape.circle,
+                        Positioned(
+                          right: -6,
+                          bottom: -6,
+                          child: Obx(
+                            () => MineController.anonymity.value
+                                ? IgnorePointer(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: theme
+                                            .colorScheme.secondaryContainer,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        size: 16,
+                                        MdiIcons.incognito,
+                                        color: theme
+                                            .colorScheme.onSecondaryContainer,
+                                      ),
                                     ),
-                                    child: Icon(
-                                      size: 16,
-                                      MdiIcons.incognito,
-                                      color: theme
-                                          .colorScheme
-                                          .onSecondaryContainer,
-                                    ),
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
                         ),
-                      ),
-                    ],
-                  )
-                : defaultUser(
-                    theme: theme,
-                    onPressed: _mainController.toMinePage,
-                  ),
+                      ],
+                    )
+                  : defaultUser(
+                      theme: theme,
+                      onPressed: _mainController.toMinePage,
+                    ),
+            ),
           ),
         ),
         const SizedBox(height: 8),
-        Obx(
-          () => _mainController.accountService.isLogin.value
-              ? msgBadge(_mainController)
-              : const SizedBox.shrink(),
-        ),
-        IconButton(
-          tooltip: '搜索',
-          icon: const Icon(
-            Icons.search_outlined,
-            semanticLabel: '搜索',
+        DpadFocusable(
+          child: Obx(
+            () => _mainController.accountService.isLogin.value
+                ? msgBadge(_mainController)
+                : const SizedBox.shrink(),
           ),
-          onPressed: () => Get.toNamed('/search'),
+        ),
+        DpadFocusable(
+          child: IconButton(
+            tooltip: '搜索',
+            icon: const Icon(
+              Icons.search_outlined,
+              semanticLabel: '搜索',
+            ),
+            onPressed: () => Get.toNamed('/search'),
+          ),
         ),
       ],
     );
