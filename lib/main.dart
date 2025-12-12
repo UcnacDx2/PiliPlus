@@ -23,8 +23,11 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
+import 'package:PiliPlus/utils/tv/dpad_config.dart';
+import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
+import 'package:dpad/dpad.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/foundation.dart';
@@ -263,7 +266,7 @@ class MyApp extends StatelessWidget {
 
         // 图片缓存
         // PaintingBinding.instance.imageCache.maximumSizeBytes = 1000 << 20;
-        return GetMaterialApp(
+        Widget app = GetMaterialApp(
           title: Constants.appName,
           theme: ThemeUtils.getThemeData(
             colorScheme: lightColorScheme,
@@ -297,7 +300,7 @@ class MyApp extends StatelessWidget {
                 ),
                 child: child!,
               );
-              if (Utils.isDesktop) {
+              if (Utils.isDesktop && !TVDetector.isTV) {
                 void onBack() {
                   if (SmartDialog.checkExist()) {
                     SmartDialog.dismiss();
@@ -368,6 +371,12 @@ class MyApp extends StatelessWidget {
             },
           ),
         );
+
+        if (TVDetector.isTV) {
+          return dpadConfig(app);
+        }
+
+        return app;
       }),
     );
   }

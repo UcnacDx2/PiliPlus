@@ -13,7 +13,9 @@ import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
+import 'package.PiliPlus/utils/tv/tv_detector.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 
@@ -46,29 +48,37 @@ class _SearchPageState extends State<SearchPage> {
         actions: [
           Obx(
             () => _searchController.showUidBtn.value
-                ? IconButton(
-                    tooltip: 'UID搜索用户',
-                    icon: const Icon(Icons.person_outline, size: 22),
-                    onPressed: () => Get.toNamed(
-                      '/member?mid=${_searchController.controller.text}',
+                ? DpadFocusable(
+                    child: IconButton(
+                      tooltip: 'UID搜索用户',
+                      icon: const Icon(Icons.person_outline, size: 22),
+                      onPressed: () => Get.toNamed(
+                        '/member?mid=${_searchController.controller.text}',
+                      ),
                     ),
                   )
                 : const SizedBox.shrink(),
           ),
-          IconButton(
-            tooltip: '清空',
-            icon: const Icon(Icons.clear, size: 22),
-            onPressed: _searchController.onClear,
+          DpadFocusable(
+            child: IconButton(
+              tooltip: '清空',
+              icon: const Icon(Icons.clear, size: 22),
+              onPressed: _searchController.onClear,
+            ),
           ),
-          IconButton(
-            tooltip: '搜索',
-            onPressed: _searchController.submit,
-            icon: const Icon(Icons.search, size: 22),
+          DpadFocusable(
+            child: IconButton(
+              tooltip: '搜索',
+              onPressed: _searchController.submit,
+              icon: const Icon(Icons.search, size: 22),
+            ),
           ),
           const SizedBox(width: 10),
         ],
-        title: TextField(
+        title: DpadFocusable(
           autofocus: true,
+          isEntryPoint: true,
+          child: TextField(
           focusNode: _searchController.searchFocusNode,
           controller: _searchController.controller,
           textInputAction: TextInputAction.search,
@@ -78,6 +88,7 @@ class _SearchPageState extends State<SearchPage> {
             border: InputBorder.none,
           ),
           onSubmitted: (value) => _searchController.submit(),
+        ),
         ),
       ),
       body: ListView(
@@ -119,12 +130,15 @@ class _SearchPageState extends State<SearchPage> {
           _searchController.searchSuggestList.isNotEmpty &&
               _searchController.searchSuggestList.first.term != null &&
               _searchController.controller.text != ''
-          ? Column(
+          ? DpadRegionScope(
+              region: 'search_suggestions',
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: _searchController.searchSuggestList
                   .map(
-                    (item) => InkWell(
+                    (item) => DpadFocusable(
+                      child: InkWell(
                       borderRadius: const BorderRadius.all(Radius.circular(4)),
                       onTap: () => _searchController.onClickKeyword(item.term!),
                       child: Padding(
@@ -152,10 +166,12 @@ class _SearchPageState extends State<SearchPage> {
                                 .toList(),
                           ),
                         ),
+                        ),
                       ),
                     ),
                   )
                   .toList(),
+              ),
             )
           : const SizedBox.shrink(),
     );
@@ -359,20 +375,25 @@ class _SearchPageState extends State<SearchPage> {
                   ],
                 ),
               ),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                direction: Axis.horizontal,
-                textDirection: TextDirection.ltr,
-                children: _searchController.historyList
-                    .map(
-                      (item) => SearchText(
-                        text: item,
-                        onTap: _searchController.onClickKeyword,
-                        onLongPress: _searchController.onLongSelect,
-                      ),
-                    )
-                    .toList(),
+              DpadRegionScope(
+                region: 'search_history',
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  direction: Axis.horizontal,
+                  textDirection: TextDirection.ltr,
+                  children: _searchController.historyList
+                      .map(
+                        (item) => DpadFocusable(
+                          child: SearchText(
+                            text: item,
+                            onTap: _searchController.onClickKeyword,
+                            onLongPress: _searchController.onLongSelect,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
               ),
             ],
           ),

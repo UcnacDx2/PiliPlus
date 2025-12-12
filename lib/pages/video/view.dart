@@ -58,6 +58,8 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:auto_orientation/auto_orientation.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:floating/floating.dart';
+import 'package:dpad/dpad.dart';
+import 'package:PiliPlus/utils/tv/dpad_wrapper.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
@@ -685,30 +687,33 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                           SizedBox(
                                             width: 42,
                                             height: 34,
-                                            child: IconButton(
-                                              tooltip: '返回',
-                                              icon: Icon(
-                                                FontAwesomeIcons.arrowLeft,
-                                                size: 15,
-                                                color: themeData
-                                                    .colorScheme
-                                                    .onSurface,
+                                            child: DpadFocusable(
+                                              child: IconButton(
+                                                tooltip: '返回',
+                                                icon: Icon(
+                                                  FontAwesomeIcons.arrowLeft,
+                                                  size: 15,
+                                                  color: themeData
+                                                      .colorScheme
+                                                      .onSurface,
+                                                ),
+                                                onPressed: Get.back,
                                               ),
-                                              onPressed: Get.back,
                                             ),
                                           ),
                                           SizedBox(
                                             width: 42,
                                             height: 34,
-                                            child: IconButton(
-                                              tooltip: '返回主页',
-                                              icon: Icon(
-                                                FontAwesomeIcons.house,
-                                                size: 15,
-                                                color: themeData
-                                                    .colorScheme
-                                                    .onSurface,
-                                              ),
+                                            child: DpadFocusable(
+                                              child: IconButton(
+                                                tooltip: '返回主页',
+                                                icon: Icon(
+                                                  FontAwesomeIcons.house,
+                                                  size: 15,
+                                                  color: themeData
+                                                      .colorScheme
+                                                      .onSurface,
+                                                ),
                                               onPressed: () {
                                                 videoDetailController
                                                     .plPlayerController
@@ -751,8 +756,10 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                       child:
                                           videoDetailController.playedTime ==
                                               null
-                                          ? _moreBtn(
-                                              themeData.colorScheme.onSurface,
+                                          ? DpadFocusable(
+                                              child: _moreBtn(
+                                                themeData.colorScheme.onSurface,
+                                              ),
                                             )
                                           : SizedBox(
                                               width: 42,
@@ -771,7 +778,8 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                                                 .currentState
                                                             as HeaderControlState?)
                                                         ?.showSettingSheet(),
-                                                icon: Icon(
+                                                icon: DpadFocusable(
+                                                    child: Icon(
                                                   Icons.more_vert_outlined,
                                                   size: 19,
                                                   color: themeData
@@ -1417,9 +1425,11 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         child: child,
       );
     }
-    return videoDetailController.plPlayerController.darkVideoPage
-        ? Theme(data: themeData, child: child)
-        : child;
+    return DpadPageWrapper(
+      child: videoDetailController.plPlayerController.darkVideoPage
+          ? Theme(data: themeData, child: child)
+          : child,
+    );
   }
 
   Widget buildTabbar({
@@ -1446,7 +1456,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     }
 
     final flag = !needIndicator || tabs.length == 1;
-    Widget tabbar() => TabBar(
+    Widget tabbar() => DpadRegionScope(
+      region: 'video_tabs',
+      child: TabBar(
       labelColor: flag ? themeData.colorScheme.onSurface : null,
       indicator: flag ? const BoxDecoration() : null,
       padding: EdgeInsets.zero,
@@ -1483,14 +1495,17 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         if (text == '评论') {
           return Obx(() {
             final count = _videoReplyController.count.value;
-            return Tab(
-              text: '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
+            return DpadFocusable(
+              child: Tab(
+                text: '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
+              ),
             );
           });
         } else {
-          return Tab(text: text);
+          return DpadFocusable(child: Tab(text: text));
         }
       }).toList(),
+      ),
     );
 
     return Container(
@@ -1520,16 +1535,18 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                 children: [
                   SizedBox(
                     height: 32,
-                    child: TextButton(
-                      style: const ButtonStyle(
-                        padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                      ),
-                      onPressed: videoDetailController.showShootDanmakuSheet,
-                      child: Text(
-                        '发弹幕',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: themeData.colorScheme.onSurfaceVariant,
+                    child: DpadFocusable(
+                      child: TextButton(
+                        style: const ButtonStyle(
+                          padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                        ),
+                        onPressed: videoDetailController.showShootDanmakuSheet,
+                        child: Text(
+                          '发弹幕',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: themeData.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ),
@@ -1541,25 +1558,27 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                       () {
                         final ctr = videoDetailController.plPlayerController;
                         final enableShowDanmaku = ctr.enableShowDanmaku.value;
-                        return IconButton(
-                          onPressed: () {
-                            final newVal = !enableShowDanmaku;
-                            ctr.enableShowDanmaku.value = newVal;
-                            if (!ctr.tempPlayerConf) {
-                              GStorage.setting.put(
-                                SettingBoxKey.enableShowDanmaku,
-                                newVal,
-                              );
-                            }
-                          },
-                          icon: Icon(
-                            size: 22,
-                            enableShowDanmaku
-                                ? CustomIcons.dm_on
-                                : CustomIcons.dm_off,
-                            color: enableShowDanmaku
-                                ? themeData.colorScheme.secondary
-                                : themeData.colorScheme.outline,
+                        return DpadFocusable(
+                          child: IconButton(
+                            onPressed: () {
+                              final newVal = !enableShowDanmaku;
+                              ctr.enableShowDanmaku.value = newVal;
+                              if (!ctr.tempPlayerConf) {
+                                GStorage.setting.put(
+                                  SettingBoxKey.enableShowDanmaku,
+                                  newVal,
+                                );
+                              }
+                            },
+                            icon: Icon(
+                              size: 22,
+                              enableShowDanmaku
+                                  ? CustomIcons.dm_on
+                                  : CustomIcons.dm_off,
+                              color: enableShowDanmaku
+                                  ? themeData.colorScheme.secondary
+                                  : themeData.colorScheme.outline,
+                            ),
                           ),
                         );
                       },

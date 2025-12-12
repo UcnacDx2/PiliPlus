@@ -69,6 +69,16 @@ List<SettingsModel> get styleSettings => [
           }
         },
       ),
+      if (Platform.isAndroid)
+        const SettingsModel(
+          settingsType: SettingsType.sw1tch,
+          title: '启用TV模式',
+          subtitle: '切换为适用于电视的布局和操作方式',
+          leading: Icon(Icons.tv),
+          setKey: SettingBoxKey.enableTVMode,
+          defaultVal: false,
+          needReboot: true,
+        ),
       const SettingsModel(
         settingsType: SettingsType.sw1tch,
         title: '改用侧边栏',

@@ -18,8 +18,10 @@ import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package.PiliPlus/utils/tv/tv_detector.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -245,25 +247,55 @@ class _MainAppState extends State<MainApp>
     Widget? bottomNav = useBottomNav
         ? _mainController.navigationBars.length > 1
               ? _mainController.enableMYBar
-                    ? Obx(
-                        () => NavigationBar(
-                          maintainBottomViewPadding: true,
-                          onDestinationSelected: _mainController.setIndex,
-                          selectedIndex: _mainController.selectedIndex.value,
-                          destinations: _mainController.navigationBars
-                              .map(
-                                (e) => NavigationDestination(
-                                  label: e.label,
-                                  icon: _buildIcon(type: e),
-                                  selectedIcon: _buildIcon(
-                                    type: e,
-                                    selected: true,
+                    ? Obx(() {
+                        if (TVDetector.isTV) {
+                          return DpadRegionScope(
+                            region: 'bottom_nav',
+                            child: NavigationBar(
+                              maintainBottomViewPadding: true,
+                              onDestinationSelected: _mainController.setIndex,
+                              selectedIndex:
+                                  _mainController.selectedIndex.value,
+                              destinations: _mainController.navigationBars
+                                  .asMap()
+                                  .entries
+                                  .map(
+                                    (entry) => DpadFocusable(
+                                      autofocus: entry.key == 0,
+                                      isEntryPoint: entry.key == 0,
+                                      child: NavigationDestination(
+                                        label: entry.value.label,
+                                        icon: _buildIcon(type: entry.value),
+                                        selectedIcon: _buildIcon(
+                                          type: entry.value,
+                                          selected: true,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          );
+                        } else {
+                          return NavigationBar(
+                            maintainBottomViewPadding: true,
+                            onDestinationSelected: _mainController.setIndex,
+                            selectedIndex: _mainController.selectedIndex.value,
+                            destinations: _mainController.navigationBars
+                                .map(
+                                  (e) => NavigationDestination(
+                                    label: e.label,
+                                    icon: _buildIcon(type: e),
+                                    selectedIcon: _buildIcon(
+                                      type: e,
+                                      selected: true,
+                                    ),
                                   ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      )
+                                )
+                                .toList(),
+                          );
+                        }
+                      })
                     : Obx(
                         () => BottomNavigationBar(
                           currentIndex: _mainController.selectedIndex.value,
@@ -273,13 +305,19 @@ class _MainAppState extends State<MainApp>
                           unselectedFontSize: 12,
                           type: BottomNavigationBarType.fixed,
                           items: _mainController.navigationBars
+                              .asMap()
+                              .entries
                               .map(
-                                (e) => BottomNavigationBarItem(
-                                  label: e.label,
-                                  icon: _buildIcon(type: e),
-                                  activeIcon: _buildIcon(
-                                    type: e,
-                                    selected: true,
+                                (entry) => DpadFocusable(
+                                  autofocus: entry.key == 0,
+                                  isEntryPoint: entry.key == 0,
+                                  child: BottomNavigationBarItem(
+                                    label: entry.value.label,
+                                    icon: _buildIcon(type: entry.value),
+                                    activeIcon: _buildIcon(
+                                      type: entry.value,
+                                      selected: true,
+                                    ),
                                   ),
                                 ),
                               )

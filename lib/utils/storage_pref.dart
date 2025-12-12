@@ -50,6 +50,9 @@ abstract class Pref {
     ),
   );
 
+  static bool get enableTVMode =>
+      _setting.get(SettingBoxKey.enableTVMode) ?? false;
+
   static Set<int> get blackMids =>
       _localCache.get(LocalCacheKey.blackMids, defaultValue: <int>{});
 

@@ -67,6 +67,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
+import 'package:dpad/dpad.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -340,43 +341,49 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       BottomControlType bottomControl,
     ) => switch (bottomControl) {
       /// 播放暂停
-      BottomControlType.playOrPause => PlayOrPauseButton(
-        plPlayerController: plPlayerController,
-      ),
+      BottomControlType.playOrPause => DpadFocusable(
+          child: PlayOrPauseButton(
+            plPlayerController: plPlayerController,
+          ),
+        ),
 
       /// 上一集
-      BottomControlType.pre => ComBtn(
-        width: widgetWidth,
-        height: 30,
-        tooltip: '上一集',
-        icon: const Icon(
-          Icons.skip_previous,
-          size: 22,
-          color: Colors.white,
+      BottomControlType.pre => DpadFocusable(
+          child: ComBtn(
+            width: widgetWidth,
+            height: 30,
+            tooltip: '上一集',
+            icon: const Icon(
+              Icons.skip_previous,
+              size: 22,
+              color: Colors.white,
+            ),
+            onTap: () {
+              if (!introController.prevPlay()) {
+                SmartDialog.showToast('已经是第一集了');
+              }
+            },
+          ),
         ),
-        onTap: () {
-          if (!introController.prevPlay()) {
-            SmartDialog.showToast('已经是第一集了');
-          }
-        },
-      ),
 
       /// 下一集
-      BottomControlType.next => ComBtn(
-        width: widgetWidth,
-        height: 30,
-        tooltip: '下一集',
-        icon: const Icon(
-          Icons.skip_next,
-          size: 22,
-          color: Colors.white,
+      BottomControlType.next => DpadFocusable(
+          child: ComBtn(
+            width: widgetWidth,
+            height: 30,
+            tooltip: '下一集',
+            icon: const Icon(
+              Icons.skip_next,
+              size: 22,
+              color: Colors.white,
+            ),
+            onTap: () {
+              if (!introController.nextPlay()) {
+                SmartDialog.showToast('已经是最后一集了');
+              }
+            },
+          ),
         ),
-        onTap: () {
-          if (!introController.nextPlay()) {
-            SmartDialog.showToast('已经是最后一集了');
-          }
-        },
-      ),
 
       /// 时间进度
       BottomControlType.time => Column(
@@ -842,28 +849,30 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       ),
 
       /// 全屏
-      BottomControlType.fullscreen => ComBtn(
-        width: widgetWidth,
-        height: 30,
-        tooltip: isFullScreen ? '退出全屏' : '全屏',
-        icon: isFullScreen
-            ? const Icon(
-                Icons.fullscreen_exit,
-                size: 24,
-                color: Colors.white,
-              )
-            : const Icon(
-                Icons.fullscreen,
-                size: 24,
-                color: Colors.white,
-              ),
-        onTap: () =>
-            plPlayerController.triggerFullScreen(status: !isFullScreen),
-        onSecondaryTap: () => plPlayerController.triggerFullScreen(
-          status: !isFullScreen,
-          inAppFullScreen: true,
+      BottomControlType.fullscreen => DpadFocusable(
+          child: ComBtn(
+            width: widgetWidth,
+            height: 30,
+            tooltip: isFullScreen ? '退出全屏' : '全屏',
+            icon: isFullScreen
+                ? const Icon(
+                    Icons.fullscreen_exit,
+                    size: 24,
+                    color: Colors.white,
+                  )
+                : const Icon(
+                    Icons.fullscreen,
+                    size: 24,
+                    color: Colors.white,
+                  ),
+            onTap: () =>
+                plPlayerController.triggerFullScreen(status: !isFullScreen),
+            onSecondaryTap: () => plPlayerController.triggerFullScreen(
+              status: !isFullScreen,
+              inAppFullScreen: true,
+            ),
+          ),
         ),
-      ),
     };
 
     final isNotFileSource = !plPlayerController.isFileSource;
@@ -894,7 +903,9 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       if (!plPlayerController.isDesktopPip) BottomControlType.fullscreen,
     ];
 
-    return Row(
+    return DpadRegionScope(
+      region: 'player_controls',
+      child: Row(
       children: [
         ...userSpecifyItemLeft.map(progressWidget),
         Expanded(
@@ -911,6 +922,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           ),
         ),
       ],
+      ),
     );
   }
 
