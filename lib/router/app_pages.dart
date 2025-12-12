@@ -70,6 +70,7 @@ import 'package:PiliPlus/pages/video/view.dart';
 import 'package:PiliPlus/pages/webdav/view.dart';
 import 'package:PiliPlus/pages/webview/view.dart';
 import 'package:PiliPlus/pages/whisper/view.dart';
+import 'package:PiliPlus/pages/tv_debug/view.dart';
 import 'package:PiliPlus/pages/whisper_detail/view.dart';
 import 'package:get/get.dart';
 
@@ -229,6 +230,7 @@ class Routes {
     CustomGetPage(name: '/sameFollowing', page: () => const FollowSamePage()),
     CustomGetPage(name: '/download', page: () => const DownloadPage()),
     CustomGetPage(name: '/dlna', page: () => const DLNAPage()),
+    CustomGetPage(name: '/tvDebug', page: () => const TVDebugPage()),
   ];
 }
 
