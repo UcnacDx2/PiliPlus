@@ -32,9 +32,12 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
+import 'package:PiliPlus/common/widgets/custom_icon.dart';
+import 'package:PiliPlus/pages/video/widgets/header_control.dart';
+import 'package:floating/floating.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
-class BottomControl extends StatelessWidget {
+class BottomControl extends StatefulWidget {
   const BottomControl({
     super.key,
     required this.maxWidth,
@@ -62,6 +65,33 @@ class BottomControl extends StatelessWidget {
   final VoidCallback? showViewPoints;
 
   @override
+  State<BottomControl> createState() => BottomControlState();
+}
+
+class BottomControlState extends State<BottomControl> with HeaderMixin {
+  PlPlayerController get plPlayerController => widget.controller;
+  late final FocusNode _progressBarFocusNode;
+  late final FocusNode _playPauseFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _progressBarFocusNode = FocusNode();
+    _progressBarFocusNode.addListener(() {
+      setState(() {});
+    });
+    _playPauseFocusNode = FocusNode();
+    _playPauseFocusNode.requestFocus();
+  }
+
+  @override
+  void dispose() {
+    _progressBarFocusNode.dispose();
+    _playPauseFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = ColorScheme.of(context);
     final primary = colorScheme.isLight
@@ -74,12 +104,12 @@ class BottomControl extends StatelessWidget {
     double lastAnnouncedValue = -1;
     void onDragStart(ThumbDragDetails duration) {
       feedBack();
-      controller.onChangedSliderStart(duration.timeStamp);
+      widget.controller.onChangedSliderStart(duration.timeStamp);
     }
 
     void onDragUpdate(ThumbDragDetails duration, int max) {
-      if (!controller.isFileSource && controller.showSeekPreview) {
-        controller.updatePreviewIndex(
+      if (!widget.controller.isFileSource && widget.controller.showSeekPreview) {
+        widget.controller.updatePreviewIndex(
           duration.timeStamp.inSeconds,
         );
       }
@@ -97,16 +127,16 @@ class BottomControl extends StatelessWidget {
           },
         );
       }
-      controller.onUpdatedSliderProgress(
+      widget.controller.onUpdatedSliderProgress(
         duration.timeStamp,
       );
     }
 
     void onSeek(Duration duration, int max) {
-      if (controller.showSeekPreview) {
-        controller.showPreview.value = false;
+      if (widget.controller.showSeekPreview) {
+        widget.controller.showPreview.value = false;
       }
-      controller
+      widget.controller
         ..onChangedSliderEnd()
         ..onChangedSlider(duration.inSeconds.toDouble())
         ..seekTo(
@@ -120,25 +150,24 @@ class BottomControl extends StatelessWidget {
     }
 
     Widget progressBar() {
-      final focusNode = FocusNode();
       final child = Obx(() {
-        final int value = controller.sliderPositionSeconds.value;
-        final int max = controller.durationSeconds.value.inSeconds;
+        final int value = widget.controller.sliderPositionSeconds.value;
+        final int max = widget.controller.durationSeconds.value.inSeconds;
         if (value > max || max <= 0) {
           return const SizedBox.shrink();
         }
         return Focus(
-          focusNode: focusNode,
+          focusNode: _progressBarFocusNode,
           onKey: (node, event) {
             if (event is KeyDownEvent) {
               if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                controller.seekTo(
+                widget.controller.seekTo(
                   Duration(seconds: value - 5),
                   isSeek: false,
                 );
                 return KeyEventResult.handled;
               } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-                controller.seekTo(
+                widget.controller.seekTo(
                   Duration(seconds: value + 5),
                   isSeek: false,
                 );
@@ -149,14 +178,15 @@ class BottomControl extends StatelessWidget {
           },
           child: DecoratedBox(
             decoration: BoxDecoration(
-              border: focusNode.hasFocus
+              border: _progressBarFocusNode.hasFocus
                   ? Border.all(color: Colors.white, width: 2)
                   : null,
               borderRadius: BorderRadius.circular(4),
             ),
             child: ProgressBar(
               progress: Duration(seconds: value),
-              buffered: Duration(seconds: controller.bufferedSeconds.value),
+              buffered:
+                  Duration(seconds: widget.controller.bufferedSeconds.value),
               total: Duration(seconds: max),
               progressBarColor: primary,
               baseBarColor: const Color(0x33FFFFFF),
@@ -182,14 +212,15 @@ class BottomControl extends StatelessWidget {
       return child;
     }
 
-    final videoDetail = introController.videoDetail.value;
+    final videoDetail = widget.introController.videoDetail.value;
     final isSeason = videoDetail.ugcSeason != null;
     final isPart = videoDetail.pages != null && videoDetail.pages!.length > 1;
-    final isPgc = !videoDetailController.isUgc;
-    final isPlayAll = videoDetailController.isPlayAll;
+    final isPgc = !widget.videoDetailController.isUgc;
+    final isPlayAll = widget.videoDetailController.isPlayAll;
     final anySeason = isSeason || isPart || isPgc || isPlayAll;
-    final isLandscape = maxWidth > Get.height;
-    final double widgetWidth = isLandscape && isFullScreen ? 42 : 35;
+    final isLandscape = widget.maxWidth > Get.height;
+    final double widgetWidth =
+        isLandscape && widget.isFullScreen ? 42 : 35;
 
     Widget progressWidget(
       BottomControlType bottomControl,
@@ -197,7 +228,8 @@ class BottomControl extends StatelessWidget {
         switch (bottomControl) {
           /// 播放暂停
           BottomControlType.playOrPause => PlayOrPauseButton(
-              plPlayerController: controller,
+              plPlayerController: widget.controller,
+              focusNode: _playPauseFocusNode,
             ),
 
           /// 上一集
@@ -211,7 +243,7 @@ class BottomControl extends StatelessWidget {
                 color: Colors.white,
               ),
               onTap: () {
-                if (!introController.prevPlay()) {
+                if (!widget.introController.prevPlay()) {
                   SmartDialog.showToast('已经是第一集了');
                 }
               },
@@ -228,7 +260,7 @@ class BottomControl extends StatelessWidget {
                 color: Colors.white,
               ),
               onTap: () {
-                if (!introController.nextPlay()) {
+                if (!widget.introController.nextPlay()) {
                   SmartDialog.showToast('已经是最后一集了');
                 }
               },
@@ -243,7 +275,7 @@ class BottomControl extends StatelessWidget {
                 Obx(
                   () => Text(
                     DurationUtils.formatDuration(
-                      controller.positionSeconds.value,
+                      widget.controller.positionSeconds.value,
                     ),
                     style: const TextStyle(
                       color: Colors.white,
@@ -256,7 +288,7 @@ class BottomControl extends StatelessWidget {
                 Obx(
                   () => Text(
                     DurationUtils.formatDuration(
-                      controller.durationSeconds.value.inSeconds,
+                      widget.controller.durationSeconds.value.inSeconds,
                     ),
                     style: const TextStyle(
                       color: Color(0xFFD0D0D0),
@@ -272,13 +304,14 @@ class BottomControl extends StatelessWidget {
           /// 高能进度条
           BottomControlType.dmChart => Obx(
               () {
-                final list = videoDetailController.dmTrend.value?.dataOrNull;
+                final list =
+                    widget.videoDetailController.dmTrend.value?.dataOrNull;
                 if (list != null && list.isNotEmpty) {
                   return FocusableBtn(
                     width: widgetWidth,
                     height: 30,
                     tooltip: '高能进度条',
-                    icon: videoDetailController.showDmTreandChart.value
+                    icon: widget.videoDetailController.showDmTreandChart.value
                         ? const Icon(
                             Icons.show_chart,
                             size: 22,
@@ -300,8 +333,9 @@ class BottomControl extends StatelessWidget {
                               ),
                             ],
                           ),
-                    onTap: () => videoDetailController.showDmTreandChart.value =
-                        !videoDetailController.showDmTreandChart.value,
+                    onTap: () => widget
+                        .videoDetailController.showDmTreandChart.value =
+                        !widget.videoDetailController.showDmTreandChart.value,
                   );
                 }
                 return const SizedBox.shrink();
@@ -313,7 +347,7 @@ class BottomControl extends StatelessWidget {
               () => PopupMenuButton<SuperResolutionType>(
                 tooltip: '超分辨率',
                 requestFocus: false,
-                initialValue: controller.superResolutionType.value,
+                initialValue: widget.controller.superResolutionType.value,
                 color: Colors.black.withValues(alpha: 0.8),
                 itemBuilder: (context) {
                   return SuperResolutionType.values
@@ -322,7 +356,7 @@ class BottomControl extends StatelessWidget {
                           height: 35,
                           padding: const EdgeInsets.only(left: 30),
                           value: type,
-                          onTap: () => controller.setShader(type),
+                          onTap: () => widget.controller.setShader(type),
                           child: Text(
                             type.title,
                             style: const TextStyle(
@@ -335,7 +369,7 @@ class BottomControl extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
-                    controller.superResolutionType.value.title,
+                    widget.controller.superResolutionType.value.title,
                     style: const TextStyle(color: Colors.white, fontSize: 13),
                   ),
                 ),
@@ -344,7 +378,7 @@ class BottomControl extends StatelessWidget {
 
           /// 分段信息
           BottomControlType.viewPoints => Obx(
-              () => videoDetailController.viewPointList.isEmpty
+              () => widget.videoDetailController.viewPointList.isEmpty
                   ? const SizedBox.shrink()
                   : FocusableBtn(
                       width: widgetWidth,
@@ -358,16 +392,16 @@ class BottomControl extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                      onTap: showViewPoints,
+                      onTap: widget.showViewPoints,
                       onLongPress: () {
                         Feedback.forLongPress(context);
-                        videoDetailController.showVP.value =
-                            !videoDetailController.showVP.value;
+                        widget.videoDetailController.showVP.value =
+                            !widget.videoDetailController.showVP.value;
                       },
                       onSecondaryTap: Utils.isMobile
                           ? null
-                          : () => videoDetailController.showVP.value =
-                              !videoDetailController.showVP.value,
+                          : () => widget.videoDetailController.showVP.value =
+                              !widget.videoDetailController.showVP.value,
                     ),
             ),
 
@@ -382,18 +416,18 @@ class BottomControl extends StatelessWidget {
                 color: Colors.white,
               ),
               onTap: () {
-                if (videoDetailController.isFileSource) {
+                if (widget.videoDetailController.isFileSource) {
                   // TODO
                   return;
                 }
                 // part -> playAll -> season(pgc)
                 if (isPlayAll && !isPart) {
-                  showEpisodes?.call();
+                  widget.showEpisodes?.call();
                   return;
                 }
                 int? index;
-                int currentCid = controller.cid!;
-                String bvid = controller.bvid;
+                int currentCid = widget.controller.cid!;
+                String bvid = widget.controller.bvid;
                 List<ugc.BaseEpisodeItem> episodes = [];
                 if (isSeason) {
                   final List<SectionItem> sections =
@@ -401,7 +435,7 @@ class BottomControl extends StatelessWidget {
                   for (int i = 0; i < sections.length; i++) {
                     final List<EpisodeItem> episodesList = sections[i].episodes!;
                     for (int j = 0; j < episodesList.length; j++) {
-                      if (episodesList[j].cid == controller.cid) {
+                      if (episodesList[j].cid == widget.controller.cid) {
                         index = i;
                         episodes = episodesList;
                         break;
@@ -412,16 +446,16 @@ class BottomControl extends StatelessWidget {
                   episodes = videoDetail.pages!;
                 } else if (isPgc) {
                   episodes =
-                      (introController as PgcIntroController).pgcItem.episodes!;
+                      (widget.introController as PgcIntroController).pgcItem.episodes!;
                 }
-                showEpisodes?.call(
+                widget.showEpisodes?.call(
                   index,
                   isSeason ? videoDetail.ugcSeason! : null,
                   isSeason ? null : episodes,
                   bvid,
                   IdUtils.bv2av(bvid),
                   isSeason && isPart
-                      ? videoDetailController.seasonCid ?? currentCid
+                      ? widget.videoDetailController.seasonCid ?? currentCid
                       : currentCid,
                 );
               },
@@ -432,7 +466,7 @@ class BottomControl extends StatelessWidget {
               () => PopupMenuButton<VideoFitType>(
                 tooltip: '画面比例',
                 requestFocus: false,
-                initialValue: controller.videoFit.value,
+                initialValue: widget.controller.videoFit.value,
                 color: Colors.black.withValues(alpha: 0.8),
                 itemBuilder: (context) {
                   return VideoFitType.values
@@ -441,7 +475,7 @@ class BottomControl extends StatelessWidget {
                           height: 35,
                           padding: const EdgeInsets.only(left: 30),
                           value: boxFit,
-                          onTap: () => controller.toggleVideoFit(boxFit),
+                          onTap: () => widget.controller.toggleVideoFit(boxFit),
                           child: Text(
                             boxFit.desc,
                             style: const TextStyle(
@@ -454,7 +488,7 @@ class BottomControl extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
-                    controller.videoFit.value.desc,
+                    widget.controller.videoFit.value.desc,
                     style: const TextStyle(color: Colors.white, fontSize: 13),
                   ),
                 ),
@@ -463,19 +497,20 @@ class BottomControl extends StatelessWidget {
 
           BottomControlType.aiTranslate => Obx(
               () {
-                final list = videoDetailController.languages.value;
+                final list = widget.videoDetailController.languages.value;
                 if (list != null && list.isNotEmpty) {
                   return PopupMenuButton<String>(
                     tooltip: '翻译',
                     requestFocus: false,
-                    initialValue: videoDetailController.currLang.value,
+                    initialValue: widget.videoDetailController.currLang.value,
                     color: Colors.black.withValues(alpha: 0.8),
                     itemBuilder: (context) {
                       return [
                         PopupMenuItem<String>(
                           height: 35,
                           value: '',
-                          onTap: () => videoDetailController.setLanguage(''),
+                          onTap: () =>
+                              widget.videoDetailController.setLanguage(''),
                           child: const Text(
                             "关闭翻译",
                             style: TextStyle(
@@ -488,8 +523,8 @@ class BottomControl extends StatelessWidget {
                           return PopupMenuItem<String>(
                             height: 35,
                             value: e.lang,
-                            onTap: () =>
-                                videoDetailController.setLanguage(e.lang!),
+                            onTap: () => widget.videoDetailController
+                                .setLanguage(e.lang!),
                             child: Text(
                               e.title!,
                               style: const TextStyle(
@@ -518,15 +553,16 @@ class BottomControl extends StatelessWidget {
 
           /// 字幕
           BottomControlType.subtitle => Obx(
-              () => videoDetailController.subtitles.isEmpty == true
+              () => widget.videoDetailController.subtitles.isEmpty == true
                   ? const SizedBox.shrink()
                   : PopupMenuButton<int>(
                       tooltip: '字幕',
                       requestFocus: false,
-                      initialValue: videoDetailController.vttSubtitlesIndex.value
-                          .clamp(
+                      initialValue:
+                          widget.videoDetailController.vttSubtitlesIndex.value
+                              .clamp(
                         0,
-                        videoDetailController.subtitles.length,
+                        widget.videoDetailController.subtitles.length,
                       ),
                       color: Colors.black.withValues(alpha: 0.8),
                       itemBuilder: (context) {
@@ -534,7 +570,8 @@ class BottomControl extends StatelessWidget {
                           PopupMenuItem<int>(
                             value: 0,
                             height: 35,
-                            onTap: () => videoDetailController.setSubtitle(0),
+                            onTap: () =>
+                                widget.videoDetailController.setSubtitle(0),
                             child: const Text(
                               "关闭字幕",
                               style: TextStyle(
@@ -543,12 +580,13 @@ class BottomControl extends StatelessWidget {
                               ),
                             ),
                           ),
-                          ...videoDetailController.subtitles.indexed.map((e) {
+                          ...widget.videoDetailController.subtitles.indexed
+                              .map((e) {
                             return PopupMenuItem<int>(
                               value: e.$1 + 1,
                               height: 35,
-                              onTap: () =>
-                                  videoDetailController.setSubtitle(e.$1 + 1),
+                              onTap: () => widget.videoDetailController
+                                  .setSubtitle(e.$1 + 1),
                               child: Text(
                                 "${e.$2.lanDoc}",
                                 maxLines: 1,
@@ -565,17 +603,19 @@ class BottomControl extends StatelessWidget {
                       child: SizedBox(
                         width: widgetWidth,
                         height: 30,
-                        child: videoDetailController.vttSubtitlesIndex.value == 0
-                            ? const Icon(
-                                Icons.closed_caption_off_outlined,
-                                size: 22,
-                                color: Colors.white,
-                              )
-                            : const Icon(
-                                Icons.closed_caption_off_rounded,
-                                size: 22,
-                                color: Colors.white,
-                              ),
+                        child:
+                            widget.videoDetailController.vttSubtitlesIndex.value ==
+                                    0
+                                ? const Icon(
+                                    Icons.closed_caption_off_outlined,
+                                    size: 22,
+                                    color: Colors.white,
+                                  )
+                                : const Icon(
+                                    Icons.closed_caption_off_rounded,
+                                    size: 22,
+                                    color: Colors.white,
+                                  ),
                       ),
                     ),
             ),
@@ -585,16 +625,17 @@ class BottomControl extends StatelessWidget {
               () => PopupMenuButton<double>(
                 tooltip: '倍速',
                 requestFocus: false,
-                initialValue: controller.playbackSpeed,
+                initialValue: widget.controller.playbackSpeed,
                 color: Colors.black.withValues(alpha: 0.8),
                 itemBuilder: (context) {
-                  return controller.speedList
+                  return widget.controller.speedList
                       .map(
                         (double speed) => PopupMenuItem<double>(
                           height: 35,
                           padding: const EdgeInsets.only(left: 30),
                           value: speed,
-                          onTap: () => controller.setPlaybackSpeed(speed),
+                          onTap: () =>
+                              widget.controller.setPlaybackSpeed(speed),
                           child: Text(
                             "${speed}X",
                             style: const TextStyle(
@@ -608,9 +649,9 @@ class BottomControl extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
-                    "${controller.playbackSpeed}X",
+                    "${widget.controller.playbackSpeed}X",
                     style: const TextStyle(color: Colors.white, fontSize: 13),
-                    semanticsLabel: "${controller.playbackSpeed}倍速",
+                    semanticsLabel: "${widget.controller.playbackSpeed}倍速",
                   ),
                 ),
               ),
@@ -619,11 +660,11 @@ class BottomControl extends StatelessWidget {
           BottomControlType.qa => Obx(
               () {
                 final VideoQuality? currentVideoQa =
-                    videoDetailController.currentVideoQa.value;
+                    widget.videoDetailController.currentVideoQa.value;
                 if (currentVideoQa == null) {
                   return const SizedBox.shrink();
                 }
-                final PlayUrlModel videoInfo = videoDetailController.data;
+                final PlayUrlModel videoInfo = widget.videoDetailController.data;
                 if (videoInfo.dash == null) {
                   return const SizedBox.shrink();
                 }
@@ -661,7 +702,7 @@ class BottomControl extends StatelessWidget {
                             }
                             final int quality = item.quality!;
                             final newQa = VideoQuality.fromCode(quality);
-                            videoDetailController
+                            widget.videoDetailController
                               ..plPlayerController.cacheVideoQa = newQa.code
                               ..currentVideoQa.value = newQa
                               ..updatePlayer();
@@ -669,7 +710,7 @@ class BottomControl extends StatelessWidget {
                             SmartDialog.showToast("画质已变为：${newQa.desc}");
 
                             // update
-                            if (!controller.tempPlayerConf) {
+                            if (!widget.controller.tempPlayerConf) {
                               GStorage.setting.put(
                                 await Utils.isWiFi
                                     ? SettingBoxKey.defaultVideoQa
@@ -707,8 +748,8 @@ class BottomControl extends StatelessWidget {
           BottomControlType.fullscreen => FocusableBtn(
               width: widgetWidth,
               height: 30,
-              tooltip: isFullScreen ? '退出全屏' : '全屏',
-              icon: isFullScreen
+              tooltip: widget.isFullScreen ? '退出全屏' : '全屏',
+              icon: widget.isFullScreen
                   ? const Icon(
                       Icons.fullscreen_exit,
                       size: 24,
@@ -719,16 +760,17 @@ class BottomControl extends StatelessWidget {
                       size: 24,
                       color: Colors.white,
                     ),
-              onTap: () => controller.triggerFullScreen(status: !isFullScreen),
-              onSecondaryTap: () => controller.triggerFullScreen(
-                status: !isFullScreen,
+              onTap: () => widget.controller
+                  .triggerFullScreen(status: !widget.isFullScreen),
+              onSecondaryTap: () => widget.controller.triggerFullScreen(
+                status: !widget.isFullScreen,
                 inAppFullScreen: true,
               ),
             ),
         };
 
     Widget buildPrimaryControls() {
-      final isNotFileSource = !controller.isFileSource;
+      final isNotFileSource = !widget.controller.isFileSource;
       List<BottomControlType> userSpecifyItemLeft = [
         BottomControlType.playOrPause,
         if (!isNotFileSource || anySeason) ...[
@@ -745,14 +787,15 @@ class BottomControl extends StatelessWidget {
     }
 
     Widget buildSecondaryControls() {
-      final isNotFileSource = !controller.isFileSource;
-      final flag =
-          isFullScreen || controller.isDesktopPip || maxWidth >= 500;
+      final isNotFileSource = !widget.controller.isFileSource;
+      final isFSOrPip =
+          widget.isFullScreen || widget.controller.isDesktopPip;
+      final flag = isFSOrPip || widget.maxWidth >= 500;
       List<BottomControlType> userSpecifyItemRight = [
-        if (isNotFileSource && controller.showDmChart)
+        if (isNotFileSource && widget.controller.showDmChart)
           BottomControlType.dmChart,
-        if (controller.isAnim) BottomControlType.superResolution,
-        if (isNotFileSource && controller.showViewPoints)
+        if (widget.controller.isAnim) BottomControlType.superResolution,
+        if (isNotFileSource && widget.controller.showViewPoints)
           BottomControlType.viewPoints,
         if (isNotFileSource && anySeason) BottomControlType.episode,
         if (flag) BottomControlType.fit,
@@ -766,8 +809,85 @@ class BottomControl extends StatelessWidget {
         children: [
           ...userSpecifyItemRight.map(progressWidget),
           const Spacer(),
+          if (isFSOrPip || Utils.isDesktop) ...[
+            FocusableBtn(
+              width: 42,
+              height: 34,
+              tooltip: '发弹幕',
+              onTap: widget.videoDetailController.showShootDanmakuSheet,
+              icon: const Icon(
+                Icons.comment_outlined,
+                size: 19,
+                color: Colors.white,
+              ),
+            ),
+            Obx(
+              () {
+                final enableShowDanmaku =
+                    widget.controller.enableShowDanmaku.value;
+                return FocusableBtn(
+                  width: 42,
+                  height: 34,
+                  tooltip: "${enableShowDanmaku ? '关闭' : '开启'}弹幕",
+                  onTap: () {
+                    final newVal = !enableShowDanmaku;
+                    widget.controller.enableShowDanmaku.value = newVal;
+                    if (!widget.controller.tempPlayerConf) {
+                      GStorage.setting.put(
+                        SettingBoxKey.enableShowDanmaku,
+                        newVal,
+                      );
+                    }
+                  },
+                  icon: enableShowDanmaku
+                      ? const Icon(
+                          size: 20,
+                          CustomIcons.dm_on,
+                          color: Colors.white,
+                        )
+                      : const Icon(
+                          size: 20,
+                          CustomIcons.dm_off,
+                          color: Colors.white,
+                        ),
+                );
+              },
+            ),
+          ],
+          if (Platform.isAndroid || (Utils.isDesktop && !widget.isFullScreen))
+            FocusableBtn(
+              width: 42,
+              height: 34,
+              tooltip: '画中画',
+              onTap: () async {
+                if (Utils.isDesktop) {
+                  widget.controller.toggleDesktopPip();
+                  return;
+                }
+                if (await Floating().isPipAvailable) {
+                  widget.controller.showControls.value = false;
+                  widget.controller.enterPip();
+                }
+              },
+              icon: const Icon(
+                Icons.picture_in_picture_outlined,
+                size: 19,
+                color: Colors.white,
+              ),
+            ),
+          FocusableBtn(
+            width: 42,
+            height: 34,
+            tooltip: "更多设置",
+            onTap: showSettingSheet,
+            icon: const Icon(
+              Icons.more_vert_outlined,
+              size: 19,
+              color: Colors.white,
+            ),
+          ),
           progressWidget(BottomControlType.time),
-          if (!controller.isDesktopPip)
+          if (!widget.controller.isDesktopPip)
             progressWidget(BottomControlType.fullscreen),
         ],
       );
@@ -787,8 +907,9 @@ class BottomControl extends StatelessWidget {
                 alignment: Alignment.bottomCenter,
                 children: [
                   progressBar(),
-                  if (controller.enableBlock &&
-                      videoDetailController.segmentProgressList.isNotEmpty)
+                  if (widget.controller.enableBlock &&
+                      widget.videoDetailController.segmentProgressList
+                          .isNotEmpty)
                     Positioned(
                       left: 0,
                       right: 0,
@@ -799,16 +920,16 @@ class BottomControl extends StatelessWidget {
                             key: const Key('segmentList'),
                             size: const Size(double.infinity, 3.5),
                             painter: SegmentProgressBar(
-                              segmentColors:
-                                  videoDetailController.segmentProgressList,
+                              segmentColors: widget
+                                  .videoDetailController.segmentProgressList,
                             ),
                           ),
                         ),
                       ),
                     ),
-                  if (controller.showViewPoints &&
-                      videoDetailController.viewPointList.isNotEmpty &&
-                      videoDetailController.showVP.value) ...[
+                  if (widget.controller.showViewPoints &&
+                      widget.videoDetailController.viewPointList.isNotEmpty &&
+                      widget.videoDetailController.showVP.value) ...[
                     Positioned(
                       left: 0,
                       right: 0,
@@ -820,7 +941,7 @@ class BottomControl extends StatelessWidget {
                             size: const Size(double.infinity, 3.5),
                             painter: SegmentProgressBar(
                               segmentColors:
-                                  videoDetailController.viewPointList,
+                                  widget.videoDetailController.viewPointList,
                             ),
                           ),
                         ),
@@ -828,16 +949,17 @@ class BottomControl extends StatelessWidget {
                     ),
                     if (!Utils.isMobile)
                       buildViewPointWidget(
-                        videoDetailController,
-                        controller,
+                        widget.videoDetailController,
+                        widget.controller,
                         8.75,
-                        maxWidth - 40,
+                        widget.maxWidth - 40,
                       ),
                   ],
-                  if (videoDetailController.showDmTreandChart.value)
-                    if (videoDetailController.dmTrend.value?.dataOrNull
+                  if (widget.videoDetailController.showDmTreandChart.value)
+                    if (widget.videoDetailController.dmTrend.value?.dataOrNull
                         case final list?)
-                      buildDmChart(primary, list, videoDetailController, 4.5),
+                      buildDmChart(
+                          primary, list, widget.videoDetailController, 4.5),
                 ],
               ),
             ),
