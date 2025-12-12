@@ -47,9 +47,30 @@ import 'package:PiliPlus/plugin/pl_player/widgets/backward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/bottom_control.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/forward_seek.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
+import 'package:PiliPlus/common/widgets/button/icon_button.dart';
+import 'package:PiliPlus/http/danmaku.dart';
+import 'package:PiliPlus/http/danmaku_block.dart';
+import 'package:PiliPlus/models/common/video/audio_quality.dart';
+import 'package:PiliPlus/models/common/video/cdn_type.dart';
+import 'package:PiliPlus/models/common/video/video_decode_type.dart';
+import 'package:PiliPlus/models_new/video/video_play_info/subtitle.dart';
+import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
+import 'package:PiliPlus/pages/setting/widgets/switch_item.dart';
+import 'package:PiliPlus/pages/video/introduction/ugc/widgets/action_item.dart';
+import 'package:PiliPlus/pages/video/introduction/ugc/widgets/menu_row.dart';
+import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/mpv_convert_webp.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
+import 'package:PiliPlus/services/service_locator.dart';
+import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
+import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/utils/video_utils.dart';
+import 'package:canvas_danmaku/canvas_danmaku.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:floating/floating.dart';
 import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
@@ -119,15 +140,20 @@ class PLVideoPlayer extends StatefulWidget {
 }
 
 class _PLVideoPlayerState extends State<PLVideoPlayer>
-    with WidgetsBindingObserver, TickerProviderStateMixin {
+    with WidgetsBindingObserver, TickerProviderStateMixin, HeaderMixin {
+  @override
+  PlPlayerController get plPlayerController => widget.plPlayerController;
+  late final VideoDetailController videoDetailCtr = widget.videoDetailController!;
+
+  late CommonIntroController introController;
+
+  bool get isFileSource => videoDetailCtr.isFileSource;
+  String get heroTag => videoDetailCtr.heroTag;
   void onDoubleTapCenter() {}
   void onDoubleTapSeekBackward() {}
   void onDoubleTapSeekForward() {}
   late AnimationController animationController;
   late VideoController videoController;
-  late final CommonIntroController introController = widget.introController!;
-  late final VideoDetailController videoDetailController =
-      widget.videoDetailController!;
 
   final _playerKey = GlobalKey();
   final _videoKey = GlobalKey();
@@ -157,6 +183,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   @override
   void initState() {
     super.initState();
+    introController = widget.introController!;
     WidgetsBinding.instance.addObserver(this);
 
     _controlsListener = plPlayerController.showControls.listen((bool val) {
@@ -1000,7 +1027,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       BottomControlType.subtitle,
       BottomControlType.speed,
       if (isNotFileSource && flag) BottomControlType.qa,
-      if (!plPlayerController.isDesktopPip) BottomControlType.fullscreen,
     ];
 
     final List<FocusNode> primaryNodes = focusManager.primaryNodes(
@@ -1042,6 +1068,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     }
 
     final Widget timeTrailing = progressWidget(BottomControlType.time);
+    final isDesktopPip = plPlayerController.isDesktopPip;
 
     return ControlRows(
       top: buildControlsRow(primaryItems, primaryNodes, true),
@@ -1049,7 +1076,62 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         secondaryItems,
         secondaryNodes,
         false,
-        trailing: timeTrailing,
+        trailing: Row(
+          children: [
+            ComBtn(
+              width: widgetWidth,
+              height: 30,
+              tooltip: '返回',
+              icon: const Icon(
+                FontAwesomeIcons.arrowLeft,
+                size: 15,
+                color: Colors.white,
+              ),
+              onTap: () {
+                if (isDesktopPip) {
+                  plPlayerController.exitDesktopPip();
+                } else if (isFullScreen) {
+                  plPlayerController.triggerFullScreen(status: false);
+                } else if (Utils.isMobile && !horizontalScreen && !isPortrait) {
+                  verticalScreenForTwoSeconds();
+                } else {
+                  Get.back();
+                }
+              },
+            ),
+            if (!isDesktopPip && (!isFullScreen || !isPortrait))
+              ComBtn(
+                width: widgetWidth,
+                height: 30,
+                tooltip: '返回主页',
+                icon: const Icon(
+                  FontAwesomeIcons.house,
+                  size: 15,
+                  color: Colors.white,
+                ),
+                onTap: () {
+                  videoDetailCtr.plPlayerController
+                    ..isCloseAll = true
+                    ..dispose();
+                  Get.until((route) => route.isFirst);
+                },
+              ),
+            ComBtn(
+              width: widgetWidth,
+              height: 30,
+              tooltip: "更多设置",
+              icon: const Icon(
+                Icons.more_vert_outlined,
+                size: 19,
+                color: Colors.white,
+              ),
+              onTap: showSettingSheet,
+            ),
+            if (!isDesktopPip)
+              progressWidget(BottomControlType.fullscreen),
+            timeTrailing,
+          ],
+        ),
       ),
     );
   }
@@ -1057,6 +1139,11 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   PlPlayerController get plPlayerController => widget.plPlayerController;
 
   bool get isFullScreen => plPlayerController.isFullScreen.value;
+
+  @override
+  bool get isPortrait => widget.maxHeight > widget.maxWidth;
+  @override
+  late final horizontalScreen = videoDetailCtr.horizontalScreen;
 
   late final transformationController = TransformationController();
 

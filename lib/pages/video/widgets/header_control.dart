@@ -2519,51 +2519,6 @@ class HeaderControlState extends State<HeaderControl>
           const SizedBox(height: 11),
           Row(
             children: [
-              SizedBox(
-                width: 42,
-                height: 34,
-                child: IconButton(
-                  tooltip: '返回',
-                  icon: const Icon(
-                    FontAwesomeIcons.arrowLeft,
-                    size: 15,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    if (plPlayerController.isDesktopPip) {
-                      plPlayerController.exitDesktopPip();
-                    } else if (isFullScreen) {
-                      plPlayerController.triggerFullScreen(status: false);
-                    } else if (Utils.isMobile &&
-                        !horizontalScreen &&
-                        !isPortrait) {
-                      verticalScreenForTwoSeconds();
-                    } else {
-                      Get.back();
-                    }
-                  },
-                ),
-              ),
-              if (!plPlayerController.isDesktopPip &&
-                  (!isFullScreen || !isPortrait))
-                SizedBox(
-                  width: 42,
-                  height: 34,
-                  child: IconButton(
-                    tooltip: '返回主页',
-                    icon: const Icon(
-                      FontAwesomeIcons.house,
-                      size: 15,
-                      color: Colors.white,
-                    ),
-                    onPressed: () {
-                      videoDetailCtr.plPlayerController
-                        ..isCloseAll = true
-                        ..dispose();
-                      Get.until((route) => route.isFirst);
-                    },
-                  ),
-                ),
               title,
               // show current datetime
               ...?timeBatteryWidgets,
@@ -2809,22 +2764,6 @@ class HeaderControlState extends State<HeaderControl>
                     ),
                   ),
                 ),
-              SizedBox(
-                width: 42,
-                height: 34,
-                child: IconButton(
-                  tooltip: "更多设置",
-                  style: const ButtonStyle(
-                    padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                  ),
-                  onPressed: showSettingSheet,
-                  icon: const Icon(
-                    Icons.more_vert_outlined,
-                    size: 19,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
             ],
           ),
           if (showFSActionItem)
