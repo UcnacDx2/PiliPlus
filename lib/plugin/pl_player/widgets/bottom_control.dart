@@ -29,6 +29,7 @@ import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -129,7 +130,7 @@ class BottomControl extends StatelessWidget {
         return Focus(
           focusNode: focusNode,
           onKey: (node, event) {
-            if (event is RawKeyDownEvent) {
+            if (event is KeyDownEvent) {
               if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
                 controller.seekTo(
                   Duration(seconds: value - 5),
@@ -156,18 +157,19 @@ class BottomControl extends StatelessWidget {
             child: ProgressBar(
               progress: Duration(seconds: value),
               buffered: Duration(seconds: controller.bufferedSeconds.value),
-            total: Duration(seconds: max),
-            progressBarColor: primary,
-            baseBarColor: const Color(0x33FFFFFF),
-            bufferedBarColor: bufferedBarColor,
-            thumbColor: primary,
-            thumbGlowColor: thumbGlowColor,
-            barHeight: 3.5,
-            thumbRadius: 7,
-            thumbGlowRadius: 25,
-            onDragStart: onDragStart,
-            onDragUpdate: (e) => onDragUpdate(e, max),
-            onSeek: (e) => onSeek(e, max),
+              total: Duration(seconds: max),
+              progressBarColor: primary,
+              baseBarColor: const Color(0x33FFFFFF),
+              bufferedBarColor: bufferedBarColor,
+              thumbColor: primary,
+              thumbGlowColor: thumbGlowColor,
+              barHeight: 3.5,
+              thumbRadius: 7,
+              thumbGlowRadius: 25,
+              onDragStart: onDragStart,
+              onDragUpdate: (e) => onDragUpdate(e, max),
+              onSeek: (e) => onSeek(e, max),
+            ),
           ),
         );
       });
@@ -660,7 +662,7 @@ class BottomControl extends StatelessWidget {
                             final int quality = item.quality!;
                             final newQa = VideoQuality.fromCode(quality);
                             videoDetailController
-                              ..controller.cacheVideoQa = newQa.code
+                              ..plPlayerController.cacheVideoQa = newQa.code
                               ..currentVideoQa.value = newQa
                               ..updatePlayer();
 

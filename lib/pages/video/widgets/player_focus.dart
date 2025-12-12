@@ -23,6 +23,7 @@ class PlayerFocus extends StatelessWidget {
     this.canPlay,
     this.onSkipSegment,
     this.onShowMenu,
+    this.focusNode,
   });
 
   final Widget child;
