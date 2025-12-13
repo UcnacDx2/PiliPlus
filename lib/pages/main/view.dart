@@ -494,36 +494,34 @@ class _MainAppState extends State<MainApp>
       color: theme.colorScheme.surface,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          for (int i = 0; i < _mainController.navigationBars.length; i++)
-            DpadFocusable(
-              autofocus: i == 0,
-              isEntryPoint: i == 0,
-              onFocus: () {},
-              onSelect: () => _mainController.setIndex(i),
-              builder: (context, hasFocus, child) {
-                final e = _mainController.navigationBars[i];
-                final isSelected = _mainController.selectedIndex.value == i;
-                final color = isSelected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface;
-                child = Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildIcon(type: e, selected: isSelected),
-                    Text(
-                      e.label,
-                      style: TextStyle(color: color),
-                    ),
-                  ],
-                );
-                if (hasFocus) {
-                  return TVFocusEffects.primary(context).build(context, child);
-                }
-                return child;
-              },
-            ),
-        ],
+        children: _mainController.navigationBars.mapWithIndex<Widget>((i, e) {
+          final isSelected = _mainController.selectedIndex.value == i;
+          return DpadFocusable(
+            autofocus: i == 0,
+            isEntryPoint: i == 0,
+            onFocus: () {},
+            onSelect: () => _mainController.setIndex(i),
+            builder: (context, hasFocus, child) {
+              final color = isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface;
+              child = Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildIcon(type: e, selected: isSelected),
+                  Text(
+                    e.label,
+                    style: TextStyle(color: color),
+                  ),
+                ],
+              );
+              if (hasFocus) {
+                return TVFocusEffects.primary(context).build(context, child);
+              }
+              return child;
+            },
+          );
+        }).toList(),
       ),
     );
   }
