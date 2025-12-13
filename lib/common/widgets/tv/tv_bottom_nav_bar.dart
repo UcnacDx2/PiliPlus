@@ -1,5 +1,6 @@
 import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
+import 'package:PiliPlus/utils/tv/focus_effects.dart';
 import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +16,22 @@ class TVBottomNavBar extends StatelessWidget {
     required this.mainController,
     required this.buildIcon,
   });
+
+  Widget _buildFocusableIcon(
+      BuildContext context, int index, NavigationBarType type,
+      {bool selected = false}) {
+    return DpadFocusable(
+      autofocus: index == 0,
+      isEntryPoint: index == 0,
+      onFocus: () => mainController.setIndex(index),
+      builder: (context, hasFocus, child) =>
+          TVFocusEffects.primary(context)(
+        context,
+        hasFocus,
+        buildIcon(type: type, selected: selected),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,19 +50,10 @@ class TVBottomNavBar extends StatelessWidget {
             .map(
               (entry) => BottomNavigationBarItem(
                 label: entry.value.label,
-                icon: DpadFocusable(
-                  autofocus: entry.key == 0,
-                  isEntryPoint: entry.key == 0,
-                  onFocus: () => mainController.setIndex(entry.key),
-                  builder: (context, hasFocus) => buildIcon(type: entry.value),
-                ),
-                activeIcon: DpadFocusable(
-                  autofocus: entry.key == 0,
-                  isEntryPoint: entry.key == 0,
-                  onFocus: () => mainController.setIndex(entry.key),
-                  builder: (context, hasFocus) =>
-                      buildIcon(type: entry.value, selected: true),
-                ),
+                icon: _buildFocusableIcon(context, entry.key, entry.value),
+                activeIcon: _buildFocusableIcon(
+                    context, entry.key, entry.value,
+                    selected: true),
               ),
             )
             .toList(),
