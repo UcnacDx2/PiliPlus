@@ -1,7 +1,5 @@
 import 'package:dpad/dpad.dart';
 
-import 'package:dpad/dpad.dart';
-
 class TVRegionManager {
   static List<RegionNavigationRule> get defaultRules => [
         // 底部导航 → 内容区

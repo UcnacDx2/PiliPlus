@@ -18,34 +18,31 @@ class TVBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DpadRegion(
-      region: 'bottom_nav',
-      child: Container(
-        height: kBottomNavigationBarHeight,
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: Theme.of(context).dividerColor,
-              width: 0.5,
-            ),
+    return Container(
+      height: kBottomNavigationBarHeight,
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).dividerColor,
+            width: 0.5,
           ),
         ),
-        child: Obx(
-          () => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: mainController.navigationBars
-                .asMap()
-                .entries
-                .map(
-                  (entry) => _buildNavItem(
-                    context,
-                    entry.key,
-                    entry.value,
-                    mainController.selectedIndex.value == entry.key,
-                  ),
-                )
-                .toList(),
-          ),
+      ),
+      child: Obx(
+        () => Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: mainController.navigationBars
+              .asMap()
+              .entries
+              .map(
+                (entry) => _buildNavItem(
+                  context,
+                  entry.key,
+                  entry.value,
+                  mainController.selectedIndex.value == entry.key,
+                ),
+              )
+              .toList(),
         ),
       ),
     );
@@ -80,7 +77,8 @@ class TVBottomNavBar extends StatelessWidget {
       child: DpadFocusable(
         autofocus: index == 0,
         isEntryPoint: index == 0,
-        onClick: () => onDestinationSelected(index),
+        region: 'bottom_nav',
+        onSelect: () => onDestinationSelected(index),
         builder: (context, hasFocus, child) {
           final color = isSelected
               ? Theme.of(context).colorScheme.primary
