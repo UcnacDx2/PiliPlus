@@ -62,6 +62,80 @@ class PlayerFocus extends StatelessWidget {
   bool _handleKey(KeyEvent event) {
     final key = event.logicalKey;
 
+    if (event is KeyDownEvent) {
+      // Controls are hidden
+      if (!plPlayerController.showControls.value) {
+        if (key == LogicalKeyboardKey.arrowUp) {
+          plPlayerController.controls = true;
+          plPlayerController.mainControlsFocusNode.requestFocus();
+          plPlayerController.currentFocus = FocusState.main;
+          return true;
+        }
+        if (key == LogicalKeyboardKey.arrowDown) {
+          plPlayerController.controls = true;
+          plPlayerController.secondaryControlsFocusNode.requestFocus();
+          plPlayerController.currentFocus = FocusState.secondary;
+          return true;
+        }
+        if (key == LogicalKeyboardKey.enter ||
+            key == LogicalKeyboardKey.select) {
+          plPlayerController.controls = true;
+          plPlayerController.progressFocusNode.requestFocus();
+          plPlayerController.currentFocus = FocusState.progress;
+          return true;
+        }
+      } else {
+        // Controls are visible
+        if (key == LogicalKeyboardKey.arrowUp) {
+          if (plPlayerController.currentFocus == FocusState.progress) {
+            plPlayerController.mainControlsFocusNode.requestFocus();
+            plPlayerController.currentFocus = FocusState.main;
+          } else if (plPlayerController.currentFocus ==
+              FocusState.secondary) {
+            plPlayerController.progressFocusNode.requestFocus();
+            plPlayerController.currentFocus = FocusState.progress;
+          }
+          return true;
+        }
+        if (key == LogicalKeyboardKey.arrowDown) {
+          if (plPlayerController.currentFocus == FocusState.main) {
+            plPlayerController.progressFocusNode.requestFocus();
+            plPlayerController.currentFocus = FocusState.progress;
+          } else if (plPlayerController.currentFocus ==
+              FocusState.progress) {
+            plPlayerController.secondaryControlsFocusNode.requestFocus();
+            plPlayerController.currentFocus = FocusState.secondary;
+          }
+          return true;
+        }
+        if (key == LogicalKeyboardKey.arrowLeft) {
+          if (plPlayerController.progressFocusNode.hasFocus) {
+            if (hasPlayer) {
+              plPlayerController
+                  .onBackward(plPlayerController.fastForBackwardDuration);
+            }
+            return true;
+          }
+        }
+        if (key == LogicalKeyboardKey.arrowRight) {
+          if (plPlayerController.progressFocusNode.hasFocus) {
+            if (hasPlayer) {
+              plPlayerController
+                  .onForward(plPlayerController.fastForBackwardDuration);
+            }
+            return true;
+          }
+        }
+        if (key == LogicalKeyboardKey.enter ||
+            key == LogicalKeyboardKey.select) {
+          if (plPlayerController.progressFocusNode.hasFocus) {
+            plPlayerController.onDoubleTapCenter();
+            return true;
+          }
+        }
+      }
+    }
+
     final isKeyQ = key == LogicalKeyboardKey.keyQ;
     if (isKeyQ || key == LogicalKeyboardKey.keyR) {
       if (HardwareKeyboard.instance.isMetaPressed) {
@@ -77,55 +151,7 @@ class PlayerFocus extends StatelessWidget {
       return true;
     }
 
-    final isArrowUp = key == LogicalKeyboardKey.arrowUp;
-    if (isArrowUp || key == LogicalKeyboardKey.arrowDown) {
-      if (plPlayerController.showControls.value) {
-        if (event is KeyDownEvent) {
-          if (isArrowUp) {
-            switch (plPlayerController.currentFocus) {
-              case FocusState.progress:
-                plPlayerController.mainControlsFocusNode.requestFocus();
-                plPlayerController.currentFocus = FocusState.main;
-                break;
-              case FocusState.secondary:
-                plPlayerController.progressFocusNode.requestFocus();
-                plPlayerController.currentFocus = FocusState.progress;
-                break;
-              default:
-            }
-          } else {
-            if (plPlayerController.currentFocus == FocusState.main) {
-              plPlayerController.progressFocusNode.requestFocus();
-              plPlayerController.currentFocus = FocusState.progress;
-            } else if (plPlayerController.currentFocus == FocusState.progress) {
-              plPlayerController.secondaryControlsFocusNode.requestFocus();
-              plPlayerController.currentFocus = FocusState.secondary;
-            }
-          }
-        }
-      } else {
-        if (event is KeyDownEvent) {
-          plPlayerController.controls = true;
-          if (isArrowUp) {
-            plPlayerController.mainControlsFocusNode.requestFocus();
-            plPlayerController.currentFocus = FocusState.main;
-          } else {
-            plPlayerController.secondaryControlsFocusNode.requestFocus();
-            plPlayerController.currentFocus = FocusState.secondary;
-          }
-        }
-      }
-      return true;
-    }
-
     if (key == LogicalKeyboardKey.arrowRight) {
-      if (plPlayerController.progressFocusNode.hasFocus) {
-        if (hasPlayer) {
-          plPlayerController
-              .onForward(plPlayerController.fastForBackwardDuration);
-        }
-        return true;
-      }
       if (!plPlayerController.isLive) {
         if (event is KeyDownEvent) {
           if (hasPlayer && !plPlayerController.longPressStatus.value) {
@@ -238,24 +264,6 @@ class PlayerFocus extends StatelessWidget {
 
         case LogicalKeyboardKey.enter:
         case LogicalKeyboardKey.select:
-          if (plPlayerController.progressFocusNode.hasFocus) {
-            plPlayerController.onDoubleTapCenter();
-            return true;
-          }
-          if (!plPlayerController.mainControlsFocusNode.hasFocus &&
-              !plPlayerController.progressFocusNode.hasFocus &&
-              !plPlayerController.secondaryControlsFocusNode.hasFocus) {
-            if (!plPlayerController.showControls.value) {
-              plPlayerController.controls = true;
-              plPlayerController.progressFocusNode.requestFocus();
-              plPlayerController.currentFocus = FocusState.progress;
-              return true;
-            } else {
-              // a temporary solution, it should be handled by the focus system
-              (FocusManager.instance.primaryFocus as FocusNode).unfocus();
-              plPlayerController.controls = false;
-            }
-          }
           if (onSkipSegment?.call() ?? false) {
             return true;
           }
@@ -277,13 +285,6 @@ class PlayerFocus extends StatelessWidget {
       if (!plPlayerController.isLive) {
         switch (key) {
           case LogicalKeyboardKey.arrowLeft:
-            if (plPlayerController.progressFocusNode.hasFocus) {
-              if (hasPlayer) {
-                plPlayerController
-                    .onBackward(plPlayerController.fastForBackwardDuration);
-              }
-              return true;
-            }
             if (hasPlayer) {
               plPlayerController.onBackward(
                 plPlayerController.fastForBackwardDuration,

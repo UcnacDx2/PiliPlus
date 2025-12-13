@@ -387,6 +387,16 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       BottomControlType.speed,
       if (!plPlayerController.isFileSource && flag) BottomControlType.qa,
       if (!plPlayerController.isDesktopPip) BottomControlType.fullscreen,
+      BottomControlType.back,
+      BottomControlType.home,
+      BottomControlType.audio,
+      BottomControlType.cast,
+      BottomControlType.submit,
+      BottomControlType.danmakuList,
+      BottomControlType.sendDanmaku,
+      BottomControlType.toggleDanmaku,
+      BottomControlType.pip,
+      BottomControlType.more,
     ];
 
     return FocusTraversalGroup(
@@ -973,6 +983,250 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
             status: !isFullScreen,
             inAppFullScreen: true,
           ),
+        ),
+      BottomControlType.back => ComBtn(
+          width: widgetWidth,
+          height: 30,
+          tooltip: '返回',
+          icon: const Icon(
+            FontAwesomeIcons.arrowLeft,
+            size: 15,
+            color: Colors.white,
+          ),
+          onTap: () {
+            if (plPlayerController.isDesktopPip) {
+              plPlayerController.exitDesktopPip();
+            } else if (isFullScreen) {
+              plPlayerController.triggerFullScreen(status: false);
+            } else if (Utils.isMobile &&
+                !videoDetailController.horizontalScreen &&
+                !widget.maxWidth > widget.maxHeight) {
+              verticalScreenForTwoSeconds();
+            } else {
+              Get.back();
+            }
+          },
+        ),
+      BottomControlType.home => ComBtn(
+          width: widgetWidth,
+          height: 30,
+          tooltip: '返回主页',
+          icon: const Icon(
+            FontAwesomeIcons.house,
+            size: 15,
+            color: Colors.white,
+          ),
+          onTap: () {
+            videoDetailController.plPlayerController
+              ..isCloseAll = true
+              ..dispose();
+            Get.until((route) => route.isFirst);
+          },
+        ),
+      BottomControlType.audio => ComBtn(
+          width: widgetWidth,
+          height: 30,
+          tooltip: '听音频',
+          icon: const Icon(
+            Icons.headphones_outlined,
+            size: 19,
+            color: Colors.white,
+          ),
+          onTap: videoDetailController.toAudioPage,
+        ),
+      BottomControlType.cast => ComBtn(
+          width: widgetWidth,
+          height: 30,
+          tooltip: '投屏',
+          icon: const Icon(
+            Icons.cast,
+            size: 19,
+            color: Colors.white,
+          ),
+          onTap: videoDetailController.onCast,
+        ),
+      BottomControlType.submit => ComBtn(
+          width: widgetWidth,
+          height: 30,
+          tooltip: '提交片段',
+          icon: const Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                Icons.shield_outlined,
+                size: 19,
+                color: Colors.white,
+              ),
+              Icon(
+                Icons.play_arrow_rounded,
+                size: 13,
+                color: Colors.white,
+              ),
+            ],
+          ),
+          onTap: () => videoDetailController.onBlock(context),
+        ),
+      BottomControlType.danmakuList => ComBtn(
+          width: widgetWidth,
+          height: 30,
+          tooltip: '弹幕列表',
+          icon: const Icon(
+            MdiIcons.advertisements,
+            size: 19,
+            color: Colors.white,
+          ),
+          onTap: () => videoDetailController.showSBDetail(context),
+        ),
+      BottomControlType.sendDanmaku => ComBtn(
+          width: widgetWidth,
+          height: 30,
+          tooltip: '发弹幕',
+          icon: const Icon(
+            Icons.comment_outlined,
+            size: 19,
+            color: Colors.white,
+          ),
+          onTap: videoDetailController.showShootDanmakuSheet,
+        ),
+      BottomControlType.toggleDanmaku => Obx(
+          () {
+            final enableShowDanmaku = plPlayerController.enableShowDanmaku.value;
+            return ComBtn(
+              width: widgetWidth,
+              height: 30,
+              tooltip: "${enableShowDanmaku ? '关闭' : '开启'}弹幕",
+              icon: enableShowDanmaku
+                  ? const Icon(
+                      size: 20,
+                      CustomIcons.dm_on,
+                      color: Colors.white,
+                    )
+                  : const Icon(
+                      size: 20,
+                      CustomIcons.dm_off,
+                      color: Colors.white,
+                    ),
+              onTap: () {
+                final newVal = !enableShowDanmaku;
+                plPlayerController.enableShowDanmaku.value = newVal;
+                if (!plPlayerController.tempPlayerConf) {
+                  GStorage.setting.put(
+                    SettingBoxKey.enableShowDanmaku,
+                    newVal,
+                  );
+                }
+              },
+            );
+          },
+        ),
+      BottomControlType.pip => ComBtn(
+          width: widgetWidth,
+          height: 30,
+          tooltip: '画中画',
+          icon: const Icon(
+            Icons.picture_in_picture_outlined,
+            size: 19,
+            color: Colors.white,
+          ),
+          onTap: () async {
+            if (Utils.isDesktop) {
+              plPlayerController.toggleDesktopPip();
+              return;
+            }
+            if (await Floating().isPipAvailable) {
+              plPlayerController.showControls.value = false;
+              if (context.mounted &&
+                  !videoPlayerServiceHandler!.enableBackgroundPlay) {
+                final theme = Theme.of(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Column(
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons.check,
+                              color: Colors.green,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              '画中画',
+                              style: TextStyle(
+                                fontSize: 15,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          '建议开启【后台音频服务】\n'
+                          '避免画中画没有暂停按钮',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.5,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            TextButton(
+                              style: ButtonStyle(
+                                foregroundColor:
+                                    WidgetStatePropertyAll(
+                                  theme
+                                      .snackBarTheme
+                                      .actionTextColor,
+                                ),
+                              ),
+                              onPressed: () {
+                                plPlayerController.setBackgroundPlay(
+                                  true,
+                                );
+                                SmartDialog.showToast("请重新载入本页面刷新");
+                              },
+                              child: const Text('启用后台音频服务'),
+                            ),
+                            const SizedBox(width: 10),
+                            TextButton(
+                              style: ButtonStyle(
+                                foregroundColor:
+                                    WidgetStatePropertyAll(
+                                  theme
+                                      .snackBarTheme
+                                      .actionTextColor,
+                                ),
+                              ),
+                              onPressed: () {},
+                              child: const Text('不启用'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    duration: const Duration(seconds: 2),
+                    showCloseIcon: true,
+                  ),
+                );
+                await Future.delayed(const Duration(seconds: 3));
+              }
+              if (!context.mounted) return;
+              plPlayerController.enterPip();
+            }
+          },
+        ),
+      BottomControlType.more => ComBtn(
+          width: widgetWidth,
+          height: 30,
+          tooltip: "更多设置",
+          icon: const Icon(
+            Icons.more_vert_outlined,
+            size: 19,
+            color: Colors.white,
+          ),
+          onTap: () => (widget.headerControl.key as GlobalKey<HeaderControlState>)
+              .currentState
+              ?.showSettingSheet(),
         ),
     };
     return FocusableControl(child: control);
