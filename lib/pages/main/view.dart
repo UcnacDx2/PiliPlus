@@ -518,7 +518,7 @@ class _MainAppState extends State<MainApp>
                   ],
                 );
                 if (hasFocus) {
-                return TVFocusEffects.primary(context)(context, hasFocus, child);
+                  return TVFocusEffects.primary(context).build(context, child);
                 }
                 return child;
               },
