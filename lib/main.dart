@@ -25,6 +25,7 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
+import 'package:dpad/dpad.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/foundation.dart';
@@ -257,7 +258,8 @@ class MyApp extends StatelessWidget {
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    return GetMaterialApp(
+    return DpadNavigator(
+        child: GetMaterialApp(
       title: Constants.appName,
       theme: ThemeUtils.getThemeData(
         colorScheme:
@@ -308,10 +310,15 @@ class MyApp extends StatelessWidget {
             return Focus(
               canRequestFocus: false,
               onKeyEvent: (_, event) {
-                if (event.logicalKey == LogicalKeyboardKey.escape &&
-                    event is KeyDownEvent) {
-                  _onBack();
-                  return KeyEventResult.handled;
+                if (event is KeyDownEvent) {
+                  final result = DpadNavigator.handleKeyEvent(event);
+                  if (result == KeyEventResult.handled) {
+                    return KeyEventResult.handled;
+                  }
+                  if (event.logicalKey == LogicalKeyboardKey.escape) {
+                    _onBack();
+                    return KeyEventResult.handled;
+                  }
                 }
                 return KeyEventResult.ignored;
               },
@@ -339,7 +346,7 @@ class MyApp extends StatelessWidget {
           if (Utils.isDesktop) PointerDeviceKind.mouse,
         },
       ),
-    );
+    ));
   }
 
   @override
