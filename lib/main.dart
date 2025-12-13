@@ -333,7 +333,7 @@ class MyApp extends StatelessWidget {
       ),
     );
 
-    if (TVDetector.isTV || Pref.enableTVMode) {
+    if (TVDetector.isTV) {
       app = DpadNavigator(
         enabled: true,
         focusMemory: const FocusMemoryOptions(enabled: true, maxHistory: 20),
