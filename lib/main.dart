@@ -23,6 +23,7 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
+import 'package:PiliPlus/utils/tv/region_manager.dart';
 import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
@@ -44,8 +45,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart' hide calcWindowPosition;
 
 WebViewEnvironment? webViewEnvironment;
-
-import 'package:dpad/dpad.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -355,6 +354,10 @@ class MyApp extends StatelessWidget {
       app = DpadNavigator(
         enabled: true,
         focusMemory: const FocusMemoryOptions(enabled: true, maxHistory: 20),
+        regionNavigation: RegionNavigationOptions(
+          enabled: true,
+          rules: TVRegionManager.defaultRules,
+        ),
         onBackPressed: () => _handleTVBack(),
         child: app,
       );
