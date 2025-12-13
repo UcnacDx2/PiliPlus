@@ -19,6 +19,12 @@ class TvDebugPage extends StatelessWidget {
             title: const Text('添加账户'),
           ),
           const Divider(),
+          ListTile(
+            onTap: () => Get.toNamed('/dpadTest'),
+            leading: const Icon(Icons.gamepad),
+            title: const Text('D-pad Test Page'),
+          ),
+          const Divider(),
           ...Routes.getPages.asMap().entries.map(
                 (entry) => ListTile(
                   onTap: () => Get.toNamed(entry.value.name),
