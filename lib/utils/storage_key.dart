@@ -227,6 +227,7 @@ abstract class SettingBoxKey {
       hiddenSettingUnlocked = 'hiddenSettingUnlocked',
       enableGradientBg = 'enableGradientBg',
       navBarSort = 'navBarSort',
+      navigationBarVisibility = 'navigationBarVisibility',
       tempPlayerConf = 'tempPlayerConf',
       reduceLuxColor = 'reduceLuxColor',
       liveCdnUrl = 'liveCdnUrl';

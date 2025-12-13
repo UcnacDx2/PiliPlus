@@ -29,6 +29,72 @@ enum NavigationBarType implements EnumWithLabel {
     Icon(Icons.tv_outlined, size: 21),
     Icon(Icons.tv, size: 21),
     TvDebugPage(),
+  ),
+  recommend(
+    '推荐',
+    Icon(Icons.thumb_up_outlined, size: 21),
+    Icon(Icons.thumb_up, size: 21),
+    Placeholder(),
+  ),
+  movie(
+    '影视',
+    Icon(Icons.movie_outlined, size: 21),
+    Icon(Icons.movie, size: 21),
+    Placeholder(),
+  ),
+  anime(
+    '番剧',
+    Icon(Icons.video_library_outlined, size: 21),
+    Icon(Icons.video_library, size: 21),
+    Placeholder(),
+  ),
+  hot(
+    '热门',
+    Icon(Icons.whatshot_outlined, size: 21),
+    Icon(Icons.whatshot, size: 21),
+    Placeholder(),
+  ),
+  partitions(
+    '分区',
+    Icon(Icons.category_outlined, size: 21),
+    Icon(Icons.category, size: 21),
+    Placeholder(),
+  ),
+  live(
+    '直播',
+    Icon(Icons.live_tv_outlined, size: 21),
+    Icon(Icons.live_tv, size: 21),
+    Placeholder(),
+  ),
+  offline(
+    '离线缓存',
+    Icon(Icons.download_outlined, size: 21),
+    Icon(Icons.download, size: 21),
+    Placeholder(),
+  ),
+  history(
+    '观看记录',
+    Icon(Icons.history_outlined, size: 21),
+    Icon(Icons.history, size: 21),
+    Placeholder(),
+  ),
+  subscription(
+    '我的订阅',
+    Icon(Icons.subscriptions_outlined, size: 21),
+    Icon(Icons.subscriptions, size: 21),
+    Placeholder(),
+  ),
+  watchLater(
+    '稍后再看',
+    Icon(Icons.watch_later_outlined, size: 21),
+    Icon(Icons.watch_later, size: 21),
+    Placeholder(),
+  ),
+  favorite(
+    '我的收藏',
+    Icon(Icons.favorite_border_outlined, size: 21),
+    Icon(Icons.favorite, size: 21),
+    Placeholder(),
   );
 
   @override

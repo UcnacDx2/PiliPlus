@@ -216,6 +216,10 @@ class MainController extends GetxController
   void setNavBarConfig() {
     List<int>? navBarSort =
         (GStorage.setting.get(SettingBoxKey.navBarSort) as List?)?.fromCast();
+    List<bool>? navigationBarVisibility =
+        (GStorage.setting.get(SettingBoxKey.navigationBarVisibility) as List?)
+            ?.map((e) => e as bool)
+            .toList();
     int defaultHomePage = Pref.defaultHomePage;
     late final List<NavigationBarType> navigationBars;
     if (navBarSort == null || navBarSort.isEmpty) {
@@ -225,10 +229,21 @@ class MainController extends GetxController
           .map((i) => NavigationBarType.values[i])
           .toList();
     }
-    this.navigationBars = navigationBars;
+    if (navigationBarVisibility != null) {
+      if (navigationBarVisibility.length < NavigationBarType.values.length) {
+        navigationBarVisibility.addAll(List.generate(
+            NavigationBarType.values.length - navigationBarVisibility.length,
+            (index) => false));
+      }
+      this.navigationBars = navigationBars
+          .where((element) => navigationBarVisibility[element.index])
+          .toList();
+    } else {
+      this.navigationBars = navigationBars;
+    }
     selectedIndex.value = max(
       0,
-      navigationBars.indexWhere((e) => e.index == defaultHomePage),
+      this.navigationBars.indexWhere((e) => e.index == defaultHomePage),
     );
   }
 

@@ -8,6 +8,7 @@ import 'package:PiliPlus/pages/setting/extra_setting.dart';
 import 'package:PiliPlus/pages/setting/play_setting.dart';
 import 'package:PiliPlus/pages/setting/privacy_setting.dart';
 import 'package:PiliPlus/pages/setting/recommend_setting.dart';
+import 'package:PiliPlus/pages/setting/navigation_setting.dart';
 import 'package:PiliPlus/pages/setting/style_setting.dart';
 import 'package:PiliPlus/pages/setting/video_setting.dart';
 import 'package:PiliPlus/pages/setting/widgets/multi_select_dialog.dart';
@@ -71,6 +72,11 @@ class _SettingPageState extends State<SettingPage> {
       icon: Icon(Icons.style_outlined),
     ),
     _SettingsModel(
+      type: SettingType.navigationSetting,
+      subtitle: '底栏、顶栏、导航栏编辑',
+      icon: Icon(Icons.navigation_outlined),
+    ),
+    _SettingsModel(
       type: SettingType.extraSetting,
       subtitle: '震动、搜索、收藏、ai、评论、动态、代理、更新检查等',
       icon: Icon(Icons.extension_outlined),
@@ -124,6 +130,9 @@ class _SettingPageState extends State<SettingPage> {
                         showAppBar: false,
                       ),
                       SettingType.styleSetting => const StyleSetting(
+                        showAppBar: false,
+                      ),
+                      SettingType.navigationSetting => const NavigationSetting(
                         showAppBar: false,
                       ),
                       SettingType.extraSetting => const ExtraSetting(

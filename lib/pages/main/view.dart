@@ -36,10 +36,19 @@ class _MainAppState extends State<MainApp>
     with RouteAware, WidgetsBindingObserver, WindowListener, TrayListener {
   final MainController _mainController = Get.put(MainController());
   late final _setting = GStorage.setting;
+  final List<FocusNode> _focusNodes = [];
 
   @override
   void initState() {
     super.initState();
+    for (var i = 0; i < _mainController.navigationBars.length; i++) {
+      _focusNodes.add(FocusNode());
+      _focusNodes[i].addListener(() {
+        if (_focusNodes[i].hasFocus) {
+          _mainController.setIndex(i);
+        }
+      });
+    }
     WidgetsBinding.instance.addObserver(this);
     if (Utils.isDesktop) {
       windowManager
@@ -95,6 +104,9 @@ class _MainAppState extends State<MainApp>
 
   @override
   void dispose() {
+    for (var focusNode in _focusNodes) {
+      focusNode.dispose();
+    }
     if (Utils.isDesktop) {
       trayManager.removeListener(this);
       windowManager.removeListener(this);
@@ -267,19 +279,26 @@ class _MainAppState extends State<MainApp>
                     : Obx(
                         () => BottomNavigationBar(
                           currentIndex: _mainController.selectedIndex.value,
-                          onTap: _mainController.setIndex,
                           iconSize: 16,
                           selectedFontSize: 12,
                           unselectedFontSize: 12,
                           type: BottomNavigationBarType.fixed,
                           items: _mainController.navigationBars
+                              .asMap()
+                              .entries
                               .map(
-                                (e) => BottomNavigationBarItem(
-                                  label: e.label,
-                                  icon: _buildIcon(type: e),
-                                  activeIcon: _buildIcon(
-                                    type: e,
-                                    selected: true,
+                                (entry) => BottomNavigationBarItem(
+                                  label: entry.value.label,
+                                  icon: Focus(
+                                    focusNode: _focusNodes[entry.key],
+                                    child: _buildIcon(type: entry.value),
+                                  ),
+                                  activeIcon: Focus(
+                                    focusNode: _focusNodes[entry.key],
+                                    child: _buildIcon(
+                                      type: entry.value,
+                                      selected: true,
+                                    ),
                                   ),
                                 ),
                               )
