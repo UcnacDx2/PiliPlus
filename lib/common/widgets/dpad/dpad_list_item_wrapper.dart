@@ -14,9 +14,8 @@ class DpadListItemWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DpadFocusable(
-      region: 'list_items',
-      effects: [
-        FocusEffects.scale(1.02),
+      focusEffects: [
+        FocusEffects.scale(scale: 1.02),
         FocusEffects.backgroundColor(
           color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         ),

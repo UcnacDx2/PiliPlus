@@ -33,11 +33,11 @@ import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:is_tv/is_tv.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:is_tv/is_tv.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -216,34 +216,32 @@ void main() async {
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  static ThemeData? darkThemeData;
+
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  bool? _isTV;
-  final _isTVPlugin = IsTV();
+  static ThemeData? darkThemeData;
+  bool _isDpadEnabled = Utils.isDesktop;
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+    _checkIfTv();
   }
 
-  Future<void> initPlatformState() async {
-    bool? isTV;
-    try {
-      isTV = await _isTVPlugin.check() ?? false;
-    } on PlatformException {
-      isTV = false;
+  Future<void> _checkIfTv() async {
+    if (Platform.isAndroid) {
+      final isTv = await IsTv.check();
+      if (mounted && isTv) {
+        setState(() {
+          _isDpadEnabled = true;
+        });
+      }
     }
-    if (!mounted) return;
-    setState(() {
-      _isTV = isTV ?? false;
-    });
   }
-
-  static ThemeData? darkThemeData;
 
   static void _onBack() {
     if (SmartDialog.checkExist()) {
@@ -280,41 +278,14 @@ class _MyAppState extends State<MyApp> {
     Get.back();
   }
 
-  Widget _buildWidget({
+  Widget _buildApp({
     ColorScheme? lightColorScheme,
     ColorScheme? darkColorScheme,
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    return DpadNavigator(
-      enabled: Utils.isDesktop || (_isTV ?? false),
-      focusMemory: true,
-      regionNavigation: const {
-        'bottom_nav': {
-          DpadAction.down: 'search',
-        },
-        'sidebar': {
-          DpadAction.right: 'search',
-        },
-        'search': {
-          DpadAction.down: 'tabs',
-          DpadAction.up: 'sidebar',
-          DpadAction.left: 'sidebar',
-        },
-        'tabs': {
-          DpadAction.down: 'content',
-          DpadAction.up: 'search',
-        },
-        'content': {
-          DpadAction.up: 'tabs',
-        },
-        'player_controls': {
-          DpadAction.down: 'video_tabs',
-        },
-        'video_tabs': {
-          DpadAction.up: 'player_controls',
-        },
-      },
+    return DpadRoot(
+      enabled: _isDpadEnabled,
       onBackPressed: _onBack,
       child: GetMaterialApp(
         title: Constants.appName,
@@ -361,53 +332,47 @@ class _MyAppState extends State<MyApp> {
               ),
               child: child!,
             );
-            if (Utils.isDesktop) {
-              return MouseBackDetector(
-                onTapDown: _onBack,
-                child: child,
-              );
-            }
-            return child;
+            return Utils.isDesktop
+                ? MouseBackDetector(onTapDown: _onBack, child: child)
+                : child;
           },
         ),
-      navigatorObservers: [
-        PageUtils.routeObserver,
-        FlutterSmartDialog.observer,
-      ],
-      scrollBehavior: const MaterialScrollBehavior().copyWith(
-        scrollbars: false,
-        dragDevices: {
-          PointerDeviceKind.touch,
-          PointerDeviceKind.stylus,
-          PointerDeviceKind.invertedStylus,
-          PointerDeviceKind.trackpad,
-          PointerDeviceKind.unknown,
-          if (Utils.isDesktop) PointerDeviceKind.mouse,
-        },
+        navigatorObservers: [
+          PageUtils.routeObserver,
+          FlutterSmartDialog.observer,
+        ],
+        scrollBehavior: const MaterialScrollBehavior().copyWith(
+          scrollbars: false,
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.stylus,
+            PointerDeviceKind.invertedStylus,
+            PointerDeviceKind.trackpad,
+            PointerDeviceKind.unknown,
+            if (Utils.isDesktop) PointerDeviceKind.mouse,
+          },
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isTV == null) {
-      return const SizedBox.shrink();
-    }
     if (!Platform.isIOS && Pref.dynamicColor) {
       return DynamicColorBuilder(
         builder: ((ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
           if (lightDynamic != null && darkDynamic != null) {
-            return _buildWidget(
+            return _buildApp(
               lightColorScheme: lightDynamic.harmonized(),
               darkColorScheme: darkDynamic.harmonized(),
             );
           } else {
-            return _buildWidget();
+            return _buildApp();
           }
         }),
       );
     }
-    return _buildWidget();
+    return _buildApp();
   }
 }
 

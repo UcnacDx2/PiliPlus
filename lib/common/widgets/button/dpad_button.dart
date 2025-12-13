@@ -17,8 +17,8 @@ class DpadButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return DpadFocusable(
       autofocus: autofocus,
-      effects: [
-        FocusEffects.scale(1.1),
+      focusEffects: [
+        FocusEffects.scale(scale: 1.1),
         FocusEffects.border(
           color: Theme.of(context).colorScheme.primary,
           width: 2,

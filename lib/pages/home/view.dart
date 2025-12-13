@@ -38,42 +38,23 @@ class _HomePageState extends State<HomePage>
             MediaQuery.sizeOf(context).isPortrait)
           customAppBar(theme),
         if (_homeController.tabs.length > 1)
-          Material(
-            color: theme.colorScheme.surface,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: SizedBox(
-                height: 42,
-                width: double.infinity,
-                child: DpadTabBar(
-                  controller: _homeController.tabController,
-                  tabs: [
-                    for (var i in _homeController.tabs)
-                      DpadFocusable(
-                        region: 'tabs',
-                        effects: [
-                          FocusEffects.border(
-                            color: theme.colorScheme.primary,
-                            width: 2,
-                          ),
-                          FocusEffects.scale(1.1),
-                        ],
-                        child: Tab(text: i.label),
-                      ),
-                  ],
-                  isScrollable: true,
-                  dividerColor: Colors.transparent,
-                  dividerHeight: 0,
-                  splashBorderRadius: StyleString.mdRadius,
-                  tabAlignment: TabAlignment.center,
-                  onTap: (_) {
-                    feedBack();
-                    if (!_homeController.tabController.indexIsChanging) {
-                      _homeController.animateToTop();
-                    }
-                  },
-                ),
-              ),
+          DpadRegion(
+            id: 'tabs',
+            child: DpadTabBar(
+              controller: _homeController.tabController,
+              tabs: [
+                for (var i in _homeController.tabs) Tab(text: i.label),
+              ],
+              isScrollable: true,
+              dividerColor: Colors.transparent,
+              splashBorderRadius: StyleString.mdRadius,
+              tabAlignment: TabAlignment.center,
+              onTap: (_) {
+                feedBack();
+                if (!_homeController.tabController.indexIsChanging) {
+                  _homeController.animateToTop();
+                }
+              },
             ),
           )
         else
@@ -89,74 +70,80 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget searchBarAndUser(ThemeData theme) {
-    return Row(
-      children: [
-        searchBar(theme),
-        const SizedBox(width: 4),
-        Obx(
-          () => _homeController.accountService.isLogin.value
-              ? msgBadge(_mainController)
-              : const SizedBox.shrink(),
-        ),
-        const SizedBox(width: 8),
-        Semantics(
-          label: "我的",
-          child: Obx(
+    return DpadRegion(
+      id: 'search',
+      child: Row(
+        children: [
+          searchBar(theme),
+          const SizedBox(width: 4),
+          Obx(
             () => _homeController.accountService.isLogin.value
-                ? Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      NetworkImgLayer(
-                        type: ImageType.avatar,
-                        width: 34,
-                        height: 34,
-                        src: _homeController.accountService.face.value,
-                      ),
-                      Positioned.fill(
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: InkWell(
-                            onTap: _mainController.toMinePage,
-                            splashColor: theme.colorScheme.primaryContainer
-                                .withValues(alpha: 0.3),
-                            customBorder: const CircleBorder(),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: -6,
-                        bottom: -6,
-                        child: Obx(
-                          () => MineController.anonymity.value
-                              ? IgnorePointer(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          theme.colorScheme.secondaryContainer,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      size: 16,
-                                      MdiIcons.incognito,
-                                      color: theme
-                                          .colorScheme
-                                          .onSecondaryContainer,
-                                    ),
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                      ),
-                    ],
-                  )
-                : defaultUser(
-                    theme: theme,
-                    onPressed: _mainController.toMinePage,
-                  ),
+                ? msgBadge(_mainController)
+                : const SizedBox.shrink(),
           ),
-        ),
-      ],
+          const SizedBox(width: 8),
+          DpadFocusable(
+            onClick: _mainController.toMinePage,
+            child: Semantics(
+              label: "我的",
+              child: Obx(
+                () => _homeController.accountService.isLogin.value
+                    ? Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          NetworkImgLayer(
+                            type: ImageType.avatar,
+                            width: 34,
+                            height: 34,
+                            src: _homeController.accountService.face.value,
+                          ),
+                          Positioned.fill(
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: InkWell(
+                                onTap: _mainController.toMinePage,
+                                splashColor: theme.colorScheme.primaryContainer
+                                    .withValues(alpha: 0.3),
+                                customBorder: const CircleBorder(),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            right: -6,
+                            bottom: -6,
+                            child: Obx(
+                              () => MineController.anonymity.value
+                                  ? IgnorePointer(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: theme
+                                              .colorScheme.secondaryContainer,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          size: 16,
+                                          MdiIcons.incognito,
+                                          color: theme
+                                              .colorScheme
+                                              .onSecondaryContainer,
+                                        ),
+                                      ),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ),
+                        ],
+                      )
+                    : defaultUser(
+                        theme: theme,
+                        onPressed: _mainController.toMinePage,
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -193,13 +180,6 @@ class _HomePageState extends State<HomePage>
         height: 44,
         child: DpadFocusable(
           autofocus: true,
-          region: 'search',
-          effects: [
-            FocusEffects.glow(
-              glowColor: theme.colorScheme.primary,
-              glowSize: 4,
-            ),
-          ],
           onClick: () => Get.toNamed(
             '/search',
             parameters: {
@@ -286,25 +266,28 @@ Widget msgBadge(MainController mainController) {
   }
 
   final msgUnReadCount = mainController.msgUnReadCount.value;
-  return GestureDetector(
-    onTap: toWhisper,
-    child: Badge(
-      isLabelVisible:
-          mainController.msgBadgeMode != DynamicBadgeMode.hidden &&
-          msgUnReadCount.isNotEmpty,
-      alignment: mainController.msgBadgeMode == DynamicBadgeMode.number
-          ? const Alignment(0, -0.5)
-          : const Alignment(0.5, -0.5),
-      label:
-          mainController.msgBadgeMode == DynamicBadgeMode.number &&
-              msgUnReadCount.isNotEmpty
-          ? Text(msgUnReadCount)
-          : null,
-      child: IconButton(
-        tooltip: '消息',
-        onPressed: toWhisper,
-        icon: const Icon(
-          Icons.notifications_none,
+  return DpadFocusable(
+    onClick: toWhisper,
+    child: GestureDetector(
+      onTap: toWhisper,
+      child: Badge(
+        isLabelVisible:
+            mainController.msgBadgeMode != DynamicBadgeMode.hidden &&
+                msgUnReadCount.isNotEmpty,
+        alignment: mainController.msgBadgeMode == DynamicBadgeMode.number
+            ? const Alignment(0, -0.5)
+            : const Alignment(0.5, -0.5),
+        label:
+            mainController.msgBadgeMode == DynamicBadgeMode.number &&
+                msgUnReadCount.isNotEmpty
+            ? Text(msgUnReadCount)
+            : null,
+        child: IconButton(
+          tooltip: '消息',
+          onPressed: toWhisper,
+          icon: const Icon(
+            Icons.notifications_none,
+          ),
         ),
       ),
     ),

@@ -14,9 +14,8 @@ class DpadVideoCardWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DpadFocusable(
-      region: 'content',
-      effects: [
-        FocusEffects.scale(1.05),
+      focusEffects: [
+        FocusEffects.scale(scale: 1.05),
         FocusEffects.border(
           color: Theme.of(context).colorScheme.primary,
           width: 3,

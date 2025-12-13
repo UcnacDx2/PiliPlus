@@ -1342,42 +1342,45 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     required double width,
     required double height,
     bool isPipMode = false,
-  }) => Obx(
-    key: videoDetailController.videoPlayerKey,
-    () =>
-        videoDetailController.videoState.value is! Success ||
-            !videoDetailController.autoPlay.value ||
-            plPlayerController?.videoController == null
-        ? const SizedBox.shrink()
-        : PLVideoPlayer(
-            maxWidth: width,
-            maxHeight: height,
-            plPlayerController: plPlayerController!,
-            videoDetailController: videoDetailController,
-            introController: introController,
-            headerControl: HeaderControl(
-              key: videoDetailController.headerCtrKey,
-              isPortrait: isPortrait,
-              controller: videoDetailController.plPlayerController,
-              videoDetailCtr: videoDetailController,
-              heroTag: heroTag,
-            ),
-            danmuWidget: isPipMode && pipNoDanmaku
-                ? null
-                : Obx(
-                    () => PlDanmaku(
-                      key: ValueKey(videoDetailController.cid.value),
-                      isPipMode: isPipMode,
-                      cid: videoDetailController.cid.value,
-                      playerController: plPlayerController!,
-                      isFullScreen: plPlayerController!.isFullScreen.value,
-                      isFileSource: videoDetailController.isFileSource,
-                    ),
+  }) =>
+      DpadRegion(
+        id: 'player_controls',
+        child: Obx(
+          key: videoDetailController.videoPlayerKey,
+          () => videoDetailController.videoState.value is! Success ||
+                  !videoDetailController.autoPlay.value ||
+                  plPlayerController?.videoController == null
+              ? const SizedBox.shrink()
+              : PLVideoPlayer(
+                  maxWidth: width,
+                  maxHeight: height,
+                  plPlayerController: plPlayerController!,
+                  videoDetailController: videoDetailController,
+                  introController: introController,
+                  headerControl: HeaderControl(
+                    key: videoDetailController.headerCtrKey,
+                    isPortrait: isPortrait,
+                    controller: videoDetailController.plPlayerController,
+                    videoDetailCtr: videoDetailController,
+                    heroTag: heroTag,
                   ),
-            showEpisodes: showEpisodes,
-            showViewPoints: showViewPoints,
-          ),
-  );
+                  danmuWidget: isPipMode && pipNoDanmaku
+                      ? null
+                      : Obx(
+                          () => PlDanmaku(
+                            key: ValueKey(videoDetailController.cid.value),
+                            isPipMode: isPipMode,
+                            cid: videoDetailController.cid.value,
+                            playerController: plPlayerController!,
+                            isFullScreen: plPlayerController!.isFullScreen.value,
+                            isFileSource: videoDetailController.isFileSource,
+                          ),
+                        ),
+                  showEpisodes: showEpisodes,
+                  showViewPoints: showViewPoints,
+                ),
+        ),
+      );
 
   late ThemeData themeData;
   late bool isPortrait;
@@ -1448,69 +1451,51 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
 
     final flag = !needIndicator || tabs.length == 1;
     Widget tabBar() => DpadTabBar(
-      labelColor: flag ? themeData.colorScheme.onSurface : null,
-      indicator: flag ? const BoxDecoration() : null,
-      padding: EdgeInsets.zero,
-      controller: videoDetailController.tabCtr,
-      labelStyle:
-          TabBarTheme.of(context).labelStyle?.copyWith(fontSize: 13) ??
-          const TextStyle(fontSize: 13),
-      labelPadding: const EdgeInsets.symmetric(horizontal: 10.0),
-      dividerColor: Colors.transparent,
-      dividerHeight: 0,
-      onTap: (value) {
-        void animToTop() {
-          if (onTap != null) {
-            onTap();
-            return;
-          }
-          String text = tabs[value];
-          if (videoDetailController.isFileSource ||
-              text == '简介' ||
-              text == '相关视频') {
-            videoDetailController.introScrollCtr?.animToTop();
-          } else if (text.startsWith('评论')) {
-            _videoReplyController.animateToTop();
-          }
-        }
+          labelColor: flag ? themeData.colorScheme.onSurface : null,
+          indicator: flag ? const BoxDecoration() : null,
+          padding: EdgeInsets.zero,
+          controller: videoDetailController.tabCtr,
+          labelStyle:
+              TabBarTheme.of(context).labelStyle?.copyWith(fontSize: 13) ??
+                  const TextStyle(fontSize: 13),
+          labelPadding: const EdgeInsets.symmetric(horizontal: 10.0),
+          dividerColor: Colors.transparent,
+          onTap: (value) {
+            void animToTop() {
+              if (onTap != null) {
+                onTap();
+                return;
+              }
+              String text = tabs[value];
+              if (videoDetailController.isFileSource ||
+                  text == '简介' ||
+                  text == '相关视频') {
+                videoDetailController.introScrollCtr?.animToTop();
+              } else if (text.startsWith('评论')) {
+                _videoReplyController.animateToTop();
+              }
+            }
 
-        if (flag) {
-          animToTop();
-        } else if (!videoDetailController.tabCtr.indexIsChanging) {
-          animToTop();
-        }
-      },
-      tabs: tabs.map((text) {
-        if (text == '评论') {
-          return DpadFocusable(
-            region: 'video_tabs',
-            effects: [
-              FocusEffects.border(
-                color: themeData.colorScheme.primary,
-                width: 2,
-              ),
-            ],
-            child: Obx(() {
-              final count = _videoReplyController.count.value;
-              return Tab(
-                text: '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
-              );
-            }),
-          );
-        } else {
-          return DpadFocusable(
-            region: 'video_tabs',
-            effects: [
-              FocusEffects.border(
-                color: themeData.colorScheme.primary,
-                width: 2,
-              ),
-            ],
-            child: Tab(text: text),
-          );
-        }
-      }).toList(),
-    );
+            if (flag) {
+              animToTop();
+            } else if (!videoDetailController.tabCtr.indexIsChanging) {
+              animToTop();
+            }
+          },
+          tabs: tabs.map((text) {
+            if (text == '评论') {
+              return Obx(() {
+                final count = _videoReplyController.count.value;
+                return Tab(
+                  text:
+                      '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
+                );
+              });
+            } else {
+              return Tab(text: text);
+            }
+          }).toList(),
+        );
 
     return Container(
       height: 45,
@@ -1522,9 +1507,11 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
           ),
         ),
       ),
-      child: Row(
-        children: [
-          if (tabs.isEmpty)
+      child: DpadRegion(
+        id: 'video_tabs',
+        child: Row(
+          children: [
+            if (tabs.isEmpty)
             const Spacer()
           else
             Flexible(
@@ -1538,8 +1525,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   DpadFocusable(
-                    region: 'video_tabs',
-                    effects: const [FocusEffects.scale(1.1)],
                     onClick: videoDetailController.showShootDanmakuSheet,
                     child: SizedBox(
                       height: 32,
@@ -1559,8 +1544,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                     ),
                   ),
                   DpadFocusable(
-                    region: 'video_tabs',
-                    effects: const [FocusEffects.scale(1.1)],
                     child: SizedBox(
                       width: 38,
                       height: 38,
