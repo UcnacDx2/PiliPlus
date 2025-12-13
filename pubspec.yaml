@@ -32,8 +32,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  dpad: ^2.0.2
-  is_tv: ^0.0.3+5
   flutter_localizations:
     sdk: flutter
   # The following adds the Cupertino Icons font to your application.
@@ -50,6 +48,8 @@ dependencies:
 
   # 网络
   dio: ^5.7.0
+  dpad: ^2.0.2
+  is_tv: ^0.0.3+5
   cookie_jar: ^4.0.8
   connectivity_plus: ^7.0.0
   dio_http2_adapter: ^2.5.3

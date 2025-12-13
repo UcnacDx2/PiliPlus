@@ -25,10 +25,8 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
-import 'package:dpad/dpad.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
-import 'package:is_tv/is_tv.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
@@ -41,6 +39,8 @@ import 'package:get/get.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:dpad/dpad.dart';
+import 'package:is_tv/is_tv.dart';
 import 'package:window_manager/window_manager.dart' hide calcWindowPosition;
 
 WebViewEnvironment? webViewEnvironment;
@@ -203,23 +203,20 @@ void main() async {
       customParameters: customParameters,
     );
 
-    final bool isTv = await IsTv.check();
     Catcher2(
       debugConfig: debugConfig,
       releaseConfig: releaseConfig,
-      rootWidget: MyApp(isTv: isTv),
+      rootWidget: const MyApp(),
     );
   } else {
-    final bool isTv = await IsTv.check();
-    runApp(MyApp(isTv: isTv));
+    final isTV = await IsTv.check();
+    runApp(MyApp(isTV: isTV));
   }
 }
 
 class MyApp extends StatelessWidget {
-  final bool isTv;
-  const MyApp({super.key, required this.isTv});
-
-  static ThemeData? darkThemeData;
+  const MyApp({super.key, required this.isTV});
+  final bool isTV;
 
   static void _onBack() {
     if (SmartDialog.checkExist()) {
@@ -262,10 +259,35 @@ class MyApp extends StatelessWidget {
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    final getMaterialApp = GetMaterialApp(
-      title: Constants.appName,
-      theme: ThemeUtils.getThemeData(
-        colorScheme: lightColorScheme ??
+    return DpadRoot(
+      focusMemory: true,
+      regionNavigation: {
+        'sidebar': {
+          'right': 'search',
+        },
+        'search': {
+          'left': 'sidebar',
+          'down': 'tabs',
+        },
+        'tabs': {
+          'up': 'search',
+          'down': 'content',
+        },
+        'content': {
+          'up': 'tabs',
+        },
+        'player_controls': {
+          'down': 'video_tabs',
+        },
+        'video_tabs': {
+          'up': 'player_controls',
+        },
+      },
+      child: GetMaterialApp(
+        title: Constants.appName,
+        theme: ThemeUtils.getThemeData(
+          colorScheme:
+            lightColorScheme ??
             SeedColorScheme.fromSeeds(
               variant: variant,
               primaryKey: brandColor,
@@ -276,7 +298,8 @@ class MyApp extends StatelessWidget {
       ),
       darkTheme: ThemeUtils.getThemeData(
         isDark: true,
-        colorScheme: darkColorScheme ??
+        colorScheme:
+            darkColorScheme ??
             SeedColorScheme.fromSeeds(
               variant: variant,
               primaryKey: brandColor,
@@ -343,41 +366,6 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
-    if (Utils.isDesktop || isTv) {
-      return DpadRoot(
-        focusMemory: true,
-        regionNavigation: {
-          'sidebar': {
-            DpadAction.arrowDown: 'search',
-            DpadAction.arrowRight: 'search',
-          },
-          'bottom_nav': {
-            DpadAction.arrowUp: 'search',
-          },
-          'search': {
-            DpadAction.arrowUp: 'sidebar',
-            DpadAction.arrowLeft: 'sidebar',
-            DpadAction.arrowDown: 'tabs',
-          },
-          'tabs': {
-            DpadAction.arrowUp: 'search',
-            DpadAction.arrowDown: 'content',
-          },
-          'content': {
-            DpadAction.arrowUp: 'tabs',
-          },
-          'player_controls': {
-            DpadAction.arrowDown: 'video_tabs',
-          },
-          'video_tabs': {
-            DpadAction.arrowUp: 'player_controls',
-          },
-        },
-        child: getMaterialApp,
-      );
-    } else {
-      return getMaterialApp;
-    }
   }
 
   @override

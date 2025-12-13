@@ -59,7 +59,6 @@ import 'package:auto_orientation/auto_orientation.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:floating/floating.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -1342,45 +1341,42 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     required double width,
     required double height,
     bool isPipMode = false,
-  }) =>
-      DpadRegion(
-        id: 'player_controls',
-        child: Obx(
-          key: videoDetailController.videoPlayerKey,
-          () => videoDetailController.videoState.value is! Success ||
-                  !videoDetailController.autoPlay.value ||
-                  plPlayerController?.videoController == null
-              ? const SizedBox.shrink()
-              : PLVideoPlayer(
-                  maxWidth: width,
-                  maxHeight: height,
-                  plPlayerController: plPlayerController!,
-                  videoDetailController: videoDetailController,
-                  introController: introController,
-                  headerControl: HeaderControl(
-                    key: videoDetailController.headerCtrKey,
-                    isPortrait: isPortrait,
-                    controller: videoDetailController.plPlayerController,
-                    videoDetailCtr: videoDetailController,
-                    heroTag: heroTag,
+  }) => Obx(
+    key: videoDetailController.videoPlayerKey,
+    () =>
+        videoDetailController.videoState.value is! Success ||
+            !videoDetailController.autoPlay.value ||
+            plPlayerController?.videoController == null
+        ? const SizedBox.shrink()
+        : PLVideoPlayer(
+            maxWidth: width,
+            maxHeight: height,
+            plPlayerController: plPlayerController!,
+            videoDetailController: videoDetailController,
+            introController: introController,
+            headerControl: HeaderControl(
+              key: videoDetailController.headerCtrKey,
+              isPortrait: isPortrait,
+              controller: videoDetailController.plPlayerController,
+              videoDetailCtr: videoDetailController,
+              heroTag: heroTag,
+            ),
+            danmuWidget: isPipMode && pipNoDanmaku
+                ? null
+                : Obx(
+                    () => PlDanmaku(
+                      key: ValueKey(videoDetailController.cid.value),
+                      isPipMode: isPipMode,
+                      cid: videoDetailController.cid.value,
+                      playerController: plPlayerController!,
+                      isFullScreen: plPlayerController!.isFullScreen.value,
+                      isFileSource: videoDetailController.isFileSource,
+                    ),
                   ),
-                  danmuWidget: isPipMode && pipNoDanmaku
-                      ? null
-                      : Obx(
-                          () => PlDanmaku(
-                            key: ValueKey(videoDetailController.cid.value),
-                            isPipMode: isPipMode,
-                            cid: videoDetailController.cid.value,
-                            playerController: plPlayerController!,
-                            isFullScreen: plPlayerController!.isFullScreen.value,
-                            isFileSource: videoDetailController.isFileSource,
-                          ),
-                        ),
-                  showEpisodes: showEpisodes,
-                  showViewPoints: showViewPoints,
-                ),
-        ),
-      );
+            showEpisodes: showEpisodes,
+            showViewPoints: showViewPoints,
+          ),
+  );
 
   late ThemeData themeData;
   late bool isPortrait;
@@ -1451,58 +1447,51 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
 
     final flag = !needIndicator || tabs.length == 1;
     Widget tabBar() => TabBar(
-          labelColor: flag ? themeData.colorScheme.onSurface : null,
-          indicator: flag ? const BoxDecoration() : null,
-          padding: EdgeInsets.zero,
-          controller: videoDetailController.tabCtr,
-          labelStyle:
-              TabBarTheme.of(context).labelStyle?.copyWith(fontSize: 13) ??
-                  const TextStyle(fontSize: 13),
-          labelPadding: const EdgeInsets.symmetric(horizontal: 10.0),
-          dividerColor: Colors.transparent,
-          onTap: (value) {
-            void animToTop() {
-              if (onTap != null) {
-                onTap();
-                return;
-              }
-              String text = tabs[value];
-              if (videoDetailController.isFileSource ||
-                  text == '简介' ||
-                  text == '相关视频') {
-                videoDetailController.introScrollCtr?.animToTop();
-              } else if (text.startsWith('评论')) {
-                _videoReplyController.animateToTop();
-              }
-            }
+      labelColor: flag ? themeData.colorScheme.onSurface : null,
+      indicator: flag ? const BoxDecoration() : null,
+      padding: EdgeInsets.zero,
+      controller: videoDetailController.tabCtr,
+      labelStyle:
+          TabBarTheme.of(context).labelStyle?.copyWith(fontSize: 13) ??
+          const TextStyle(fontSize: 13),
+      labelPadding: const EdgeInsets.symmetric(horizontal: 10.0),
+      dividerColor: Colors.transparent,
+      dividerHeight: 0,
+      onTap: (value) {
+        void animToTop() {
+          if (onTap != null) {
+            onTap();
+            return;
+          }
+          String text = tabs[value];
+          if (videoDetailController.isFileSource ||
+              text == '简介' ||
+              text == '相关视频') {
+            videoDetailController.introScrollCtr?.animToTop();
+          } else if (text.startsWith('评论')) {
+            _videoReplyController.animateToTop();
+          }
+        }
 
-            if (flag) {
-              animToTop();
-            } else if (!videoDetailController.tabCtr.indexIsChanging) {
-              animToTop();
-            }
-          },
-          tabs: tabs.asMap().entries.map((entry) {
-            final index = entry.key;
-            final text = entry.value;
-            return DpadFocusable(
-              onEnter: () => videoDetailController.tabCtr.animateTo(index),
-              builder: (context, hasFocus, _) {
-                if (text == '评论') {
-                  return Obx(() {
-                    final count = _videoReplyController.count.value;
-                    return Tab(
-                      text:
-                          '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
-                    );
-                  });
-                } else {
-                  return Tab(text: text);
-                }
-              },
+        if (flag) {
+          animToTop();
+        } else if (!videoDetailController.tabCtr.indexIsChanging) {
+          animToTop();
+        }
+      },
+      tabs: tabs.map((text) {
+        if (text == '评论') {
+          return Obx(() {
+            final count = _videoReplyController.count.value;
+            return Tab(
+              text: '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
             );
-          }).toList(),
-        );
+          });
+        } else {
+          return Tab(text: text);
+        }
+      }).toList(),
+    );
 
     return Container(
       height: 45,
@@ -1514,11 +1503,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
           ),
         ),
       ),
-      child: DpadRegion(
-        id: 'video_tabs',
-        child: Row(
-          children: [
-            if (tabs.isEmpty)
+      child: Row(
+        children: [
+          if (tabs.isEmpty)
             const Spacer()
           else
             Flexible(
@@ -1531,56 +1518,51 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  DpadFocusable(
-                    builder: (context, hasFocus, _) => SizedBox(
-                      height: 32,
-                      child: TextButton(
-                        style: const ButtonStyle(
-                          padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                        ),
-                        onPressed: videoDetailController.showShootDanmakuSheet,
-                        child: Text(
-                          '发弹幕',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: themeData.colorScheme.onSurfaceVariant,
-                          ),
+                  SizedBox(
+                    height: 32,
+                    child: TextButton(
+                      style: const ButtonStyle(
+                        padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                      ),
+                      onPressed: videoDetailController.showShootDanmakuSheet,
+                      child: Text(
+                        '发弹幕',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: themeData.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
                   ),
-                  DpadFocusable(
-                    builder: (context, hasFocus, _) => SizedBox(
-                      width: 38,
-                      height: 38,
-                      child: Obx(
-                        () {
-                          final ctr = videoDetailController.plPlayerController;
-                          final enableShowDanmaku =
-                              ctr.enableShowDanmaku.value;
-                          return IconButton(
-                            onPressed: () {
-                              final newVal = !enableShowDanmaku;
-                              ctr.enableShowDanmaku.value = newVal;
-                              if (!ctr.tempPlayerConf) {
-                                GStorage.setting.put(
-                                  SettingBoxKey.enableShowDanmaku,
-                                  newVal,
-                                );
-                              }
-                            },
-                            icon: Icon(
-                              size: 22,
-                              enableShowDanmaku
-                                  ? CustomIcons.dm_on
-                                  : CustomIcons.dm_off,
-                              color: enableShowDanmaku
-                                  ? themeData.colorScheme.secondary
-                                  : themeData.colorScheme.outline,
-                            ),
-                          );
-                        },
-                      ),
+                  SizedBox(
+                    width: 38,
+                    height: 38,
+                    child: Obx(
+                      () {
+                        final ctr = videoDetailController.plPlayerController;
+                        final enableShowDanmaku = ctr.enableShowDanmaku.value;
+                        return IconButton(
+                          onPressed: () {
+                            final newVal = !enableShowDanmaku;
+                            ctr.enableShowDanmaku.value = newVal;
+                            if (!ctr.tempPlayerConf) {
+                              GStorage.setting.put(
+                                SettingBoxKey.enableShowDanmaku,
+                                newVal,
+                              );
+                            }
+                          },
+                          icon: Icon(
+                            size: 22,
+                            enableShowDanmaku
+                                ? CustomIcons.dm_on
+                                : CustomIcons.dm_off,
+                            color: enableShowDanmaku
+                                ? themeData.colorScheme.secondary
+                                : themeData.colorScheme.outline,
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 14),
