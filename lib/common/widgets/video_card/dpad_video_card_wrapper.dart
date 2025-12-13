@@ -33,7 +33,7 @@ class DpadVideoCardWrapper extends StatelessWidget {
           ),
         );
       },
-      onClick: onClick,
+      onEnter: onClick,
       child: child,
     );
   }

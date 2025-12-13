@@ -1501,7 +1501,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                       child: child!,
                     );
                   },
-                  onClick: () => videoDetailController.tabCtr.animateTo(index),
+                  onEnter: () => videoDetailController.tabCtr.animateTo(index),
                   child: Builder(builder: (context) {
                     if (text == '评论') {
                       return Obx(() {

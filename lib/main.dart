@@ -25,6 +25,8 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
+import 'package:dpad/dpad.dart';
+import 'package:is_tv/is_tv.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/foundation.dart';
@@ -204,10 +206,95 @@ void main() async {
     Catcher2(
       debugConfig: debugConfig,
       releaseConfig: releaseConfig,
-      rootWidget: const MyApp(),
+      rootWidget: const AppWrapper(),
     );
   } else {
-    runApp(const MyApp());
+    runApp(const AppWrapper());
+  }
+}
+
+class AppWrapper extends StatefulWidget {
+  const AppWrapper({super.key});
+
+  @override
+  State<AppWrapper> createState() => _AppWrapperState();
+}
+
+class _AppWrapperState extends State<AppWrapper> {
+  bool? _isTV;
+
+  @override
+  void initState() {
+    super.initState();
+    IsTv.check().then((value) {
+      setState(() {
+        _isTV = value;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isTV == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_isTV! || Utils.isDesktop) {
+      return DpadRoot(
+        focusMemory: true,
+        onBackPressed: DpadRoot.defaultOnBackPressed,
+        regionNavigation: DpadRegionNavigation(
+          rules: {
+            'sidebar': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.right: 'search',
+              },
+            ),
+            'bottom_nav': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.up: 'search',
+              },
+            ),
+            'search': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.left: 'sidebar',
+                DpadDirection.down: 'tabs',
+                DpadDirection.up: 'bottom_nav',
+              },
+            ),
+            'tabs': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.up: 'search',
+                DpadDirection.down: 'content',
+              },
+            ),
+            'content': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.up: 'tabs',
+              },
+            ),
+            'player_controls': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.down: 'video_tabs',
+              },
+            ),
+            'video_tabs': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.up: 'player_controls',
+                DpadDirection.down: 'video_info',
+              },
+            ),
+            'video_info': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.up: 'video_tabs',
+              },
+            ),
+          },
+        ),
+        child: const MyApp(),
+      );
+    } else {
+      return const MyApp();
+    }
   }
 }
 

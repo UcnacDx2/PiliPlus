@@ -259,18 +259,26 @@ class _MainAppState extends State<MainApp>
                                     label: e.label,
                                     icon: DpadFocusable(
                                       builder: (context, hasFocus, isSelected, child) {
-                                        return child!;
+                                        final scale = hasFocus ? 1.1 : 1.0;
+                                        return Transform.scale(
+                                          scale: scale,
+                                          child: child!,
+                                        );
                                       },
-                                      onClick: () => _mainController.setIndex(
+                                      onEnter: () => _mainController.setIndex(
                                         _mainController.navigationBars.indexOf(e),
                                       ),
                                       child: _buildIcon(type: e),
                                     ),
                                     selectedIcon: DpadFocusable(
                                       builder: (context, hasFocus, isSelected, child) {
-                                        return child!;
+                                        final scale = hasFocus ? 1.1 : 1.0;
+                                        return Transform.scale(
+                                          scale: scale,
+                                          child: child!,
+                                        );
                                       },
-                                      onClick: () => _mainController.setIndex(
+                                      onEnter: () => _mainController.setIndex(
                                         _mainController.navigationBars.indexOf(e),
                                       ),
                                       child: _buildIcon(
@@ -524,12 +532,10 @@ class _MainAppState extends State<MainApp>
   }
 
   Widget userAndSearchVertical(ThemeData theme) {
-    return DpadRegion(
-      region: 'sidebar',
-      child: Column(
-        children: [
-          Semantics(
-            label: "我的",
+    return Column(
+      children: [
+        Semantics(
+          label: "我的",
             child: DpadFocusable(
               builder: (context, hasFocus, isSelected, child) {
                 final scale = hasFocus ? 1.1 : 1.0;
@@ -538,7 +544,7 @@ class _MainAppState extends State<MainApp>
                   child: child!,
                 );
               },
-              onClick: _mainController.toMinePage,
+              onEnter: _mainController.toMinePage,
               child: Obx(
                 () => _mainController.accountService.isLogin.value
                     ? Stack(
@@ -608,7 +614,7 @@ class _MainAppState extends State<MainApp>
                 child: child!,
               );
             },
-            onClick: () => Get.toNamed('/search'),
+            onEnter: () => Get.toNamed('/search'),
             child: IconButton(
               tooltip: '搜索',
               icon: const Icon(

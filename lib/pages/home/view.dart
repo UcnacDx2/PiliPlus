@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage>
                             ),
                           );
                         },
-                        onClick: () {
+                        onEnter: () {
                           _homeController.tabController.animateTo(
                             _homeController.tabs.indexOf(e),
                           );
@@ -106,74 +106,104 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget searchBarAndUser(ThemeData theme) {
-    return Row(
-      children: [
-        searchBar(theme),
-        const SizedBox(width: 4),
-        Obx(
-          () => _homeController.accountService.isLogin.value
-              ? msgBadge(_mainController)
-              : const SizedBox.shrink(),
-        ),
-        const SizedBox(width: 8),
-        Semantics(
-          label: "我的",
-          child: Obx(
-            () => _homeController.accountService.isLogin.value
-                ? Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      NetworkImgLayer(
-                        type: ImageType.avatar,
-                        width: 34,
-                        height: 34,
-                        src: _homeController.accountService.face.value,
-                      ),
-                      Positioned.fill(
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: InkWell(
-                            onTap: _mainController.toMinePage,
-                            splashColor: theme.colorScheme.primaryContainer
-                                .withValues(alpha: 0.3),
-                            customBorder: const CircleBorder(),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: -6,
-                        bottom: -6,
-                        child: Obx(
-                          () => MineController.anonymity.value
-                              ? IgnorePointer(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          theme.colorScheme.secondaryContainer,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      size: 16,
-                                      MdiIcons.incognito,
-                                      color: theme
-                                          .colorScheme
-                                          .onSecondaryContainer,
-                                    ),
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                      ),
-                    ],
-                  )
-                : defaultUser(
-                    theme: theme,
-                    onPressed: _mainController.toMinePage,
-                  ),
+    return DpadRegion(
+      region: 'user_area',
+      child: Row(
+        children: [
+          DpadRegion(
+            region: 'search',
+            child: searchBar(theme),
           ),
-        ),
-      ],
+          const SizedBox(width: 4),
+          DpadFocusable(
+            builder: (context, hasFocus, isSelected, child) {
+              final scale = hasFocus ? 1.1 : 1.0;
+              return Transform.scale(
+                scale: scale,
+                child: child!,
+              );
+            },
+            onEnter: () {
+              _mainController.msgUnReadCount.value = '';
+              _mainController.lastCheckUnreadAt =
+                  DateTime.now().millisecondsSinceEpoch;
+              Get.toNamed('/whisper');
+            },
+            child: Obx(
+              () => _homeController.accountService.isLogin.value
+                  ? msgBadge(_mainController)
+                  : const SizedBox.shrink(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          DpadFocusable(
+            builder: (context, hasFocus, isSelected, child) {
+              final scale = hasFocus ? 1.1 : 1.0;
+              return Transform.scale(
+                scale: scale,
+                child: child!,
+              );
+            },
+            onEnter: _mainController.toMinePage,
+            child: Semantics(
+              label: "我的",
+              child: Obx(
+                () => _homeController.accountService.isLogin.value
+                    ? Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          NetworkImgLayer(
+                            type: ImageType.avatar,
+                            width: 34,
+                            height: 34,
+                            src: _homeController.accountService.face.value,
+                          ),
+                          Positioned.fill(
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: InkWell(
+                                onTap: _mainController.toMinePage,
+                                splashColor: theme.colorScheme.primaryContainer
+                                    .withValues(alpha: 0.3),
+                                customBorder: const CircleBorder(),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            right: -6,
+                            bottom: -6,
+                            child: Obx(
+                              () => MineController.anonymity.value
+                                  ? IgnorePointer(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: theme
+                                              .colorScheme.secondaryContainer,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          size: 16,
+                                          MdiIcons.incognito,
+                                          color: theme
+                                              .colorScheme.onSecondaryContainer,
+                                        ),
+                                      ),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ),
+                        ],
+                      )
+                    : defaultUser(
+                        theme: theme,
+                        onPressed: _mainController.toMinePage,
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -222,7 +252,7 @@ class _HomePageState extends State<HomePage>
           );
         },
         autofocus: true,
-        onClick: () => Get.toNamed(
+        onEnter: () => Get.toNamed(
           '/search',
           parameters: {
             if (_homeController.enableSearchWord)
