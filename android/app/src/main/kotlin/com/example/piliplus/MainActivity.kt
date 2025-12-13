@@ -20,7 +20,8 @@ import kotlin.system.exitProcess
 
 class MainActivity : AudioServiceActivity() {
     private lateinit var methodChannel: MethodChannel
-    private var backPressedKeyDownTime: Long = 0
+    private var backPressedCount: Int = 0
+    private var backPressedTime: Long = 0
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -158,9 +159,6 @@ class MainActivity : AudioServiceActivity() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (event.repeatCount == 0) {
-                backPressedKeyDownTime = event.eventTime
-            }
             event.startTracking()
             return true
         }
@@ -169,8 +167,16 @@ class MainActivity : AudioServiceActivity() {
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK && event.isTracking && !event.isCanceled) {
-            val pressedDuration = event.eventTime - backPressedKeyDownTime
-            if (pressedDuration >= 3500) {
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - backPressedTime < 1000) {
+                backPressedCount++
+            } else {
+                backPressedCount = 1
+            }
+            backPressedTime = currentTime
+            
+            if (backPressedCount >= 3) {
+                backPressedCount = 0
                 finish()
             } else {
                 super.onBackPressed()
