@@ -198,7 +198,6 @@ class _LiveRoomPageState extends State<LiveRoomPage>
     if (plPlayerController.keyboardControl) {
       child = PlayerFocus(
         plPlayerController: plPlayerController,
-        onSendDanmaku: _liveRoomController.onSendDanmaku,
         child: child,
       );
     }

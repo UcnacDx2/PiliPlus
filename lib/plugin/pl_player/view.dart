@@ -357,7 +357,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 videoDetailController,
                 isLandscape,
                 focusNode:
-                    isFirst ? plPlayerController.mainControlFocusNode : null,
+                    isFirst ? plPlayerController.mainControlsFocusNode : null,
               );
             },
           ),
@@ -385,7 +385,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final isFullScreen = this.isFullScreen;
 
     final flag =
-        isFullScreen || plPlayerController.isDesktopPip || maxWidth >= 500;
+        isFullScreen || plPlayerController.isDesktopPip || widget.maxWidth >= 500;
     List<BottomControlType> secondaryControls = [
       if (!plPlayerController.isFileSource && plPlayerController.showDmChart)
         BottomControlType.dmChart,
@@ -429,7 +429,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         videoDetailController,
                         isLandscape,
                         focusNode: isFirst
-                            ? plPlayerController.secondaryControlFocusNode
+                            ? plPlayerController.secondaryControlsFocusNode
                             : null,
                       );
                     }).toList(),
@@ -1024,7 +1024,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               plPlayerController.triggerFullScreen(status: false);
             } else if (Utils.isMobile &&
                 !videoDetailController.horizontalScreen &&
-                widget.maxWidth < widget.maxHeight) {
+                !widget.maxWidth > widget.maxHeight) {
               verticalScreenForTwoSeconds();
             } else {
               Get.back();
@@ -1999,11 +1999,11 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         videoDetailController: videoDetailController,
                         buildMainControls: () => buildMainControls(
                           videoDetailController,
-                          maxWidth > maxHeight,
+                          !widget.maxWidth > widget.maxHeight,
                         ),
                         buildSecondaryControls: () => buildSecondaryControls(
                           videoDetailController,
-                          maxWidth > maxHeight,
+                          !widget.maxWidth > widget.maxHeight,
                         ),
                       ),
                 ),

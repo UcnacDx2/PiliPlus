@@ -32,22 +32,22 @@ class PlayerFocus extends StatelessWidget {
     final key = event.logicalKey;
 
     // Layer 1: Controls are hidden. Handle waking up the controls.
-    if (!plPlayerController.isControlShowing.value) {
+    if (!plPlayerController.showControls.value) {
       if (key == LogicalKeyboardKey.select ||
           key == LogicalKeyboardKey.enter ||
           key == LogicalKeyboardKey.arrowUp ||
           key == LogicalKeyboardKey.arrowDown) {
 
-        plPlayerController.showControls();
+        plPlayerController.controls = true;
 
         // Delay to allow the UI to build before requesting focus.
         Future.delayed(const Duration(milliseconds: 50), () {
           if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
             plPlayerController.progressFocusNode.requestFocus();
           } else if (key == LogicalKeyboardKey.arrowUp) {
-            plPlayerController.mainControlFocusNode.requestFocus();
+            plPlayerController.mainControlsFocusNode.requestFocus();
           } else if (key == LogicalKeyboardKey.arrowDown) {
-            plPlayerController.secondaryControlFocusNode.requestFocus();
+            plPlayerController.secondaryControlsFocusNode.requestFocus();
           }
         });
 
