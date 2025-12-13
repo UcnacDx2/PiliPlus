@@ -491,49 +491,45 @@ class _MainAppState extends State<MainApp>
   int _currentFocusIndex = 0;
 
   Widget _buildTVBottomNav(ThemeData theme) {
-    return DpadRegion(
-      region: 'bottom_nav',
-      child: Container(
-        height: 60,
-        color: theme.colorScheme.surface,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: _mainController.navigationBars.mapWithIndex((i, e) {
-            final isSelected = _mainController.selectedIndex.value == i;
-            return DpadFocusable(
-              focusNode: _focusNodes[i],
-              autofocus: i == 0,
-              isEntryPoint: i == 0,
-              onFocus: (hasFocus) {
-                if (hasFocus) {
-                  setState(() {
-                    _currentFocusIndex = i;
-                  });
-                }
-              },
-              onPressed: () => _mainController.setIndex(i),
-              builder: (context, hasFocus) {
-                final color = isSelected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface;
-                Widget child = Column(
-                  mainAxisAlignment.center,
-                  children: [
-                    _buildIcon(type: e, selected: isSelected),
-                    Text(
-                      e.label,
-                      style: TextStyle(color: color),
-                    ),
-                  ],
-                );
-                if (hasFocus) {
-                  child = TVFocusEffects.primary(context).build(context, child);
-                }
-                return child;
-              },
-            );
-          }).toList(),
-        ),
+    return Container(
+      height: 60,
+      color: theme.colorScheme.surface,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: _mainController.navigationBars.mapWithIndex((i, e) {
+          final isSelected = _mainController.selectedIndex.value == i;
+          return DpadFocusable(
+            autofocus: i == 0,
+            isEntryPoint: i == 0,
+            onFocus: (hasFocus) {
+              if (hasFocus) {
+                setState(() {
+                  _currentFocusIndex = i;
+                });
+              }
+            },
+            onPressed: () => _mainController.setIndex(i),
+            builder: (context, hasFocus) {
+              final color = isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface;
+              Widget child = Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildIcon(type: e, selected: isSelected),
+                  Text(
+                    e.label,
+                    style: TextStyle(color: color),
+                  ),
+                ],
+              );
+              if (hasFocus) {
+                child = TVFocusEffects.primary(context).build(context, child);
+              }
+              return child;
+            },
+          );
+        }).toList(),
       ),
     );
   }
