@@ -5,34 +5,31 @@ class DpadVideoCardWrapper extends StatelessWidget {
   const DpadVideoCardWrapper({
     super.key,
     required this.child,
-    this.onEnter,
-    this.onLongPress,
+    required this.onEnter,
   });
 
   final Widget child;
-  final VoidCallback? onEnter;
-  final VoidCallback? onLongPress;
+  final VoidCallback onEnter;
 
   @override
   Widget build(BuildContext context) {
     return DpadFocusable(
-      onEnter: onEnter,
-      onLongPress: onLongPress,
       builder: (context, hasFocus, child) {
-        if (hasFocus) {
-          return FocusEffects.combine(
-            [
-              FocusEffects.scale(scale: 1.05),
-              FocusEffects.border(
-                color: Theme.of(context).colorScheme.primary,
-                width: 3,
-              ),
-            ],
-            child: child!,
-          );
-        }
-        return child!;
+        final a = FocusEffects.scale(
+          context: context,
+          hasFocus: hasFocus,
+          child: child!,
+          scale: 1.05,
+        );
+        return FocusEffects.border(
+          context: context,
+          hasFocus: hasFocus,
+          child: a,
+          color: Theme.of(context).colorScheme.primary,
+          width: 2,
+        );
       },
+      onEnter: onEnter,
       child: child,
     );
   }

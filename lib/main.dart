@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/common/constants.dart';
+import 'package:dpad/dpad.dart';
+import 'package:is_tv/is_tv.dart';
 import 'package:PiliPlus/common/widgets/custom_toast.dart';
 import 'package:PiliPlus/common/widgets/mouse_back.dart';
 import 'package:PiliPlus/http/init.dart';
@@ -39,8 +41,6 @@ import 'package:get/get.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:dpad/dpad.dart';
-import 'package:is_tv/is_tv.dart';
 import 'package:window_manager/window_manager.dart' hide calcWindowPosition;
 
 WebViewEnvironment? webViewEnvironment;
@@ -206,18 +206,95 @@ void main() async {
     Catcher2(
       debugConfig: debugConfig,
       releaseConfig: releaseConfig,
-      rootWidget: const MyApp(),
+      rootWidget: const AppWrapper(),
     );
   } else {
-    final isTV = await IsTv.check();
-    runApp(MyApp(isTV: isTV));
+    runApp(const AppWrapper());
+  }
+}
+
+class AppWrapper extends StatefulWidget {
+  const AppWrapper({super.key});
+
+  @override
+  State<AppWrapper> createState() => _AppWrapperState();
+}
+
+class _AppWrapperState extends State<AppWrapper> {
+  bool isTV = false;
+
+  @override
+  void initState() {
+    super.initState();
+    IsTv.check().then((value) {
+      setState(() {
+        isTV = value;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isTV) {
+      return DpadRoot(
+        focusMemory: true,
+        regionNavigation: DpadRegionNavigation(
+          rules: {
+            'sidebar': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.right: 'search',
+              },
+            ),
+            'bottom_nav': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.up: 'search',
+              },
+            ),
+            'search': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.left: 'sidebar',
+                DpadDirection.down: 'tabs',
+                DpadDirection.up: 'bottom_nav',
+              },
+            ),
+            'tabs': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.up: 'search',
+                DpadDirection.down: 'content',
+              },
+            ),
+            'content': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.up: 'tabs',
+              },
+            ),
+            'player_controls': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.down: 'video_tabs',
+              },
+            ),
+            'video_tabs': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.up: 'player_controls',
+                DpadDirection.down: 'video_info',
+              },
+            ),
+            'video_info': DpadRegionNavigationRule(
+              targets: {
+                DpadDirection.up: 'video_tabs',
+              },
+            ),
+          },
+        ),
+        child: const MyApp(),
+      );
+    }
+    return const MyApp();
   }
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, required this.isTV});
-
-  final bool isTV;
+  const MyApp({super.key});
 
   static ThemeData? darkThemeData;
 
@@ -256,13 +333,13 @@ class MyApp extends StatelessWidget {
     Get.back();
   }
 
-  Widget _build({
+  static Widget _build({
     ColorScheme? lightColorScheme,
     ColorScheme? darkColorScheme,
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    final app = GetMaterialApp(
+    return GetMaterialApp(
       title: Constants.appName,
       theme: ThemeUtils.getThemeData(
         colorScheme:
@@ -345,36 +422,6 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
-
-    if (isTV) {
-      return DpadRoot(
-        focusMemory: true,
-        regionNavigation: {
-          'sidebar': {
-            'right': 'search',
-          },
-          'search': {
-            'left': 'sidebar',
-            'down': 'tabs',
-          },
-          'tabs': {
-            'up': 'search',
-            'down': 'content',
-          },
-          'content': {
-            'up': 'tabs',
-          },
-          'player_controls': {
-            'down': 'video_tabs',
-          },
-          'video_tabs': {
-            'up': 'player_controls',
-          },
-        },
-        child: app,
-      );
-    }
-    return app;
   }
 
   @override

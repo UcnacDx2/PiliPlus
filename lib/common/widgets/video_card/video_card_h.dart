@@ -15,9 +15,10 @@ import 'package:PiliPlus/models/search/result.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/common/widgets/video_card/dpad_video_card_wrapper.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
-import 'package:PiliPlus/common/widgets/video_card/dpad_video_card_wrapper.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter/services.dart'; // 必须导入，用于 LogicalKeyboardKey
@@ -159,33 +160,31 @@ class _VideoCardHState extends State<VideoCardH> {
       title: widget.videoItem.title,
       cover: widget.videoItem.cover,
     );
-    
     return DpadVideoCardWrapper(
       onEnter: widget.onTap ?? _onTap,
-      onLongPress: onLongPress,
       child: Material(
-        type: MaterialType.transparency,
-        // [Feat] Focus 监听逻辑
-        child: Focus(
-          canRequestFocus: false,
-          skipTraversal: true,
-          onKeyEvent: (node, event) {
-            if (event is KeyDownEvent &&
-                event.logicalKey == LogicalKeyboardKey.contextMenu) {
-              _menuKey.currentState?.showButtonMenu();
-              return KeyEventResult.handled;
-            }
-            return KeyEventResult.ignored;
-          },
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              InkWell(
-                onLongPress: onLongPress,
-                onSecondaryTap: Utils.isMobile ? null : onLongPress,
-                onTap: widget.onTap ?? _onTap,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
+          type: MaterialType.transparency,
+          // [Feat] Focus 监听逻辑
+          child: Focus(
+        canRequestFocus: false,
+        skipTraversal: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.contextMenu) {
+            _menuKey.currentState?.showButtonMenu();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            InkWell(
+              onLongPress: onLongPress,
+              onSecondaryTap: Utils.isMobile ? null : onLongPress,
+              onTap: widget.onTap ?? _onTap, // 使用合并后的 onTap
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
                   horizontal: StyleString.safeSpace,
                   vertical: 5,
                 ),

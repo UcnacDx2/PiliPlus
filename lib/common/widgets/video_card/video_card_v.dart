@@ -14,9 +14,10 @@ import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/common/widgets/video_card/dpad_video_card_wrapper.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
-import 'package:PiliPlus/common/widgets/video_card/dpad_video_card_wrapper.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:intl/intl.dart';
@@ -121,33 +122,31 @@ class _VideoCardVState extends State<VideoCardV> {
     );
     // [Feat] Focus 包裹
     return DpadVideoCardWrapper(
-      onEnter: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
-      onLongPress: onLongPress,
-      child: Focus(
-        canRequestFocus: false,
-        skipTraversal: true,
-        onKeyEvent: (node, event) {
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.contextMenu) {
-            _menuKey.currentState?.showButtonMenu();
-            return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Card(
-              clipBehavior: Clip.hardEdge,
-              child: InkWell(
-                onTap: () =>
-                    onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
-                onLongPress: onLongPress,
-                onSecondaryTap: Utils.isMobile ? null : onLongPress,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AspectRatio(
+        onEnter: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
+        child: Focus(
+              canRequestFocus: false,
+              skipTraversal: true,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.contextMenu) {
+          _menuKey.currentState?.showButtonMenu();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Card(
+            clipBehavior: Clip.hardEdge,
+            child: InkWell(
+              onTap: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
+              onLongPress: onLongPress,
+              onSecondaryTap: Utils.isMobile ? null : onLongPress,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AspectRatio(
                     aspectRatio: StyleString.aspectRatio,
                     child: LayoutBuilder(
                       builder: (context, boxConstraints) {

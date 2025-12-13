@@ -37,6 +37,8 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  dpad: ^2.0.2
+  is_tv: ^0.0.3+5
   # 动态取色
   dynamic_color: ^1.8.1
 
@@ -48,8 +50,6 @@ dependencies:
 
   # 网络
   dio: ^5.7.0
-  dpad: ^2.0.2
-  is_tv: ^0.0.3+5
   cookie_jar: ^4.0.8
   connectivity_plus: ^7.0.0
   dio_http2_adapter: ^2.5.3

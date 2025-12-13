@@ -12,6 +12,7 @@ import 'package:PiliPlus/pages/rank/view.dart';
 import 'package:PiliPlus/utils/grid.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -35,9 +36,14 @@ class _HotPageState extends CommonPageState<HotPage, HotController>
     required String title,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+    return DpadFocusable(
+      builder: (context, hasFocus, child) => FocusEffects.scale(
+        context: context,
+        hasFocus: hasFocus,
+        child: child!,
+        scale: 1.1,
+      ),
+      onEnter: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -144,9 +150,11 @@ class _HotPageState extends CommonPageState<HotPage, HotController>
       Loading() => gridSkeleton,
       Success(:var response) =>
         response != null && response.isNotEmpty
-            ? SliverGrid.builder(
-                gridDelegate: gridDelegate,
-                itemBuilder: (context, index) {
+            ? DpadRegion(
+                region: 'content',
+                child: SliverGrid.builder(
+                  gridDelegate: gridDelegate,
+                  itemBuilder: (context, index) {
                   if (index == response.length - 1) {
                     controller.onLoadMore();
                   }

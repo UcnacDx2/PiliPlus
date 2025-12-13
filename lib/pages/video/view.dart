@@ -1342,17 +1342,18 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     required double width,
     required double height,
     bool isPipMode = false,
-  }) => Obx(
-    key: videoDetailController.videoPlayerKey,
-    () =>
-        videoDetailController.videoState.value is! Success ||
-            !videoDetailController.autoPlay.value ||
-            plPlayerController?.videoController == null
-        ? const SizedBox.shrink()
-        : PLVideoPlayer(
-            maxWidth: width,
-            maxHeight: height,
-            plPlayerController: plPlayerController!,
+  }) => DpadRegion(
+        region: 'player_controls',
+        child: Obx(
+          key: videoDetailController.videoPlayerKey,
+          () => videoDetailController.videoState.value is! Success ||
+                  !videoDetailController.autoPlay.value ||
+                  plPlayerController?.videoController == null
+              ? const SizedBox.shrink()
+              : PLVideoPlayer(
+                  maxWidth: width,
+                  maxHeight: height,
+                  plPlayerController: plPlayerController!,
             videoDetailController: videoDetailController,
             introController: introController,
             headerControl: HeaderControl(
@@ -1447,63 +1448,68 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     }
 
     final flag = !needIndicator || tabs.length == 1;
-    Widget tabBar() => TabBar(
-          labelColor: flag ? themeData.colorScheme.onSurface : null,
-          indicator: flag ? const BoxDecoration() : null,
-          padding: EdgeInsets.zero,
-          controller: videoDetailController.tabCtr,
-          labelStyle:
-              TabBarTheme.of(context).labelStyle?.copyWith(fontSize: 13) ??
-                  const TextStyle(fontSize: 13),
-          labelPadding: const EdgeInsets.symmetric(horizontal: 10.0),
-          dividerColor: Colors.transparent,
-          dividerHeight: 0,
-          onTap: (value) {
-            void animToTop() {
-              if (onTap != null) {
-                onTap();
-                return;
-              }
-              String text = tabs[value];
-              if (videoDetailController.isFileSource ||
-                  text == '简介' ||
-                  text == '相关视频') {
-                videoDetailController.introScrollCtr?.animToTop();
-              } else if (text.startsWith('评论')) {
-                _videoReplyController.animateToTop();
-              }
-            }
-
-            if (flag) {
-              animToTop();
-            } else if (!videoDetailController.tabCtr.indexIsChanging) {
-              animToTop();
-            }
-          },
-          tabs: tabs.asMap().entries.map((entry) {
-            final index = entry.key;
-            final text = entry.value;
-            return DpadFocusable(
-              onEnter: () => videoDetailController.tabCtr.animateTo(index),
-              builder: (context, hasFocus, _) {
-                if (text == '评论') {
-                  return Obx(() {
-                    final count = _videoReplyController.count.value;
-                    return Tab(
-                      text:
-                          '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
-                    );
-                  });
-                } else {
-                  return Tab(text: text);
+    Widget tabBar() => DpadRegion(
+          region: 'video_tabs',
+          child: TabBar(
+            labelColor: flag ? themeData.colorScheme.onSurface : null,
+            indicator: flag ? const BoxDecoration() : null,
+            padding: EdgeInsets.zero,
+            controller: videoDetailController.tabCtr,
+            labelStyle:
+                TabBarTheme.of(context).labelStyle?.copyWith(fontSize: 13) ??
+                    const TextStyle(fontSize: 13),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 10.0),
+            dividerColor: Colors.transparent,
+            dividerHeight: 0,
+            onTap: (value) {
+              void animToTop() {
+                if (onTap != null) {
+                  onTap();
+                  return;
                 }
-              },
-            );
-          }).toList(),
+                String text = tabs[value];
+                if (videoDetailController.isFileSource ||
+                    text == '简介' ||
+                    text == '相关视频') {
+                  videoDetailController.introScrollCtr?.animToTop();
+                } else if (text.startsWith('评论')) {
+                  _videoReplyController.animateToTop();
+                }
+              }
+
+              if (flag) {
+                animToTop();
+              } else if (!videoDetailController.tabCtr.indexIsChanging) {
+                animToTop();
+              }
+            },
+            tabs: tabs.asMap().entries.map((entry) {
+              final index = entry.key;
+              final text = entry.value;
+              return DpadFocusable(
+                builder: (context, hasFocus, child) => child!,
+                onEnter: () => videoDetailController.tabCtr.animateTo(index),
+                child: Builder(
+                  builder: (context) {
+                    if (text == '评论') {
+                      return Obx(() {
+                        final count = _videoReplyController.count.value;
+                        return Tab(
+                          text:
+                              '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
+                        );
+                      });
+                    } else {
+                      return Tab(text: text);
+                    }
+                  },
+                ),
+              );
+            }).toList(),
+          ),
         );
-    return DpadRegion(
-      id: 'video_tabs',
-      child: Container(
+
+    return Container(
       height: 45,
       decoration: BoxDecoration(
         border: Border(
