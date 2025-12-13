@@ -22,6 +22,7 @@ import 'package:PiliPlus/utils/update.dart';
 import 'package:collection/collection.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
 class MainController extends GetxController
@@ -67,6 +68,7 @@ class MainController extends GetxController
 
   static const _period = 5 * 60 * 1000;
   late int _lastSelectTime = 0;
+  DateTime? _lastBackPressed;
 
   @override
   void onInit() {
@@ -280,6 +282,14 @@ class MainController extends GetxController
     }
   }
 
+  void setIndexWithDebounce(int value) {
+    EasyDebounce.debounce(
+      'setIndexWithDebounce',
+      const Duration(milliseconds: 300),
+      () => setIndex(value),
+    );
+  }
+
   void setIndex(int value) {
     feedBack();
 
@@ -325,6 +335,36 @@ class MainController extends GetxController
   void setSearchBar() {
     if (hasHome) {
       homeController.searchBarStream?.add(true);
+    }
+  }
+
+  void handleBackPress(bool isContentFocused, {required Function onBack}) {
+    if (isContentFocused) {
+      final currentNav = navigationBars[selectedIndex.value];
+      switch (currentNav) {
+        case NavigationBarType.home:
+          if (homeController.tabController.index != 0) {
+            homeController.tabController.animateTo(0);
+          } else {
+            FocusManager.instance.primaryFocus?.unfocus();
+          }
+          break;
+        default:
+          FocusManager.instance.primaryFocus?.unfocus();
+      }
+    } else {
+      if (selectedIndex.value != 0) {
+        setIndex(0);
+      } else {
+        final now = DateTime.now();
+        if (_lastBackPressed == null ||
+            now.difference(_lastBackPressed!) > const Duration(seconds: 2)) {
+          _lastBackPressed = now;
+          SmartDialog.showToast('再按一次退出应用');
+        } else {
+          onBack();
+        }
+      }
     }
   }
 

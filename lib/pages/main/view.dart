@@ -20,8 +20,10 @@ import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:collection/collection.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -36,10 +38,25 @@ class _MainAppState extends State<MainApp>
     with RouteAware, WidgetsBindingObserver, WindowListener, TrayListener {
   final MainController _mainController = Get.put(MainController());
   late final _setting = GStorage.setting;
+  late List<FocusNode> _focusNodes;
+  late FocusNode _contentFocusNode;
 
   @override
   void initState() {
     super.initState();
+    _focusNodes = List.generate(
+      _mainController.navigationBars.length,
+      (index) => FocusNode(),
+    );
+    _contentFocusNode = FocusNode();
+
+    for (var i = 0; i < _focusNodes.length; i++) {
+      _focusNodes[i].addListener(() {
+        if (_focusNodes[i].hasFocus) {
+          _mainController.setIndexWithDebounce(i);
+        }
+      });
+    }
     WidgetsBinding.instance.addObserver(this);
     if (Utils.isDesktop) {
       windowManager
@@ -99,6 +116,10 @@ class _MainAppState extends State<MainApp>
       trayManager.removeListener(this);
       windowManager.removeListener(this);
     }
+    for (var node in _focusNodes) {
+      node.dispose();
+    }
+    _contentFocusNode.dispose();
     PageUtils.routeObserver.unsubscribe(this);
     WidgetsBinding.instance.removeObserver(this);
     PiliScheme.listener?.cancel();
@@ -251,13 +272,17 @@ class _MainAppState extends State<MainApp>
                           onDestinationSelected: _mainController.setIndex,
                           selectedIndex: _mainController.selectedIndex.value,
                           destinations: _mainController.navigationBars
-                              .map(
-                                (e) => NavigationDestination(
+                              .mapIndexed(
+                                (index, e) => NavigationDestination(
                                   label: e.label,
-                                  icon: _buildIcon(type: e),
-                                  selectedIcon: _buildIcon(
+                                  icon: _buildIconWithFocus(
+                                    type: e,
+                                    focusNode: _focusNodes[index],
+                                  ),
+                                  selectedIcon: _buildIconWithFocus(
                                     type: e,
                                     selected: true,
+                                    focusNode: _focusNodes[index],
                                   ),
                                 ),
                               )
@@ -267,7 +292,7 @@ class _MainAppState extends State<MainApp>
                     : Obx(
                         () => BottomNavigationBar(
                           currentIndex: _mainController.selectedIndex.value,
-                          onTap: _mainController.setIndex,
+                          onTap: _mainController.setIndexWithDebounce,
                           iconSize: 16,
                           selectedFontSize: 12,
                           unselectedFontSize: 12,
@@ -288,21 +313,18 @@ class _MainAppState extends State<MainApp>
                       )
               : const SizedBox.shrink()
         : null;
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (bool didPop, Object? result) {
-        if (_mainController.directExitOnBack) {
-          onBack();
-        } else {
-          if (_mainController.selectedIndex.value != 0) {
-            _mainController
-              ..setIndex(0)
-              ..bottomBarStream?.add(true)
-              ..setSearchBar();
-          } else {
-            onBack();
-          }
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.back) {
+          _mainController.handleBackPress(
+            _contentFocusNode.hasFocus,
+            onBack: onBack,
+          );
+          return KeyEventResult.handled;
         }
+        return KeyEventResult.ignored;
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
@@ -347,8 +369,8 @@ class _MainAppState extends State<MainApp>
                                                   Radius.circular(16),
                                                 ),
                                               ),
-                                          onDestinationSelected:
-                                              _mainController.setIndex,
+                                          onDestinationSelected: _mainController
+                                              .setIndexWithDebounce,
                                           selectedIndex: _mainController
                                               .selectedIndex
                                               .value,
@@ -361,9 +383,12 @@ class _MainAppState extends State<MainApp>
                                                       icon: _buildIcon(
                                                         type: e,
                                                       ),
-                                                      selectedIcon: _buildIcon(
+                                                      selectedIcon:
+                                                          _buildIconWithFocus(
                                                         type: e,
                                                         selected: true,
+                                                        focusNode:
+                                                            _focusNodes[index],
                                                       ),
                                                     ),
                                               )
@@ -380,17 +405,18 @@ class _MainAppState extends State<MainApp>
                                   selectedIndex:
                                       _mainController.selectedIndex.value,
                                   onDestinationSelected:
-                                      _mainController.setIndex,
+                                      _mainController.setIndexWithDebounce,
                                   labelType: NavigationRailLabelType.selected,
                                   leading: userAndSearchVertical(theme),
                                   destinations: _mainController.navigationBars
-                                      .map(
-                                        (e) => NavigationRailDestination(
+                                      .mapIndexed(
+                                        (index, e) => NavigationRailDestination(
                                           label: Text(e.label),
                                           icon: _buildIcon(type: e),
-                                          selectedIcon: _buildIcon(
+                                          selectedIcon: _buildIconWithFocus(
                                             type: e,
                                             selected: true,
+                                            focusNode: _focusNodes[index],
                                           ),
                                         ),
                                       )
@@ -410,20 +436,24 @@ class _MainAppState extends State<MainApp>
                 ],
                 Expanded(
                   child: _mainController.mainTabBarView
-                      ? CustomTabBarView(
-                          scrollDirection: useBottomNav
-                              ? Axis.horizontal
-                              : Axis.vertical,
+                      ? Focus(
+                          focusNode: _contentFocusNode,
+                          child: CustomTabBarView(
+                            scrollDirection: useBottomNav
+                                ? Axis.horizontal
+                                : Axis.vertical,
                           physics: const NeverScrollableScrollPhysics(),
                           controller: _mainController.controller,
                           children: _mainController.navigationBars
                               .map((i) => i.page)
                               .toList(),
-                        )
-                      : PageView(
-                          physics: const NeverScrollableScrollPhysics(),
-                          controller: _mainController.controller,
-                          children: _mainController.navigationBars
+                        ))
+                      : Focus(
+                          focusNode: _contentFocusNode,
+                          child: PageView(
+                            physics: const NeverScrollableScrollPhysics(),
+                            controller: _mainController.controller,
+                            children: _mainController.navigationBars
                               .map((i) => i.page)
                               .toList(),
                         ),
@@ -474,6 +504,31 @@ class _MainAppState extends State<MainApp>
             },
           )
         : icon;
+  }
+
+  Widget _buildIconWithFocus({
+    required NavigationBarType type,
+    bool selected = false,
+    required FocusNode focusNode,
+  }) {
+    return Focus(
+      focusNode: focusNode,
+      child: AnimatedBuilder(
+        animation: focusNode,
+        builder: (context, child) {
+          return Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: focusNode.hasFocus
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: _buildIcon(type: type, selected: selected),
+          );
+        },
+      ),
+    );
   }
 
   Widget userAndSearchVertical(ThemeData theme) {
