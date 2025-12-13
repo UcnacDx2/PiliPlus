@@ -22,6 +22,10 @@ class MainActivity : AudioServiceActivity() {
     private lateinit var methodChannel: MethodChannel
     private var backPressedCount: Int = 0
     private var backPressedTime: Long = 0
+    
+    companion object {
+        private const val TRIPLE_CLICK_TIMEOUT_MS = 1000L
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -168,7 +172,7 @@ class MainActivity : AudioServiceActivity() {
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK && event.isTracking && !event.isCanceled) {
             val currentTime = System.currentTimeMillis()
-            if (currentTime - backPressedTime < 1000) {
+            if (currentTime - backPressedTime < TRIPLE_CLICK_TIMEOUT_MS) {
                 backPressedCount++
             } else {
                 backPressedCount = 1
