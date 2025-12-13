@@ -1024,7 +1024,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               plPlayerController.triggerFullScreen(status: false);
             } else if (Utils.isMobile &&
                 !videoDetailController.horizontalScreen &&
-                !widget.maxWidth > widget.maxHeight) {
+                widget.maxWidth < widget.maxHeight) {
               verticalScreenForTwoSeconds();
             } else {
               Get.back();
