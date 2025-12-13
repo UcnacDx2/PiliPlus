@@ -78,6 +78,31 @@ class TvDebugPage extends StatelessWidget {
             leading: const Icon(Icons.brightness_6_outlined),
             title: const Text('切换主题'),
           ),
+          ListTile(
+            onTap: () => Get.toNamed('/videoV?bvid=BV1x14y1s7WU'),
+            leading: const Icon(Icons.video_collection_outlined),
+            title: const Text('视频详情'),
+          ),
+          ListTile(
+            onTap: () => Get.toNamed('/member?mid=351610151'),
+            leading: const Icon(Icons.person_outline),
+            title: const Text('用户中心'),
+          ),
+          ListTile(
+            onTap: () => Get.toNamed('/liveRoom?roomId=23058422'),
+            leading: const Icon(Icons.live_tv_outlined),
+            title: const Text('直播详情'),
+          ),
+          ListTile(
+            onTap: () => Get.toNamed('/articlePage?id=1919810'),
+            leading: const Icon(Icons.article_outlined),
+            title: const Text('专栏详情'),
+          ),
+          ListTile(
+            onTap: () => Get.toNamed('/dynamicDetail?id=883442575233318921'),
+            leading: const Icon(Icons.dynamic_feed_outlined),
+            title: const Text('动态详情'),
+          ),
         ],
       ),
     );
