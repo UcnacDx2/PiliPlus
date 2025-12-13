@@ -242,6 +242,7 @@ class CustomGetPage<T> extends GetPage<T> {
   CustomGetPage({
     required super.name,
     required super.page,
+    super.binding,
     super.popGesture = false,
     super.fullscreenDialog = false,
     super.showCupertinoParallax = false,
