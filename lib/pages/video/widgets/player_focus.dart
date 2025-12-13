@@ -250,10 +250,11 @@ class PlayerFocus extends StatelessWidget {
               plPlayerController.progressFocusNode.requestFocus();
               plPlayerController.currentFocus = FocusState.progress;
               return true;
+            } else {
+              // a temporary solution, it should be handled by the focus system
+              (FocusManager.instance.primaryFocus as FocusNode).unfocus();
+              plPlayerController.controls = false;
             }
-            plPlayerController.mainControlsFocusNode.requestFocus();
-            plPlayerController.currentFocus = FocusState.main;
-            return true;
           }
           if (onSkipSegment?.call() ?? false) {
             return true;
