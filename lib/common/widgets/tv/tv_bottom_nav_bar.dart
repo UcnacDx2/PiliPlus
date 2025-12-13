@@ -78,12 +78,12 @@ class TVBottomNavBar extends StatelessWidget {
         autofocus: index == 0,
         isEntryPoint: index == 0,
         region: 'bottom_nav',
-        onSelect: () => onDestinationSelected(index),
+        onTap: () => onDestinationSelected(index),
         builder: (context, hasFocus, child) {
           final color = isSelected
               ? Theme.of(context).colorScheme.primary
               : Theme.of(context).colorScheme.onSurface;
-          return TVFocusEffects.primary(context)(
+          return TVFocusEffects.primary(
             context,
             hasFocus,
             Column(
