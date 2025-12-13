@@ -310,15 +310,10 @@ class MyApp extends StatelessWidget {
             return Focus(
               canRequestFocus: false,
               onKeyEvent: (_, event) {
-                if (event is KeyDownEvent) {
-                  final result = DpadNavigator.handleKeyEvent(event);
-                  if (result == KeyEventResult.handled) {
-                    return KeyEventResult.handled;
-                  }
-                  if (event.logicalKey == LogicalKeyboardKey.escape) {
-                    _onBack();
-                    return KeyEventResult.handled;
-                  }
+                if (event.logicalKey == LogicalKeyboardKey.escape &&
+                    event is KeyDownEvent) {
+                  _onBack();
+                  return KeyEventResult.handled;
                 }
                 return KeyEventResult.ignored;
               },
