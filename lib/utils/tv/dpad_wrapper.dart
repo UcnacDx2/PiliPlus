@@ -1,8 +1,6 @@
-import 'package:flutter/material.dart';
-
-import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:dpad/dpad.dart';
+import 'package:flutter/material.dart';
 
 class DpadPageWrapper extends StatelessWidget {
   final Widget child;
@@ -18,7 +16,7 @@ class DpadPageWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!TVDetector.isTV && !Pref.enableTVMode) return child;
+    if (!TVDetector.isTV) return child;
 
     return DpadRegionScope(
       region: region,

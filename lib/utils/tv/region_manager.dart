@@ -1,9 +1,8 @@
 import 'package:dpad/dpad.dart';
-import 'package:flutter/widgets.dart';
 
 class TVRegionManager {
   static List<RegionNavigationRule> get defaultRules => [
-        // Bottom navigation -> Content area
+        // 底部导航 → 内容区
         RegionNavigationRule(
           fromRegion: 'bottom_nav',
           toRegion: 'video_grid',
@@ -12,7 +11,7 @@ class TVRegionManager {
           bidirectional: true,
           reverseStrategy: RegionNavigationStrategy.fixedEntry,
         ),
-        // Video card -> Player controls
+        // 视频卡片 → 播放器控制
         RegionNavigationRule(
           fromRegion: 'video_grid',
           toRegion: 'player_controls',

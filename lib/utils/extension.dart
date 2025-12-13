@@ -68,10 +68,6 @@ extension NonNullIterableExt<T> on Iterable<T> {
     }
     return value;
   }
-
-  Iterable<E> mapWithIndex<E>(E Function(int index, T value) f) {
-    return toList().asMap().entries.map((entry) => f(entry.key, entry.value));
-  }
 }
 
 extension MapExt<K, V> on Map<K, V> {

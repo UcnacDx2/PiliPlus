@@ -53,6 +53,7 @@ void main() async {
   appSupportDirPath = (await getApplicationSupportDirectory()).path;
   try {
     await GStorage.init();
+    await TVDetector.init();
   } catch (e) {
     await Utils.copyText(e.toString());
     if (kDebugMode) debugPrint('GStorage init error: $e');
@@ -331,6 +332,7 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
+
     if (TVDetector.isTV || Pref.enableTVMode) {
       app = DpadNavigator(
         enabled: true,
@@ -342,9 +344,8 @@ class MyApp extends StatelessWidget {
         onBackPressed: () => _handleTVBack(),
         child: app,
       );
-    }
-    if (Utils.isDesktop && !(TVDetector.isTV || Pref.enableTVMode)) {
-      return Focus(
+    } else if (Utils.isDesktop) {
+      app = Focus(
         canRequestFocus: false,
         onKeyEvent: (_, event) {
           if (event.logicalKey == LogicalKeyboardKey.escape &&
