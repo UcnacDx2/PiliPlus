@@ -41,8 +41,11 @@ import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/gesture_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
+<<<<<<< HEAD
+=======
 import 'package:PiliPlus/plugin/pl_player/utils/focus_manager.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
 import 'package:PiliPlus/plugin/pl_player/widgets/app_bar_ani.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/backward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/bottom_control.dart';
@@ -325,6 +328,12 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     super.dispose();
   }
 
+<<<<<<< HEAD
+  // 动态构建底部控制条
+  Widget buildBottomControl(
+    VideoDetailController videoDetailController,
+    bool isLandscape,
+=======
   /// 构建支持 TV 自动聚焦和高亮的菜单子项
   Widget _buildMenuItemChild({
     required bool isSelected,
@@ -410,6 +419,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     VideoDetailController videoDetailController,
     bool isLandscape,
     BottomControlsFocusManager focusManager,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
   ) {
     final videoDetail = introController.videoDetail.value;
     final isSeason = videoDetail.ugcSeason != null;
@@ -418,6 +428,16 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final isPlayAll = videoDetailController.isPlayAll;
     final anySeason = isSeason || isPart || isPgc || isPlayAll;
     final isFullScreen = this.isFullScreen;
+<<<<<<< HEAD
+    final double widgetWidth = isLandscape && isFullScreen ? 42 : 35;
+
+    Widget progressWidget(
+      BottomControlType bottomControl,
+    ) => switch (bottomControl) {
+      /// 播放暂停
+      BottomControlType.playOrPause => PlayOrPauseButton(
+        plPlayerController: plPlayerController,
+=======
     final isPipMode = plPlayerController.isPipMode;
     final isDesktop = Utils.isDesktop;
     final double widgetWidth = isLandscape && isFullScreen ? 42 : 35;
@@ -464,6 +484,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         plPlayerController: plPlayerController,
         focusNode: focusNode,
         autofocus: autofocus,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
       ),
 
       /// 上一集
@@ -476,7 +497,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           size: 22,
           color: Colors.white,
         ),
+<<<<<<< HEAD
+=======
         focusNode: focusNode,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
         onTap: () {
           if (!introController.prevPlay()) {
             SmartDialog.showToast('已经是第一集了');
@@ -494,7 +518,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           size: 22,
           color: Colors.white,
         ),
+<<<<<<< HEAD
+=======
         focusNode: focusNode,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
         onTap: () {
           if (!introController.nextPlay()) {
             SmartDialog.showToast('已经是最后一集了');
@@ -537,6 +564,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         ],
       ),
 
+<<<<<<< HEAD
+=======
       /// 更多设置
       BottomControlType.moreSettings => ComBtn(
         width: widgetWidth,
@@ -672,6 +701,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         },
       ),
 
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
       /// 高能进度条
       BottomControlType.dmChart => Obx(
         () {
@@ -703,7 +733,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         ),
                       ],
                     ),
+<<<<<<< HEAD
+=======
               focusNode: focusNode,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
               onTap: () => videoDetailController.showDmTrendChart.value =
                   !videoDetailController.showDmTrendChart.value,
             );
@@ -714,6 +747,34 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
       /// 超分辨率
       BottomControlType.superResolution => Obx(
+<<<<<<< HEAD
+        () => PopupMenuButton<SuperResolutionType>(
+          tooltip: '超分辨率',
+          requestFocus: false,
+          initialValue: plPlayerController.superResolutionType.value,
+          color: Colors.black.withValues(alpha: 0.8),
+          itemBuilder: (context) {
+            return SuperResolutionType.values
+                .map(
+                  (type) => PopupMenuItem<SuperResolutionType>(
+                    height: 35,
+                    padding: const EdgeInsets.only(left: 30),
+                    value: type,
+                    onTap: () => plPlayerController.setShader(type),
+                    child: Text(
+                      type.title,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                )
+                .toList();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              plPlayerController.superResolutionType.value.title,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+=======
         () => Focus(
           focusNode: focusNode,
           child: PopupMenuButton<SuperResolutionType>(
@@ -745,6 +806,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 ),
               ),
               focusNode,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
             ),
           ),
         ),
@@ -766,7 +828,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                     color: Colors.white,
                   ),
                 ),
+<<<<<<< HEAD
+=======
                 focusNode: focusNode,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
                 onTap: widget.showViewPoints,
                 onLongPress: () {
                   Feedback.forLongPress(context);
@@ -790,10 +855,16 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           size: 22,
           color: Colors.white,
         ),
+<<<<<<< HEAD
+        onTap: () {
+          if (videoDetailController.isFileSource) {
+            // TODO
+=======
         focusNode: focusNode,
         onTap: () {
           if (videoDetailController.isFileSource) {
             // TODO：我也不知道做什么
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
             return;
           }
           // part -> playAll -> season(pgc)
@@ -838,6 +909,34 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
       /// 画面比例
       BottomControlType.fit => Obx(
+<<<<<<< HEAD
+        () => PopupMenuButton<VideoFitType>(
+          tooltip: '画面比例',
+          requestFocus: false,
+          initialValue: plPlayerController.videoFit.value,
+          color: Colors.black.withValues(alpha: 0.8),
+          itemBuilder: (context) {
+            return VideoFitType.values
+                .map(
+                  (boxFit) => PopupMenuItem<VideoFitType>(
+                    height: 35,
+                    padding: const EdgeInsets.only(left: 30),
+                    value: boxFit,
+                    onTap: () => plPlayerController.toggleVideoFit(boxFit),
+                    child: Text(
+                      boxFit.desc,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                )
+                .toList();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              plPlayerController.videoFit.value.desc,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+=======
         () => Focus(
           focusNode: focusNode,
           child: PopupMenuButton<VideoFitType>(
@@ -868,6 +967,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 ),
               ),
               focusNode,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
             ),
           ),
         ),
@@ -877,6 +977,50 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         () {
           final list = videoDetailController.languages.value;
           if (list != null && list.isNotEmpty) {
+<<<<<<< HEAD
+            return PopupMenuButton<String>(
+              tooltip: '翻译',
+              requestFocus: false,
+              initialValue: videoDetailController.currLang.value,
+              color: Colors.black.withValues(alpha: 0.8),
+              itemBuilder: (context) {
+                return [
+                  PopupMenuItem<String>(
+                    height: 35,
+                    value: '',
+                    onTap: () => videoDetailController.setLanguage(''),
+                    child: const Text(
+                      "关闭翻译",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  ...list.map((e) {
+                    return PopupMenuItem<String>(
+                      height: 35,
+                      value: e.lang,
+                      onTap: () => videoDetailController.setLanguage(e.lang!),
+                      child: Text(
+                        e.title!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
+                      ),
+                    );
+                  }),
+                ];
+              },
+              child: SizedBox(
+                width: widgetWidth,
+                height: 30,
+                child: const Icon(
+                  Icons.translate,
+                  size: 18,
+                  color: Colors.white,
+=======
             return Focus(
               focusNode: focusNode,
               child: PopupMenuButton<String>(
@@ -931,6 +1075,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                     ),
                   ),
                   focusNode,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
                 ),
               ),
             );
@@ -943,6 +1088,64 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       BottomControlType.subtitle => Obx(
         () => videoDetailController.subtitles.isEmpty
             ? const SizedBox.shrink()
+<<<<<<< HEAD
+            : PopupMenuButton<int>(
+                tooltip: '字幕',
+                requestFocus: false,
+                initialValue: videoDetailController.vttSubtitlesIndex.value
+                    .clamp(
+                      0,
+                      videoDetailController.subtitles.length,
+                    ),
+                color: Colors.black.withValues(alpha: 0.8),
+                itemBuilder: (context) {
+                  return [
+                    PopupMenuItem<int>(
+                      value: 0,
+                      height: 35,
+                      onTap: () => videoDetailController.setSubtitle(0),
+                      child: const Text(
+                        "关闭字幕",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    ...videoDetailController.subtitles.indexed.map((e) {
+                      return PopupMenuItem<int>(
+                        value: e.$1 + 1,
+                        height: 35,
+                        onTap: () =>
+                            videoDetailController.setSubtitle(e.$1 + 1),
+                        child: Text(
+                          "${e.$2.lanDoc}",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
+                      );
+                    }),
+                  ];
+                },
+                child: SizedBox(
+                  width: widgetWidth,
+                  height: 30,
+                  child: videoDetailController.vttSubtitlesIndex.value == 0
+                      ? const Icon(
+                          Icons.closed_caption_off_outlined,
+                          size: 22,
+                          color: Colors.white,
+                        )
+                      : const Icon(
+                          Icons.closed_caption_off_rounded,
+                          size: 22,
+                          color: Colors.white,
+                        ),
+=======
             : Focus(
                 focusNode: focusNode,
                 child: PopupMenuButton<int>(
@@ -1010,12 +1213,43 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                     ),
                     focusNode,
                   ),
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
                 ),
               ),
       ),
 
       /// 播放速度
       BottomControlType.speed => Obx(
+<<<<<<< HEAD
+        () => PopupMenuButton<double>(
+          tooltip: '倍速',
+          requestFocus: false,
+          initialValue: plPlayerController.playbackSpeed,
+          color: Colors.black.withValues(alpha: 0.8),
+          itemBuilder: (context) {
+            return plPlayerController.speedList
+                .map(
+                  (double speed) => PopupMenuItem<double>(
+                    height: 35,
+                    padding: const EdgeInsets.only(left: 30),
+                    value: speed,
+                    onTap: () => plPlayerController.setPlaybackSpeed(speed),
+                    child: Text(
+                      "${speed}X",
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      semanticsLabel: "$speed倍速",
+                    ),
+                  ),
+                )
+                .toList();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              "${plPlayerController.playbackSpeed}X",
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              semanticsLabel: "${plPlayerController.playbackSpeed}倍速",
+=======
         () => Focus(
           focusNode: focusNode,
           child: PopupMenuButton<double>(
@@ -1047,6 +1281,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 ),
               ),
               focusNode,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
             ),
           ),
         ),
@@ -1075,6 +1310,28 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               usefulQaSam++;
             }
           }
+<<<<<<< HEAD
+          return PopupMenuButton<int>(
+            tooltip: '画质',
+            requestFocus: false,
+            initialValue: currentVideoQa.code,
+            color: Colors.black.withValues(alpha: 0.8),
+            itemBuilder: (context) {
+              return List.generate(
+                totalQaSam,
+                (index) {
+                  final item = videoFormat[index];
+                  final enabled = index >= totalQaSam - usefulQaSam;
+                  return PopupMenuItem<int>(
+                    enabled: enabled,
+                    height: 35,
+                    padding: const EdgeInsets.only(left: 15, right: 10),
+                    value: item.quality,
+                    onTap: () async {
+                      if (currentVideoQa.code == item.quality) {
+                        return;
+                      }
+=======
           return Focus(
             focusNode: focusNode,
             child: PopupMenuButton<int>(
@@ -1091,6 +1348,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
                     void handleTap() async {
                       if (currentVideoQa.code == item.quality) return;
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
                       final int quality = item.quality!;
                       final newQa = VideoQuality.fromCode(quality);
                       videoDetailController
@@ -1100,6 +1358,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
                       SmartDialog.showToast("画质已变为：${newQa.desc}");
 
+<<<<<<< HEAD
+                      // update
+=======
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
                       if (!plPlayerController.tempPlayerConf) {
                         GStorage.setting.put(
                           await Utils.isWiFi
@@ -1108,6 +1370,27 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                           quality,
                         );
                       }
+<<<<<<< HEAD
+                    },
+                    child: Text(
+                      item.newDesc ?? '',
+                      style: enabled
+                          ? const TextStyle(color: Colors.white, fontSize: 13)
+                          : const TextStyle(
+                              color: Color(0x62FFFFFF),
+                              fontSize: 13,
+                            ),
+                    ),
+                  );
+                },
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                currentVideoQa.shortDesc,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+=======
                     }
 
                     return PopupMenuItem<int>(
@@ -1137,6 +1420,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                   ),
                 ),
                 focusNode,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
               ),
             ),
           );
@@ -1159,7 +1443,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 size: 24,
                 color: Colors.white,
               ),
+<<<<<<< HEAD
+=======
         focusNode: focusNode,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
         onTap: () =>
             plPlayerController.triggerFullScreen(status: !isFullScreen),
         onSecondaryTap: () => plPlayerController.triggerFullScreen(
@@ -1171,6 +1458,28 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
     final isNotFileSource = !plPlayerController.isFileSource;
 
+<<<<<<< HEAD
+    List<BottomControlType> userSpecifyItemLeft = [
+      BottomControlType.playOrPause,
+      BottomControlType.time,
+      if (!isNotFileSource || anySeason) ...[
+        BottomControlType.pre,
+        BottomControlType.next,
+      ],
+    ];
+
+    final flag =
+        isFullScreen || plPlayerController.isDesktopPip || maxWidth >= 500;
+    List<BottomControlType> userSpecifyItemRight = [
+      if (isNotFileSource && plPlayerController.showDmChart)
+        BottomControlType.dmChart,
+      if (plPlayerController.isAnim) BottomControlType.superResolution,
+      if (isNotFileSource && plPlayerController.showViewPoints)
+        BottomControlType.viewPoints,
+      if (isNotFileSource && anySeason) BottomControlType.episode,
+      if (flag) BottomControlType.fit,
+      if (isNotFileSource) BottomControlType.aiTranslate,
+=======
     final List<BottomControlType> primaryItems = [
       BottomControlType.playOrPause,
       BottomControlType.pre,
@@ -1201,12 +1510,32 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       if (showPipButton) BottomControlType.pip,
       if (isNotFileSource && anySeason) BottomControlType.episode,
       if (flag) BottomControlType.fit,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
       BottomControlType.subtitle,
       BottomControlType.speed,
       if (isNotFileSource && flag) BottomControlType.qa,
       if (!plPlayerController.isDesktopPip) BottomControlType.fullscreen,
     ];
 
+<<<<<<< HEAD
+    return Row(
+      children: [
+        ...userSpecifyItemLeft.map(progressWidget),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) => FittedBox(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: userSpecifyItemRight.map(progressWidget).toList(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+=======
     final List<FocusNode> primaryNodes = focusManager.primaryNodes(
       primaryItems.length,
     );
@@ -1255,6 +1584,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         false,
         trailing: timeTrailing,
       ),
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
     );
   }
 
@@ -1534,8 +1864,12 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       default:
         if (_suspendedDm == null) {
           if (plPlayerController.playerStatus.value != PlayerStatus.paused) {
+<<<<<<< HEAD
+            plPlayerController.controls = !plPlayerController.showControls.value;
+=======
             plPlayerController.controls =
                 !plPlayerController.showControls.value;
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
           }
         } else if (_suspendedDm!.suspend) {
           _dmOffset.value = details.localPosition;
@@ -2000,12 +2334,19 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         isFullScreen: isFullScreen,
                         controller: plPlayerController,
                         videoDetailController: videoDetailController,
+<<<<<<< HEAD
+                        buildBottomControl: () => buildBottomControl(
+                          videoDetailController,
+                          maxWidth > maxHeight,
+                        ),
+=======
                         buildBottomControl: (focusManager) =>
                             buildBottomControl(
                               videoDetailController,
                               maxWidth > maxHeight,
                               focusManager,
                             ),
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
                       ),
                 ),
               ],

@@ -2,12 +2,20 @@ import 'package:PiliPlus/common/widgets/progress_bar/audio_video_progress_bar.da
 import 'package:PiliPlus/common/widgets/progress_bar/segment_progress_bar.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+<<<<<<< HEAD
+=======
 import 'package:PiliPlus/plugin/pl_player/utils/focus_manager.dart';
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
 import 'package:PiliPlus/plugin/pl_player/view.dart';
 import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
+import 'package:get/get.dart';
+
+class BottomControl extends StatelessWidget {
+=======
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -18,6 +26,7 @@ class ControlRows {
 }
 
 class BottomControl extends StatefulWidget {
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
   const BottomControl({
     super.key,
     required this.maxWidth,
@@ -30,6 +39,12 @@ class BottomControl extends StatefulWidget {
   final double maxWidth;
   final bool isFullScreen;
   final PlPlayerController controller;
+<<<<<<< HEAD
+  final Widget Function() buildBottomControl;
+  final VideoDetailController videoDetailController;
+
+  @override
+=======
   final ControlRows Function(BottomControlsFocusManager focusManager)
   buildBottomControl;
   final VideoDetailController videoDetailController;
@@ -54,6 +69,7 @@ class _BottomControlState extends State<BottomControl> {
   }
 
   @override
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
   Widget build(BuildContext context) {
     final colorScheme = ColorScheme.of(context);
     final primary = colorScheme.isLight
@@ -61,8 +77,11 @@ class _BottomControlState extends State<BottomControl> {
         : colorScheme.primary;
     final thumbGlowColor = primary.withAlpha(80);
     final bufferedBarColor = primary.withValues(alpha: 0.4);
+<<<<<<< HEAD
+=======
     final Color focusColor = colorScheme.primary.withAlpha(90);
 
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
     void onDragStart(ThumbDragDetails duration) {
       feedBack();
       controller.onChangedSliderStart(duration.timeStamp);
@@ -85,6 +104,10 @@ class _BottomControlState extends State<BottomControl> {
         ..seekTo(Duration(seconds: duration.inSeconds), isSeek: false);
     }
 
+<<<<<<< HEAD
+    Widget progressBar() {
+      final child = Obx(() {
+=======
     KeyEventResult handleProgressKey(KeyEvent event) {
       if (event is! KeyDownEvent) return KeyEventResult.ignored;
       final key = event.logicalKey;
@@ -101,6 +124,7 @@ class _BottomControlState extends State<BottomControl> {
 
     Widget progressBar() {
       final Widget bar = Obx(() {
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
         final int value = controller.sliderPositionSeconds.value;
         final int max = controller.durationSeconds.value.inSeconds;
         if (value > max || max <= 0) {
@@ -123,6 +147,8 @@ class _BottomControlState extends State<BottomControl> {
           onSeek: (e) => onSeek(e, max),
         );
       });
+<<<<<<< HEAD
+=======
 
       final Widget child = Focus(
         focusNode: focusManager.progressNode,
@@ -145,6 +171,7 @@ class _BottomControlState extends State<BottomControl> {
         ),
       );
 
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
       if (Utils.isDesktop) {
         return MouseRegion(
           cursor: SystemMouseCursors.click,
@@ -156,6 +183,70 @@ class _BottomControlState extends State<BottomControl> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+<<<<<<< HEAD
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
+            child: Obx(
+              () => Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.bottomCenter,
+                children: [
+                  progressBar(),
+                  if (controller.enableBlock &&
+                      videoDetailController.segmentProgressList.isNotEmpty)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 5.25,
+                      child: IgnorePointer(
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            key: const Key('segmentList'),
+                            size: const Size(double.infinity, 3.5),
+                            painter: SegmentProgressBar(
+                              segmentColors:
+                                  videoDetailController.segmentProgressList,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (controller.showViewPoints &&
+                      videoDetailController.viewPointList.isNotEmpty &&
+                      videoDetailController.showVP.value) ...[
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 5.25,
+                      child: IgnorePointer(
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            key: const Key('viewPointList'),
+                            size: const Size(double.infinity, 3.5),
+                            painter: SegmentProgressBar(
+                              segmentColors:
+                                  videoDetailController.viewPointList,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (!Utils.isMobile)
+                      buildViewPointWidget(
+                        videoDetailController,
+                        controller,
+                        8.75,
+                        maxWidth - 40,
+                      ),
+                  ],
+                  if (videoDetailController.showDmTrendChart.value)
+                    if (videoDetailController.dmTrend.value?.dataOrNull
+                        case final list?)
+                      buildDmChart(primary, list, videoDetailController, 4.5),
+=======
       child: BottomControlsFocusMarker(
         child: Focus(
           // Custom navigation to keep vertical movement aligned by index and
@@ -316,11 +407,17 @@ class _BottomControlState extends State<BottomControl> {
                       );
                     },
                   ),
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
                 ],
               ),
             ),
           ),
+<<<<<<< HEAD
+          buildBottomControl(),
+        ],
+=======
         ),
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
       ),
     );
   }

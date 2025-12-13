@@ -1,20 +1,29 @@
 import 'dart:async';
 
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+<<<<<<< HEAD
+=======
 import 'package:PiliPlus/plugin/pl_player/widgets/focusable_btn.dart';
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
 class PlayOrPauseButton extends StatefulWidget {
   final PlPlayerController plPlayerController;
+<<<<<<< HEAD
+=======
   final FocusNode? focusNode;
   final bool autofocus;
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
 
   const PlayOrPauseButton({
     super.key,
     required this.plPlayerController,
+<<<<<<< HEAD
+=======
     this.focusNode,
     this.autofocus = false,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
   });
 
   @override
@@ -54,6 +63,23 @@ class PlayOrPauseButtonState extends State<PlayOrPauseButton>
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
+    return SizedBox(
+      width: 42,
+      height: 34,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.plPlayerController.onDoubleTapCenter,
+        child: Center(
+          child: AnimatedIcon(
+            semanticLabel: player.state.playing ? '暂停' : '播放',
+            progress: controller,
+            icon: AnimatedIcons.play_pause,
+            color: Colors.white,
+            size: 20,
+          ),
+        ),
+=======
     return FocusableBtn(
       width: 42,
       height: 34,
@@ -66,6 +92,7 @@ class PlayOrPauseButtonState extends State<PlayOrPauseButton>
         icon: AnimatedIcons.play_pause,
         color: Colors.white,
         size: 20,
+>>>>>>> 1272fabaf (fix: 优化弹幕操作显示逻辑以支持画中画模式)
       ),
     );
   }
