@@ -68,7 +68,6 @@ extension NonNullIterableExt<T> on Iterable<T> {
     }
     return value;
   }
-
 }
 
 extension MapExt<K, V> on Map<K, V> {
