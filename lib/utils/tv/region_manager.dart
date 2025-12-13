@@ -11,6 +11,7 @@ class TVRegionManager {
           bidirectional: true,
           reverseStrategy: RegionNavigationStrategy.fixedEntry,
         ),
+
         // 视频卡片 → 播放器控制
         RegionNavigationRule(
           fromRegion: 'video_grid',

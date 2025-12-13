@@ -1,25 +1,26 @@
 import 'dart:io';
-import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/material.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 
 class TVDetector {
   static bool _isTV = false;
-
-  static bool get isTV => _isTV || Pref.enableTVMode;
+  static bool get isTV => _isTV;
 
   static Future<void> init() async {
     if (Platform.isAndroid) {
-      _isTV = await _isAndroidTV();
-    }
-  }
-
-  static Future<bool> _isAndroidTV() async {
-    try {
       final deviceInfo = await DeviceInfoPlugin().androidInfo;
-      // A common way to check for Android TV is to look for the leanback feature.
-      return deviceInfo.systemFeatures.contains('android.software.leanback');
-    } catch (e) {
-      return false;
+      // Use a combination of factors to determine if it's a TV.
+      // Android TVs often lack touch support and have specific UI modes.
+      final isAndroidTV = deviceInfo.systemFeatures.contains('android.software.leanback') ||
+                          deviceInfo.systemFeatures.contains('android.hardware.type.television');
+      _isTV = isAndroidTV;
+    } else {
+      _isTV = false;
+    }
+    // Allow user to override
+    if (Pref.enableTVMode) {
+      _isTV = true;
     }
   }
 }

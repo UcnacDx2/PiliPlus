@@ -23,11 +23,11 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
-import 'package:PiliPlus/utils/tv/region_manager.dart';
-import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
 import 'package:dpad/dpad.dart';
+import 'package:PiliPlus/utils/tv/region_manager.dart';
+import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/foundation.dart';
@@ -176,7 +176,6 @@ void main() async {
   }
 
   if (Pref.enableLog) {
-    // 异常捕获 logo记录
     final customParameters = {
       'BuildConfig':
           '\nBuild Time: ${DateFormatUtils.format(BuildConfig.buildTime, format: DateFormatUtils.longFormatDs)}\n'
@@ -215,63 +214,94 @@ void main() async {
   }
 }
 
+void _onBack() {
+  if (SmartDialog.checkExist()) {
+    SmartDialog.dismiss();
+    return;
+  }
+
+  if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
+    Get.back();
+    return;
+  }
+
+  final plCtr = PlPlayerController.instance;
+  if (plCtr != null) {
+    if (plCtr.isFullScreen.value) {
+      plCtr
+        ..triggerFullScreen(status: false)
+        ..controlsLock.value = false
+        ..showControls.value = false;
+      return;
+    }
+
+    if (plCtr.isDesktopPip) {
+      plCtr
+        ..exitDesktopPip().whenComplete(
+          () => plCtr.initialFocalPoint = Offset.zero,
+        )
+        ..controlsLock.value = false
+        ..showControls.value = false;
+      return;
+    }
+  }
+
+  Get.back();
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  static ThemeData? darkThemeData;
-
-  static KeyEventResult _handleTVBack() {
-    if (SmartDialog.checkExist()) {
-      SmartDialog.dismiss();
-      return KeyEventResult.handled;
-    }
-
-    if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
-      Get.back();
-      return KeyEventResult.handled;
-    }
-
-    final plCtr = PlPlayerController.instance;
-    if (plCtr != null) {
-      if (plCtr.isFullScreen.value) {
-        plCtr
-          ..triggerFullScreen(status: false)
-          ..controlsLock.value = false
-          ..showControls.value = false;
-        return KeyEventResult.handled;
-      }
-
-      if (plCtr.isDesktopPip) {
-        plCtr
-          ..exitDesktopPip().whenComplete(
-            () => plCtr.initialFocalPoint = Offset.zero,
+  @override
+  Widget build(BuildContext context) {
+    Widget app = !Platform.isIOS && Pref.dynamicColor
+        ? DynamicColorBuilder(
+            builder: ((ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+              if (lightDynamic != null && darkDynamic != null) {
+                return _AppCore(
+                  lightColorScheme: lightDynamic.harmonized(),
+                  darkColorScheme: darkDynamic.harmonized(),
+                );
+              } else {
+                return const _AppCore();
+              }
+            }),
           )
-          ..controlsLock.value = false
-          ..showControls.value = false;
-        return KeyEventResult.handled;
-      }
+        : const _AppCore();
+
+    if (TVDetector.isTV) {
+      app = DpadNavigator(
+        enabled: true,
+        focusMemory: const FocusMemoryOptions(enabled: true, maxHistory: 20),
+        regionNavigation: RegionNavigationOptions(
+          enabled: true,
+          rules: TVRegionManager.defaultRules,
+        ),
+        onBackPressed: () {
+          _onBack();
+          return KeyEventResult.handled;
+        },
+        child: app,
+      );
     }
-
-    Get.back();
-    return KeyEventResult.handled;
+    return app;
   }
+}
 
-  static void _onBack() {
-    _handleTVBack();
-  }
+class _AppCore extends StatelessWidget {
+  final ColorScheme? lightColorScheme;
+  final ColorScheme? darkColorScheme;
 
-  static Widget _build({
-    ColorScheme? lightColorScheme,
-    ColorScheme? darkColorScheme,
-  }) {
+  const _AppCore({this.lightColorScheme, this.darkColorScheme});
+
+  @override
+  Widget build(BuildContext context) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-
-    Widget app = GetMaterialApp(
+    return GetMaterialApp(
       title: Constants.appName,
       theme: ThemeUtils.getThemeData(
-        colorScheme:
-            lightColorScheme ??
+        colorScheme: lightColorScheme ??
             SeedColorScheme.fromSeeds(
               variant: variant,
               primaryKey: brandColor,
@@ -282,8 +312,7 @@ class MyApp extends StatelessWidget {
       ),
       darkTheme: ThemeUtils.getThemeData(
         isDark: true,
-        colorScheme:
-            darkColorScheme ??
+        colorScheme: darkColorScheme ??
             SeedColorScheme.fromSeeds(
               variant: variant,
               primaryKey: brandColor,
@@ -350,38 +379,6 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
-    if (TVDetector.isTV) {
-      app = DpadNavigator(
-        enabled: true,
-        focusMemory: const FocusMemoryOptions(enabled: true, maxHistory: 20),
-        regionNavigation: RegionNavigationOptions(
-          enabled: true,
-          rules: TVRegionManager.defaultRules,
-        ),
-        onBackPressed: () => _handleTVBack(),
-        child: app,
-      );
-    }
-    return app;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!Platform.isIOS && Pref.dynamicColor) {
-      return DynamicColorBuilder(
-        builder: ((ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-          if (lightDynamic != null && darkDynamic != null) {
-            return _build(
-              lightColorScheme: lightDynamic.harmonized(),
-              darkColorScheme: darkDynamic.harmonized(),
-            );
-          } else {
-            return _build();
-          }
-        }),
-      );
-    }
-    return _build();
   }
 }
 
@@ -389,7 +386,6 @@ class _CustomHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     final client = super.createHttpClient(context)
-      // ..maxConnectionsPerHost = 32
       ..idleTimeout = const Duration(seconds: 15);
     if (kDebugMode || Pref.badCertificateCallback) {
       client.badCertificateCallback = (cert, host, port) => true;

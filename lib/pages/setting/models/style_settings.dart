@@ -70,6 +70,15 @@ List<SettingsModel> get styleSettings => [
   ),
   const SettingsModel(
     settingsType: SettingsType.sw1tch,
+    title: '启用TV模式',
+    subtitle: '优化D-pad导航和焦点，需要重启App',
+    leading: Icon(Icons.tv),
+    setKey: SettingBoxKey.enableTVMode,
+    defaultVal: false,
+    needReboot: true,
+  ),
+  const SettingsModel(
+    settingsType: SettingsType.sw1tch,
     title: '改用侧边栏',
     subtitle: '开启后底栏与顶栏被替换，且相关设置失效',
     leading: Icon(Icons.chrome_reader_mode_outlined),

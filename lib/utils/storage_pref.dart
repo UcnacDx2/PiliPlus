@@ -882,6 +882,9 @@ abstract class Pref {
     defaultValue: false,
   );
 
+  static bool get enableTVMode =>
+      _setting.get(SettingBoxKey.enableTVMode, defaultValue: false);
+
     static FollowOrderType get followOrderType =>
             FollowOrderType.values[_setting.get(
                 SettingBoxKey.followOrderType,
@@ -892,7 +895,4 @@ abstract class Pref {
                 SettingBoxKey.useFirstFrameAsCover,
                 defaultValue: true,
             );
-
-  static bool get enableTVMode =>
-      _setting.get(SettingBoxKey.enableTVMode, defaultValue: false);
 }

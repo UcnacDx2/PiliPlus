@@ -1,6 +1,6 @@
-import 'package:PiliPlus/utils/tv/tv_detector.dart';
-import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
+import 'package:dpad/dpad.dart';
+import 'package:PiliPlus/utils/tv/tv_detector.dart';
 
 class DpadPageWrapper extends StatelessWidget {
   final Widget child;
@@ -8,11 +8,11 @@ class DpadPageWrapper extends StatelessWidget {
   final bool enableMemory;
 
   const DpadPageWrapper({
-    super.key,
+    Key? key,
     required this.child,
     this.region,
     this.enableMemory = false,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
