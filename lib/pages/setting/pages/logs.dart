@@ -16,6 +16,7 @@ import 'package:catcher_2/model/report.dart' as catcher;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:get/get.dart';
 
 const _snackBarDisplayDuration = Duration(seconds: 1);
 
@@ -130,6 +131,9 @@ class _LogsPageState extends State<LogsPage> {
                   latestLog = null;
                   clearLogsHandle();
                   break;
+                case 'dpad':
+                  Get.toNamed('/tvDebug');
+                  break;
                 default:
                   if (kDebugMode) {
                     Timer.periodic(const Duration(milliseconds: 3500), (timer) {
@@ -143,6 +147,10 @@ class _LogsPageState extends State<LogsPage> {
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'dpad',
+                child: Text('DPAD调试'),
+              ),
               if (kDebugMode)
                 const PopupMenuItem<String>(
                   value: 'assert',

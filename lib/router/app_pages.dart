@@ -66,15 +66,22 @@ import 'package:PiliPlus/pages/space_setting/view.dart';
 import 'package:PiliPlus/pages/sponsor_block/view.dart';
 import 'package:PiliPlus/pages/subscription/view.dart';
 import 'package:PiliPlus/pages/subscription_detail/view.dart';
+import 'package:PiliPlus/pages/tv_debug/index.dart';
 import 'package:PiliPlus/pages/video/view.dart';
 import 'package:PiliPlus/pages/webdav/view.dart';
 import 'package:PiliPlus/pages/webview/view.dart';
 import 'package:PiliPlus/pages/whisper/view.dart';
 import 'package:PiliPlus/pages/whisper_detail/view.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class Routes {
   static final List<GetPage<dynamic>> getPages = [
+    CustomGetPage(
+      name: '/tvDebug',
+      page: () => const TvDebugPage(),
+      binding: TvDebugBinding(),
+    ),
     CustomGetPage(name: '/', page: () => const MainApp()),
     // 首页(推荐)
     CustomGetPage(name: '/home', page: () => const HomePage()),
@@ -234,10 +241,18 @@ class Routes {
 
 class CustomGetPage<T> extends GetPage<T> {
   CustomGetPage({
-    required super.name,
-    required super.page,
-    super.popGesture = false,
-    super.fullscreenDialog = false,
-    super.showCupertinoParallax = false,
-  });
+    required String name,
+    required Widget Function() page,
+    Bindings? binding,
+    bool popGesture = false,
+    bool fullscreenDialog = false,
+    bool showCupertinoParallax = false,
+  }) : super(
+          name: name,
+          page: page,
+          binding: binding,
+          popGesture: popGesture,
+          fullscreenDialog: fullscreenDialog,
+          showCupertinoParallax: showCupertinoParallax,
+        );
 }
