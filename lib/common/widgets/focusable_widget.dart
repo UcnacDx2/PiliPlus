@@ -5,12 +5,14 @@ class FocusableWidget extends StatelessWidget {
   final Widget child;
   final VoidCallback? onSelect;
   final bool autofocus;
+  final bool selected;
 
   const FocusableWidget({
     super.key,
     required this.child,
     this.onSelect,
     this.autofocus = false,
+    this.selected = false,
   });
 
   @override
@@ -23,7 +25,7 @@ class FocusableWidget extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             border: Border.all(
-              color: isFocused ? Colors.blue : Colors.transparent,
+              color: isFocused ? Colors.blue : (selected ? Colors.grey : Colors.transparent),
               width: 2,
             ),
             borderRadius: BorderRadius.circular(8),

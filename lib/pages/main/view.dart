@@ -258,13 +258,14 @@ class _MainAppState extends State<MainApp>
                                   final index = _mainController.navigationBars.indexOf(e);
                                   return FocusableWidget(
                                     onSelect: () {
-                                      _mainController.setIndex(index);
                                       Get.find<FocusManagementService>().requestFocus(
                                         FocusState(
-                                          level: FocusLevel.bottomBar,
+                                          level: index == 0 ? FocusLevel.lvl1 : FocusLevel.lvl2,
                                           index: index,
                                         ),
+                                        debounce: true,
                                       );
+                                      _mainController.setIndex(index);
                                     },
                                     child: NavigationDestination(
                                       label: e.label,
@@ -296,25 +297,27 @@ class _MainAppState extends State<MainApp>
                                     label: e.label,
                                     icon: FocusableWidget(
                                       onSelect: () {
-                                        _mainController.setIndex(index);
                                         Get.find<FocusManagementService>().requestFocus(
                                           FocusState(
-                                            level: FocusLevel.bottomBar,
+                                            level: index == 0 ? FocusLevel.lvl1 : FocusLevel.lvl2,
                                             index: index,
                                           ),
+                                          debounce: true,
                                         );
+                                        _mainController.setIndex(index);
                                       },
                                       child: _buildIcon(type: e),
                                     ),
                                     activeIcon: FocusableWidget(
                                       onSelect: () {
-                                        _mainController.setIndex(index);
                                         Get.find<FocusManagementService>().requestFocus(
                                           FocusState(
-                                            level: FocusLevel.bottomBar,
+                                            level: index == 0 ? FocusLevel.lvl1 : FocusLevel.lvl2,
                                             index: index,
                                           ),
+                                          debounce: true,
                                         );
+                                        _mainController.setIndex(index);
                                       },
                                       child: _buildIcon(
                                         type: e,

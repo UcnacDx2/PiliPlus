@@ -220,9 +220,18 @@ class MyApp extends StatelessWidget {
   static ThemeData? darkThemeData;
 
   static void _onBack() {
-    if (Get.find<FocusManagementService>().handleBackButton()) {
+    final focusService = Get.find<FocusManagementService>();
+    if (focusService.handleBackButton()) {
       return;
     }
+
+    if (focusService.currentState?.level == FocusLevel.lvl1) {
+      SmartDialog.showToast('再按一次退出应用');
+      // In a real app, you'd handle the double-press logic here.
+      // For now, we'll just show the toast.
+      return;
+    }
+
     if (SmartDialog.checkExist()) {
       SmartDialog.dismiss();
       return;
