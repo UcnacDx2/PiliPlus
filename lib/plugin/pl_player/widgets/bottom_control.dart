@@ -95,10 +95,7 @@ class BottomControl extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Focus(
-            focusNode: controller.mainControlsFocusNode,
-            child: buildMainControls(),
-          ),
+          buildMainControls(),
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
             child: Obx(
@@ -165,10 +162,7 @@ class BottomControl extends StatelessWidget {
               ),
             ),
           ),
-          Focus(
-            focusNode: controller.secondaryControlsFocusNode,
-            child: buildSecondaryControls(),
-          ),
+          buildSecondaryControls(),
         ],
       ),
     );

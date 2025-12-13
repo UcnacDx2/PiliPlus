@@ -338,9 +338,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final isPlayAll = videoDetailController.isPlayAll;
     final anySeason = isSeason || isPart || isPgc || isPlayAll;
 
-    Widget progressWidget(BottomControlType bottomControl) =>
-        _buildControlButton(bottomControl, videoDetailController, isLandscape);
-
     List<BottomControlType> mainLeft = [
       BottomControlType.playOrPause,
       if (!plPlayerController.isFileSource || anySeason) ...[
@@ -350,13 +347,29 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     ];
 
     return FocusTraversalGroup(
-        child: Row(
-      children: [
-        ...mainLeft.map(progressWidget),
-        const Spacer(),
-        progressWidget(BottomControlType.time),
-      ],
-    ));
+      child: Row(
+        children: [
+          ...mainLeft.map(
+            (controlType) {
+              final isFirst = controlType == mainLeft.first;
+              return _buildControlButton(
+                controlType,
+                videoDetailController,
+                isLandscape,
+                focusNode:
+                    isFirst ? plPlayerController.mainControlFocusNode : null,
+              );
+            },
+          ),
+          const Spacer(),
+          _buildControlButton(
+            BottomControlType.time,
+            videoDetailController,
+            isLandscape,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget buildSecondaryControls(
@@ -370,9 +383,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final isPlayAll = videoDetailController.isPlayAll;
     final anySeason = isSeason || isPart || isPgc || isPlayAll;
     final isFullScreen = this.isFullScreen;
-
-    Widget progressWidget(BottomControlType bottomControl) =>
-        _buildControlButton(bottomControl, videoDetailController, isLandscape);
 
     final flag =
         isFullScreen || plPlayerController.isDesktopPip || maxWidth >= 500;
@@ -412,7 +422,17 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                   constraints: BoxConstraints(minWidth: constraints.maxWidth),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    children: secondaryControls.map(progressWidget).toList(),
+                    children: secondaryControls.map((controlType) {
+                      final isFirst = controlType == secondaryControls.first;
+                      return _buildControlButton(
+                        controlType,
+                        videoDetailController,
+                        isLandscape,
+                        focusNode: isFirst
+                            ? plPlayerController.secondaryControlFocusNode
+                            : null,
+                      );
+                    }).toList(),
                   ),
                 ),
               ),
@@ -426,8 +446,9 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   Widget _buildControlButton(
     BottomControlType bottomControl,
     VideoDetailController videoDetailController,
-    bool isLandscape,
-  ) {
+    bool isLandscape, {
+    FocusNode? focusNode,
+  }) {
     final videoDetail = introController.videoDetail.value;
     final isSeason = videoDetail.ugcSeason != null;
     final isPart = videoDetail.pages != null && videoDetail.pages!.length > 1;
@@ -1232,7 +1253,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               ?.showSettingSheet(),
         ),
     };
-    return FocusableControl(child: control);
+    return FocusableControl(focusNode: focusNode, child: control);
   }
 
   PlPlayerController get plPlayerController => widget.plPlayerController;

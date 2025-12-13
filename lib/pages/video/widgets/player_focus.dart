@@ -1,54 +1,26 @@
 import 'dart:async';
-import 'dart:math' as math;
 
-import 'package:PiliPlus/pages/common/common_intro_controller.dart';
-import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
-import 'package:PiliPlus/utils/storage.dart';
-import 'package:PiliPlus/utils/storage_key.dart';
-import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'
-    show KeyDownEvent, KeyUpEvent, LogicalKeyboardKey, HardwareKeyboard, FocusManager;
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 
 class PlayerFocus extends StatelessWidget {
   const PlayerFocus({
     super.key,
     required this.child,
     required this.plPlayerController,
-    this.introController,
-    required this.onSendDanmaku,
-    this.canPlay,
-    this.onSkipSegment,
-    this.onShowMenu,
   });
 
   final Widget child;
   final PlPlayerController plPlayerController;
-  final CommonIntroController? introController;
-  final VoidCallback onSendDanmaku;
-  final VoidCallback? onShowMenu;
-  final bool Function()? canPlay;
-  final bool Function()? onSkipSegment;
-
-  static bool _shouldHandle(LogicalKeyboardKey logicalKey) {
-    return logicalKey == LogicalKeyboardKey.tab ||
-        logicalKey == LogicalKeyboardKey.arrowLeft ||
-        logicalKey == LogicalKeyboardKey.arrowRight ||
-        logicalKey == LogicalKeyboardKey.arrowUp ||
-        logicalKey == LogicalKeyboardKey.arrowDown;
-  }
 
   @override
   Widget build(BuildContext context) {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
-        final handled = _handleKey(event);
-        if (handled || _shouldHandle(event.logicalKey)) {
-          return KeyEventResult.handled;
+        if (event is KeyDownEvent) {
+          return _handleGlobalKeys(event);
         }
         return KeyEventResult.ignored;
       },
@@ -56,282 +28,73 @@ class PlayerFocus extends StatelessWidget {
     );
   }
 
-  bool get isFullScreen => plPlayerController.isFullScreen.value;
-  bool get hasPlayer => plPlayerController.videoPlayerController != null;
-
-  bool _handleKey(KeyEvent event) {
+  KeyEventResult _handleGlobalKeys(KeyDownEvent event) {
     final key = event.logicalKey;
 
-    if (event is KeyDownEvent) {
-      // Controls are hidden
-      if (!plPlayerController.showControls.value) {
-        if (key == LogicalKeyboardKey.arrowUp) {
-          plPlayerController.controls = true;
-          plPlayerController.mainControlsFocusNode.requestFocus();
-          plPlayerController.currentFocus = FocusState.main;
-          return true;
-        }
-        if (key == LogicalKeyboardKey.arrowDown) {
-          plPlayerController.controls = true;
-          plPlayerController.secondaryControlsFocusNode.requestFocus();
-          plPlayerController.currentFocus = FocusState.secondary;
-          return true;
-        }
-        if (key == LogicalKeyboardKey.enter ||
-            key == LogicalKeyboardKey.select) {
-          plPlayerController.controls = true;
-          plPlayerController.progressFocusNode.requestFocus();
-          plPlayerController.currentFocus = FocusState.progress;
-          return true;
-        }
-      } else {
-        // Controls are visible
-        if (key == LogicalKeyboardKey.arrowUp) {
-          if (plPlayerController.currentFocus == FocusState.progress) {
-            plPlayerController.mainControlsFocusNode.requestFocus();
-            plPlayerController.currentFocus = FocusState.main;
-          } else if (plPlayerController.currentFocus ==
-              FocusState.secondary) {
+    // Layer 1: Controls are hidden. Handle waking up the controls.
+    if (!plPlayerController.isControlShowing.value) {
+      if (key == LogicalKeyboardKey.select ||
+          key == LogicalKeyboardKey.enter ||
+          key == LogicalKeyboardKey.arrowUp ||
+          key == LogicalKeyboardKey.arrowDown) {
+
+        plPlayerController.showControls();
+
+        // Delay to allow the UI to build before requesting focus.
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
             plPlayerController.progressFocusNode.requestFocus();
-            plPlayerController.currentFocus = FocusState.progress;
+          } else if (key == LogicalKeyboardKey.arrowUp) {
+            plPlayerController.mainControlFocusNode.requestFocus();
+          } else if (key == LogicalKeyboardKey.arrowDown) {
+            plPlayerController.secondaryControlFocusNode.requestFocus();
           }
-          return true;
-        }
-        if (key == LogicalKeyboardKey.arrowDown) {
-          if (plPlayerController.currentFocus == FocusState.main) {
-            plPlayerController.progressFocusNode.requestFocus();
-            plPlayerController.currentFocus = FocusState.progress;
-          } else if (plPlayerController.currentFocus ==
-              FocusState.progress) {
-            plPlayerController.secondaryControlsFocusNode.requestFocus();
-            plPlayerController.currentFocus = FocusState.secondary;
-          }
-          return true;
+        });
+
+        // This key press was used to show the controls, so we handle it.
+        return KeyEventResult.handled;
+      }
+    }
+    // Layer 2: Controls are visible. Handle navigation and actions.
+    else {
+      // Special handling when the progress bar is focused.
+      if (plPlayerController.progressFocusNode.hasFocus) {
+        if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
+          plPlayerController.onDoubleTapCenter(); // Toggles play/pause
+          return KeyEventResult.handled;
         }
         if (key == LogicalKeyboardKey.arrowLeft) {
-          if (plPlayerController.progressFocusNode.hasFocus) {
-            if (hasPlayer) {
-              plPlayerController
-                  .onBackward(plPlayerController.fastForBackwardDuration);
-            }
-            return true;
-          }
+          plPlayerController.onBackward(plPlayerController.fastForBackwardDuration);
+          return KeyEventResult.handled;
         }
         if (key == LogicalKeyboardKey.arrowRight) {
-          if (plPlayerController.progressFocusNode.hasFocus) {
-            if (hasPlayer) {
-              plPlayerController
-                  .onForward(plPlayerController.fastForBackwardDuration);
-            }
-            return true;
-          }
+          plPlayerController.onForward(plPlayerController.fastForBackwardDuration);
+          return KeyEventResult.handled;
         }
-        if (key == LogicalKeyboardKey.enter ||
-            key == LogicalKeyboardKey.select) {
-          if (plPlayerController.progressFocusNode.hasFocus) {
-            plPlayerController.onDoubleTapCenter();
-            return true;
-          }
-        }
+        // Let Up/Down fall through to allow default focus traversal.
       }
     }
 
-    final isKeyQ = key == LogicalKeyboardKey.keyQ;
-    if (isKeyQ || key == LogicalKeyboardKey.keyR) {
-      if (HardwareKeyboard.instance.isMetaPressed) {
-        return true;
-      }
-      if (!plPlayerController.isLive) {
-        if (event is KeyDownEvent) {
-          introController!.onStartTriple();
-        } else if (event is KeyUpEvent) {
-          introController!.onCancelTriple(isKeyQ);
-        }
-      }
-      return true;
+    // Handle global hotkeys regardless of control visibility
+    if (key == LogicalKeyboardKey.keyF) {
+      plPlayerController.triggerFullScreen();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.keyM) {
+       final isMuted = !plPlayerController.isMuted;
+       plPlayerController.videoPlayerController!.setVolume(
+         isMuted ? 0 : plPlayerController.volume.value * 100,
+       );
+       plPlayerController.isMuted = isMuted;
+      return KeyEventResult.handled;
+    }
+     if (key == LogicalKeyboardKey.space) {
+        plPlayerController.onDoubleTapCenter();
+        return KeyEventResult.handled;
     }
 
-    if (key == LogicalKeyboardKey.arrowRight) {
-      if (!plPlayerController.isLive) {
-        if (event is KeyDownEvent) {
-          if (hasPlayer && !plPlayerController.longPressStatus.value) {
-            plPlayerController
-              ..cancelLongPressTimer()
-              ..longPressTimer ??= Timer(
-                const Duration(milliseconds: 200),
-                () => plPlayerController
-                  ..cancelLongPressTimer()
-                  ..setLongPressStatus(true),
-              );
-          }
-        } else if (event is KeyUpEvent) {
-          plPlayerController.cancelLongPressTimer();
-          if (hasPlayer) {
-            if (plPlayerController.longPressStatus.value) {
-              plPlayerController.setLongPressStatus(false);
-            } else {
-              plPlayerController.onForward(
-                plPlayerController.fastForBackwardDuration,
-              );
-            }
-          }
-        }
-      }
-      return true;
-    }
 
-    if (event is KeyDownEvent) {
-      final isDigit1 = key == LogicalKeyboardKey.digit1;
-      if (isDigit1 || key == LogicalKeyboardKey.digit2) {
-        if (HardwareKeyboard.instance.isShiftPressed && hasPlayer) {
-          final speed = isDigit1 ? 1.0 : 2.0;
-          if (speed != plPlayerController.playbackSpeed) {
-            plPlayerController.setPlaybackSpeed(speed);
-          }
-          SmartDialog.showToast('${speed}x播放');
-        }
-        return true;
-      }
-
-      switch (key) {
-        case LogicalKeyboardKey.space:
-          if (plPlayerController.isLive || canPlay!()) {
-            if (hasPlayer) {
-              plPlayerController.onDoubleTapCenter();
-            }
-          }
-          return true;
-
-        case LogicalKeyboardKey.keyF:
-          final isFullScreen = this.isFullScreen;
-          if (isFullScreen && plPlayerController.controlsLock.value) {
-            plPlayerController
-              ..controlsLock.value = false
-              ..showControls.value = false;
-          }
-          plPlayerController.triggerFullScreen(
-            status: !isFullScreen,
-            inAppFullScreen: HardwareKeyboard.instance.isShiftPressed,
-          );
-          return true;
-
-        case LogicalKeyboardKey.keyD:
-          final newVal = !plPlayerController.enableShowDanmaku.value;
-          plPlayerController.enableShowDanmaku.value = newVal;
-          if (!plPlayerController.tempPlayerConf) {
-            GStorage.setting.put(
-              plPlayerController.isLive
-                  ? SettingBoxKey.enableShowLiveDanmaku
-                  : SettingBoxKey.enableShowDanmaku,
-              newVal,
-            );
-          }
-          return true;
-
-        case LogicalKeyboardKey.keyP:
-          if (Utils.isDesktop && hasPlayer && !isFullScreen) {
-            plPlayerController
-              ..toggleDesktopPip()
-              ..controlsLock.value = false
-              ..showControls.value = false;
-          }
-          return true;
-
-        case LogicalKeyboardKey.keyM:
-          if (hasPlayer) {
-            final isMuted = !plPlayerController.isMuted;
-            plPlayerController.videoPlayerController!.setVolume(
-              isMuted ? 0 : plPlayerController.volume.value * 100,
-            );
-            plPlayerController.isMuted = isMuted;
-            SmartDialog.showToast('${isMuted ? '' : '取消'}静音');
-          }
-          return true;
-
-        case LogicalKeyboardKey.keyS:
-          if (hasPlayer && isFullScreen) {
-            plPlayerController.takeScreenshot();
-          }
-          return true;
-
-        case LogicalKeyboardKey.keyL:
-          if (isFullScreen || plPlayerController.isDesktopPip) {
-            plPlayerController.onLockControl(
-              !plPlayerController.controlsLock.value,
-            );
-          }
-          return true;
-
-        case LogicalKeyboardKey.enter:
-        case LogicalKeyboardKey.select:
-          if (onSkipSegment?.call() ?? false) {
-            return true;
-          }
-          if (plPlayerController.isLive || canPlay!()) {
-            if (hasPlayer) {
-              plPlayerController.onDoubleTapCenter();
-            }
-          }
-          return true;
-        case LogicalKeyboardKey.contextMenu:
-          if (plPlayerController.isLive || (canPlay?.call() ?? false)) {
-            if (hasPlayer) {
-              onShowMenu?.call();
-            }
-          }
-          return true;
-      }
-
-      if (!plPlayerController.isLive) {
-        switch (key) {
-          case LogicalKeyboardKey.arrowLeft:
-            if (hasPlayer) {
-              plPlayerController.onBackward(
-                plPlayerController.fastForBackwardDuration,
-              );
-            }
-            return true;
-
-          case LogicalKeyboardKey.keyW:
-            if (HardwareKeyboard.instance.isMetaPressed) {
-              return true;
-            }
-            introController?.actionCoinVideo();
-            return true;
-
-          case LogicalKeyboardKey.keyE:
-            introController?.actionFavVideo(isQuick: true);
-            return true;
-
-          case LogicalKeyboardKey.keyT || LogicalKeyboardKey.keyV:
-            introController?.viewLater();
-            return true;
-
-          case LogicalKeyboardKey.keyG:
-            if (introController case UgcIntroController ugcCtr) {
-              ugcCtr.actionRelationMod(Get.context!);
-            }
-            return true;
-
-          case LogicalKeyboardKey.bracketLeft:
-            if (introController case final introController?) {
-              if (!introController.prevPlay()) {
-                SmartDialog.showToast('已经是第一集了');
-              }
-            }
-            return true;
-
-          case LogicalKeyboardKey.bracketRight:
-            if (introController case final introController?) {
-              if (!introController.nextPlay()) {
-                SmartDialog.showToast('已经是最后一集了');
-              }
-            }
-            return true;
-        }
-      }
-    }
-
-    return false;
+    // If no specific action was taken, let the event be handled by others.
+    return KeyEventResult.ignored;
   }
 }
