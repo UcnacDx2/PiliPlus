@@ -518,16 +518,7 @@ class _MainAppState extends State<MainApp>
                   ],
                 );
                 if (hasFocus) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: theme.colorScheme.primary,
-                        width: 2,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: child,
-                  );
+                return TVFocusEffects.primary(context)(context, hasFocus, child);
                 }
                 return child;
               },

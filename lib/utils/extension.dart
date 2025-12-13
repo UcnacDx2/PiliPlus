@@ -275,3 +275,9 @@ extension GetExt on GetInterface {
   S putOrFind<S>(InstanceBuilderCallback<S> dep, {String? tag}) =>
       GetInstance().putOrFind(dep, tag: tag);
 }
+
+extension IterableExt<T> on Iterable<T> {
+  Iterable<E> mapWithIndex<E>(E Function(int index, T value) f) {
+    return toList().asMap().entries.map((entry) => f(entry.key, entry.value));
+  }
+}

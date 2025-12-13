@@ -1,0 +1,17 @@
+import 'package:flutter/material.dart';
+import 'package:dpad/dpad.dart';
+
+class TVFocusEffects {
+  static FocusEffectBuilder primary(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    return FocusEffects.combine([
+      FocusEffects.scale(scale: 1.05),
+      FocusEffects.border(
+          border: Border.all(
+        color: color,
+        width: 3,
+      )),
+      FocusEffects.glow(glowColor: color.withOpacity(0.3)),
+    ]);
+  }
+}
