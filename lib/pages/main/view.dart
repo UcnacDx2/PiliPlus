@@ -508,7 +508,7 @@ class _MainAppState extends State<MainApp>
                 });
               }
             },
-            onPressed: () => _mainController.setIndex(i),
+              onSelect: () => _mainController.setIndex(i),
             builder: (context, hasFocus) {
               final color = isSelected
                   ? theme.colorScheme.primary

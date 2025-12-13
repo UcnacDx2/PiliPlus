@@ -52,11 +52,7 @@ extension ScrollControllerExt on ScrollController {
   }
 }
 
-extension IterableExt<T> on Iterable<T>? {
-  bool get isNullOrEmpty => this == null || this!.isEmpty;
-}
-
-extension NonNullIterableExt<T> on Iterable<T> {
+extension IterableExt<T> on Iterable<T> {
   T? reduceOrNull(T Function(T value, T element) combine) {
     Iterator<T> iterator = this.iterator;
     if (!iterator.moveNext()) {
@@ -67,6 +63,10 @@ extension NonNullIterableExt<T> on Iterable<T> {
       value = combine(value, iterator.current);
     }
     return value;
+  }
+
+  Iterable<E> mapWithIndex<E>(E Function(int index, T value) f) {
+    return toList().asMap().entries.map((entry) => f(entry.key, entry.value));
   }
 }
 
@@ -274,10 +274,4 @@ extension SizeExt on Size {
 extension GetExt on GetInterface {
   S putOrFind<S>(InstanceBuilderCallback<S> dep, {String? tag}) =>
       GetInstance().putOrFind(dep, tag: tag);
-}
-
-extension IterableExt<T> on Iterable<T> {
-  Iterable<E> mapWithIndex<E>(E Function(int index, T value) f) {
-    return toList().asMap().entries.map((entry) => f(entry.key, entry.value));
-  }
 }
