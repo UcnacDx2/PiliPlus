@@ -52,7 +52,11 @@ extension ScrollControllerExt on ScrollController {
   }
 }
 
-extension IterableExt<T> on Iterable<T> {
+extension IterableExt<T> on Iterable<T>? {
+  bool get isNullOrEmpty => this == null || this!.isEmpty;
+}
+
+extension NonNullIterableExt<T> on Iterable<T> {
   T? reduceOrNull(T Function(T value, T element) combine) {
     Iterator<T> iterator = this.iterator;
     if (!iterator.moveNext()) {
@@ -65,9 +69,6 @@ extension IterableExt<T> on Iterable<T> {
     return value;
   }
 
-  Iterable<E> mapWithIndex<E>(E Function(int index, T value) f) {
-    return toList().asMap().entries.map((entry) => f(entry.key, entry.value));
-  }
 }
 
 extension MapExt<K, V> on Map<K, V> {

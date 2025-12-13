@@ -488,8 +488,6 @@ class _MainAppState extends State<MainApp>
         : icon;
   }
 
-  int _currentFocusIndex = 0;
-
   Widget _buildTVBottomNav(ThemeData theme) {
     return Container(
       height: 60,
@@ -501,19 +499,13 @@ class _MainAppState extends State<MainApp>
           return DpadFocusable(
             autofocus: i == 0,
             isEntryPoint: i == 0,
-            onFocus: (hasFocus) {
-              if (hasFocus) {
-                setState(() {
-                  _currentFocusIndex = i;
-                });
-              }
-            },
-              onSelect: () => _mainController.setIndex(i),
-            builder: (context, hasFocus) {
+            onFocus: () {},
+            onSelect: () => _mainController.setIndex(i),
+            builder: (context, hasFocus, child) {
               final color = isSelected
                   ? theme.colorScheme.primary
                   : theme.colorScheme.onSurface;
-              Widget child = Column(
+              child = Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _buildIcon(type: e, selected: isSelected),
@@ -524,7 +516,7 @@ class _MainAppState extends State<MainApp>
                 ],
               );
               if (hasFocus) {
-                child = TVFocusEffects.primary(context).build(context, child);
+                return TVFocusEffects.primary(context)(context, hasFocus, child);
               }
               return child;
             },
