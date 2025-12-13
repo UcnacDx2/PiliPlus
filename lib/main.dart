@@ -10,6 +10,7 @@ import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/router/app_pages.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
+import 'package:PiliPlus/services/focus_management_service.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
@@ -85,7 +86,8 @@ void main() async {
   }
   Get
     ..lazyPut(AccountService.new)
-    ..lazyPut(DownloadService.new);
+    ..lazyPut(DownloadService.new)
+    ..lazyPut(FocusManagementService.new);
   HttpOverrides.global = _CustomHttpOverrides();
 
   CacheManager.autoClearCache();
@@ -218,6 +220,9 @@ class MyApp extends StatelessWidget {
   static ThemeData? darkThemeData;
 
   static void _onBack() {
+    if (Get.find<FocusManagementService>().handleBackButton()) {
+      return;
+    }
     if (SmartDialog.checkExist()) {
       SmartDialog.dismiss();
       return;
