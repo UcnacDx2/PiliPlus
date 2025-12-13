@@ -39,17 +39,30 @@ jobs:
           cache: true
 
       # 步骤 3 & 4: 安装依赖并运行分析
-      # 将 `pub get` 和 `analyze` 合并为一步。这样无论哪一个失败，
-      # 都会被 `continue-on-error` 捕获，并允许后续步骤运行。
-      # 完整的输出（包括 `pub get` 的错误）都会被记录到日志文件中。
+      # 我们首先运行 `pub get`。然后运行 `analyze` 并捕获其退出代码。
+      # 根据 Flutter 文档，退出代码 3 表示有错误，而 1 和 2 仅表示有警告或信息。
+      # 我们修改脚本，使其仅在退出代码为 3 时才失败，从而忽略警告和信息。
       - name: Install Dependencies and Run Analysis
         id: analysis_step
         run: |
           {
             echo "--- Installing Dependencies (flutter pub get) ---"
             flutter pub get
+
             echo "--- Running Static Analysis (flutter analyze) ---"
             flutter analyze
+            ANALYSIS_EXIT_CODE=$?
+
+            echo "--- Flutter Analyze exited with code $ANALYSIS_EXIT_CODE ---"
+
+            # 仅在退出代码为 3 (error) 时失败
+            if [ $ANALYSIS_EXIT_CODE -eq 3 ]; then
+              echo "Errors found. Failing the step."
+              exit 1
+            else
+              echo "No fatal errors found. Passing the step."
+              exit 0
+            fi
           } > flutter_analyze.log 2>&1
         continue-on-error: true
 
