@@ -9,7 +9,7 @@ import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
-    show KeyDownEvent, KeyUpEvent, LogicalKeyboardKey, HardwareKeyboard;
+    show KeyDownEvent, KeyUpEvent, LogicalKeyboardKey, HardwareKeyboard, FocusManager;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 

@@ -46,6 +46,9 @@ import 'package:PiliPlus/plugin/pl_player/widgets/backward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/bottom_control.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/focusable_control.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
+import 'package:floating/floating.dart';
+import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/forward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/mpv_convert_webp.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
@@ -1000,7 +1003,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               plPlayerController.triggerFullScreen(status: false);
             } else if (Utils.isMobile &&
                 !videoDetailController.horizontalScreen &&
-                !widget.maxWidth > widget.maxHeight) {
+                widget.maxWidth < widget.maxHeight) {
               verticalScreenForTwoSeconds();
             } else {
               Get.back();
