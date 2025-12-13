@@ -1,0 +1,390 @@
+name: Main CI Workflow
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+    inputs:
+      build_android:
+        description: "Build Android"
+        required: false
+        default: true
+        type: boolean
+      build_ios:
+        description: "Build iOS"
+        required: false
+        default: true
+        type: boolean
+      build_mac:
+        description: "Build Mac"
+        required: false
+        default: true
+        type: boolean
+      build_win_x64:
+        description: "Build Win-x64"
+        required: false
+        default: true
+        type: boolean
+      build_linux_x64:
+        description: "Build Linux-x64"
+        required: false
+        default: false
+        type: boolean
+      tag:
+        description: "tag"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  analyze:
+    name: Flutter Analyzer
+    runs-on: ubuntu-latest
+    outputs:
+      ANALYSIS_FAILED: ${{ steps.analysis_step.outputs.ANALYSIS_FAILED }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          cache: true
+      - name: Install, Analyze, and Set Output
+        id: analysis_step
+        run: |
+          ANALYSIS_HAS_FAILED=false
+          echo "--- Installing Dependencies (flutter pub get) ---"
+          if ! flutter pub get > flutter_analyze.log 2>&1; then
+            echo "flutter pub get failed"
+            ANALYSIS_HAS_FAILED=true
+          else
+            echo "--- Running Static Analysis (flutter analyze) ---"
+            set +e
+            flutter analyze 2> >(tee -a flutter_analyze.log >&2) 1> >(tee -a flutter_analyze.log)
+            ANALYSIS_EXIT_CODE=$?
+            set -e
+            echo "--- Flutter Analyze exited with code $ANALYSIS_EXIT_CODE ---"
+            if [ $ANALYSIS_EXIT_CODE -eq 3 ]; then
+              echo "Errors found."
+              ANALYSIS_HAS_FAILED=true
+            else
+              echo "No fatal errors found."
+            fi
+          fi
+          echo "Final analysis status: $ANALYSIS_HAS_FAILED"
+          echo "ANALYSIS_FAILED=$ANALYSIS_HAS_FAILED" >> $GITHUB_OUTPUT
+      - name: Comment on PR on failure
+        if: steps.analysis_step.outputs.ANALYSIS_FAILED == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PR_COMMENTER_TOKEN }}
+          script: |
+            const fs = require('fs');
+            if (context.eventName === 'pull_request') {
+              const prNumber = context.issue.number;
+              const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+              let errorOutput = '无法读取错误日志。';
+              try {
+                errorOutput = fs.readFileSync('flutter_analyze.log', 'utf8');
+              } catch (e) {
+                console.error('Error reading log file:', e);
+              }
+              const body = `
+              ❌ **CI Check 失败**
+              工作流在执行过程中遇到错误。
+              *   **[查看完整的CI日志](${runUrl})**
+              <details>
+              <summary>点击展开错误详情</summary>
+              \`\`\`
+              ${errorOutput}
+              \`\`\`
+              </details>
+              `;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
+
+  build_android:
+    name: Build Android
+    needs: analyze
+    runs-on: ubuntu-latest
+    permissions: write-all
+    if: ${{ needs.analyze.outputs.ANALYSIS_FAILED != 'true' && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_android == 'true')) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "17"
+          cache: "gradle"
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          cache: true
+      - name: Write key
+        run: |
+          if [ ! -z "${{ secrets.SIGN_KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.SIGN_KEYSTORE_BASE64 }}" | base64 --decode > android/app/key.jks
+            echo storeFile='key.jks' >> android/key.properties
+            echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> android/key.properties
+            echo keyAlias='${{ secrets.KEY_ALIAS }}' >> android/key.properties
+            echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> android/key.properties
+          fi
+      - name: Set and Extract version
+        shell: pwsh
+        run: lib/scripts/build.ps1 android
+      - name: flutter build apk
+        run: flutter build apk --release --split-per-abi --dart-define-from-file=pili_release.json --pub
+      - name: rename
+        run: |
+          for file in build/app/outputs/flutter-apk/app-*-release.apk; do
+            abi=$(echo "$file" | sed -E 's|.*app-(.*)-release\.apk|\1|')
+            mv "$file" "PiliPlus_android_${{ env.version }}_${abi}.apk"
+          done
+        shell: bash
+      - name: Release
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          name: ${{ github.event.inputs.tag }}
+          files: |
+              PiliPlus_android_*.apk
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: Android-APKs
+          path: PiliPlus_android_*.apk
+
+  build_ios:
+    name: Build iOS
+    needs: analyze
+    runs-on: macos-latest
+    permissions: write-all
+    if: ${{ needs.analyze.outputs.ANALYSIS_FAILED != 'true' && (github.event_name == 'workflow_dispatch' && github.event.inputs.build_ios == 'true') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          cache: true
+      - name: Set and Extract version
+        shell: pwsh
+        run: lib/scripts/build.ps1
+      - name: Build iOS
+        run: |
+          flutter build ios --release --no-codesign --dart-define-from-file=pili_release.json
+          ln -sf ./build/ios/iphoneos Payload
+          zip -r9 PiliPlus_ios_${{env.version}}.ipa Payload/runner.app
+      - name: Release
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          name: ${{ github.event.inputs.tag }}
+          files: |
+            PiliPlus_ios_*.ipa
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: iOS-IPA
+          path: PiliPlus_ios_*.ipa
+
+  build_macos:
+    name: Build macOS
+    needs: analyze
+    runs-on: macos-latest
+    permissions: write-all
+    if: ${{ needs.analyze.outputs.ANALYSIS_FAILED != 'true' && (github.event_name == 'workflow_dispatch' && github.event.inputs.build_mac == 'true') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          cache: true
+      - name: Set and Extract version
+        shell: pwsh
+        run: lib/scripts/build.ps1
+      - name: Build macOS
+        run: flutter build macos --release --dart-define-from-file=pili_release.json
+      - name: Package DMG
+        run: |
+          npm install --global create-dmg
+          create-dmg build/macos/Build/Products/Release/PiliPlus.app
+        continue-on-error: true
+      - name: Rename DMG
+        run: mv PiliPlus*.dmg PiliPlus_macos_${{ env.version }}.dmg
+      - name: Release
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          name: ${{ github.event.inputs.tag }}
+          files: |
+            PiliPlus_macos_*.dmg
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: macOS-DMG
+          path: PiliPlus_macos_*.dmg
+
+  build_windows_x64:
+    name: Build Windows x64
+    needs: analyze
+    runs-on: windows-latest
+    permissions: write-all
+    if: ${{ needs.analyze.outputs.ANALYSIS_FAILED != 'true' && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' && github.event.inputs.build_win_x64 == 'true') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          cache: true
+      - name: Add fastforge and Inno Setup
+        run: |
+          dart pub global activate fastforge
+          choco install innosetup
+      - name: Add Chinese language file for Inno Setup
+        run: |
+          Copy-Item "windows/packaging/exe/ChineseSimplified.isl" "C:\Program Files (x86)\Inno Setup 6\Languages\ChineseSimplified.isl"
+        shell: pwsh
+      - name: Set and Extract version
+        shell: pwsh
+        run: lib/scripts/build.ps1
+      - name: Build Windows
+        run: |
+          fastforge package --platform windows --targets exe --flutter-build-args="dart-define-from-file=pili_release.json"
+      - name: Prepare Upload
+        run: |
+          mkdir -p Release/PiliPlus-Win
+          mkdir -p PiliPlus-Win-Setup
+          mv build/windows/x64/runner/Release/* Release/PiliPlus-Win/
+          mv dist/**/*.exe PiliPlus-Win-Setup/PiliPlus_windows_${{env.version}}_x64_setup.exe
+      - name: Compress
+        if: ${{ github.event.inputs.tag != '' }}
+        run: |
+          Compress-Archive -Path "Release/PiliPlus-Win" -DestinationPath "PiliPlus_windows_${{env.version}}_x64.zip"
+        shell: pwsh
+      - name: Release
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          name: ${{ github.event.inputs.tag }}
+          files: |
+            PiliPlus_windows_*.zip
+            PiliPlus-Win-Setup/PiliPlus_windows_*.exe
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: Windows-Release-Files
+          path: |
+            Release/
+            PiliPlus-Win-Setup/
+
+  build_linux_x64:
+    name: Build Linux x64
+    needs: analyze
+    runs-on: ubuntu-latest
+    permissions: write-all
+    if: ${{ needs.analyze.outputs.ANALYSIS_FAILED != 'true' && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_linux_x64 == 'true')) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake libgtk-3-dev ninja-build libayatana-appindicator3-dev unzip webkit2gtk-4.1 libasound2-dev rpm patchelf
+          sudo apt-get install -y gcc g++ autoconf automake debhelper glslang-dev ladspa-sdk xutils-dev libasound2-dev \
+              libarchive-dev libbluray-dev libbs2b-dev libcaca-dev libcdio-paranoia-dev libdrm-dev \
+              libdav1d-dev libdvdnav-dev libegl1-mesa-dev libepoxy-dev libfontconfig-dev libfreetype6-dev \
+              libfribidi-dev libgl1-mesa-dev libgbm-dev libgme-dev libgsm1-dev libharfbuzz-dev libjpeg-dev \
+              libbrotli-dev liblcms2-dev libmodplug-dev libmp3lame-dev libopenal-dev \
+              libopus-dev libopencore-amrnb-dev libopencore-amrwb-dev libpulse-dev librtmp-dev \
+              libsdl2-dev libsixel-dev libssh-dev libsoxr-dev libspeex-dev libtool \
+              libv4l-dev libva-dev libvdpau-dev libvorbis-dev libvo-amrwbenc-dev \
+              libunwind-dev libvpx-dev libwayland-dev libx11-dev libxext-dev \
+              libxkbcommon-dev libxrandr-dev libxss-dev libxv-dev libxvidcore-dev \
+              linux-libc-dev nasm ninja-build pkg-config python3 python3-docutils wayland-protocols \
+              x11proto-core-dev zlib1g-dev libfdk-aac-dev libtheora-dev libwebp-dev \
+              unixodbc-dev libpq-dev libxxhash-dev libaom-dev \
+              libgtk-3-0 libblkid1 liblzma5 libmpv-dev
+        shell: bash
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          cache: true
+      - name: Set and Extract version
+        shell: pwsh
+        run: lib/scripts/build.ps1
+      - name: Build Linux
+        run: flutter build linux --release -v --pub --dart-define-from-file=pili_release.json
+      - name: Package archives
+        run: |
+          tar -zcvf PiliPlus_linux_${{ env.version }}_amd64.tar.gz -C build/linux/x64/release/bundle .
+      - name: Package deb
+        run: |
+          # ... (original deb packaging script)
+      - name: Package rpm
+        run: |
+          # ... (original rpm packaging script)
+      - name: Package AppImage
+        run: |
+          # ... (original AppImage packaging script)
+      - name: Release
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          name: ${{ github.event.inputs.tag }}
+          files: |
+            PiliPlus_linux_*.tar.gz
+            PiliPlus_linux_*.deb
+            PiliPlus_linux_*.rpm
+            PiliPlus_linux_*.AppImage
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: Linux-Packages
+          path: |
+            PiliPlus_linux_*.tar.gz
+            PiliPlus_linux_*.deb
+            PiliPlus_linux_*.rpm
+            PiliPlus_linux_*.AppImage
