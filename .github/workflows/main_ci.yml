@@ -46,6 +46,8 @@ jobs:
   analyze:
     name: Flutter Analyzer
     runs-on: ubuntu-latest
+    outputs:
+      ANALYSIS_FAILED: ${{ steps.analysis_step.outputs.ANALYSIS_FAILED }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -55,32 +57,30 @@ jobs:
           flutter-version: '3.38.4'
           channel: 'stable'
           cache: true
-      - name: Install Dependencies and Run Analysis
+      - name: Install, Analyze, and Set Output
         id: analysis_step
         run: |
-          set -o pipefail
-          {
-            echo "--- Installing Dependencies (flutter pub get) ---"
-            flutter pub get
-            if [ $? -ne 0 ]; then
-              echo "flutter pub get failed"
-              echo "ANALYSIS_FAILED=true" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-
+          ANALYSIS_HAS_FAILED=false
+          echo "--- Installing Dependencies (flutter pub get) ---"
+          if ! flutter pub get > flutter_analyze.log 2>&1; then
+            echo "flutter pub get failed"
+            ANALYSIS_HAS_FAILED=true
+          else
             echo "--- Running Static Analysis (flutter analyze) ---"
-            flutter analyze
+            set +e
+            flutter analyze 2> >(tee -a flutter_analyze.log >&2) 1> >(tee -a flutter_analyze.log)
             ANALYSIS_EXIT_CODE=$?
+            set -e
             echo "--- Flutter Analyze exited with code $ANALYSIS_EXIT_CODE ---"
-
             if [ $ANALYSIS_EXIT_CODE -eq 3 ]; then
-              echo "Errors found. Setting output and failing."
-              echo "ANALYSIS_FAILED=true" >> $GITHUB_OUTPUT
+              echo "Errors found."
+              ANALYSIS_HAS_FAILED=true
             else
-              echo "No fatal errors found. Setting output and passing."
-              echo "ANALYSIS_FAILED=false" >> $GITHUB_OUTPUT
+              echo "No fatal errors found."
             fi
-          } | tee flutter_analyze.log
+          fi
+          echo "Final analysis status: $ANALYSIS_HAS_FAILED"
+          echo "ANALYSIS_FAILED=$ANALYSIS_HAS_FAILED" >> $GITHUB_OUTPUT
       - name: Comment on PR on failure
         if: steps.analysis_step.outputs.ANALYSIS_FAILED == 'true'
         uses: actions/github-script@v7
