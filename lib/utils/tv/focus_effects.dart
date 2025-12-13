@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class TVFocusEffects {
-  static Widget Function(BuildContext, bool, Widget) primary(
+  static Widget Function(BuildContext, bool, Widget?) primary(
       BuildContext context) {
-    return (BuildContext context, bool hasFocus, Widget child) {
+    return (BuildContext context, bool hasFocus, Widget? child) {
       final color = Theme.of(context).colorScheme.primary;
       return AnimatedContainer(
         duration: const Duration(milliseconds: 200),
