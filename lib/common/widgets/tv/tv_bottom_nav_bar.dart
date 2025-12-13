@@ -23,7 +23,7 @@ class TVBottomNavBar extends StatelessWidget {
     return DpadFocusable(
       autofocus: index == 0,
       isEntryPoint: index == 0,
-      onClick: () => mainController.setIndex(index),
+      onTap: () => mainController.setIndex(index),
       builder: (context, hasFocus, child) =>
           TVFocusEffects.primary(context)(
         context,
