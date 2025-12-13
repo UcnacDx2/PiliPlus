@@ -230,6 +230,9 @@ class Routes {
     CustomGetPage(name: '/download', page: () => const DownloadPage()),
     CustomGetPage(name: '/dlna', page: () => const DLNAPage()),
   ];
+
+  static final List<GetPage<dynamic>> debugPages =
+      getPages.where((i) => i.name != '/').toList();
 }
 
 class CustomGetPage<T> extends GetPage<T> {
