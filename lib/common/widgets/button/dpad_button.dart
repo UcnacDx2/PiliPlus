@@ -24,8 +24,10 @@ class DpadButton extends StatelessWidget {
           width: 2,
         ),
       ],
-      onClick: onClick,
-      child: child,
+      builder: (context, hasFocus) => InkWell(
+        onTap: onClick,
+        child: child,
+      ),
     );
   }
 }

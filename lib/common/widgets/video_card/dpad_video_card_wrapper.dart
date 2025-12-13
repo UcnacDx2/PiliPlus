@@ -21,8 +21,10 @@ class DpadVideoCardWrapper extends StatelessWidget {
           width: 3,
         ),
       ],
-      onClick: onClick,
-      child: child,
+      builder: (context, hasFocus) => InkWell(
+        onTap: onClick,
+        child: child,
+      ),
     );
   }
 }

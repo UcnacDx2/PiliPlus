@@ -20,8 +20,10 @@ class DpadListItemWrapper extends StatelessWidget {
           color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         ),
       ],
-      onClick: onClick,
-      child: child,
+      builder: (context, hasFocus) => InkWell(
+        onTap: onClick,
+        child: child,
+      ),
     );
   }
 }

@@ -40,7 +40,7 @@ class _HomePageState extends State<HomePage>
         if (_homeController.tabs.length > 1)
           DpadRegion(
             id: 'tabs',
-            child: DpadTabBar(
+            child: TabBar(
               controller: _homeController.tabController,
               tabs: [
                 for (var i in _homeController.tabs) Tab(text: i.label),
@@ -180,14 +180,7 @@ class _HomePageState extends State<HomePage>
         height: 44,
         child: DpadFocusable(
           autofocus: true,
-          onClick: () => Get.toNamed(
-            '/search',
-            parameters: {
-              if (_homeController.enableSearchWord)
-                'hintText': _homeController.defaultSearch.value,
-            },
-          ),
-          child: Material(
+          builder: (context, hasFocus) => Material(
             borderRadius: const BorderRadius.all(Radius.circular(25)),
             color:
                 theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.05),
@@ -267,8 +260,7 @@ Widget msgBadge(MainController mainController) {
 
   final msgUnReadCount = mainController.msgUnReadCount.value;
   return DpadFocusable(
-    onClick: toWhisper,
-    child: GestureDetector(
+    builder: (context, hasFocus) => InkWell(
       onTap: toWhisper,
       child: Badge(
         isLabelVisible:

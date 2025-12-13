@@ -213,35 +213,10 @@ void main() async {
   }
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   static ThemeData? darkThemeData;
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  static ThemeData? darkThemeData;
-  bool _isDpadEnabled = Utils.isDesktop;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkIfTv();
-  }
-
-  Future<void> _checkIfTv() async {
-    if (Platform.isAndroid) {
-      final isTv = await IsTv.check();
-      if (mounted && isTv) {
-        setState(() {
-          _isDpadEnabled = true;
-        });
-      }
-    }
-  }
 
   static void _onBack() {
     if (SmartDialog.checkExist()) {
@@ -278,14 +253,13 @@ class _MyAppState extends State<MyApp> {
     Get.back();
   }
 
-  Widget _buildApp({
+  static Widget _build({
     ColorScheme? lightColorScheme,
     ColorScheme? darkColorScheme,
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
     return DpadRoot(
-      enabled: _isDpadEnabled,
       onBackPressed: _onBack,
       child: GetMaterialApp(
         title: Constants.appName,
@@ -332,9 +306,13 @@ class _MyAppState extends State<MyApp> {
               ),
               child: child!,
             );
-            return Utils.isDesktop
-                ? MouseBackDetector(onTapDown: _onBack, child: child)
-                : child;
+            if (Utils.isDesktop) {
+              return MouseBackDetector(
+                onTapDown: _onBack,
+                child: child,
+              );
+            }
+            return child;
           },
         ),
         navigatorObservers: [
@@ -362,17 +340,17 @@ class _MyAppState extends State<MyApp> {
       return DynamicColorBuilder(
         builder: ((ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
           if (lightDynamic != null && darkDynamic != null) {
-            return _buildApp(
+            return _build(
               lightColorScheme: lightDynamic.harmonized(),
               darkColorScheme: darkDynamic.harmonized(),
             );
           } else {
-            return _buildApp();
+            return _build();
           }
         }),
       );
     }
-    return _buildApp();
+    return _build();
   }
 }
 

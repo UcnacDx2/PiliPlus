@@ -1450,7 +1450,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     }
 
     final flag = !needIndicator || tabs.length == 1;
-    Widget tabBar() => DpadTabBar(
+    Widget tabBar() => TabBar(
           labelColor: flag ? themeData.colorScheme.onSurface : null,
           indicator: flag ? const BoxDecoration() : null,
           padding: EdgeInsets.zero,
@@ -1525,8 +1525,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   DpadFocusable(
-                    onClick: videoDetailController.showShootDanmakuSheet,
-                    child: SizedBox(
+                    builder: (context, hasFocus) => SizedBox(
                       height: 32,
                       child: TextButton(
                         style: const ButtonStyle(
@@ -1544,7 +1543,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                     ),
                   ),
                   DpadFocusable(
-                    child: SizedBox(
+                    builder: (context, hasFocus) => SizedBox(
                       width: 38,
                       height: 38,
                       child: Obx(

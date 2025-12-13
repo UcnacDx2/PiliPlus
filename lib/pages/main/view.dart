@@ -256,11 +256,14 @@ class _MainAppState extends State<MainApp>
                               .entries
                               .map(
                                 (entry) => DpadFocusable(
-                                  onClick: () =>
-                                      _mainController.setIndex(entry.key),
-                                  child: NavigationDestination(
-                                    label: entry.value.label,
-                                    icon: _buildIcon(type: entry.value),
+                                      builder: (context, hasFocus) =>
+                                          InkWell(
+                                            onTap: () => _mainController
+                                                .setIndex(entry.key),
+                                            child: NavigationDestination(
+                                              label: entry.value.label,
+                                              icon: _buildIcon(
+                                                  type: entry.value),
                                     selectedIcon: _buildIcon(
                                       type: entry.value,
                                       selected: true,
@@ -368,16 +371,22 @@ class _MainAppState extends State<MainApp>
                                                 .entries
                                                 .map(
                                                   (entry) => DpadFocusable(
-                                                    onClick: () =>
-                                                        _mainController
-                                                            .setIndex(
-                                                                entry.key),
-                                                    child:
-                                                        NavigationDrawerDestination(
-                                                      label: Text(
-                                                          entry.value.label),
-                                                      icon: _buildIcon(
-                                                          type: entry.value),
+                                                      builder: (context,
+                                                              hasFocus) =>
+                                                          InkWell(
+                                                            onTap: () =>
+                                                                _mainController
+                                                                    .setIndex(
+                                                                        entry
+                                                                            .key),
+                                                            child:
+                                                                NavigationDrawerDestination(
+                                                              label: Text(entry
+                                                                  .value
+                                                                  .label),
+                                                              icon: _buildIcon(
+                                                                  type: entry
+                                                                      .value),
                                                       selectedIcon: _buildIcon(
                                                         type: entry.value,
                                                         selected: true,
@@ -531,61 +540,63 @@ class _MainAppState extends State<MainApp>
     return Column(
       children: [
         DpadFocusable(
-          onClick: _mainController.toMinePage,
-          child: Semantics(
-            label: "我的",
-            child: Obx(
-              () => _mainController.accountService.isLogin.value
-                  ? Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        NetworkImgLayer(
-                          type: ImageType.avatar,
-                          width: 34,
-                          height: 34,
-                          src: _mainController.accountService.face.value,
-                        ),
-                        Positioned.fill(
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: InkWell(
-                              onTap: _mainController.toMinePage,
-                              splashColor: theme.colorScheme.primaryContainer
-                                  .withValues(alpha: 0.3),
-                              customBorder: const CircleBorder(),
+          builder: (context, hasFocus) => InkWell(
+            onTap: _mainController.toMinePage,
+            child: Semantics(
+              label: "我的",
+              child: Obx(
+                () => _mainController.accountService.isLogin.value
+                    ? Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          NetworkImgLayer(
+                            type: ImageType.avatar,
+                            width: 34,
+                            height: 34,
+                            src: _mainController.accountService.face.value,
+                          ),
+                          Positioned.fill(
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: InkWell(
+                                onTap: _mainController.toMinePage,
+                                splashColor: theme.colorScheme.primaryContainer
+                                    .withValues(alpha: 0.3),
+                                customBorder: const CircleBorder(),
+                              ),
                             ),
                           ),
-                        ),
-                        Positioned(
-                          right: -6,
-                          bottom: -6,
-                          child: Obx(
-                            () => MineController.anonymity.value
-                                ? IgnorePointer(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                        color: theme
-                                            .colorScheme.secondaryContainer,
-                                        shape: BoxShape.circle,
+                          Positioned(
+                            right: -6,
+                            bottom: -6,
+                            child: Obx(
+                              () => MineController.anonymity.value
+                                  ? IgnorePointer(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: theme
+                                              .colorScheme.secondaryContainer,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          size: 16,
+                                          MdiIcons.incognito,
+                                          color: theme.colorScheme
+                                              .onSecondaryContainer,
+                                        ),
                                       ),
-                                      child: Icon(
-                                        size: 16,
-                                        MdiIcons.incognito,
-                                        color: theme
-                                            .colorScheme.onSecondaryContainer,
-                                      ),
-                                    ),
-                                  )
-                                : const SizedBox.shrink(),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
                           ),
-                        ),
-                      ],
-                    )
-                  : defaultUser(
-                      theme: theme,
-                      onPressed: _mainController.toMinePage,
-                    ),
+                        ],
+                      )
+                    : defaultUser(
+                        theme: theme,
+                        onPressed: _mainController.toMinePage,
+                      ),
+              ),
             ),
           ),
         ),
@@ -597,8 +608,7 @@ class _MainAppState extends State<MainApp>
         ),
         DpadFocusable(
           autofocus: true,
-          onClick: () => Get.toNamed('/search'),
-          child: IconButton(
+          builder: (context, hasFocus) => IconButton(
             tooltip: '搜索',
             icon: const Icon(
               Icons.search_outlined,
