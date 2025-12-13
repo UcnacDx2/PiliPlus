@@ -1,0 +1,51 @@
+# GitHub Actions 工作流：Flutter 静态代码分析
+#
+# 这个工作流会在每次有代码推送到 main 分支或创建/更新 main 分支的 Pull Request 时被触发。
+# 它的主要任务是运行 `flutter analyze` 来检查代码中是否存在潜在错误、警告或风格问题。
+
+name: Flutter Analyzer
+
+# 触发工作流的事件
+on:
+  # 1. 推送到 main 分支时触发
+  push:
+    branches: [ main ]
+  # 2. 对 main 分支发起 Pull Request 时触发
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # 定义一个名为 "analyze" 的任务
+  analyze:
+    # 指定任务运行的虚拟环境
+    runs-on: ubuntu-latest
+
+    # 任务执行的步骤
+    steps:
+      # 步骤 1: 检出代码
+      # 使用 GitHub 官方的 `checkout` action 来获取你的仓库代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 步骤 2: 设置 Flutter 环境
+      # 使用 `subosito/flutter-action` 这个广受欢迎的 action 来安装和配置 Flutter SDK
+      # 它可以缓存 SDK，后续运行会更快
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          # 你可以指定项目使用的 Flutter 版本
+          flutter-version: '3.19.0' # 建议修改为你项目当前使用的 Flutter 版本
+          channel: 'stable'
+          cache: true
+
+      # 步骤 3: 获取项目依赖
+      # 在执行任何 flutter 命令之前，需要先运行 `pub get`
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 步骤 4: 运行代码分析
+      # 执行 `flutter analyze` 命令。如果分析发现任何问题（错误、警告等），
+      # 此命令会以非零状态码退出，导致工作流失败。
+      # 这正是我们想要的，因为它会阻止不合规的代码被合并。
+      - name: Run static analysis
+        run: flutter analyze
