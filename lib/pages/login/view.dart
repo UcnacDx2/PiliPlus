@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/widgets/focusable_text_field.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/loading_widget.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/http/loading_state.dart';
@@ -181,7 +182,7 @@ class _LoginPageState extends State<LoginPage> {
         const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          child: TextField(
+          child: FocusableTextField(
             minLines: 1,
             maxLines: 10,
             controller: _loginPageCtr.cookieTextController,
@@ -214,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
         const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          child: TextField(
+          child: FocusableTextField(
             controller: _loginPageCtr.usernameTextController,
             inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r"\s"))],
             decoration: InputDecoration(
@@ -231,7 +232,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          child: TextField(
+          child: FocusableTextField(
             obscureText: !showPassword,
             keyboardType: TextInputType.visiblePassword,
             inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r"\s"))],
@@ -422,7 +423,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: TextField(
+                  child: FocusableTextField(
                     enabled: !Platform.isLinux,
                     controller: _loginPageCtr.telTextController,
                     keyboardType: TextInputType.number,
@@ -454,7 +455,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: FocusableTextField(
                     enabled: !Platform.isLinux,
                     controller: _loginPageCtr.smsCodeTextController,
                     decoration: const InputDecoration(
