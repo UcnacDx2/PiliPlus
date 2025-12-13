@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/widgets/flutter/list_tile.dart';
+import 'package:PiliPlus/common/widgets/focusable_widget.dart';
 import 'package:PiliPlus/common/widgets/view_safe_area.dart';
 import 'package:PiliPlus/http/login.dart';
 import 'package:PiliPlus/models/common/setting_type.dart';
@@ -15,6 +16,7 @@ import 'package:PiliPlus/pages/webdav/view.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/utils/extension.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart' hide ListTile;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
@@ -177,7 +179,9 @@ class _SettingPageState extends State<SettingPage> {
         ..._items
             .take(_items.length - 1)
             .map(
-              (item) => ListTile(
+              (item) => FocusableWidget(
+                  onSelect: () => _toPage(item.type),
+                  child: ListTile(
                 tileColor: _getTileColor(theme, item.type),
                 onTap: () => _toPage(item.type),
                 leading: item.icon,
@@ -185,28 +189,34 @@ class _SettingPageState extends State<SettingPage> {
                 subtitle: item.subtitle == null
                     ? null
                     : Text(item.subtitle!, style: subTitleStyle),
-              ),
+              )),
             ),
-        ListTile(
+        FocusableWidget(
+            onSelect: () => LoginPageController.switchAccountDialog(context),
+            child: ListTile(
           onTap: () => LoginPageController.switchAccountDialog(context),
           leading: const Icon(Icons.switch_account_outlined),
           title: Text('设置账号模式', style: titleStyle),
-        ),
+        )),
         Obx(
           () => _noAccount.value
               ? const SizedBox.shrink()
-              : ListTile(
+              : FocusableWidget(
+                  onSelect: () => _logoutDialog(context),
+                  child: ListTile(
                   leading: const Icon(Icons.logout_outlined),
                   onTap: () => _logoutDialog(context),
                   title: Text('退出登录', style: titleStyle),
-                ),
+                )),
         ),
-        ListTile(
+        FocusableWidget(
+            onSelect: () => _toPage(_items.last.type),
+            child: ListTile(
           tileColor: _getTileColor(theme, _items.last.type),
           onTap: () => _toPage(_items.last.type),
           leading: _items.last.icon,
           title: Text(_items.last.type.title, style: titleStyle),
-        ),
+        )),
       ],
     );
   }
@@ -284,7 +294,9 @@ class _SettingPageState extends State<SettingPage> {
       right: 16,
       bottom: 8,
     ),
-    child: Material(
+    child: FocusableWidget(
+        onSelect: () => Get.toNamed('/settingsSearch'),
+        child: Material(
       type: MaterialType.transparency,
       child: InkWell(
         onTap: () => Get.toNamed('/settingsSearch'),
@@ -309,6 +321,6 @@ class _SettingPageState extends State<SettingPage> {
           ),
         ),
       ),
-    ),
+    )),
   );
 }

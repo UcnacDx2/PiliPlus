@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/flutter/tabs.dart';
+import 'package:PiliPlus/common/widgets/focusable_widget.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamic_badge_mode.dart';
 import 'package:PiliPlus/models/common/image_type.dart';
@@ -11,6 +12,7 @@ import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
+import 'package:PiliPlus/services/focus_management_service.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/context_ext.dart';
 import 'package:PiliPlus/utils/extension.dart';
@@ -252,14 +254,29 @@ class _MainAppState extends State<MainApp>
                           selectedIndex: _mainController.selectedIndex.value,
                           destinations: _mainController.navigationBars
                               .map(
-                                (e) => NavigationDestination(
-                                  label: e.label,
-                                  icon: _buildIcon(type: e),
-                                  selectedIcon: _buildIcon(
-                                    type: e,
-                                    selected: true,
-                                  ),
-                                ),
+                                (e) {
+                                  final index = _mainController.navigationBars.indexOf(e);
+                                  return FocusableWidget(
+                                    onSelect: () {
+                                      Get.find<FocusManagementService>().requestFocus(
+                                        FocusState(
+                                          level: index == 0 ? FocusLevel.lvl1 : FocusLevel.lvl2,
+                                          index: index,
+                                        ),
+                                        debounce: true,
+                                      );
+                                      _mainController.setIndex(index);
+                                    },
+                                    child: NavigationDestination(
+                                      label: e.label,
+                                      icon: _buildIcon(type: e),
+                                      selectedIcon: _buildIcon(
+                                        type: e,
+                                        selected: true,
+                                      ),
+                                    ),
+                                  );
+                                },
                               )
                               .toList(),
                         ),
@@ -274,14 +291,41 @@ class _MainAppState extends State<MainApp>
                           type: BottomNavigationBarType.fixed,
                           items: _mainController.navigationBars
                               .map(
-                                (e) => BottomNavigationBarItem(
-                                  label: e.label,
-                                  icon: _buildIcon(type: e),
-                                  activeIcon: _buildIcon(
-                                    type: e,
-                                    selected: true,
-                                  ),
-                                ),
+                                (e) {
+                                  final index = _mainController.navigationBars.indexOf(e);
+                                  return BottomNavigationBarItem(
+                                    label: e.label,
+                                    icon: FocusableWidget(
+                                      onSelect: () {
+                                        Get.find<FocusManagementService>().requestFocus(
+                                          FocusState(
+                                            level: index == 0 ? FocusLevel.lvl1 : FocusLevel.lvl2,
+                                            index: index,
+                                          ),
+                                          debounce: true,
+                                        );
+                                        _mainController.setIndex(index);
+                                      },
+                                      child: _buildIcon(type: e),
+                                    ),
+                                    activeIcon: FocusableWidget(
+                                      onSelect: () {
+                                        Get.find<FocusManagementService>().requestFocus(
+                                          FocusState(
+                                            level: index == 0 ? FocusLevel.lvl1 : FocusLevel.lvl2,
+                                            index: index,
+                                          ),
+                                          debounce: true,
+                                        );
+                                        _mainController.setIndex(index);
+                                      },
+                                      child: _buildIcon(
+                                        type: e,
+                                        selected: true,
+                                      ),
+                                    ),
+                                  );
+                                },
                               )
                               .toList(),
                         ),

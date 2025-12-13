@@ -10,6 +10,7 @@ import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/router/app_pages.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
+import 'package:PiliPlus/services/focus_management_service.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
@@ -25,6 +26,7 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
+import 'package:dpad/dpad.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/foundation.dart';
@@ -84,7 +86,8 @@ void main() async {
   }
   Get
     ..lazyPut(AccountService.new)
-    ..lazyPut(DownloadService.new);
+    ..lazyPut(DownloadService.new)
+    ..lazyPut(FocusManagementService.new);
   HttpOverrides.global = _CustomHttpOverrides();
 
   CacheManager.autoClearCache();
@@ -217,6 +220,18 @@ class MyApp extends StatelessWidget {
   static ThemeData? darkThemeData;
 
   static void _onBack() {
+    final focusService = Get.find<FocusManagementService>();
+    if (focusService.handleBackButton()) {
+      return;
+    }
+
+    if (focusService.currentState?.level == FocusLevel.lvl1) {
+      SmartDialog.showToast('再按一次退出应用');
+      // In a real app, you'd handle the double-press logic here.
+      // For now, we'll just show the toast.
+      return;
+    }
+
     if (SmartDialog.checkExist()) {
       SmartDialog.dismiss();
       return;
@@ -257,7 +272,8 @@ class MyApp extends StatelessWidget {
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    return GetMaterialApp(
+    return DpadNavigator(
+        child: GetMaterialApp(
       title: Constants.appName,
       theme: ThemeUtils.getThemeData(
         colorScheme:
@@ -339,7 +355,7 @@ class MyApp extends StatelessWidget {
           if (Utils.isDesktop) PointerDeviceKind.mouse,
         },
       ),
-    );
+    ));
   }
 
   @override

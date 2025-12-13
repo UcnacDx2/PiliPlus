@@ -1,6 +1,8 @@
+import 'package:PiliPlus/common/widgets/focusable_widget.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
+import 'package:PiliPlus/services/focus_management_service.dart';
 import 'package:PiliPlus/models/common/dynamic/up_panel_position.dart';
 import 'package:PiliPlus/models/dynamics/up.dart';
 import 'package:PiliPlus/pages/dynamics/controller.dart';
@@ -124,7 +126,21 @@ class _DynamicsPageState extends State<DynamicsPage>
                 TabBarTheme.of(context).labelStyle?.copyWith(fontSize: 13) ??
                 const TextStyle(fontSize: 13),
             tabs: _dynamicsController.displayedTabs
-                .map((e) => Tab(text: e.label))
+                .map((e) {
+                  final index = _dynamicsController.displayedTabs.indexOf(e);
+                  return FocusableWidget(
+                    onSelect: () {
+                      _dynamicsController.tabController.animateTo(index);
+                      Get.find<FocusManagementService>().requestFocus(
+                        FocusState(
+                          level: index == 0 ? FocusLevel.lvl3 : FocusLevel.lvl4,
+                          index: index,
+                        ),
+                      );
+                    },
+                    child: Tab(text: e.label),
+                  );
+                })
                 .toList(),
             onTap: (index) {
               if (!_dynamicsController.tabController.indexIsChanging) {
