@@ -240,11 +240,18 @@ class Routes {
 
 class CustomGetPage<T> extends GetPage<T> {
   CustomGetPage({
-    required super.name,
-    required super.page,
-    super.binding,
-    super.popGesture = false,
-    super.fullscreenDialog = false,
-    super.showCupertinoParallax = false,
-  });
+    required String name,
+    required Widget Function() page,
+    Bindings? binding,
+    bool popGesture = false,
+    bool fullscreenDialog = false,
+    bool showCupertinoParallax = false,
+  }) : super(
+          name: name,
+          page: page,
+          binding: binding,
+          popGesture: popGesture,
+          fullscreenDialog: fullscreenDialog,
+          showCupertinoParallax: showCupertinoParallax,
+        );
 }
