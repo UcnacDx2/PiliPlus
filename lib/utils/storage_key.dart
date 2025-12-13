@@ -148,7 +148,8 @@ abstract class SettingBoxKey {
       setSystemBrightness = 'setSystemBrightness',
       downloadPath = 'downloadPath',
       followOrderType = 'followOrderType',
-      useFirstFrameAsCover = 'useFirstFrameAsCover';
+      useFirstFrameAsCover = 'useFirstFrameAsCover',
+      enableTVMode = 'enableTVMode';
 
   static const String minimizeOnExit = 'minimizeOnExit',
       windowSize = 'windowSize',
@@ -229,8 +230,7 @@ abstract class SettingBoxKey {
       navBarSort = 'navBarSort',
       tempPlayerConf = 'tempPlayerConf',
       reduceLuxColor = 'reduceLuxColor',
-      liveCdnUrl = 'liveCdnUrl',
-      enableTVMode = 'enableTVMode';
+      liveCdnUrl = 'liveCdnUrl';
 }
 
 abstract class LocalCacheKey {

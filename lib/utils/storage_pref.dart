@@ -892,7 +892,6 @@ abstract class Pref {
                 SettingBoxKey.useFirstFrameAsCover,
                 defaultValue: true,
             );
-
-  static bool get enableTVMode =>
-      _setting.get(SettingBoxKey.enableTVMode, defaultValue: false);
+    static bool get enableTVMode =>
+      _setting.get(SettingBoxKey.enableTVMode) ?? false;
 }
