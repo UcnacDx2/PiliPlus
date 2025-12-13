@@ -317,7 +317,7 @@ class _MainAppState extends State<MainApp>
       autofocus: true,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.back) {
+            event.logicalKey == LogicalKeyboardKey.goBack) {
           _mainController.handleBackPress(
             _contentFocusNode.hasFocus,
             onBack: onBack,
@@ -376,8 +376,8 @@ class _MainAppState extends State<MainApp>
                                               .value,
                                           children: _mainController
                                               .navigationBars
-                                              .map(
-                                                (e) =>
+                                              .mapIndexed(
+                                                (index, e) =>
                                                     NavigationDrawerDestination(
                                                       label: Text(e.label),
                                                       icon: _buildIcon(
@@ -412,7 +412,10 @@ class _MainAppState extends State<MainApp>
                                       .mapIndexed(
                                         (index, e) => NavigationRailDestination(
                                           label: Text(e.label),
-                                          icon: _buildIcon(type: e),
+                                          icon: _buildIconWithFocus(
+                                            type: e,
+                                            focusNode: _focusNodes[index],
+                                          ),
                                           selectedIcon: _buildIconWithFocus(
                                             type: e,
                                             selected: true,
@@ -456,7 +459,7 @@ class _MainAppState extends State<MainApp>
                             children: _mainController.navigationBars
                               .map((i) => i.page)
                               .toList(),
-                        ),
+                        )),
                 ),
               ],
             ),
