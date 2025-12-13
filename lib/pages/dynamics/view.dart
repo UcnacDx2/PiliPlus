@@ -133,7 +133,7 @@ class _DynamicsPageState extends State<DynamicsPage>
                       _dynamicsController.tabController.animateTo(index);
                       Get.find<FocusManagementService>().requestFocus(
                         FocusState(
-                          level: FocusLevel.tab,
+                          level: index == 0 ? FocusLevel.lvl3 : FocusLevel.lvl4,
                           index: index,
                         ),
                       );
