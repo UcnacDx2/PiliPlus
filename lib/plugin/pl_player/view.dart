@@ -1999,11 +1999,11 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         videoDetailController: videoDetailController,
                         buildMainControls: () => buildMainControls(
                           videoDetailController,
-                          !widget.maxWidth > widget.maxHeight,
+                          widget.maxWidth > widget.maxHeight,
                         ),
                         buildSecondaryControls: () => buildSecondaryControls(
                           videoDetailController,
-                          !widget.maxWidth > widget.maxHeight,
+                          widget.maxWidth > widget.maxHeight,
                         ),
                       ),
                 ),
