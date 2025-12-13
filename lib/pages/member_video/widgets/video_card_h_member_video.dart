@@ -37,9 +37,36 @@ class VideoCardHMemberVideo extends StatelessWidget {
       cover: videoItem.cover,
       bvid: videoItem.bvid,
     );
-    return Material(
-      type: MaterialType.transparency,
-      child: Stack(
+    return DpadVideoCardWrapper(
+      onClick: onTap ??
+          () {
+            final isPgc = videoItem.isPgc == true;
+            final isPugv = videoItem.isPugv == true;
+            if ((isPgc || isPugv) && videoItem.uri?.isNotEmpty == true) {
+              if (PageUtils.viewPgcFromUri(
+                videoItem.uri!,
+                isPgc: isPgc,
+              )) {
+                return;
+              }
+            }
+            if (videoItem.bvid == null || videoItem.cid == null) {
+              return;
+            }
+            try {
+              PageUtils.toVideoPage(
+                bvid: videoItem.bvid,
+                cid: videoItem.cid!,
+                cover: videoItem.cover,
+                title: videoItem.title,
+              );
+            } catch (err) {
+              SmartDialog.showToast(err.toString());
+            }
+          },
+      child: Material(
+        type: MaterialType.transparency,
+        child: Stack(
         clipBehavior: Clip.none,
         children: [
           InkWell(
@@ -218,7 +245,7 @@ class VideoCardHMemberVideo extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),);
   }
 
   Widget content(BuildContext context, ThemeData theme) {

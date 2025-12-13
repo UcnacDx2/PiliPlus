@@ -265,7 +265,7 @@ class _MainAppState extends State<MainApp>
                                           child: child!,
                                         );
                                       },
-                                      onEnter: () => _mainController.setIndex(
+                                      onClick: () => _mainController.setIndex(
                                         _mainController.navigationBars.indexOf(e),
                                       ),
                                       child: _buildIcon(type: e),
@@ -278,7 +278,7 @@ class _MainAppState extends State<MainApp>
                                           child: child!,
                                         );
                                       },
-                                      onEnter: () => _mainController.setIndex(
+                                      onClick: () => _mainController.setIndex(
                                         _mainController.navigationBars.indexOf(e),
                                       ),
                                       child: _buildIcon(
@@ -544,7 +544,7 @@ class _MainAppState extends State<MainApp>
                   child: child!,
                 );
               },
-              onEnter: _mainController.toMinePage,
+              onClick: _mainController.toMinePage,
               child: Obx(
                 () => _mainController.accountService.isLogin.value
                     ? Stack(
@@ -614,7 +614,7 @@ class _MainAppState extends State<MainApp>
                 child: child!,
               );
             },
-            onEnter: () => Get.toNamed('/search'),
+            onClick: () => Get.toNamed('/search'),
             child: IconButton(
               tooltip: '搜索',
               icon: const Icon(

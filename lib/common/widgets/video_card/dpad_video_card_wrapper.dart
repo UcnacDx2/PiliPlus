@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 
 class DpadVideoCardWrapper extends StatelessWidget {
   final Widget child;
-  final VoidCallback onEnter;
+  final VoidCallback onClick;
 
   const DpadVideoCardWrapper({
     super.key,
     required this.child,
-    required this.onEnter,
+    required this.onClick,
   });
 
   @override
@@ -33,7 +33,7 @@ class DpadVideoCardWrapper extends StatelessWidget {
           ),
         );
       },
-      onEnter: onEnter,
+      onClick: onClick,
       child: child,
     );
   }

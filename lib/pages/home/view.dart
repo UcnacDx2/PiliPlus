@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage>
                             ),
                           );
                         },
-                        onEnter: () {
+                        onClick: () {
                           _homeController.tabController.animateTo(
                             _homeController.tabs.indexOf(e),
                           );
@@ -123,7 +123,7 @@ class _HomePageState extends State<HomePage>
                 child: child!,
               );
             },
-            onEnter: () {
+            onClick: () {
               _mainController.msgUnReadCount.value = '';
               _mainController.lastCheckUnreadAt =
                   DateTime.now().millisecondsSinceEpoch;
@@ -144,7 +144,7 @@ class _HomePageState extends State<HomePage>
                 child: child!,
               );
             },
-            onEnter: _mainController.toMinePage,
+            onClick: _mainController.toMinePage,
             child: Semantics(
               label: "我的",
               child: Obx(
@@ -252,7 +252,7 @@ class _HomePageState extends State<HomePage>
           );
         },
         autofocus: true,
-        onEnter: () => Get.toNamed(
+        onClick: () => Get.toNamed(
           '/search',
           parameters: {
             if (_homeController.enableSearchWord)

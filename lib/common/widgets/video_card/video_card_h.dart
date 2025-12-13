@@ -20,6 +20,7 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter/services.dart';
+import 'package:dpad/dpad.dart';
 import 'dpad_video_card_wrapper.dart';
 
 // 视频卡片 - 水平布局
@@ -161,7 +162,7 @@ class _VideoCardHState extends State<VideoCardH> {
     );
 
     return DpadVideoCardWrapper(
-      onEnter: widget.onTap ?? _onTap,
+      onClick: widget.onTap ?? _onTap,
       child: Material(
         type: MaterialType.transparency,
         // [Feat] Focus 监听逻辑

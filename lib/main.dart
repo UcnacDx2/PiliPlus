@@ -25,8 +25,6 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
-import 'package:dpad/dpad.dart';
-import 'package:is_tv/is_tv.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/foundation.dart';
@@ -241,7 +239,10 @@ class _AppWrapperState extends State<AppWrapper> {
     if (_isTV! || Utils.isDesktop) {
       return DpadRoot(
         focusMemory: true,
-        onBackPressed: DpadRoot.defaultOnBackPressed,
+        onBackPressed: (focusNode) {
+          MyApp._onBack();
+          return KeyEventResult.handled;
+        },
         regionNavigation: DpadRegionNavigation(
           rules: {
             'sidebar': DpadRegionNavigationRule(

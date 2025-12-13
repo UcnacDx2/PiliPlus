@@ -357,7 +357,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 )
               : child!;
         },
-        onEnter: () => plPlayerController.playOrPause(),
+        onClick: () => plPlayerController.playOrPause(),
         child: PlayOrPauseButton(
           plPlayerController: plPlayerController,
         ),
@@ -378,7 +378,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               child: child!,
             );
           },
-          onEnter: () {
+          onClick: () {
             if (!introController.prevPlay()) {
               SmartDialog.showToast('已经是第一集了');
             }
@@ -414,7 +414,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               child: child!,
             );
           },
-          onEnter: () {
+          onClick: () {
             if (!introController.nextPlay()) {
               SmartDialog.showToast('已经是最后一集了');
             }
@@ -489,7 +489,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                   child: child!,
                 );
               },
-              onEnter: () => videoDetailController.showDmTrendChart.value =
+              onClick: () => videoDetailController.showDmTrendChart.value =
                   !videoDetailController.showDmTrendChart.value,
               child: ComBtn(
                 width: widgetWidth,
@@ -583,7 +583,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                     child: child!,
                   );
                 },
-                onEnter: widget.showViewPoints,
+              onClick: widget.showViewPoints,
                 child: ComBtn(
                   width: widgetWidth,
                   height: 30,
@@ -625,7 +625,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               child: child!,
             );
           },
-          onEnter: () {
+          onClick: () {
             if (videoDetailController.isFileSource) {
               // TODO
               return;
@@ -1088,7 +1088,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               child: child!,
             );
           },
-          onEnter: () =>
+          onClick: () =>
               plPlayerController.triggerFullScreen(status: !isFullScreen),
           child: ComBtn(
             width: widgetWidth,

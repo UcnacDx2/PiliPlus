@@ -49,10 +49,40 @@ class VideoCardHLater extends StatelessWidget {
             ..enableMultiSelect.value = true
             ..onSelect(videoItem);
 
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onLongPress: onLongPress,
+    return DpadVideoCardWrapper(
+      onClick: enableMultiSelect
+          ? () => ctr.onSelect(videoItem)
+          : () async {
+              if (type == 'ketang') {
+                PageUtils.viewPugv(seasonId: videoItem.aid);
+                return;
+              }
+              if (videoItem.isPgc == true) {
+                if (videoItem.bangumi?.epId != null) {
+                  PageUtils.viewPgc(epId: videoItem.bangumi!.epId);
+                } else if (videoItem.redirectUrl?.isNotEmpty == true) {
+                  PageUtils.viewPgcFromUri(videoItem.redirectUrl!);
+                }
+                return;
+              }
+              try {
+                final int? cid =
+                    videoItem.cid ??
+                    await SearchHttp.ab2c(
+                      aid: videoItem.aid,
+                      bvid: videoItem.bvid,
+                    );
+                if (cid != null) {
+                  onViewLater(cid);
+                }
+              } catch (err) {
+                SmartDialog.showToast(err.toString());
+              }
+            },
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onLongPress: onLongPress,
         onSecondaryTap: Utils.isMobile ? null : onLongPress,
         onTap: enableMultiSelect
             ? () => ctr.onSelect(videoItem)
@@ -265,6 +295,6 @@ class VideoCardHLater extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),);
   }
 }
