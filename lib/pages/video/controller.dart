@@ -457,12 +457,7 @@ class VideoDetailController extends GetxController
       if (plPlayerController.isFullScreen.value || showVideoSheet) {
         PageUtils.showVideoBottomSheet(
           context,
-          child: plPlayerController.darkVideoPage && Theme.of(Get.context!) != null
-              ? Theme(
-                  data: Theme.of(Get.context!)!,
-                  child: panel(),
-                )
-              : panel(),
+          child: panel(),
           isFullScreen: () => plPlayerController.isFullScreen.value,
         );
       } else {
@@ -1431,20 +1426,11 @@ class VideoDetailController extends GetxController
     if (plPlayerController.isFullScreen.value || showVideoSheet) {
       PageUtils.showVideoBottomSheet(
         context,
-        child: plPlayerController.darkVideoPage && Theme.of(Get.context!) != null
-            ? Theme(
-                data: Theme.of(Get.context!)!,
-                child: PostPanel(
-                  enableSlide: false,
-                  videoDetailController: this,
-                  plPlayerController: plPlayerController,
-                ),
-              )
-            : PostPanel(
-                enableSlide: false,
-                videoDetailController: this,
-                plPlayerController: plPlayerController,
-              ),
+        child: PostPanel(
+          enableSlide: false,
+          videoDetailController: this,
+          plPlayerController: plPlayerController,
+        ),
         isFullScreen: () => plPlayerController.isFullScreen.value,
       );
     } else {
@@ -1764,24 +1750,13 @@ class VideoDetailController extends GetxController
     if (plPlayerController.isFullScreen.value || showVideoSheet) {
       PageUtils.showVideoBottomSheet(
         context,
-        child: plPlayerController.darkVideoPage && Theme.of(Get.context!) != null
-            ? Theme(
-                data: Theme.of(Get.context!)!,
-                child: NoteListPage(
-                  oid: aid,
-                  enableSlide: false,
-                  heroTag: heroTag,
-                  isStein: graphVersion != null,
-                  title: title,
-                ),
-              )
-            : NoteListPage(
-                oid: aid,
-                enableSlide: false,
-                heroTag: heroTag,
-                isStein: graphVersion != null,
-                title: title,
-              ),
+        child: NoteListPage(
+          oid: aid,
+          enableSlide: false,
+          heroTag: heroTag,
+          isStein: graphVersion != null,
+          title: title,
+        ),
         isFullScreen: () => plPlayerController.isFullScreen.value,
       );
     } else {

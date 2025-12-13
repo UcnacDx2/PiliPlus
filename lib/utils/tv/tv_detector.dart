@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/material.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 
 class TVDetector {
@@ -8,6 +7,10 @@ class TVDetector {
   static bool get isTV => _isTV;
 
   static Future<void> init() async {
+    if (Pref.enableTVMode) {
+      _isTV = true;
+      return;
+    }
     if (Platform.isAndroid) {
       final deviceInfo = await DeviceInfoPlugin().androidInfo;
       // Use a combination of factors to determine if it's a TV.
@@ -17,10 +20,6 @@ class TVDetector {
       _isTV = isAndroidTV;
     } else {
       _isTV = false;
-    }
-    // Allow user to override
-    if (Pref.enableTVMode) {
-      _isTV = true;
     }
   }
 }

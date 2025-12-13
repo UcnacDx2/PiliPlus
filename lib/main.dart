@@ -214,91 +214,49 @@ void main() async {
   }
 }
 
-void _onBack() {
-  if (SmartDialog.checkExist()) {
-    SmartDialog.dismiss();
-    return;
-  }
-
-  if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
-    Get.back();
-    return;
-  }
-
-  final plCtr = PlPlayerController.instance;
-  if (plCtr != null) {
-    if (plCtr.isFullScreen.value) {
-      plCtr
-        ..triggerFullScreen(status: false)
-        ..controlsLock.value = false
-        ..showControls.value = false;
-      return;
-    }
-
-    if (plCtr.isDesktopPip) {
-      plCtr
-        ..exitDesktopPip().whenComplete(
-          () => plCtr.initialFocalPoint = Offset.zero,
-        )
-        ..controlsLock.value = false
-        ..showControls.value = false;
-      return;
-    }
-  }
-
-  Get.back();
-}
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    Widget app = !Platform.isIOS && Pref.dynamicColor
-        ? DynamicColorBuilder(
-            builder: ((ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-              if (lightDynamic != null && darkDynamic != null) {
-                return _AppCore(
-                  lightColorScheme: lightDynamic.harmonized(),
-                  darkColorScheme: darkDynamic.harmonized(),
-                );
-              } else {
-                return const _AppCore();
-              }
-            }),
-          )
-        : const _AppCore();
-
-    if (TVDetector.isTV) {
-      app = DpadNavigator(
-        enabled: true,
-        focusMemory: const FocusMemoryOptions(enabled: true, maxHistory: 20),
-        regionNavigation: RegionNavigationOptions(
-          enabled: true,
-          rules: TVRegionManager.defaultRules,
-        ),
-        onBackPressed: () {
-          _onBack();
-          return KeyEventResult.handled;
-        },
-        child: app,
-      );
+  static void _onBack() {
+    if (SmartDialog.checkExist()) {
+      SmartDialog.dismiss();
+      return;
     }
-    return app;
+
+    if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
+      Get.back();
+      return;
+    }
+
+    final plCtr = PlPlayerController.instance;
+    if (plCtr != null) {
+      if (plCtr.isFullScreen.value) {
+        plCtr
+          ..triggerFullScreen(status: false)
+          ..controlsLock.value = false
+          ..showControls.value = false;
+        return;
+      }
+
+      if (plCtr.isDesktopPip) {
+        plCtr
+          ..exitDesktopPip().whenComplete(
+            () => plCtr.initialFocalPoint = Offset.zero,
+          )
+          ..controlsLock.value = false
+          ..showControls.value = false;
+        return;
+      }
+    }
+
+    Get.back();
   }
-}
 
-class _AppCore extends StatelessWidget {
-  final ColorScheme? lightColorScheme;
-  final ColorScheme? darkColorScheme;
-
-  const _AppCore({this.lightColorScheme, this.darkColorScheme});
-
-  @override
-  Widget build(BuildContext context) {
+  static Widget _buildApp(
+      {ColorScheme? lightColorScheme, ColorScheme? darkColorScheme}) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    return GetMaterialApp(
+    Widget app = GetMaterialApp(
       title: Constants.appName,
       theme: ThemeUtils.getThemeData(
         colorScheme: lightColorScheme ??
@@ -379,6 +337,43 @@ class _AppCore extends StatelessWidget {
         },
       ),
     );
+
+    if (TVDetector.isTV) {
+      app = DpadNavigator(
+        enabled: true,
+        focusMemory: const FocusMemoryOptions(enabled: true, maxHistory: 20),
+        regionNavigation: RegionNavigationOptions(
+          enabled: true,
+          rules: TVRegionManager.defaultRules,
+        ),
+        onBackPressed: () {
+          _onBack();
+          return KeyEventResult.handled;
+        },
+        child: app,
+      );
+    }
+
+    return app;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!Platform.isIOS && Pref.dynamicColor) {
+      return DynamicColorBuilder(
+        builder: ((ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+          if (lightDynamic != null && darkDynamic != null) {
+            return _buildApp(
+              lightColorScheme: lightDynamic.harmonized(),
+              darkColorScheme: darkDynamic.harmonized(),
+            );
+          } else {
+            return _buildApp();
+          }
+        }),
+      );
+    }
+    return _buildApp();
   }
 }
 

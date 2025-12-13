@@ -193,7 +193,7 @@ List<SettingsModel> get styleSettings => [
     setKey: SettingBoxKey.darkVideoPage,
     defaultVal: false,
     onChanged: (value) {
-      if (value && Theme.of(Get.context!) == null) {
+      if (value && MyApp.darkThemeData == null) {
         Get.forceAppUpdate();
       }
     },
