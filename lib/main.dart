@@ -216,7 +216,10 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key, required this.isTV});
+
   final bool isTV;
+
+  static ThemeData? darkThemeData;
 
   static void _onBack() {
     if (SmartDialog.checkExist()) {
@@ -259,34 +262,10 @@ class MyApp extends StatelessWidget {
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    return DpadRoot(
-      focusMemory: true,
-      regionNavigation: {
-        'sidebar': {
-          'right': 'search',
-        },
-        'search': {
-          'left': 'sidebar',
-          'down': 'tabs',
-        },
-        'tabs': {
-          'up': 'search',
-          'down': 'content',
-        },
-        'content': {
-          'up': 'tabs',
-        },
-        'player_controls': {
-          'down': 'video_tabs',
-        },
-        'video_tabs': {
-          'up': 'player_controls',
-        },
-      },
-      child: GetMaterialApp(
-        title: Constants.appName,
-        theme: ThemeUtils.getThemeData(
-          colorScheme:
+    final app = GetMaterialApp(
+      title: Constants.appName,
+      theme: ThemeUtils.getThemeData(
+        colorScheme:
             lightColorScheme ??
             SeedColorScheme.fromSeeds(
               variant: variant,
@@ -366,6 +345,36 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
+
+    if (isTV) {
+      return DpadRoot(
+        focusMemory: true,
+        regionNavigation: {
+          'sidebar': {
+            'right': 'search',
+          },
+          'search': {
+            'left': 'sidebar',
+            'down': 'tabs',
+          },
+          'tabs': {
+            'up': 'search',
+            'down': 'content',
+          },
+          'content': {
+            'up': 'tabs',
+          },
+          'player_controls': {
+            'down': 'video_tabs',
+          },
+          'video_tabs': {
+            'up': 'player_controls',
+          },
+        },
+        child: app,
+      );
+    }
+    return app;
   }
 
   @override

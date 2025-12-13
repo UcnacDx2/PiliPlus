@@ -18,6 +18,7 @@ import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
@@ -374,28 +375,61 @@ class _MainAppState extends State<MainApp>
                                   ),
                                 ],
                               )
-                            : Obx(
-                                () => NavigationRail(
-                                  groupAlignment: 0.5,
-                                  selectedIndex:
-                                      _mainController.selectedIndex.value,
-                                  onDestinationSelected:
-                                      _mainController.setIndex,
-                                  labelType: NavigationRailLabelType.selected,
-                                  leading: userAndSearchVertical(theme),
-                                  destinations: _mainController.navigationBars
-                                      .map(
-                                        (e) => NavigationRailDestination(
-                                          label: Text(e.label),
-                                          icon: _buildIcon(type: e),
-                                          selectedIcon: _buildIcon(
-                                            type: e,
-                                            selected: true,
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                ),
+                            : DpadRegion(
+                                id: 'sidebar',
+                                child: Obx(() {
+                                  final selectedIndex =
+                                      _mainController.selectedIndex.value;
+                                  return SizedBox(
+                                    width: 80,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        userAndSearchVertical(theme),
+                                        const Spacer(),
+                                        ..._mainController.navigationBars
+                                            .asMap()
+                                            .entries
+                                            .map((entry) {
+                                          final index = entry.key;
+                                          final item = entry.value;
+                                          final isSelected =
+                                              selectedIndex == index;
+                                          return DpadFocusable(
+                                            onEnter: () =>
+                                                _mainController.setIndex(index),
+                                            builder:
+                                                (context, hasFocus, child) {
+                                              return SizedBox(
+                                                height: 72,
+                                                width: 80,
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    _buildIcon(
+                                                      type: item,
+                                                      selected: isSelected,
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      item.label,
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .labelMedium,
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        }).toList(),
+                                        const Spacer(),
+                                      ],
+                                    ),
+                                  );
+                                }),
                               )
                       : Container(
                           padding: const EdgeInsets.only(top: 10),
@@ -479,62 +513,75 @@ class _MainAppState extends State<MainApp>
   Widget userAndSearchVertical(ThemeData theme) {
     return Column(
       children: [
-        Semantics(
-          label: "我的",
-          child: Obx(
-            () => _mainController.accountService.isLogin.value
-                ? Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      NetworkImgLayer(
-                        type: ImageType.avatar,
-                        width: 34,
-                        height: 34,
-                        src: _mainController.accountService.face.value,
-                      ),
-                      Positioned.fill(
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: InkWell(
-                            onTap: _mainController.toMinePage,
-                            splashColor: theme.colorScheme.primaryContainer
-                                .withValues(alpha: 0.3),
-                            customBorder: const CircleBorder(),
+        DpadFocusable(
+          onEnter: _mainController.toMinePage,
+          builder: (context, hasFocus, child) {
+            child = Semantics(
+              label: "我的",
+              child: Obx(
+                () => _mainController.accountService.isLogin.value
+                    ? Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          NetworkImgLayer(
+                            type: ImageType.avatar,
+                            width: 34,
+                            height: 34,
+                            src: _mainController.accountService.face.value,
                           ),
-                        ),
+                          Positioned.fill(
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: InkWell(
+                                onTap: _mainController.toMinePage,
+                                splashColor: theme
+                                    .colorScheme
+                                    .primaryContainer
+                                    .withValues(alpha: 0.3),
+                                customBorder: const CircleBorder(),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            right: -6,
+                            bottom: -6,
+                            child: Obx(
+                              () => MineController.anonymity.value
+                                  ? IgnorePointer(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme
+                                              .secondaryContainer,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          size: 16,
+                                          MdiIcons.incognito,
+                                          color: theme.colorScheme
+                                              .onSecondaryContainer,
+                                        ),
+                                      ),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ),
+                        ],
+                      )
+                    : defaultUser(
+                        theme: theme,
+                        onPressed: _mainController.toMinePage,
                       ),
-                      Positioned(
-                        right: -6,
-                        bottom: -6,
-                        child: Obx(
-                          () => MineController.anonymity.value
-                              ? IgnorePointer(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          theme.colorScheme.secondaryContainer,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      size: 16,
-                                      MdiIcons.incognito,
-                                      color: theme
-                                          .colorScheme
-                                          .onSecondaryContainer,
-                                    ),
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                      ),
-                    ],
-                  )
-                : defaultUser(
-                    theme: theme,
-                    onPressed: _mainController.toMinePage,
-                  ),
-          ),
+              ),
+            );
+            if (hasFocus) {
+              return FocusEffects.scale(
+                child: child,
+                scale: 1.2,
+              );
+            }
+            return child;
+          },
         ),
         const SizedBox(height: 8),
         Obx(
@@ -542,13 +589,25 @@ class _MainAppState extends State<MainApp>
               ? msgBadge(_mainController)
               : const SizedBox.shrink(),
         ),
-        IconButton(
-          tooltip: '搜索',
-          icon: const Icon(
-            Icons.search_outlined,
-            semanticLabel: '搜索',
-          ),
-          onPressed: () => Get.toNamed('/search'),
+        DpadFocusable(
+          onEnter: () => Get.toNamed('/search'),
+          builder: (context, hasFocus, child) {
+            child = IconButton(
+              tooltip: '搜索',
+              icon: const Icon(
+                Icons.search_outlined,
+                semanticLabel: '搜索',
+              ),
+              onPressed: () => Get.toNamed('/search'),
+            );
+            if (hasFocus) {
+              return FocusEffects.scale(
+                child: child,
+                scale: 1.2,
+              );
+            }
+            return child;
+          },
         ),
       ],
     );
