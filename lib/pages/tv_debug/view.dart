@@ -24,6 +24,28 @@ class TvDebugPage extends GetView<TvDebugController> {
                 ),
                 itemCount: 20,
                 itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return Focus(
+                      onKey: controller.onKey,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.dialog(
+                            AlertDialog(
+                              title: const Text('Test Dialog'),
+                              content: const Text('This is a test dialog.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: Get.back,
+                                  child: const Text('Close'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        child: const Text('Show Dialog'),
+                      ),
+                    );
+                  }
                   return Focus(
                     onKey: controller.onKey,
                     child: ElevatedButton(
@@ -32,6 +54,36 @@ class TvDebugPage extends GetView<TvDebugController> {
                     ),
                   );
                 },
+              ),
+            ),
+            Container(
+              height: 100,
+              color: Colors.black,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Focus(
+                    onKey: controller.onKey,
+                    child: IconButton(
+                      icon: const Icon(Icons.play_arrow, color: Colors.white),
+                      onPressed: () {},
+                    ),
+                  ),
+                  Focus(
+                    onKey: controller.onKey,
+                    child: IconButton(
+                      icon: const Icon(Icons.pause, color: Colors.white),
+                      onPressed: () {},
+                    ),
+                  ),
+                  Focus(
+                    onKey: controller.onKey,
+                    child: IconButton(
+                      icon: const Icon(Icons.stop, color: Colors.white),
+                      onPressed: () {},
+                    ),
+                  ),
+                ],
               ),
             ),
             Expanded(

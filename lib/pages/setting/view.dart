@@ -83,6 +83,10 @@ class _SettingPageState extends State<SettingPage> {
       type: SettingType.about,
       icon: Icon(Icons.info_outline),
     ),
+    const _SettingsModel(
+      type: SettingType.debug,
+      icon: Icon(Icons.tv),
+    ),
   ];
 
   @override
@@ -133,6 +137,8 @@ class _SettingPageState extends State<SettingPage> {
                         showAppBar: false,
                       ),
                       SettingType.about => const AboutPage(showAppBar: false),
+                      SettingType.debug =>
+                        const Center(child: Text('Debug Page')),
                     },
                   ),
                 ],
@@ -148,6 +154,10 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   void _toPage(SettingType type) {
+    if (type == SettingType.debug) {
+      Get.toNamed('/tvDebug');
+      return;
+    }
     if (_isPortrait) {
       Get.toNamed('/${type.name}');
     } else {
