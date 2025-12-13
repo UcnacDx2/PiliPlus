@@ -179,6 +179,7 @@ class _SettingPageState extends State<SettingPage> {
             .take(_items.length - 1)
             .map(
               (item) => DpadFocusable(
+                  onSelect: () => _toPage(item.type),
                   child: ListTile(
                 tileColor: _getTileColor(theme, item.type),
                 onTap: () => _toPage(item.type),
@@ -190,6 +191,7 @@ class _SettingPageState extends State<SettingPage> {
               )),
             ),
         DpadFocusable(
+            onSelect: () => LoginPageController.switchAccountDialog(context),
             child: ListTile(
           onTap: () => LoginPageController.switchAccountDialog(context),
           leading: const Icon(Icons.switch_account_outlined),
@@ -199,6 +201,7 @@ class _SettingPageState extends State<SettingPage> {
           () => _noAccount.value
               ? const SizedBox.shrink()
               : DpadFocusable(
+                  onSelect: () => _logoutDialog(context),
                   child: ListTile(
                   leading: const Icon(Icons.logout_outlined),
                   onTap: () => _logoutDialog(context),
@@ -206,6 +209,7 @@ class _SettingPageState extends State<SettingPage> {
                 )),
         ),
         DpadFocusable(
+            onSelect: () => _toPage(_items.last.type),
             child: ListTile(
           tileColor: _getTileColor(theme, _items.last.type),
           onTap: () => _toPage(_items.last.type),
@@ -290,6 +294,7 @@ class _SettingPageState extends State<SettingPage> {
       bottom: 8,
     ),
     child: DpadFocusable(
+        onSelect: () => Get.toNamed('/settingsSearch'),
         child: Material(
       type: MaterialType.transparency,
       child: InkWell(
