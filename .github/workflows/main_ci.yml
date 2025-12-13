@@ -152,8 +152,11 @@ jobs:
         shell: pwsh
         run: lib/scripts/build.ps1 android
       - name: flutter build apk
-        run: flutter build apk --release --split-per-abi --dart-define-from-file=pili_release.json --pub
+        id: build_step
+        continue-on-error: true
+        run: flutter build apk --release --split-per-abi --dart-define-from-file=pili_release.json --pub > ${{ runner.temp }}/build_android.log 2>&1
       - name: rename
+        if: steps.build_step.outcome == 'success'
         run: |
           for file in build/app/outputs/flutter-apk/app-*-release.apk; do
             abi=$(echo "$file" | sed -E 's|.*app-(.*)-release\.apk|\1|')
@@ -161,7 +164,7 @@ jobs:
           done
         shell: bash
       - name: Release
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+        if: steps.build_step.outcome == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag }}
@@ -169,10 +172,48 @@ jobs:
           files: |
               PiliPlus_android_*.apk
       - name: Upload Artifact
+        if: steps.build_step.outcome == 'success'
         uses: actions/upload-artifact@v5
         with:
           name: Android-APKs
           path: PiliPlus_android_*.apk
+      - name: Comment on PR on failure
+        if: steps.build_step.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PR_COMMENTER_TOKEN }}
+          script: |
+            const fs = require('fs');
+            if (context.eventName === 'pull_request') {
+              const prNumber = context.issue.number;
+              const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+              let errorOutput = '无法读取错误日志。';
+              try {
+                errorOutput = fs.readFileSync('${{ runner.temp }}/build_android.log', 'utf8');
+              } catch (e) {
+                console.error('Error reading log file:', e);
+              }
+              const body = `
+              ❌ **CI Check 失败 (Build Android)**
+              工作流在执行过程中遇到错误。
+              *   **[查看完整的CI日志](${runUrl})**
+              <details>
+              <summary>点击展开错误详情</summary>
+              \`\`\`
+              ${errorOutput}
+              \`\`\`
+              </details>
+              `;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
+      - name: Fail the job
+        if: steps.build_step.outcome == 'failure'
+        run: exit 1
 
   build_ios:
     name: Build iOS
@@ -195,12 +236,16 @@ jobs:
         shell: pwsh
         run: lib/scripts/build.ps1
       - name: Build iOS
+        id: build_step
+        continue-on-error: true
         run: |
-          flutter build ios --release --no-codesign --dart-define-from-file=pili_release.json
-          ln -sf ./build/ios/iphoneos Payload
-          zip -r9 PiliPlus_ios_${{env.version}}.ipa Payload/runner.app
+          {
+            flutter build ios --release --no-codesign --dart-define-from-file=pili_release.json
+            ln -sf ./build/ios/iphoneos Payload
+            zip -r9 PiliPlus_ios_${{env.version}}.ipa Payload/runner.app
+          } > ${{ runner.temp }}/build_ios.log 2>&1
       - name: Release
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+        if: steps.build_step.outcome == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag }}
@@ -208,10 +253,48 @@ jobs:
           files: |
             PiliPlus_ios_*.ipa
       - name: Upload Artifact
+        if: steps.build_step.outcome == 'success'
         uses: actions/upload-artifact@v5
         with:
           name: iOS-IPA
           path: PiliPlus_ios_*.ipa
+      - name: Comment on PR on failure
+        if: steps.build_step.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PR_COMMENTER_TOKEN }}
+          script: |
+            const fs = require('fs');
+            if (context.eventName === 'pull_request') {
+              const prNumber = context.issue.number;
+              const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+              let errorOutput = '无法读取错误日志。';
+              try {
+                errorOutput = fs.readFileSync('${{ runner.temp }}/build_ios.log', 'utf8');
+              } catch (e) {
+                console.error('Error reading log file:', e);
+              }
+              const body = `
+              ❌ **CI Check 失败 (Build iOS)**
+              工作流在执行过程中遇到错误。
+              *   **[查看完整的CI日志](${runUrl})**
+              <details>
+              <summary>点击展开错误详情</summary>
+              \`\`\`
+              ${errorOutput}
+              \`\`\`
+              </details>
+              `;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
+      - name: Fail the job
+        if: steps.build_step.outcome == 'failure'
+        run: exit 1
 
   build_macos:
     name: Build macOS
@@ -234,16 +317,20 @@ jobs:
         shell: pwsh
         run: lib/scripts/build.ps1
       - name: Build macOS
-        run: flutter build macos --release --dart-define-from-file=pili_release.json
+        id: build_step
+        continue-on-error: true
+        run: flutter build macos --release --dart-define-from-file=pili_release.json > ${{ runner.temp }}/build_macos.log 2>&1
       - name: Package DMG
+        if: steps.build_step.outcome == 'success'
         run: |
           npm install --global create-dmg
           create-dmg build/macos/Build/Products/Release/PiliPlus.app
         continue-on-error: true
       - name: Rename DMG
+        if: steps.build_step.outcome == 'success'
         run: mv PiliPlus*.dmg PiliPlus_macos_${{ env.version }}.dmg
       - name: Release
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+        if: steps.build_step.outcome == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag }}
@@ -251,10 +338,48 @@ jobs:
           files: |
             PiliPlus_macos_*.dmg
       - name: Upload Artifact
+        if: steps.build_step.outcome == 'success'
         uses: actions/upload-artifact@v5
         with:
           name: macOS-DMG
           path: PiliPlus_macos_*.dmg
+      - name: Comment on PR on failure
+        if: steps.build_step.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PR_COMMENTER_TOKEN }}
+          script: |
+            const fs = require('fs');
+            if (context.eventName === 'pull_request') {
+              const prNumber = context.issue.number;
+              const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+              let errorOutput = '无法读取错误日志。';
+              try {
+                errorOutput = fs.readFileSync('${{ runner.temp }}/build_macos.log', 'utf8');
+              } catch (e) {
+                console.error('Error reading log file:', e);
+              }
+              const body = `
+              ❌ **CI Check 失败 (Build macOS)**
+              工作流在执行过程中遇到错误。
+              *   **[查看完整的CI日志](${runUrl})**
+              <details>
+              <summary>点击展开错误详情</summary>
+              \`\`\`
+              ${errorOutput}
+              \`\`\`
+              </details>
+              `;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
+      - name: Fail the job
+        if: steps.build_step.outcome == 'failure'
+        run: exit 1
 
   build_windows_x64:
     name: Build Windows x64
@@ -285,21 +410,23 @@ jobs:
         shell: pwsh
         run: lib/scripts/build.ps1
       - name: Build Windows
-        run: |
-          fastforge package --platform windows --targets exe --flutter-build-args="dart-define-from-file=pili_release.json"
+        id: build_step
+        continue-on-error: true
+        run: fastforge package --platform windows --targets exe --flutter-build-args="dart-define-from-file=pili_release.json" > ${{ runner.temp }}/build_windows.log 2>&1
       - name: Prepare Upload
+        if: steps.build_step.outcome == 'success'
         run: |
           mkdir -p Release/PiliPlus-Win
           mkdir -p PiliPlus-Win-Setup
           mv build/windows/x64/runner/Release/* Release/PiliPlus-Win/
           mv dist/**/*.exe PiliPlus-Win-Setup/PiliPlus_windows_${{env.version}}_x64_setup.exe
       - name: Compress
-        if: ${{ github.event.inputs.tag != '' }}
+        if: steps.build_step.outcome == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.tag != ''
         run: |
           Compress-Archive -Path "Release/PiliPlus-Win" -DestinationPath "PiliPlus_windows_${{env.version}}_x64.zip"
         shell: pwsh
       - name: Release
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+        if: steps.build_step.outcome == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag }}
@@ -308,12 +435,50 @@ jobs:
             PiliPlus_windows_*.zip
             PiliPlus-Win-Setup/PiliPlus_windows_*.exe
       - name: Upload Artifact
+        if: steps.build_step.outcome == 'success'
         uses: actions/upload-artifact@v5
         with:
           name: Windows-Release-Files
           path: |
             Release/
             PiliPlus-Win-Setup/
+      - name: Comment on PR on failure
+        if: steps.build_step.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PR_COMMENTER_TOKEN }}
+          script: |
+            const fs = require('fs');
+            if (context.eventName === 'pull_request') {
+              const prNumber = context.issue.number;
+              const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+              let errorOutput = '无法读取错误日志。';
+              try {
+                errorOutput = fs.readFileSync('${{ runner.temp }}/build_windows.log', 'utf8');
+              } catch (e) {
+                console.error('Error reading log file:', e);
+              }
+              const body = `
+              ❌ **CI Check 失败 (Build Windows)**
+              工作流在执行过程中遇到错误。
+              *   **[查看完整的CI日志](${runUrl})**
+              <details>
+              <summary>点击展开错误详情</summary>
+              \`\`\`
+              ${errorOutput}
+              \`\`\`
+              </details>
+              `;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
+      - name: Fail the job
+        if: steps.build_step.outcome == 'failure'
+        run: exit 1
 
   build_linux_x64:
     name: Build Linux x64
@@ -355,21 +520,27 @@ jobs:
         shell: pwsh
         run: lib/scripts/build.ps1
       - name: Build Linux
-        run: flutter build linux --release -v --pub --dart-define-from-file=pili_release.json
+        id: build_step
+        continue-on-error: true
+        run: flutter build linux --release -v --pub --dart-define-from-file=pili_release.json > ${{ runner.temp }}/build_linux.log 2>&1
       - name: Package archives
+        if: steps.build_step.outcome == 'success'
         run: |
           tar -zcvf PiliPlus_linux_${{ env.version }}_amd64.tar.gz -C build/linux/x64/release/bundle .
       - name: Package deb
+        if: steps.build_step.outcome == 'success'
         run: |
           # ... (original deb packaging script)
       - name: Package rpm
+        if: steps.build_step.outcome == 'success'
         run: |
           # ... (original rpm packaging script)
       - name: Package AppImage
+        if: steps.build_step.outcome == 'success'
         run: |
           # ... (original AppImage packaging script)
       - name: Release
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+        if: steps.build_step.outcome == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag }}
@@ -380,6 +551,7 @@ jobs:
             PiliPlus_linux_*.rpm
             PiliPlus_linux_*.AppImage
       - name: Upload Artifact
+        if: steps.build_step.outcome == 'success'
         uses: actions/upload-artifact@v5
         with:
           name: Linux-Packages
@@ -388,3 +560,40 @@ jobs:
             PiliPlus_linux_*.deb
             PiliPlus_linux_*.rpm
             PiliPlus_linux_*.AppImage
+      - name: Comment on PR on failure
+        if: steps.build_step.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PR_COMMENTER_TOKEN }}
+          script: |
+            const fs = require('fs');
+            if (context.eventName === 'pull_request') {
+              const prNumber = context.issue.number;
+              const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+              let errorOutput = '无法读取错误日志。';
+              try {
+                errorOutput = fs.readFileSync('${{ runner.temp }}/build_linux.log', 'utf8');
+              } catch (e) {
+                console.error('Error reading log file:', e);
+              }
+              const body = `
+              ❌ **CI Check 失败 (Build Linux)**
+              工作流在执行过程中遇到错误。
+              *   **[查看完整的CI日志](${runUrl})**
+              <details>
+              <summary>点击展开错误详情</summary>
+              \`\`\`
+              ${errorOutput}
+              \`\`\`
+              </details>
+              `;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
+      - name: Fail the job
+        if: steps.build_step.outcome == 'failure'
+        run: exit 1
