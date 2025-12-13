@@ -11,6 +11,7 @@ import 'package:PiliPlus/pages/live/view.dart';
 import 'package:PiliPlus/pages/pgc/view.dart';
 import 'package:PiliPlus/pages/pgc_index/view.dart';
 import 'package:PiliPlus/pages/rcmd/view.dart';
+import 'package:PiliPlus/models/common/home_tab_type.dart';
 import 'package:PiliPlus/pages/subscription/view.dart';
 import 'package:PiliPlus/pages/tv_debug/view.dart';
 import 'package:flutter/material.dart';
@@ -50,13 +51,13 @@ enum NavigationBarType implements EnumWithLabel {
     '影视',
     Icon(Icons.movie_outlined, size: 21),
     Icon(Icons.movie, size: 21),
-    PgcPage(),
+    PgcPage(tabType: HomeTabType.cinema),
   ),
   anime(
     '番剧',
     Icon(Icons.video_library_outlined, size: 21),
     Icon(Icons.video_library, size: 21),
-    PgcIndexPage(),
+    PgcPage(tabType: HomeTabType.bangumi),
   ),
   hot(
     '热门',
@@ -92,7 +93,7 @@ enum NavigationBarType implements EnumWithLabel {
     '我的订阅',
     Icon(Icons.subscriptions_outlined, size: 21),
     Icon(Icons.subscriptions, size: 21),
-    SubscriptionPage(),
+    SubPage(),
   ),
   watchLater(
     '稍后再看',
