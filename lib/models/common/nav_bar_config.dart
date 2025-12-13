@@ -2,6 +2,16 @@ import 'package:PiliPlus/models/common/enum_with_label.dart';
 import 'package:PiliPlus/pages/dynamics/view.dart';
 import 'package:PiliPlus/pages/home/view.dart';
 import 'package:PiliPlus/pages/mine/view.dart';
+import 'package:PiliPlus/pages/download/view.dart';
+import 'package:PiliPlus/pages/fav/view.dart';
+import 'package:PiliPlus/pages/history/view.dart';
+import 'package:PiliPlus/pages/hot/view.dart';
+import 'package:PiliPlus/pages/later/view.dart';
+import 'package:PiliPlus/pages/live/view.dart';
+import 'package:PiliPlus/pages/pgc/view.dart';
+import 'package:PiliPlus/pages/pgc_index/view.dart';
+import 'package:PiliPlus/pages/rcmd/view.dart';
+import 'package:PiliPlus/pages/subscription/view.dart';
 import 'package:PiliPlus/pages/tv_debug/view.dart';
 import 'package:flutter/material.dart';
 
@@ -34,25 +44,25 @@ enum NavigationBarType implements EnumWithLabel {
     '推荐',
     Icon(Icons.thumb_up_outlined, size: 21),
     Icon(Icons.thumb_up, size: 21),
-    Placeholder(),
+    RcmdPage(),
   ),
   movie(
     '影视',
     Icon(Icons.movie_outlined, size: 21),
     Icon(Icons.movie, size: 21),
-    Placeholder(),
+    PgcPage(),
   ),
   anime(
     '番剧',
     Icon(Icons.video_library_outlined, size: 21),
     Icon(Icons.video_library, size: 21),
-    Placeholder(),
+    PgcIndexPage(),
   ),
   hot(
     '热门',
     Icon(Icons.whatshot_outlined, size: 21),
     Icon(Icons.whatshot, size: 21),
-    Placeholder(),
+    HotPage(),
   ),
   partitions(
     '分区',
@@ -64,37 +74,37 @@ enum NavigationBarType implements EnumWithLabel {
     '直播',
     Icon(Icons.live_tv_outlined, size: 21),
     Icon(Icons.live_tv, size: 21),
-    Placeholder(),
+    LivePage(),
   ),
   offline(
     '离线缓存',
     Icon(Icons.download_outlined, size: 21),
     Icon(Icons.download, size: 21),
-    Placeholder(),
+    DownloadPage(),
   ),
   history(
     '观看记录',
     Icon(Icons.history_outlined, size: 21),
     Icon(Icons.history, size: 21),
-    Placeholder(),
+    HistoryPage(),
   ),
   subscription(
     '我的订阅',
     Icon(Icons.subscriptions_outlined, size: 21),
     Icon(Icons.subscriptions, size: 21),
-    Placeholder(),
+    SubscriptionPage(),
   ),
   watchLater(
     '稍后再看',
     Icon(Icons.watch_later_outlined, size: 21),
     Icon(Icons.watch_later, size: 21),
-    Placeholder(),
+    LaterPage(),
   ),
   favorite(
     '我的收藏',
     Icon(Icons.favorite_border_outlined, size: 21),
     Icon(Icons.favorite, size: 21),
-    Placeholder(),
+    FavPage(),
   );
 
   @override
