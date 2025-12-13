@@ -72,9 +72,15 @@ import 'package:PiliPlus/pages/webview/view.dart';
 import 'package:PiliPlus/pages/whisper/view.dart';
 import 'package:PiliPlus/pages/whisper_detail/view.dart';
 import 'package:get/get.dart';
+import 'package:PiliPlus/pages/tv_debug/index.dart';
 
 class Routes {
   static final List<GetPage<dynamic>> getPages = [
+    CustomGetPage(
+      name: '/tvDebug',
+      page: () => const TvDebugPage(),
+      binding: TvDebugBinding(),
+    ),
     CustomGetPage(name: '/', page: () => const MainApp()),
     // 首页(推荐)
     CustomGetPage(name: '/home', page: () => const HomePage()),
