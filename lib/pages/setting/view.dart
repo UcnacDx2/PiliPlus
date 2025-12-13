@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/widgets/flutter/list_tile.dart';
+import 'package:PiliPlus/common/widgets/focusable_widget.dart';
 import 'package:PiliPlus/common/widgets/view_safe_area.dart';
 import 'package:PiliPlus/http/login.dart';
 import 'package:PiliPlus/models/common/setting_type.dart';
@@ -178,7 +179,7 @@ class _SettingPageState extends State<SettingPage> {
         ..._items
             .take(_items.length - 1)
             .map(
-              (item) => DpadFocusable(
+              (item) => FocusableWidget(
                   onSelect: () => _toPage(item.type),
                   child: ListTile(
                 tileColor: _getTileColor(theme, item.type),
@@ -190,7 +191,7 @@ class _SettingPageState extends State<SettingPage> {
                     : Text(item.subtitle!, style: subTitleStyle),
               )),
             ),
-        DpadFocusable(
+        FocusableWidget(
             onSelect: () => LoginPageController.switchAccountDialog(context),
             child: ListTile(
           onTap: () => LoginPageController.switchAccountDialog(context),
@@ -200,7 +201,7 @@ class _SettingPageState extends State<SettingPage> {
         Obx(
           () => _noAccount.value
               ? const SizedBox.shrink()
-              : DpadFocusable(
+              : FocusableWidget(
                   onSelect: () => _logoutDialog(context),
                   child: ListTile(
                   leading: const Icon(Icons.logout_outlined),
@@ -208,7 +209,7 @@ class _SettingPageState extends State<SettingPage> {
                   title: Text('退出登录', style: titleStyle),
                 )),
         ),
-        DpadFocusable(
+        FocusableWidget(
             onSelect: () => _toPage(_items.last.type),
             child: ListTile(
           tileColor: _getTileColor(theme, _items.last.type),
@@ -293,7 +294,7 @@ class _SettingPageState extends State<SettingPage> {
       right: 16,
       bottom: 8,
     ),
-    child: DpadFocusable(
+    child: FocusableWidget(
         onSelect: () => Get.toNamed('/settingsSearch'),
         child: Material(
       type: MaterialType.transparency,
