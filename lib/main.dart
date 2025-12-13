@@ -23,10 +23,8 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
-import 'package:PiliPlus/utils/tv/region_manager.dart';
 import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:PiliPlus/utils/utils.dart';
-import 'package:dpad/dpad.dart';
 import 'package:catcher_2/catcher_2.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
@@ -46,14 +44,16 @@ import 'package:window_manager/window_manager.dart' hide calcWindowPosition;
 
 WebViewEnvironment? webViewEnvironment;
 
+import 'package:dpad/dpad.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await TVDetector.init();
   MediaKit.ensureInitialized();
   tmpDirPath = (await getTemporaryDirectory()).path;
   appSupportDirPath = (await getApplicationSupportDirectory()).path;
   try {
     await GStorage.init();
-    await TVDetector.init();
   } catch (e) {
     await Utils.copyText(e.toString());
     if (kDebugMode) debugPrint('GStorage init error: $e');
@@ -220,15 +220,15 @@ class MyApp extends StatelessWidget {
 
   static ThemeData? darkThemeData;
 
-  static void _onBack() {
+  static KeyEventResult _handleTVBack() {
     if (SmartDialog.checkExist()) {
       SmartDialog.dismiss();
-      return;
+      return KeyEventResult.handled;
     }
 
     if (Get.isDialogOpen ?? Get.isBottomSheetOpen ?? false) {
       Get.back();
-      return;
+      return KeyEventResult.handled;
     }
 
     final plCtr = PlPlayerController.instance;
@@ -238,7 +238,7 @@ class MyApp extends StatelessWidget {
           ..triggerFullScreen(status: false)
           ..controlsLock.value = false
           ..showControls.value = false;
-        return;
+        return KeyEventResult.handled;
       }
 
       if (plCtr.isDesktopPip) {
@@ -248,16 +248,16 @@ class MyApp extends StatelessWidget {
           )
           ..controlsLock.value = false
           ..showControls.value = false;
-        return;
+        return KeyEventResult.handled;
       }
     }
 
     Get.back();
+    return KeyEventResult.handled;
   }
 
-  static KeyEventResult _handleTVBack() {
-    _onBack();
-    return KeyEventResult.handled;
+  static void _onBack() {
+    _handleTVBack();
   }
 
   static Widget _build({
@@ -266,6 +266,7 @@ class MyApp extends StatelessWidget {
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
+
     Widget app = GetMaterialApp(
       title: Constants.appName,
       theme: ThemeUtils.getThemeData(
@@ -313,6 +314,23 @@ class MyApp extends StatelessWidget {
             ),
             child: child!,
           );
+          if (Utils.isDesktop) {
+            return Focus(
+              canRequestFocus: false,
+              onKeyEvent: (_, event) {
+                if (event.logicalKey == LogicalKeyboardKey.escape &&
+                    event is KeyDownEvent) {
+                  _onBack();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: MouseBackDetector(
+                onTapDown: _onBack,
+                child: child,
+              ),
+            );
+          }
           return child;
         },
       ),
@@ -332,33 +350,12 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
-
     if (TVDetector.isTV) {
       app = DpadNavigator(
         enabled: true,
         focusMemory: const FocusMemoryOptions(enabled: true, maxHistory: 20),
-        regionNavigation: RegionNavigationOptions(
-          enabled: true,
-          rules: TVRegionManager.defaultRules,
-        ),
         onBackPressed: () => _handleTVBack(),
         child: app,
-      );
-    } else if (Utils.isDesktop) {
-      app = Focus(
-        canRequestFocus: false,
-        onKeyEvent: (_, event) {
-          if (event.logicalKey == LogicalKeyboardKey.escape &&
-              event is KeyDownEvent) {
-            _onBack();
-            return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
-        },
-        child: MouseBackDetector(
-          onTapDown: _onBack,
-          child: app,
-        ),
       );
     }
     return app;

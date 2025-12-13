@@ -1,28 +1,21 @@
-import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 
 class TVFocusEffects {
-  static FocusEffectBuilder primary(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
-
-    FocusEffectBuilder borderEffect = (context, hasFocus, child) {
+  static Widget Function(BuildContext, bool, Widget) primary(
+      BuildContext context) {
+    return (BuildContext context, bool hasFocus, Widget child) {
+      final color = Theme.of(context).colorScheme.primary;
       return AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+        duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          border: hasFocus
-              ? Border.all(color: color, width: 3)
-              : Border.all(color: Colors.transparent, width: 3),
-          borderRadius:
-              BorderRadius.circular(8.0), // A reasonable default radius
+          border: Border.all(
+            color: hasFocus ? color : Colors.transparent,
+            width: 3,
+          ),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: child,
       );
     };
-
-    return FocusEffects.combine([
-      FocusEffects.scale(scale: 1.05),
-      borderEffect,
-      FocusEffects.glow(glowColor: color.withOpacity(0.3)),
-    ]);
   }
 }

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/flutter/tabs.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
-import 'package:PiliPlus/common/widgets/tv/tv_bottom_nav_bar.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamic_badge_mode.dart';
 import 'package:PiliPlus/models/common/image_type.dart';
 import 'package:PiliPlus/models/common/nav_bar_config.dart';
@@ -15,6 +14,7 @@ import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/context_ext.dart';
 import 'package:PiliPlus/utils/extension.dart';
+import 'package:PiliPlus/common/widgets/tv/tv_bottom_nav_bar.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -244,12 +244,11 @@ class _MainAppState extends State<MainApp>
     final padding = MediaQuery.viewPaddingOf(context);
     useBottomNav =
         !_mainController.useSideBar && MediaQuery.sizeOf(context).isPortrait;
-
     if (TVDetector.isTV) {
       useBottomNav = true;
     }
-
     Widget? bottomNav;
+
     if (useBottomNav) {
       if (TVDetector.isTV) {
         bottomNav = TVBottomNavBar(
@@ -302,8 +301,6 @@ class _MainAppState extends State<MainApp>
                   )
             : const SizedBox.shrink();
       }
-    } else {
-      bottomNav = null;
     }
     return PopScope(
       canPop: false,
