@@ -207,6 +207,11 @@ class _SettingPageState extends State<SettingPage> {
           leading: _items.last.icon,
           title: Text(_items.last.type.title, style: titleStyle),
         ),
+        ListTile(
+          onTap: () => Get.toNamed('/tvDebug'),
+          leading: const Icon(Icons.bug_report),
+          title: Text('Debug', style: titleStyle),
+        ),
       ],
     );
   }
