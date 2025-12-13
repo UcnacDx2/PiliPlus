@@ -457,7 +457,12 @@ class VideoDetailController extends GetxController
       if (plPlayerController.isFullScreen.value || showVideoSheet) {
         PageUtils.showVideoBottomSheet(
           context,
-          child: panel(),
+          child: plPlayerController.darkVideoPage && MyApp.darkThemeData != null
+              ? Theme(
+                  data: MyApp.darkThemeData!,
+                  child: panel(),
+                )
+              : panel(),
           isFullScreen: () => plPlayerController.isFullScreen.value,
         );
       } else {
@@ -1426,11 +1431,20 @@ class VideoDetailController extends GetxController
     if (plPlayerController.isFullScreen.value || showVideoSheet) {
       PageUtils.showVideoBottomSheet(
         context,
-        child: PostPanel(
-          enableSlide: false,
-          videoDetailController: this,
-          plPlayerController: plPlayerController,
-        ),
+        child: plPlayerController.darkVideoPage && MyApp.darkThemeData != null
+            ? Theme(
+                data: MyApp.darkThemeData!,
+                child: PostPanel(
+                  enableSlide: false,
+                  videoDetailController: this,
+                  plPlayerController: plPlayerController,
+                ),
+              )
+            : PostPanel(
+                enableSlide: false,
+                videoDetailController: this,
+                plPlayerController: plPlayerController,
+              ),
         isFullScreen: () => plPlayerController.isFullScreen.value,
       );
     } else {
@@ -1750,13 +1764,24 @@ class VideoDetailController extends GetxController
     if (plPlayerController.isFullScreen.value || showVideoSheet) {
       PageUtils.showVideoBottomSheet(
         context,
-        child: NoteListPage(
-          oid: aid,
-          enableSlide: false,
-          heroTag: heroTag,
-          isStein: graphVersion != null,
-          title: title,
-        ),
+        child: plPlayerController.darkVideoPage && MyApp.darkThemeData != null
+            ? Theme(
+                data: MyApp.darkThemeData!,
+                child: NoteListPage(
+                  oid: aid,
+                  enableSlide: false,
+                  heroTag: heroTag,
+                  isStein: graphVersion != null,
+                  title: title,
+                ),
+              )
+            : NoteListPage(
+                oid: aid,
+                enableSlide: false,
+                heroTag: heroTag,
+                isStein: graphVersion != null,
+                title: title,
+              ),
         isFullScreen: () => plPlayerController.isFullScreen.value,
       );
     } else {

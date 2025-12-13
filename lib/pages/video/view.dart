@@ -57,10 +57,6 @@ import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:auto_orientation/auto_orientation.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
-import 'package:flex_seed_scheme/flex_seed_scheme.dart';
-import 'package:PiliPlus/utils/theme_utils.dart';
-import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:floating/floating.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -489,22 +485,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
           ? maxVideoHeight
           : minVideoHeight;
 
-    if (videoDetailController.plPlayerController.darkVideoPage) {
-      final brandColor = colorThemeTypes[Pref.customColor].color;
-      final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-      themeData = ThemeUtils.getThemeData(
-        isDark: true,
-        colorScheme: SeedColorScheme.fromSeeds(
-          variant: variant,
-          primaryKey: brandColor,
-          brightness: Brightness.dark,
-          useExpressiveOnContainerColors: false,
-        ),
-        isDynamic: false,
-      );
-    } else {
-      themeData = Theme.of(context);
-    }
+    themeData = videoDetailController.plPlayerController.darkVideoPage
+        ? MyApp.darkThemeData ?? Theme.of(context)
+        : Theme.of(context);
   }
 
   void animListener() {

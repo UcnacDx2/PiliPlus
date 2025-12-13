@@ -17,8 +17,6 @@ import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
-import 'package:PiliPlus/pages/main/widgets/tv_bottom_nav_bar.dart';
-import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -244,74 +242,52 @@ class _MainAppState extends State<MainApp>
     final padding = MediaQuery.viewPaddingOf(context);
     useBottomNav =
         !_mainController.useSideBar && MediaQuery.sizeOf(context).isPortrait;
-    Widget? bottomNav;
-    if (TVDetector.isTV) {
-      bottomNav = Obx(
-        () => TVBottomNavBar(
-          selectedIndex: _mainController.selectedIndex.value,
-          onDestinationSelected: _mainController.setIndex,
-          destinations: _mainController.navigationBars
-              .map(
-                (e) => NavigationDestination(
-                  label: e.label,
-                  icon: _buildIcon(type: e),
-                  selectedIcon: _buildIcon(
-                    type: e,
-                    selected: true,
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-      );
-    } else {
-      bottomNav = useBottomNav
-          ? _mainController.navigationBars.length > 1
+    Widget? bottomNav = useBottomNav
+        ? _mainController.navigationBars.length > 1
               ? _mainController.enableMYBar
-                  ? Obx(
-                      () => NavigationBar(
-                        maintainBottomViewPadding: true,
-                        onDestinationSelected: _mainController.setIndex,
-                        selectedIndex: _mainController.selectedIndex.value,
-                        destinations: _mainController.navigationBars
-                            .map(
-                              (e) => NavigationDestination(
-                                label: e.label,
-                                icon: _buildIcon(type: e),
-                                selectedIcon: _buildIcon(
-                                  type: e,
-                                  selected: true,
+                    ? Obx(
+                        () => NavigationBar(
+                          maintainBottomViewPadding: true,
+                          onDestinationSelected: _mainController.setIndex,
+                          selectedIndex: _mainController.selectedIndex.value,
+                          destinations: _mainController.navigationBars
+                              .map(
+                                (e) => NavigationDestination(
+                                  label: e.label,
+                                  icon: _buildIcon(type: e),
+                                  selectedIcon: _buildIcon(
+                                    type: e,
+                                    selected: true,
+                                  ),
                                 ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    )
-                  : Obx(
-                      () => BottomNavigationBar(
-                        currentIndex: _mainController.selectedIndex.value,
-                        onTap: _mainController.setIndex,
-                        iconSize: 16,
-                        selectedFontSize: 12,
-                        unselectedFontSize: 12,
-                        type: BottomNavigationBarType.fixed,
-                        items: _mainController.navigationBars
-                            .map(
-                              (e) => BottomNavigationBarItem(
-                                label: e.label,
-                                icon: _buildIcon(type: e),
-                                activeIcon: _buildIcon(
-                                  type: e,
-                                  selected: true,
+                              )
+                              .toList(),
+                        ),
+                      )
+                    : Obx(
+                        () => BottomNavigationBar(
+                          currentIndex: _mainController.selectedIndex.value,
+                          onTap: _mainController.setIndex,
+                          iconSize: 16,
+                          selectedFontSize: 12,
+                          unselectedFontSize: 12,
+                          type: BottomNavigationBarType.fixed,
+                          items: _mainController.navigationBars
+                              .map(
+                                (e) => BottomNavigationBarItem(
+                                  label: e.label,
+                                  icon: _buildIcon(type: e),
+                                  activeIcon: _buildIcon(
+                                    type: e,
+                                    selected: true,
+                                  ),
                                 ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    )
+                              )
+                              .toList(),
+                        ),
+                      )
               : const SizedBox.shrink()
-          : null;
-    }
+        : null;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (bool didPop, Object? result) {

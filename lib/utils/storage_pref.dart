@@ -128,7 +128,7 @@ abstract class Pref {
     return SegmentType.values.map(
       (item) {
         final String e = list[item.index];
-        final color = e.isNotEmpty ? int.tryParse('FF$e', radix: 16) : null;
+        final color = e.isNotEmpty ? int.tryParse('FF\$e', radix: 16) : null;
         return color != null ? Color(color) : item.color;
       },
     ).toList();
@@ -881,9 +881,6 @@ abstract class Pref {
     SettingBoxKey.showBatteryLevel,
     defaultValue: false,
   );
-
-  static bool get enableTVMode =>
-      _setting.get(SettingBoxKey.enableTVMode, defaultValue: false);
 
     static FollowOrderType get followOrderType =>
             FollowOrderType.values[_setting.get(

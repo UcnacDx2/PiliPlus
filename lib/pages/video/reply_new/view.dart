@@ -68,7 +68,7 @@ class _ReplyPageState extends CommonRichTextPubPageState<ReplyPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     themeData = darkVideoPage
-        ? Theme.of(context)
+        ? MyApp.darkThemeData ?? Theme.of(context)
         : Theme.of(context);
   }
 

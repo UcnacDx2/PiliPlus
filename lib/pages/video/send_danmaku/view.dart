@@ -139,7 +139,7 @@ class _SendDanmakuPanelState extends CommonTextPubPageState<SendDanmakuPanel> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     themeData = widget.darkVideoPage
-        ? Theme.of(context)
+        ? MyApp.darkThemeData ?? Theme.of(context)
         : Theme.of(context);
   }
 

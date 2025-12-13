@@ -25,9 +25,6 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
-import 'package:dpad/dpad.dart';
-import 'package:PiliPlus/utils/tv/region_manager.dart';
-import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/foundation.dart';
@@ -48,7 +45,6 @@ WebViewEnvironment? webViewEnvironment;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await TVDetector.init();
   MediaKit.ensureInitialized();
   tmpDirPath = (await getTemporaryDirectory()).path;
   appSupportDirPath = (await getApplicationSupportDirectory()).path;
@@ -56,7 +52,7 @@ void main() async {
     await GStorage.init();
   } catch (e) {
     await Utils.copyText(e.toString());
-    if (kDebugMode) debugPrint('GStorage init error: \$e');
+    if (kDebugMode) debugPrint('GStorage init error: $e');
     exit(0);
   }
   if (Utils.isDesktop) {
@@ -72,7 +68,7 @@ void main() async {
         downloadPath = defDownloadPath;
         await GStorage.setting.delete(SettingBoxKey.downloadPath);
         if (kDebugMode) {
-          debugPrint('download path error: \$e');
+          debugPrint('download path error: $e');
         }
       }
     } else {
@@ -176,10 +172,11 @@ void main() async {
   }
 
   if (Pref.enableLog) {
+    // 异常捕获 logo记录
     final customParameters = {
       'BuildConfig':
-          '\\nBuild Time: \${DateFormatUtils.format(BuildConfig.buildTime, format: DateFormatUtils.longFormatDs)}\\n'
-          'Commit Hash: \${BuildConfig.commitHash}',
+          '\nBuild Time: ${DateFormatUtils.format(BuildConfig.buildTime, format: DateFormatUtils.longFormatDs)}\n'
+          'Commit Hash: ${BuildConfig.commitHash}',
     };
     final fileHandler = await JsonFileHandler.init();
     final Catcher2Options debugConfig = Catcher2Options(
@@ -217,6 +214,8 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  static ThemeData? darkThemeData;
+
   static void _onBack() {
     if (SmartDialog.checkExist()) {
       SmartDialog.dismiss();
@@ -252,14 +251,17 @@ class MyApp extends StatelessWidget {
     Get.back();
   }
 
-  static Widget _buildApp(
-      {ColorScheme? lightColorScheme, ColorScheme? darkColorScheme}) {
+  static Widget _build({
+    ColorScheme? lightColorScheme,
+    ColorScheme? darkColorScheme,
+  }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    Widget app = GetMaterialApp(
+    return GetMaterialApp(
       title: Constants.appName,
       theme: ThemeUtils.getThemeData(
-        colorScheme: lightColorScheme ??
+        colorScheme:
+            lightColorScheme ??
             SeedColorScheme.fromSeeds(
               variant: variant,
               primaryKey: brandColor,
@@ -270,7 +272,8 @@ class MyApp extends StatelessWidget {
       ),
       darkTheme: ThemeUtils.getThemeData(
         isDark: true,
-        colorScheme: darkColorScheme ??
+        colorScheme:
+            darkColorScheme ??
             SeedColorScheme.fromSeeds(
               variant: variant,
               primaryKey: brandColor,
@@ -337,24 +340,6 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
-
-    if (TVDetector.isTV) {
-      app = DpadNavigator(
-        enabled: true,
-        focusMemory: const FocusMemoryOptions(enabled: true, maxHistory: 20),
-        regionNavigation: RegionNavigationOptions(
-          enabled: true,
-          rules: TVRegionManager.defaultRules,
-        ),
-        onBackPressed: () {
-          _onBack();
-          return KeyEventResult.handled;
-        },
-        child: app,
-      );
-    }
-
-    return app;
   }
 
   @override
@@ -363,17 +348,17 @@ class MyApp extends StatelessWidget {
       return DynamicColorBuilder(
         builder: ((ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
           if (lightDynamic != null && darkDynamic != null) {
-            return _buildApp(
+            return _build(
               lightColorScheme: lightDynamic.harmonized(),
               darkColorScheme: darkDynamic.harmonized(),
             );
           } else {
-            return _buildApp();
+            return _build();
           }
         }),
       );
     }
-    return _buildApp();
+    return _build();
   }
 }
 
@@ -381,6 +366,7 @@ class _CustomHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     final client = super.createHttpClient(context)
+      // ..maxConnectionsPerHost = 32
       ..idleTimeout = const Duration(seconds: 15);
     if (kDebugMode || Pref.badCertificateCallback) {
       client.badCertificateCallback = (cert, host, port) => true;
@@ -388,4 +374,3 @@ class _CustomHttpOverrides extends HttpOverrides {
     return client;
   }
 }
-EOL
