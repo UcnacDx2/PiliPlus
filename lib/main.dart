@@ -56,7 +56,7 @@ void main() async {
     await GStorage.init();
   } catch (e) {
     await Utils.copyText(e.toString());
-    if (kDebugMode) debugPrint('GStorage init error: $e');
+    if (kDebugMode) debugPrint('GStorage init error: \$e');
     exit(0);
   }
   if (Utils.isDesktop) {
@@ -72,7 +72,7 @@ void main() async {
         downloadPath = defDownloadPath;
         await GStorage.setting.delete(SettingBoxKey.downloadPath);
         if (kDebugMode) {
-          debugPrint('download path error: $e');
+          debugPrint('download path error: \$e');
         }
       }
     } else {
@@ -178,8 +178,8 @@ void main() async {
   if (Pref.enableLog) {
     final customParameters = {
       'BuildConfig':
-          '\nBuild Time: ${DateFormatUtils.format(BuildConfig.buildTime, format: DateFormatUtils.longFormatDs)}\n'
-          'Commit Hash: ${BuildConfig.commitHash}',
+          '\\nBuild Time: \${DateFormatUtils.format(BuildConfig.buildTime, format: DateFormatUtils.longFormatDs)}\\n'
+          'Commit Hash: \${BuildConfig.commitHash}',
     };
     final fileHandler = await JsonFileHandler.init();
     final Catcher2Options debugConfig = Catcher2Options(
@@ -388,3 +388,4 @@ class _CustomHttpOverrides extends HttpOverrides {
     return client;
   }
 }
+EOL
