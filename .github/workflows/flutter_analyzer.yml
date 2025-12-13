@@ -34,7 +34,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           # 你可以指定项目使用的 Flutter 版本
-          flutter-version: '3.19.0' # 建议修改为你项目当前使用的 Flutter 版本
+          flutter-version: '3.22.2' # 已更新以满足项目对 Dart SDK 的要求
           channel: 'stable'
           cache: true
 
@@ -49,3 +49,30 @@ jobs:
       # 这正是我们想要的，因为它会阻止不合规的代码被合并。
       - name: Run static analysis
         run: flutter analyze
+
+      # 步骤 5: 如果分析失败，则在 PR 中添加评论
+      # 仅当之前的步骤失败时运行
+      - name: Comment on PR on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // 仅在 pull request 事件中运行
+            if (context.eventName === 'pull_request') {
+              const prNumber = context.issue.number;
+              const errorMessage = `
+              ❌ **Flutter Analyzer 失败**
+
+              抱歉，静态代码分析检查未通过。请检查工作流日志以获取详细信息。
+
+              * **PR:** #${prNumber}
+              * **触发者:** ${context.actor}
+              `;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: errorMessage
+              });
+            }
