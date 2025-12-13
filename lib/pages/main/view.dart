@@ -412,14 +412,10 @@ class _MainAppState extends State<MainApp>
                                       .mapIndexed(
                                         (index, e) => NavigationRailDestination(
                                           label: Text(e.label),
-                                          icon: _buildIconWithFocus(
-                                            type: e,
-                                            focusNode: _focusNodes[index],
-                                          ),
-                                          selectedIcon: _buildIconWithFocus(
+                                          icon: _buildIcon(type: e),
+                                          selectedIcon: _buildIcon(
                                             type: e,
                                             selected: true,
-                                            focusNode: _focusNodes[index],
                                           ),
                                         ),
                                       )
