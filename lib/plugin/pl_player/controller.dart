@@ -1896,4 +1896,11 @@ class PlPlayerController {
       }
     });
   }
+
+  final FocusNode mainControlsFocusNode = FocusNode();
+  final FocusNode progressFocusNode = FocusNode();
+  final FocusNode secondaryControlsFocusNode = FocusNode();
+  FocusState currentFocus = FocusState.main;
 }
+
+enum FocusState { main, progress, secondary }

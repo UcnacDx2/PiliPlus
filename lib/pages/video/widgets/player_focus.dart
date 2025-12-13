@@ -79,17 +79,43 @@ class PlayerFocus extends StatelessWidget {
 
     final isArrowUp = key == LogicalKeyboardKey.arrowUp;
     if (isArrowUp || key == LogicalKeyboardKey.arrowDown) {
-      if (event is! KeyDownEvent) return true;
-      if (isArrowUp) {
-        if (introController case final introController?) {
-          if (!introController.prevPlay()) {
-            SmartDialog.showToast('已经是第一集了');
+      if (plPlayerController.showControls.value) {
+        if (event is KeyDownEvent) {
+          if (isArrowUp) {
+            switch (plPlayerController.currentFocus) {
+              case FocusState.progress:
+                plPlayerController.mainControlsFocusNode.requestFocus();
+                plPlayerController.currentFocus = FocusState.main;
+                break;
+              case FocusState.secondary:
+                plPlayerController.progressFocusNode.requestFocus();
+                plPlayerController.currentFocus = FocusState.progress;
+                break;
+              default:
+            }
+          } else {
+            if (plPlayerController.currentFocus == FocusState.main) {
+              plPlayerController.progressFocusNode.requestFocus();
+              plPlayerController.currentFocus = FocusState.progress;
+            } else if (plPlayerController.currentFocus == FocusState.progress) {
+              plPlayerController.secondaryControlsFocusNode.requestFocus();
+              plPlayerController.currentFocus = FocusState.secondary;
+            }
           }
         }
       } else {
-        if (introController case final introController?) {
-          if (!introController.nextPlay()) {
-            SmartDialog.showToast('已经是最后一集了');
+        if (event is! KeyDownEvent) return true;
+        if (isArrowUp) {
+          if (introController case final introController?) {
+            if (!introController.prevPlay()) {
+              SmartDialog.showToast('已经是第一集了');
+            }
+          }
+        } else {
+          if (introController case final introController?) {
+            if (!introController.nextPlay()) {
+              SmartDialog.showToast('已经是最后一集了');
+            }
           }
         }
       }
@@ -209,6 +235,16 @@ class PlayerFocus extends StatelessWidget {
 
         case LogicalKeyboardKey.enter:
         case LogicalKeyboardKey.select:
+          if (plPlayerController.progressFocusNode.hasFocus) {
+            plPlayerController.onDoubleTapCenter();
+            return true;
+          }
+          if (!plPlayerController.mainControlsFocusNode.hasFocus &&
+              !plPlayerController.secondaryControlsFocusNode.hasFocus) {
+            plPlayerController.mainControlsFocusNode.requestFocus();
+            plPlayerController.currentFocus = FocusState.main;
+            return true;
+          }
           if (onSkipSegment?.call() ?? false) {
             return true;
           }

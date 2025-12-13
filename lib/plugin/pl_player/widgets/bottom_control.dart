@@ -15,14 +15,16 @@ class BottomControl extends StatelessWidget {
     required this.maxWidth,
     required this.isFullScreen,
     required this.controller,
-    required this.buildBottomControl,
+    required this.buildMainControls,
+    required this.buildSecondaryControls,
     required this.videoDetailController,
   });
 
   final double maxWidth;
   final bool isFullScreen;
   final PlPlayerController controller;
-  final Widget Function() buildBottomControl;
+  final Widget Function() buildMainControls;
+  final Widget Function() buildSecondaryControls;
   final VideoDetailController videoDetailController;
 
   @override
@@ -93,6 +95,10 @@ class BottomControl extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Focus(
+            focusNode: controller.mainControlsFocusNode,
+            child: buildMainControls(),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
             child: Obx(
@@ -100,7 +106,10 @@ class BottomControl extends StatelessWidget {
                 clipBehavior: Clip.none,
                 alignment: Alignment.bottomCenter,
                 children: [
-                  progressBar(),
+                  Focus(
+                    focusNode: controller.progressFocusNode,
+                    child: progressBar(),
+                  ),
                   if (controller.enableBlock &&
                       videoDetailController.segmentProgressList.isNotEmpty)
                     Positioned(
@@ -156,7 +165,10 @@ class BottomControl extends StatelessWidget {
               ),
             ),
           ),
-          buildBottomControl(),
+          Focus(
+            focusNode: controller.secondaryControlsFocusNode,
+            child: buildSecondaryControls(),
+          ),
         ],
       ),
     );
