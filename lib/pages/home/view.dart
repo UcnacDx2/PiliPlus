@@ -9,6 +9,7 @@ import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:flutter/material.dart';
+import 'package:dpad/dpad.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
@@ -44,10 +45,21 @@ class _HomePageState extends State<HomePage>
               child: SizedBox(
                 height: 42,
                 width: double.infinity,
-                child: TabBar(
+                child: DpadTabBar(
                   controller: _homeController.tabController,
                   tabs: [
-                    for (var i in _homeController.tabs) Tab(text: i.label),
+                    for (var i in _homeController.tabs)
+                      DpadFocusable(
+                        region: 'tabs',
+                        effects: [
+                          FocusEffects.border(
+                            color: theme.colorScheme.primary,
+                            width: 2,
+                          ),
+                          FocusEffects.scale(1.1),
+                        ],
+                        child: Tab(text: i.label),
+                      ),
                   ],
                   isScrollable: true,
                   dividerColor: Colors.transparent,
@@ -179,42 +191,60 @@ class _HomePageState extends State<HomePage>
     return Expanded(
       child: SizedBox(
         height: 44,
-        child: Material(
-          borderRadius: const BorderRadius.all(Radius.circular(25)),
-          color: theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.05),
-          child: InkWell(
+        child: DpadFocusable(
+          autofocus: true,
+          region: 'search',
+          effects: [
+            FocusEffects.glow(
+              glowColor: theme.colorScheme.primary,
+              glowSize: 4,
+            ),
+          ],
+          onClick: () => Get.toNamed(
+            '/search',
+            parameters: {
+              if (_homeController.enableSearchWord)
+                'hintText': _homeController.defaultSearch.value,
+            },
+          ),
+          child: Material(
             borderRadius: const BorderRadius.all(Radius.circular(25)),
-            splashColor: theme.colorScheme.primaryContainer.withValues(
-              alpha: 0.3,
-            ),
-            onTap: () => Get.toNamed(
-              '/search',
-              parameters: {
-                if (_homeController.enableSearchWord)
-                  'hintText': _homeController.defaultSearch.value,
-              },
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 14),
-                Icon(
-                  Icons.search_outlined,
-                  color: theme.colorScheme.onSecondaryContainer,
-                  semanticLabel: '搜索',
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Obx(
-                    () => Text(
-                      _homeController.defaultSearch.value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: theme.colorScheme.outline),
+            color:
+                theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.05),
+            child: InkWell(
+              borderRadius: const BorderRadius.all(Radius.circular(25)),
+              splashColor: theme.colorScheme.primaryContainer.withValues(
+                alpha: 0.3,
+              ),
+              onTap: () => Get.toNamed(
+                '/search',
+                parameters: {
+                  if (_homeController.enableSearchWord)
+                    'hintText': _homeController.defaultSearch.value,
+                },
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 14),
+                  Icon(
+                    Icons.search_outlined,
+                    color: theme.colorScheme.onSecondaryContainer,
+                    semanticLabel: '搜索',
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Obx(
+                      () => Text(
+                        _homeController.defaultSearch.value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: theme.colorScheme.outline),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 5),
-              ],
+                  const SizedBox(width: 5),
+                ],
+              ),
             ),
           ),
         ),

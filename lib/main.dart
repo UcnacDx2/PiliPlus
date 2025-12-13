@@ -25,6 +25,7 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
+import 'package:dpad/dpad.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/foundation.dart';
@@ -36,6 +37,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
+import 'package:is_tv/is_tv.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -211,8 +213,35 @@ void main() async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool? _isTV;
+  final _isTVPlugin = IsTV();
+
+  @override
+  void initState() {
+    super.initState();
+    initPlatformState();
+  }
+
+  Future<void> initPlatformState() async {
+    bool? isTV;
+    try {
+      isTV = await _isTVPlugin.check() ?? false;
+    } on PlatformException {
+      isTV = false;
+    }
+    if (!mounted) return;
+    setState(() {
+      _isTV = isTV ?? false;
+    });
+  }
 
   static ThemeData? darkThemeData;
 
@@ -251,79 +280,96 @@ class MyApp extends StatelessWidget {
     Get.back();
   }
 
-  static Widget _build({
+  Widget _buildWidget({
     ColorScheme? lightColorScheme,
     ColorScheme? darkColorScheme,
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    return GetMaterialApp(
-      title: Constants.appName,
-      theme: ThemeUtils.getThemeData(
-        colorScheme:
-            lightColorScheme ??
-            SeedColorScheme.fromSeeds(
-              variant: variant,
-              primaryKey: brandColor,
-              brightness: Brightness.light,
-              useExpressiveOnContainerColors: false,
-            ),
-        isDynamic: lightColorScheme != null,
-      ),
-      darkTheme: ThemeUtils.getThemeData(
-        isDark: true,
-        colorScheme:
-            darkColorScheme ??
-            SeedColorScheme.fromSeeds(
-              variant: variant,
-              primaryKey: brandColor,
-              brightness: Brightness.dark,
-              useExpressiveOnContainerColors: false,
-            ),
-        isDynamic: darkColorScheme != null,
-      ),
-      themeMode: Pref.themeMode,
-      localizationsDelegates: const [
-        GlobalCupertinoLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      locale: const Locale("zh", "CN"),
-      fallbackLocale: const Locale("zh", "CN"),
-      supportedLocales: const [Locale("zh", "CN"), Locale("en", "US")],
-      initialRoute: '/',
-      getPages: Routes.getPages,
-      defaultTransition: Pref.pageTransition,
-      builder: FlutterSmartDialog.init(
-        toastBuilder: (String msg) => CustomToast(msg: msg),
-        loadingBuilder: (msg) => LoadingWidget(msg: msg),
-        builder: (context, child) {
-          child = MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: TextScaler.linear(Pref.defaultTextScale),
-            ),
-            child: child!,
-          );
-          if (Utils.isDesktop) {
-            return Focus(
-              canRequestFocus: false,
-              onKeyEvent: (_, event) {
-                if (event.logicalKey == LogicalKeyboardKey.escape &&
-                    event is KeyDownEvent) {
-                  _onBack();
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.ignored;
-              },
-              child: MouseBackDetector(
+    return DpadNavigator(
+      enabled: Utils.isDesktop || (_isTV ?? false),
+      focusMemory: true,
+      regionNavigation: const {
+        'bottom_nav': {
+          DpadAction.down: 'search',
+        },
+        'sidebar': {
+          DpadAction.right: 'search',
+        },
+        'search': {
+          DpadAction.down: 'tabs',
+          DpadAction.up: 'sidebar',
+          DpadAction.left: 'sidebar',
+        },
+        'tabs': {
+          DpadAction.down: 'content',
+          DpadAction.up: 'search',
+        },
+        'content': {
+          DpadAction.up: 'tabs',
+        },
+        'player_controls': {
+          DpadAction.down: 'video_tabs',
+        },
+        'video_tabs': {
+          DpadAction.up: 'player_controls',
+        },
+      },
+      onBackPressed: _onBack,
+      child: GetMaterialApp(
+        title: Constants.appName,
+        theme: ThemeUtils.getThemeData(
+          colorScheme: lightColorScheme ??
+              SeedColorScheme.fromSeeds(
+                variant: variant,
+                primaryKey: brandColor,
+                brightness: Brightness.light,
+                useExpressiveOnContainerColors: false,
+              ),
+          isDynamic: lightColorScheme != null,
+        ),
+        darkTheme: ThemeUtils.getThemeData(
+          isDark: true,
+          colorScheme: darkColorScheme ??
+              SeedColorScheme.fromSeeds(
+                variant: variant,
+                primaryKey: brandColor,
+                brightness: Brightness.dark,
+                useExpressiveOnContainerColors: false,
+              ),
+          isDynamic: darkColorScheme != null,
+        ),
+        themeMode: Pref.themeMode,
+        localizationsDelegates: const [
+          GlobalCupertinoLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        locale: const Locale("zh", "CN"),
+        fallbackLocale: const Locale("zh", "CN"),
+        supportedLocales: const [Locale("zh", "CN"), Locale("en", "US")],
+        initialRoute: '/',
+        getPages: Routes.getPages,
+        defaultTransition: Pref.pageTransition,
+        builder: FlutterSmartDialog.init(
+          toastBuilder: (String msg) => CustomToast(msg: msg),
+          loadingBuilder: (msg) => LoadingWidget(msg: msg),
+          builder: (context, child) {
+            child = MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(Pref.defaultTextScale),
+              ),
+              child: child!,
+            );
+            if (Utils.isDesktop) {
+              return MouseBackDetector(
                 onTapDown: _onBack,
                 child: child,
-              ),
-            );
-          }
-          return child;
-        },
-      ),
+              );
+            }
+            return child;
+          },
+        ),
       navigatorObservers: [
         PageUtils.routeObserver,
         FlutterSmartDialog.observer,
@@ -344,21 +390,24 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_isTV == null) {
+      return const SizedBox.shrink();
+    }
     if (!Platform.isIOS && Pref.dynamicColor) {
       return DynamicColorBuilder(
         builder: ((ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
           if (lightDynamic != null && darkDynamic != null) {
-            return _build(
+            return _buildWidget(
               lightColorScheme: lightDynamic.harmonized(),
               darkColorScheme: darkDynamic.harmonized(),
             );
           } else {
-            return _build();
+            return _buildWidget();
           }
         }),
       );
     }
-    return _build();
+    return _buildWidget();
   }
 }
 

@@ -59,6 +59,7 @@ import 'package:auto_orientation/auto_orientation.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:floating/floating.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:dpad/dpad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -1446,7 +1447,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     }
 
     final flag = !needIndicator || tabs.length == 1;
-    Widget tabBar() => TabBar(
+    Widget tabBar() => DpadTabBar(
       labelColor: flag ? themeData.colorScheme.onSurface : null,
       indicator: flag ? const BoxDecoration() : null,
       padding: EdgeInsets.zero,
@@ -1481,14 +1482,32 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       },
       tabs: tabs.map((text) {
         if (text == '评论') {
-          return Obx(() {
-            final count = _videoReplyController.count.value;
-            return Tab(
-              text: '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
-            );
-          });
+          return DpadFocusable(
+            region: 'video_tabs',
+            effects: [
+              FocusEffects.border(
+                color: themeData.colorScheme.primary,
+                width: 2,
+              ),
+            ],
+            child: Obx(() {
+              final count = _videoReplyController.count.value;
+              return Tab(
+                text: '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
+              );
+            }),
+          );
         } else {
-          return Tab(text: text);
+          return DpadFocusable(
+            region: 'video_tabs',
+            effects: [
+              FocusEffects.border(
+                color: themeData.colorScheme.primary,
+                width: 2,
+              ),
+            ],
+            child: Tab(text: text),
+          );
         }
       }).toList(),
     );
@@ -1518,51 +1537,61 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  SizedBox(
-                    height: 32,
-                    child: TextButton(
-                      style: const ButtonStyle(
-                        padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                      ),
-                      onPressed: videoDetailController.showShootDanmakuSheet,
-                      child: Text(
-                        '发弹幕',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: themeData.colorScheme.onSurfaceVariant,
+                  DpadFocusable(
+                    region: 'video_tabs',
+                    effects: const [FocusEffects.scale(1.1)],
+                    onClick: videoDetailController.showShootDanmakuSheet,
+                    child: SizedBox(
+                      height: 32,
+                      child: TextButton(
+                        style: const ButtonStyle(
+                          padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                        ),
+                        onPressed: videoDetailController.showShootDanmakuSheet,
+                        child: Text(
+                          '发弹幕',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: themeData.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(
-                    width: 38,
-                    height: 38,
-                    child: Obx(
-                      () {
-                        final ctr = videoDetailController.plPlayerController;
-                        final enableShowDanmaku = ctr.enableShowDanmaku.value;
-                        return IconButton(
-                          onPressed: () {
-                            final newVal = !enableShowDanmaku;
-                            ctr.enableShowDanmaku.value = newVal;
-                            if (!ctr.tempPlayerConf) {
-                              GStorage.setting.put(
-                                SettingBoxKey.enableShowDanmaku,
-                                newVal,
-                              );
-                            }
-                          },
-                          icon: Icon(
-                            size: 22,
-                            enableShowDanmaku
-                                ? CustomIcons.dm_on
-                                : CustomIcons.dm_off,
-                            color: enableShowDanmaku
-                                ? themeData.colorScheme.secondary
-                                : themeData.colorScheme.outline,
-                          ),
-                        );
-                      },
+                  DpadFocusable(
+                    region: 'video_tabs',
+                    effects: const [FocusEffects.scale(1.1)],
+                    child: SizedBox(
+                      width: 38,
+                      height: 38,
+                      child: Obx(
+                        () {
+                          final ctr = videoDetailController.plPlayerController;
+                          final enableShowDanmaku =
+                              ctr.enableShowDanmaku.value;
+                          return IconButton(
+                            onPressed: () {
+                              final newVal = !enableShowDanmaku;
+                              ctr.enableShowDanmaku.value = newVal;
+                              if (!ctr.tempPlayerConf) {
+                                GStorage.setting.put(
+                                  SettingBoxKey.enableShowDanmaku,
+                                  newVal,
+                                );
+                              }
+                            },
+                            icon: Icon(
+                              size: 22,
+                              enableShowDanmaku
+                                  ? CustomIcons.dm_on
+                                  : CustomIcons.dm_off,
+                              color: enableShowDanmaku
+                                  ? themeData.colorScheme.secondary
+                                  : themeData.colorScheme.outline,
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(width: 14),
