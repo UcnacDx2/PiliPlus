@@ -161,17 +161,19 @@ class MainActivity : AudioServiceActivity() {
             if (event.repeatCount == 0) {
                 backPressedKeyDownTime = event.eventTime
             }
+            event.startTracking()
+            return true
         }
         return super.onKeyDown(keyCode, event)
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.isTracking && !event.isCanceled) {
             val pressedDuration = event.eventTime - backPressedKeyDownTime
             if (pressedDuration >= 3500) {
                 finish()
             } else {
-                methodChannel.invokeMethod("onBackPressed", null)
+                super.onBackPressed()
             }
             return true
         }
