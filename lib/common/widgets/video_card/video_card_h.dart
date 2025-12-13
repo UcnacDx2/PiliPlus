@@ -161,7 +161,7 @@ class _VideoCardHState extends State<VideoCardH> {
     );
     
     return DpadVideoCardWrapper(
-      onClick: widget.onTap ?? _onTap,
+      onEnter: widget.onTap ?? _onTap,
       child: Material(
         type: MaterialType.transparency,
         // [Feat] Focus 监听逻辑

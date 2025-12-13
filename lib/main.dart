@@ -28,12 +28,12 @@ import 'package:catcher_2/catcher_2.dart';
 import 'package:dpad/dpad.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
+import 'package:is_tv/is_tv.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:is_tv/is_tv.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -203,18 +203,21 @@ void main() async {
       customParameters: customParameters,
     );
 
+    final bool isTv = await IsTv.check();
     Catcher2(
       debugConfig: debugConfig,
       releaseConfig: releaseConfig,
-      rootWidget: const MyApp(),
+      rootWidget: MyApp(isTv: isTv),
     );
   } else {
-    runApp(const MyApp());
+    final bool isTv = await IsTv.check();
+    runApp(MyApp(isTv: isTv));
   }
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isTv;
+  const MyApp({super.key, required this.isTv});
 
   static ThemeData? darkThemeData;
 
@@ -253,85 +256,128 @@ class MyApp extends StatelessWidget {
     Get.back();
   }
 
-  static Widget _build({
+  Widget _build({
     ColorScheme? lightColorScheme,
     ColorScheme? darkColorScheme,
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    return DpadRoot(
-      onBackPressed: _onBack,
-      child: GetMaterialApp(
-        title: Constants.appName,
-        theme: ThemeUtils.getThemeData(
-          colorScheme: lightColorScheme ??
-              SeedColorScheme.fromSeeds(
-                variant: variant,
-                primaryKey: brandColor,
-                brightness: Brightness.light,
-                useExpressiveOnContainerColors: false,
-              ),
-          isDynamic: lightColorScheme != null,
-        ),
-        darkTheme: ThemeUtils.getThemeData(
-          isDark: true,
-          colorScheme: darkColorScheme ??
-              SeedColorScheme.fromSeeds(
-                variant: variant,
-                primaryKey: brandColor,
-                brightness: Brightness.dark,
-                useExpressiveOnContainerColors: false,
-              ),
-          isDynamic: darkColorScheme != null,
-        ),
-        themeMode: Pref.themeMode,
-        localizationsDelegates: const [
-          GlobalCupertinoLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        locale: const Locale("zh", "CN"),
-        fallbackLocale: const Locale("zh", "CN"),
-        supportedLocales: const [Locale("zh", "CN"), Locale("en", "US")],
-        initialRoute: '/',
-        getPages: Routes.getPages,
-        defaultTransition: Pref.pageTransition,
-        builder: FlutterSmartDialog.init(
-          toastBuilder: (String msg) => CustomToast(msg: msg),
-          loadingBuilder: (msg) => LoadingWidget(msg: msg),
-          builder: (context, child) {
-            child = MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: TextScaler.linear(Pref.defaultTextScale),
-              ),
-              child: child!,
-            );
-            if (Utils.isDesktop) {
-              return MouseBackDetector(
+    final getMaterialApp = GetMaterialApp(
+      title: Constants.appName,
+      theme: ThemeUtils.getThemeData(
+        colorScheme: lightColorScheme ??
+            SeedColorScheme.fromSeeds(
+              variant: variant,
+              primaryKey: brandColor,
+              brightness: Brightness.light,
+              useExpressiveOnContainerColors: false,
+            ),
+        isDynamic: lightColorScheme != null,
+      ),
+      darkTheme: ThemeUtils.getThemeData(
+        isDark: true,
+        colorScheme: darkColorScheme ??
+            SeedColorScheme.fromSeeds(
+              variant: variant,
+              primaryKey: brandColor,
+              brightness: Brightness.dark,
+              useExpressiveOnContainerColors: false,
+            ),
+        isDynamic: darkColorScheme != null,
+      ),
+      themeMode: Pref.themeMode,
+      localizationsDelegates: const [
+        GlobalCupertinoLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      locale: const Locale("zh", "CN"),
+      fallbackLocale: const Locale("zh", "CN"),
+      supportedLocales: const [Locale("zh", "CN"), Locale("en", "US")],
+      initialRoute: '/',
+      getPages: Routes.getPages,
+      defaultTransition: Pref.pageTransition,
+      builder: FlutterSmartDialog.init(
+        toastBuilder: (String msg) => CustomToast(msg: msg),
+        loadingBuilder: (msg) => LoadingWidget(msg: msg),
+        builder: (context, child) {
+          child = MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: TextScaler.linear(Pref.defaultTextScale),
+            ),
+            child: child!,
+          );
+          if (Utils.isDesktop) {
+            return Focus(
+              canRequestFocus: false,
+              onKeyEvent: (_, event) {
+                if (event.logicalKey == LogicalKeyboardKey.escape &&
+                    event is KeyDownEvent) {
+                  _onBack();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: MouseBackDetector(
                 onTapDown: _onBack,
                 child: child,
-              );
-            }
-            return child;
-          },
-        ),
-        navigatorObservers: [
-          PageUtils.routeObserver,
-          FlutterSmartDialog.observer,
-        ],
-        scrollBehavior: const MaterialScrollBehavior().copyWith(
-          scrollbars: false,
-          dragDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.stylus,
-            PointerDeviceKind.invertedStylus,
-            PointerDeviceKind.trackpad,
-            PointerDeviceKind.unknown,
-            if (Utils.isDesktop) PointerDeviceKind.mouse,
-          },
-        ),
+              ),
+            );
+          }
+          return child;
+        },
+      ),
+      navigatorObservers: [
+        PageUtils.routeObserver,
+        FlutterSmartDialog.observer,
+      ],
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        scrollbars: false,
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.invertedStylus,
+          PointerDeviceKind.trackpad,
+          PointerDeviceKind.unknown,
+          if (Utils.isDesktop) PointerDeviceKind.mouse,
+        },
       ),
     );
+    if (Utils.isDesktop || isTv) {
+      return DpadRoot(
+        focusMemory: true,
+        regionNavigation: {
+          'sidebar': {
+            DpadAction.arrowDown: 'search',
+            DpadAction.arrowRight: 'search',
+          },
+          'bottom_nav': {
+            DpadAction.arrowUp: 'search',
+          },
+          'search': {
+            DpadAction.arrowUp: 'sidebar',
+            DpadAction.arrowLeft: 'sidebar',
+            DpadAction.arrowDown: 'tabs',
+          },
+          'tabs': {
+            DpadAction.arrowUp: 'search',
+            DpadAction.arrowDown: 'content',
+          },
+          'content': {
+            DpadAction.arrowUp: 'tabs',
+          },
+          'player_controls': {
+            DpadAction.arrowDown: 'video_tabs',
+          },
+          'video_tabs': {
+            DpadAction.arrowUp: 'player_controls',
+          },
+        },
+        child: getMaterialApp,
+      );
+    } else {
+      return getMaterialApp;
+    }
   }
 
   @override

@@ -343,24 +343,22 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     ) => switch (bottomControl) {
       /// 播放暂停
       BottomControlType.playOrPause => DpadFocusable(
-        region: 'player_controls',
-        effects: const [FocusEffects.scale(1.1)],
-        onClick: () => plPlayerController.playOrPause(),
-        child: PlayOrPauseButton(
+        effects: const [FocusEffects.scale(scale: 1.1)],
+        onEnter: () => plPlayerController.playOrPause(),
+        builder: (context, hasFocus, _) => PlayOrPauseButton(
           plPlayerController: plPlayerController,
         ),
       ),
 
       /// 上一集
       BottomControlType.pre => DpadFocusable(
-        region: 'player_controls',
-        effects: const [FocusEffects.scale(1.1)],
-        onClick: () {
+        effects: const [FocusEffects.scale(scale: 1.1)],
+        onEnter: () {
           if (!introController.prevPlay()) {
             SmartDialog.showToast('已经是第一集了');
           }
         },
-        child: ComBtn(
+        builder: (context, hasFocus, _) => ComBtn(
           width: widgetWidth,
           height: 30,
           tooltip: '上一集',
@@ -374,14 +372,13 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
       /// 下一集
       BottomControlType.next => DpadFocusable(
-        region: 'player_controls',
-        effects: const [FocusEffects.scale(1.1)],
-        onClick: () {
+        effects: const [FocusEffects.scale(scale: 1.1)],
+        onEnter: () {
           if (!introController.nextPlay()) {
             SmartDialog.showToast('已经是最后一集了');
           }
         },
-        child: ComBtn(
+        builder: (context, hasFocus, _) => ComBtn(
           width: widgetWidth,
           height: 30,
           tooltip: '下一集',
@@ -434,11 +431,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           final list = videoDetailController.dmTrend.value?.dataOrNull;
           if (list != null && list.isNotEmpty) {
             return DpadFocusable(
-              region: 'player_controls',
-              effects: const [FocusEffects.scale(1.1)],
-              onClick: () => videoDetailController.showDmTrendChart.value =
+              effects: const [FocusEffects.scale(scale: 1.1)],
+              onEnter: () => videoDetailController.showDmTrendChart.value =
                   !videoDetailController.showDmTrendChart.value,
-              child: ComBtn(
+              builder: (context, hasFocus, _) => ComBtn(
                 width: widgetWidth,
                 height: 30,
                 tooltip: '高能进度条',
@@ -474,9 +470,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       /// 超分辨率
       BottomControlType.superResolution => Obx(
         () => DpadFocusable(
-          region: 'player_controls',
-          effects: const [FocusEffects.scale(1.1)],
-          child: PopupMenuButton<SuperResolutionType>(
+          effects: const [FocusEffects.scale(scale: 1.1)],
+          builder: (context, hasFocus, _) => PopupMenuButton<SuperResolutionType>(
             tooltip: '超分辨率',
             requestFocus: false,
             initialValue: plPlayerController.superResolutionType.value,
@@ -514,10 +509,9 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         () => videoDetailController.viewPointList.isEmpty
             ? const SizedBox.shrink()
             : DpadFocusable(
-                region: 'player_controls',
-                effects: const [FocusEffects.scale(1.1)],
-                onClick: widget.showViewPoints,
-                child: ComBtn(
+                effects: const [FocusEffects.scale(scale: 1.1)],
+                onEnter: widget.showViewPoints,
+                builder: (context, hasFocus, _) => ComBtn(
                   width: widgetWidth,
                   height: 30,
                   tooltip: '分段信息',
@@ -544,9 +538,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
       /// 选集
       BottomControlType.episode => DpadFocusable(
-        region: 'player_controls',
-        effects: const [FocusEffects.scale(1.1)],
-        onClick: () {
+        effects: const [FocusEffects.scale(scale: 1.1)],
+        onEnter: () {
           if (videoDetailController.isFileSource) {
             // TODO
             return;
@@ -590,7 +583,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 : currentCid,
           );
         },
-        child: ComBtn(
+        builder: (context, hasFocus, _) => ComBtn(
           width: widgetWidth,
           height: 30,
           tooltip: '选集',
@@ -605,9 +598,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       /// 画面比例
       BottomControlType.fit => Obx(
         () => DpadFocusable(
-          region: 'player_controls',
-          effects: const [FocusEffects.scale(1.1)],
-          child: PopupMenuButton<VideoFitType>(
+          effects: const [FocusEffects.scale(scale: 1.1)],
+          builder: (context, hasFocus, _) => PopupMenuButton<VideoFitType>(
             tooltip: '画面比例',
             requestFocus: false,
             initialValue: plPlayerController.videoFit.value,
@@ -645,9 +637,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           final list = videoDetailController.languages.value;
           if (list != null && list.isNotEmpty) {
             return DpadFocusable(
-              region: 'player_controls',
-              effects: const [FocusEffects.scale(1.1)],
-              child: PopupMenuButton<String>(
+              effects: const [FocusEffects.scale(scale: 1.1)],
+              builder: (context, hasFocus, _) => PopupMenuButton<String>(
                 tooltip: '翻译',
                 requestFocus: false,
                 initialValue: videoDetailController.currLang.value,
@@ -704,9 +695,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         () => videoDetailController.subtitles.isEmpty
             ? const SizedBox.shrink()
             : DpadFocusable(
-                region: 'player_controls',
-                effects: const [FocusEffects.scale(1.1)],
-                child: PopupMenuButton<int>(
+                effects: const [FocusEffects.scale(scale: 1.1)],
+                builder: (context, hasFocus, _) => PopupMenuButton<int>(
                   tooltip: '字幕',
                   requestFocus: false,
                   initialValue: videoDetailController.vttSubtitlesIndex.value
@@ -770,9 +760,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       /// 播放速度
       BottomControlType.speed => Obx(
         () => DpadFocusable(
-          region: 'player_controls',
-          effects: const [FocusEffects.scale(1.1)],
-          child: PopupMenuButton<double>(
+          effects: const [FocusEffects.scale(scale: 1.1)],
+          builder: (context, hasFocus, _) => PopupMenuButton<double>(
             tooltip: '倍速',
             requestFocus: false,
             initialValue: plPlayerController.playbackSpeed,
@@ -831,9 +820,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
             }
           }
           return DpadFocusable(
-            region: 'player_controls',
-            effects: const [FocusEffects.scale(1.1)],
-            child: PopupMenuButton<int>(
+            effects: const [FocusEffects.scale(scale: 1.1)],
+            builder: (context, hasFocus, _) => PopupMenuButton<int>(
               tooltip: '画质',
               requestFocus: false,
               initialValue: currentVideoQa.code,
@@ -900,11 +888,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
       /// 全屏
       BottomControlType.fullscreen => DpadFocusable(
-        region: 'player_controls',
-        effects: const [FocusEffects.scale(1.1)],
-        onClick: () =>
+        effects: const [FocusEffects.scale(scale: 1.1)],
+        onEnter: () =>
             plPlayerController.triggerFullScreen(status: !isFullScreen),
-        child: ComBtn(
+        builder: (context, hasFocus, _) => ComBtn(
           width: widgetWidth,
           height: 30,
           tooltip: isFullScreen ? '退出全屏' : '全屏',

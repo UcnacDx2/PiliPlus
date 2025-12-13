@@ -3,28 +3,26 @@ import 'package:flutter/material.dart';
 
 class DpadVideoCardWrapper extends StatelessWidget {
   final Widget child;
-  final VoidCallback? onClick;
+  final VoidCallback? onEnter;
 
   const DpadVideoCardWrapper({
     super.key,
     required this.child,
-    this.onClick,
+    this.onEnter,
   });
 
   @override
   Widget build(BuildContext context) {
     return DpadFocusable(
-      focusEffects: [
+      effects: [
         FocusEffects.scale(scale: 1.05),
         FocusEffects.border(
           color: Theme.of(context).colorScheme.primary,
           width: 3,
         ),
       ],
-      builder: (context, hasFocus) => InkWell(
-        onTap: onClick,
-        child: child,
-      ),
+      onEnter: onEnter,
+      builder: (context, hasFocus, _) => child,
     );
   }
 }

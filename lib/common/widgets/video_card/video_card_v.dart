@@ -121,7 +121,7 @@ class _VideoCardVState extends State<VideoCardV> {
     );
     // [Feat] Focus 包裹
     return DpadVideoCardWrapper(
-      onClick: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
+      onEnter: () => onPushDetail(Utils.makeHeroTag(widget.videoItem.aid)),
       child: Focus(
         canRequestFocus: false,
         skipTraversal: true,

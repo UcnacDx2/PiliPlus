@@ -256,14 +256,12 @@ class _MainAppState extends State<MainApp>
                               .entries
                               .map(
                                 (entry) => DpadFocusable(
-                                      builder: (context, hasFocus) =>
-                                          InkWell(
-                                            onTap: () => _mainController
-                                                .setIndex(entry.key),
-                                            child: NavigationDestination(
-                                              label: entry.value.label,
-                                              icon: _buildIcon(
-                                                  type: entry.value),
+                                  onEnter: () =>
+                                      _mainController.setIndex(entry.key),
+                                  builder: (context, hasFocus, _) =>
+                                      NavigationDestination(
+                                    label: entry.value.label,
+                                    icon: _buildIcon(type: entry.value),
                                     selectedIcon: _buildIcon(
                                       type: entry.value,
                                       selected: true,
@@ -283,13 +281,20 @@ class _MainAppState extends State<MainApp>
                           unselectedFontSize: 12,
                           type: BottomNavigationBarType.fixed,
                           items: _mainController.navigationBars
+                              .asMap()
+                              .entries
                               .map(
-                                (e) => BottomNavigationBarItem(
-                                  label: e.label,
-                                  icon: _buildIcon(type: e),
-                                  activeIcon: _buildIcon(
-                                    type: e,
-                                    selected: true,
+                                (entry) => DpadFocusable(
+                                  onEnter: () =>
+                                      _mainController.setIndex(entry.key),
+                                  builder: (context, hasFocus, _) =>
+                                      BottomNavigationBarItem(
+                                    label: entry.value.label,
+                                    icon: _buildIcon(type: entry.value),
+                                    activeIcon: _buildIcon(
+                                      type: entry.value,
+                                      selected: true,
+                                    ),
                                   ),
                                 ),
                               )
@@ -367,30 +372,16 @@ class _MainAppState extends State<MainApp>
                                                 .value,
                                             children: _mainController
                                                 .navigationBars
-                                                .asMap()
-                                                .entries
                                                 .map(
-                                                  (entry) => DpadFocusable(
-                                                      builder: (context,
-                                                              hasFocus) =>
-                                                          InkWell(
-                                                            onTap: () =>
-                                                                _mainController
-                                                                    .setIndex(
-                                                                        entry
-                                                                            .key),
-                                                            child:
-                                                                NavigationDrawerDestination(
-                                                              label: Text(entry
-                                                                  .value
-                                                                  .label),
-                                                              icon: _buildIcon(
-                                                                  type: entry
-                                                                      .value),
-                                                      selectedIcon: _buildIcon(
-                                                        type: entry.value,
-                                                        selected: true,
-                                                      ),
+                                                  (e) =>
+                                                      NavigationDrawerDestination(
+                                                    label: Text(e.label),
+                                                    icon: _buildIcon(
+                                                      type: e,
+                                                    ),
+                                                    selectedIcon: _buildIcon(
+                                                      type: e,
+                                                      selected: true,
                                                     ),
                                                   ),
                                                 )
@@ -401,56 +392,62 @@ class _MainAppState extends State<MainApp>
                                   ),
                                 ],
                               )
-                            : Obx(() {
-                                final selectedIndex =
-                                    _mainController.selectedIndex.value;
-                                return SizedBox(
-                                  width: 80,
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.center,
-                                    children: [
-                                      userAndSearchVertical(theme),
-                                      const Spacer(),
-                                      ..._mainController.navigationBars
-                                          .asMap()
-                                          .entries
-                                          .map((entry) {
-                                        final index = entry.key;
-                                        final item = entry.value;
-                                        final isSelected =
-                                            selectedIndex == index;
-                                        return DpadFocusable(
-                                          onClick: () => _mainController
-                                              .setIndex(index),
-                                          child: SizedBox(
-                                            height: 72,
-                                            width: 80,
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                _buildIcon(
-                                                  type: item,
-                                                  selected: isSelected,
+                            : DpadRegion(
+                                id: 'sidebar',
+                                child: Obx(() {
+                                  final selectedIndex =
+                                      _mainController.selectedIndex.value;
+                                  return SizedBox(
+                                    width: 80,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        userAndSearchVertical(theme),
+                                        const Spacer(),
+                                        ..._mainController.navigationBars
+                                            .asMap()
+                                            .entries
+                                            .map((entry) {
+                                          final index = entry.key;
+                                          final item = entry.value;
+                                          final isSelected =
+                                              selectedIndex == index;
+                                          return DpadFocusable(
+                                            onEnter: () =>
+                                                _mainController.setIndex(index),
+                                            builder:
+                                                (context, hasFocus, child) {
+                                              return SizedBox(
+                                                height: 72,
+                                                width: 80,
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    _buildIcon(
+                                                      type: item,
+                                                      selected: isSelected,
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      item.label,
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .labelMedium,
+                                                    ),
+                                                  ],
                                                 ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  item.label,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .labelMedium,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                      const Spacer(),
-                                    ],
-                                  ),
-                                );
-                              })
+                                              );
+                                            },
+                                          );
+                                        }).toList(),
+                                        const Spacer(),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              )
                       : DpadRegion(
                           id: 'sidebar',
                           child: Container(
@@ -540,7 +537,7 @@ class _MainAppState extends State<MainApp>
     return Column(
       children: [
         DpadFocusable(
-          builder: (context, hasFocus) => InkWell(
+          builder: (context, hasFocus, _) => InkWell(
             onTap: _mainController.toMinePage,
             child: Semantics(
               label: "我的",
@@ -608,7 +605,7 @@ class _MainAppState extends State<MainApp>
         ),
         DpadFocusable(
           autofocus: true,
-          builder: (context, hasFocus) => IconButton(
+          builder: (context, hasFocus, _) => IconButton(
             tooltip: '搜索',
             icon: const Icon(
               Icons.search_outlined,

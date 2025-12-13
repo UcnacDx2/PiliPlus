@@ -1482,18 +1482,25 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
               animToTop();
             }
           },
-          tabs: tabs.map((text) {
-            if (text == '评论') {
-              return Obx(() {
-                final count = _videoReplyController.count.value;
-                return Tab(
-                  text:
-                      '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
-                );
-              });
-            } else {
-              return Tab(text: text);
-            }
+          tabs: tabs.asMap().entries.map((entry) {
+            final index = entry.key;
+            final text = entry.value;
+            return DpadFocusable(
+              onEnter: () => videoDetailController.tabCtr.animateTo(index),
+              builder: (context, hasFocus, _) {
+                if (text == '评论') {
+                  return Obx(() {
+                    final count = _videoReplyController.count.value;
+                    return Tab(
+                      text:
+                          '评论${count == -1 ? '' : ' ${NumUtils.numFormat(count)}'}',
+                    );
+                  });
+                } else {
+                  return Tab(text: text);
+                }
+              },
+            );
           }).toList(),
         );
 
@@ -1525,7 +1532,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   DpadFocusable(
-                    builder: (context, hasFocus) => SizedBox(
+                    builder: (context, hasFocus, _) => SizedBox(
                       height: 32,
                       child: TextButton(
                         style: const ButtonStyle(
@@ -1543,7 +1550,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                     ),
                   ),
                   DpadFocusable(
-                    builder: (context, hasFocus) => SizedBox(
+                    builder: (context, hasFocus, _) => SizedBox(
                       width: 38,
                       height: 38,
                       child: Obx(

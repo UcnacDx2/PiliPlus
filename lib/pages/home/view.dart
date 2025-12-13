@@ -42,9 +42,16 @@ class _HomePageState extends State<HomePage>
             id: 'tabs',
             child: TabBar(
               controller: _homeController.tabController,
-              tabs: [
-                for (var i in _homeController.tabs) Tab(text: i.label),
-              ],
+              tabs: _homeController.tabs
+                  .asMap()
+                  .entries
+                  .map(
+                    (entry) => DpadFocusable(
+                      onEnter: () => _homeController.tabController.animateTo(entry.key),
+                      builder: (context, hasFocus, _) => Tab(text: entry.value.label),
+                    ),
+                  )
+                  .toList(),
               isScrollable: true,
               dividerColor: Colors.transparent,
               splashBorderRadius: StyleString.mdRadius,
@@ -83,8 +90,8 @@ class _HomePageState extends State<HomePage>
           ),
           const SizedBox(width: 8),
           DpadFocusable(
-            onClick: _mainController.toMinePage,
-            child: Semantics(
+            onEnter: _mainController.toMinePage,
+            builder: (context, hasFocus, child) => Semantics(
               label: "我的",
               child: Obx(
                 () => _homeController.accountService.isLogin.value
@@ -180,7 +187,14 @@ class _HomePageState extends State<HomePage>
         height: 44,
         child: DpadFocusable(
           autofocus: true,
-          builder: (context, hasFocus) => Material(
+          onEnter: () => Get.toNamed(
+            '/search',
+            parameters: {
+              if (_homeController.enableSearchWord)
+                'hintText': _homeController.defaultSearch.value,
+            },
+          ),
+          builder: (context, hasFocus, _) => Material(
             borderRadius: const BorderRadius.all(Radius.circular(25)),
             color:
                 theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.05),
@@ -260,7 +274,7 @@ Widget msgBadge(MainController mainController) {
 
   final msgUnReadCount = mainController.msgUnReadCount.value;
   return DpadFocusable(
-    builder: (context, hasFocus) => InkWell(
+    builder: (context, hasFocus, _) => InkWell(
       onTap: toWhisper,
       child: Badge(
         isLabelVisible:
