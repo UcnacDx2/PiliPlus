@@ -44,38 +44,58 @@ jobs:
         run: flutter pub get
 
       # 步骤 4: 运行代码分析
-      # 执行 `flutter analyze` 命令。如果分析发现任何问题（错误、警告等），
-      # 此命令会以非零状态码退出，导致工作流失败。
-      # 这正是我们想要的，因为它会阻止不合规的代码被合并。
+      # 我们将错误输出重定向到一个日志文件，并设置 continue-on-error 为 true。
+      # 这可以确保即使分析失败，我们也能继续执行下一步来发表包含详细错误信息的评论。
       - name: Run static analysis
-        run: flutter analyze
+        id: analyze
+        run: flutter analyze > flutter_analyze.log 2>&1
+        continue-on-error: true
 
       # 步骤 5: 如果分析失败，则在 PR 中添加评论
-      # 仅当之前的步骤失败时运行
+      # 仅当上一步（id: analyze）失败时运行
       - name: Comment on PR on failure
-        if: failure()
+        if: steps.analyze.outcome == 'failure'
         uses: actions/github-script@v7
         with:
           # 使用您在仓库 Secrets 中设置的个人访问令牌
           # 这将使得评论以您的身份发布
           github-token: ${{ secrets.PR_COMMENTER_TOKEN }}
           script: |
+            const fs = require('fs');
+
             // 仅在 pull request 事件中运行
             if (context.eventName === 'pull_request') {
               const prNumber = context.issue.number;
-              const errorMessage = `
+              const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+              // 读取分析步骤产生的日志文件
+              let errorOutput = '无法读取错误日志。';
+              try {
+                errorOutput = fs.readFileSync('flutter_analyze.log', 'utf8');
+              } catch (e) {
+                console.error('Error reading log file:', e);
+              }
+
+              const body = `
               ❌ **Flutter Analyzer 失败**
 
-              抱歉，静态代码分析检查未通过。请检查工作流日志以获取详细信息。
+              静态代码分析检查发现问题。
 
-              * **PR:** #${prNumber}
-              * **触发者:** ${context.actor}
+              *   **[查看完整的CI日志](${runUrl})**
+
+              <details>
+              <summary>点击展开错误详情</summary>
+
+              \`\`\`
+              ${errorOutput}
+              \`\`\`
+              </details>
               `;
 
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
-                body: errorMessage
+                body: body
               });
             }
