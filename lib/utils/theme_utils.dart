@@ -131,9 +131,6 @@ abstract class ThemeUtils {
       if (Pref.isPureBlackTheme) {
         themeData = darkenTheme(themeData);
       }
-      if (Pref.darkVideoPage) {
-        MyApp.darkThemeData = themeData;
-      }
     }
     return themeData;
   }

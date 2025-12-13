@@ -486,7 +486,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
           : minVideoHeight;
 
     themeData = videoDetailController.plPlayerController.darkVideoPage
-        ? MyApp.darkThemeData ?? Theme.of(context)
+        ? Theme.of(Get.context!) ?? Theme.of(context)
         : Theme.of(context);
   }
 
