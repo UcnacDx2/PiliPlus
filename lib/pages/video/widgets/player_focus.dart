@@ -123,6 +123,13 @@ class PlayerFocus extends StatelessWidget {
     }
 
     if (key == LogicalKeyboardKey.arrowRight) {
+      if (plPlayerController.progressFocusNode.hasFocus) {
+        if (hasPlayer) {
+          plPlayerController
+              .onForward(plPlayerController.fastForBackwardDuration);
+        }
+        return true;
+      }
       if (!plPlayerController.isLive) {
         if (event is KeyDownEvent) {
           if (hasPlayer && !plPlayerController.longPressStatus.value) {
@@ -266,6 +273,13 @@ class PlayerFocus extends StatelessWidget {
       if (!plPlayerController.isLive) {
         switch (key) {
           case LogicalKeyboardKey.arrowLeft:
+            if (plPlayerController.progressFocusNode.hasFocus) {
+              if (hasPlayer) {
+                plPlayerController
+                    .onBackward(plPlayerController.fastForBackwardDuration);
+              }
+              return true;
+            }
             if (hasPlayer) {
               plPlayerController.onBackward(
                 plPlayerController.fastForBackwardDuration,

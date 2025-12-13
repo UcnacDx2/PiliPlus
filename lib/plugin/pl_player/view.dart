@@ -45,6 +45,7 @@ import 'package:PiliPlus/plugin/pl_player/widgets/app_bar_ani.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/backward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/bottom_control.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
+import 'package:PiliPlus/plugin/pl_player/widgets/focusable_control.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/forward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/mpv_convert_webp.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
@@ -345,13 +346,14 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       ],
     ];
 
-    return Row(
+    return FocusTraversalGroup(
+        child: Row(
       children: [
         ...mainLeft.map(progressWidget),
         const Spacer(),
         progressWidget(BottomControlType.time),
       ],
-    );
+    ));
   }
 
   Widget buildSecondaryControls(
@@ -387,22 +389,24 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       if (!plPlayerController.isDesktopPip) BottomControlType.fullscreen,
     ];
 
-    return Row(
-      children: [
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) => FittedBox(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: secondaryControls.map(progressWidget).toList(),
+    return FocusTraversalGroup(
+      child: Row(
+        children: [
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) => FittedBox(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: secondaryControls.map(progressWidget).toList(),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -420,7 +424,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final isFullScreen = this.isFullScreen;
     final double widgetWidth = isLandscape && isFullScreen ? 42 : 35;
 
-    return switch (bottomControl) {
+    final control = switch (bottomControl) {
       /// 播放暂停
       BottomControlType.playOrPause => PlayOrPauseButton(
           plPlayerController: plPlayerController,
@@ -971,6 +975,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           ),
         ),
     };
+    return FocusableControl(child: control);
   }
 
   PlPlayerController get plPlayerController => widget.plPlayerController;
