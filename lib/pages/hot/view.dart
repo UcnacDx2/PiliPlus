@@ -36,14 +36,9 @@ class _HotPageState extends CommonPageState<HotPage, HotController>
     required String title,
     required VoidCallback onTap,
   }) {
-    return DpadFocusable(
-      builder: (context, hasFocus, child) => FocusEffects.scale(
-        context: context,
-        hasFocus: hasFocus,
-        child: child!,
-        scale: 1.1,
-      ),
-      onEnter: onTap,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -155,17 +150,18 @@ class _HotPageState extends CommonPageState<HotPage, HotController>
                 child: SliverGrid.builder(
                   gridDelegate: gridDelegate,
                   itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
-                    controller.onLoadMore();
-                  }
-                  return VideoCardH(
-                    videoItem: response[index],
-                    onRemove: () => controller.loadingState
-                      ..value.data!.removeAt(index)
-                      ..refresh(),
-                  );
-                },
-                itemCount: response.length,
+                    if (index == response.length - 1) {
+                      controller.onLoadMore();
+                    }
+                    return VideoCardH(
+                      videoItem: response[index],
+                      onRemove: () => controller.loadingState
+                        ..value.data!.removeAt(index)
+                        ..refresh(),
+                    );
+                  },
+                  itemCount: response.length,
+                ),
               )
             : HttpError(onReload: controller.onReload),
       Error(:var errMsg) => HttpError(

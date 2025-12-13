@@ -258,22 +258,25 @@ class _MainAppState extends State<MainApp>
                                   (e) => NavigationDestination(
                                     label: e.label,
                                     icon: DpadFocusable(
-                                      builder: (context, hasFocus, child) =>
-                                          FocusEffects.scale(
-                                        context: context,
-                                        hasFocus: hasFocus,
-                                        child: child!,
-                                        scale: 1.1,
-                                      ),
-                                      onEnter: () => _mainController.setIndex(
-                                        _mainController.navigationBars
-                                            .indexOf(e),
+                                      builder: (context, hasFocus, isSelected, child) {
+                                        return child!;
+                                      },
+                                      onClick: () => _mainController.setIndex(
+                                        _mainController.navigationBars.indexOf(e),
                                       ),
                                       child: _buildIcon(type: e),
                                     ),
-                                    selectedIcon: _buildIcon(
-                                      type: e,
-                                      selected: true,
+                                    selectedIcon: DpadFocusable(
+                                      builder: (context, hasFocus, isSelected, child) {
+                                        return child!;
+                                      },
+                                      onClick: () => _mainController.setIndex(
+                                        _mainController.navigationBars.indexOf(e),
+                                      ),
+                                      child: _buildIcon(
+                                        type: e,
+                                        selected: true,
+                                      ),
                                     ),
                                   ),
                                 )
@@ -407,26 +410,33 @@ class _MainAppState extends State<MainApp>
                                         .navigationBars
                                         .map(
                                           (e) => NavigationRailDestination(
-                                            label: DpadFocusable(
+                                            label: Text(e.label),
+                                            icon: DpadFocusable(
                                               builder: (context, hasFocus,
-                                                      child) =>
-                                                  FocusEffects.scale(
-                                                context: context,
-                                                hasFocus: hasFocus,
-                                                child: child!,
-                                                scale: 1.1,
-                                              ),
-                                              onEnter: () =>
-                                                  _mainController.setIndex(
-                                                _mainController.navigationBars
-                                                    .indexOf(e),
-                                              ),
-                                              child: Text(e.label),
+                                                  isSelected, child) {
+                                                final scale =
+                                                    hasFocus ? 1.1 : 1.0;
+                                                return Transform.scale(
+                                                  scale: scale,
+                                                  child: child!,
+                                                );
+                                              },
+                                              child: _buildIcon(type: e),
                                             ),
-                                            icon: _buildIcon(type: e),
-                                            selectedIcon: _buildIcon(
-                                              type: e,
-                                              selected: true,
+                                            selectedIcon: DpadFocusable(
+                                              builder: (context, hasFocus,
+                                                  isSelected, child) {
+                                                final scale =
+                                                    hasFocus ? 1.1 : 1.0;
+                                                return Transform.scale(
+                                                  scale: scale,
+                                                  child: child!,
+                                                );
+                                              },
+                                              child: _buildIcon(
+                                                type: e,
+                                                selected: true,
+                                              ),
                                             ),
                                           ),
                                         )
@@ -514,97 +524,102 @@ class _MainAppState extends State<MainApp>
   }
 
   Widget userAndSearchVertical(ThemeData theme) {
-    return Column(
-      children: [
-        DpadFocusable(
-          builder: (context, hasFocus, child) => FocusEffects.scale(
-            context: context,
-            hasFocus: hasFocus,
-            child: child!,
-            scale: 1.1,
-          ),
-          onEnter: _mainController.toMinePage,
-          child: Semantics(
+    return DpadRegion(
+      region: 'sidebar',
+      child: Column(
+        children: [
+          Semantics(
             label: "我的",
-            child: Obx(
-              () => _mainController.accountService.isLogin.value
-                  ? Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        NetworkImgLayer(
-                          type: ImageType.avatar,
-                          width: 34,
-                          height: 34,
-                          src: _mainController.accountService.face.value,
-                        ),
-                        Positioned.fill(
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: InkWell(
-                              onTap: _mainController.toMinePage,
-                              splashColor: theme.colorScheme.primaryContainer
-                                  .withValues(alpha: 0.3),
-                              customBorder: const CircleBorder(),
+            child: DpadFocusable(
+              builder: (context, hasFocus, isSelected, child) {
+                final scale = hasFocus ? 1.1 : 1.0;
+                return Transform.scale(
+                  scale: scale,
+                  child: child!,
+                );
+              },
+              onClick: _mainController.toMinePage,
+              child: Obx(
+                () => _mainController.accountService.isLogin.value
+                    ? Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          NetworkImgLayer(
+                            type: ImageType.avatar,
+                            width: 34,
+                            height: 34,
+                            src: _mainController.accountService.face.value,
+                          ),
+                          Positioned.fill(
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: InkWell(
+                                onTap: _mainController.toMinePage,
+                                splashColor: theme.colorScheme.primaryContainer
+                                    .withValues(alpha: 0.3),
+                                customBorder: const CircleBorder(),
+                              ),
                             ),
                           ),
-                        ),
-                        Positioned(
-                          right: -6,
-                          bottom: -6,
-                          child: Obx(
-                            () => MineController.anonymity.value
-                                ? IgnorePointer(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                        color: theme
-                                            .colorScheme.secondaryContainer,
-                                        shape: BoxShape.circle,
+                          Positioned(
+                            right: -6,
+                            bottom: -6,
+                            child: Obx(
+                              () => MineController.anonymity.value
+                                  ? IgnorePointer(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: theme
+                                              .colorScheme.secondaryContainer,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          size: 16,
+                                          MdiIcons.incognito,
+                                          color: theme.colorScheme
+                                              .onSecondaryContainer,
+                                        ),
                                       ),
-                                      child: Icon(
-                                        size: 16,
-                                        MdiIcons.incognito,
-                                        color: theme
-                                            .colorScheme.onSecondaryContainer,
-                                      ),
-                                    ),
-                                  )
-                                : const SizedBox.shrink(),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
                           ),
-                        ),
-                      ],
-                    )
-                  : defaultUser(
-                      theme: theme,
-                      onPressed: _mainController.toMinePage,
-                    ),
+                        ],
+                      )
+                    : defaultUser(
+                        theme: theme,
+                        onPressed: _mainController.toMinePage,
+                      ),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Obx(
-          () => _mainController.accountService.isLogin.value
-              ? msgBadge(_mainController)
-              : const SizedBox.shrink(),
-        ),
-        DpadFocusable(
-          builder: (context, hasFocus, child) => FocusEffects.scale(
-            context: context,
-            hasFocus: hasFocus,
-            child: child!,
-            scale: 1.1,
+          const SizedBox(height: 8),
+          Obx(
+            () => _mainController.accountService.isLogin.value
+                ? msgBadge(_mainController)
+                : const SizedBox.shrink(),
           ),
-          onEnter: () => Get.toNamed('/search'),
-          child: IconButton(
-            tooltip: '搜索',
-            icon: const Icon(
-              Icons.search_outlined,
-              semanticLabel: '搜索',
+          DpadFocusable(
+            builder: (context, hasFocus, isSelected, child) {
+              final scale = hasFocus ? 1.1 : 1.0;
+              return Transform.scale(
+                scale: scale,
+                child: child!,
+              );
+            },
+            onClick: () => Get.toNamed('/search'),
+            child: IconButton(
+              tooltip: '搜索',
+              icon: const Icon(
+                Icons.search_outlined,
+                semanticLabel: '搜索',
+              ),
+              onPressed: () => Get.toNamed('/search'),
             ),
-            onPressed: () => Get.toNamed('/search'),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

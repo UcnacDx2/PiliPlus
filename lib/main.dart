@@ -2,8 +2,6 @@ import 'dart:io';
 
 import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/common/constants.dart';
-import 'package:dpad/dpad.dart';
-import 'package:is_tv/is_tv.dart';
 import 'package:PiliPlus/common/widgets/custom_toast.dart';
 import 'package:PiliPlus/common/widgets/mouse_back.dart';
 import 'package:PiliPlus/http/init.dart';
@@ -206,90 +204,10 @@ void main() async {
     Catcher2(
       debugConfig: debugConfig,
       releaseConfig: releaseConfig,
-      rootWidget: const AppWrapper(),
+      rootWidget: const MyApp(),
     );
   } else {
-    runApp(const AppWrapper());
-  }
-}
-
-class AppWrapper extends StatefulWidget {
-  const AppWrapper({super.key});
-
-  @override
-  State<AppWrapper> createState() => _AppWrapperState();
-}
-
-class _AppWrapperState extends State<AppWrapper> {
-  bool isTV = false;
-
-  @override
-  void initState() {
-    super.initState();
-    IsTv.check().then((value) {
-      setState(() {
-        isTV = value;
-      });
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (isTV) {
-      return DpadRoot(
-        focusMemory: true,
-        regionNavigation: DpadRegionNavigation(
-          rules: {
-            'sidebar': DpadRegionNavigationRule(
-              targets: {
-                DpadDirection.right: 'search',
-              },
-            ),
-            'bottom_nav': DpadRegionNavigationRule(
-              targets: {
-                DpadDirection.up: 'search',
-              },
-            ),
-            'search': DpadRegionNavigationRule(
-              targets: {
-                DpadDirection.left: 'sidebar',
-                DpadDirection.down: 'tabs',
-                DpadDirection.up: 'bottom_nav',
-              },
-            ),
-            'tabs': DpadRegionNavigationRule(
-              targets: {
-                DpadDirection.up: 'search',
-                DpadDirection.down: 'content',
-              },
-            ),
-            'content': DpadRegionNavigationRule(
-              targets: {
-                DpadDirection.up: 'tabs',
-              },
-            ),
-            'player_controls': DpadRegionNavigationRule(
-              targets: {
-                DpadDirection.down: 'video_tabs',
-              },
-            ),
-            'video_tabs': DpadRegionNavigationRule(
-              targets: {
-                DpadDirection.up: 'player_controls',
-                DpadDirection.down: 'video_info',
-              },
-            ),
-            'video_info': DpadRegionNavigationRule(
-              targets: {
-                DpadDirection.up: 'video_tabs',
-              },
-            ),
-          },
-        ),
-        child: const MyApp(),
-      );
-    }
-    return const MyApp();
+    runApp(const MyApp());
   }
 }
 

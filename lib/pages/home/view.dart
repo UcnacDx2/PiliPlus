@@ -49,33 +49,46 @@ class _HomePageState extends State<HomePage>
                   width: double.infinity,
                   child: TabBar(
                     controller: _homeController.tabController,
-                    tabs: _homeController.tabs
-                        .map(
-                          (i) => DpadFocusable(
-                            builder: (context, hasFocus, child) =>
-                                FocusEffects.scale(
-                              context: context,
-                              hasFocus: hasFocus,
+                    tabs: _homeController.tabs.map((e) {
+                      return DpadFocusable(
+                        builder: (context, hasFocus, isSelected, child) {
+                          final scale = hasFocus ? 1.1 : 1.0;
+                          final color = hasFocus
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.transparent;
+                          return Transform.scale(
+                            scale: scale,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: color,
+                                  width: 2,
+                                ),
+                              ),
                               child: child!,
-                              scale: 1.1,
                             ),
-                            onEnter: () => _homeController.tabController
-                                .animateTo(_homeController.tabs.indexOf(i)),
-                            child: Tab(text: i.label),
-                          ),
-                        )
-                        .toList(),
+                          );
+                        },
+                        onClick: () {
+                          _homeController.tabController.animateTo(
+                            _homeController.tabs.indexOf(e),
+                          );
+                        },
+                        child: Tab(text: e.label),
+                      );
+                    }).toList(),
                     isScrollable: true,
                     dividerColor: Colors.transparent,
-                  dividerHeight: 0,
-                  splashBorderRadius: StyleString.mdRadius,
-                  tabAlignment: TabAlignment.center,
-                  onTap: (_) {
-                    feedBack();
-                    if (!_homeController.tabController.indexIsChanging) {
-                      _homeController.animateToTop();
-                    }
-                  },
+                    dividerHeight: 0,
+                    splashBorderRadius: StyleString.mdRadius,
+                    tabAlignment: TabAlignment.center,
+                    onTap: (_) {
+                      feedBack();
+                      if (!_homeController.tabController.indexIsChanging) {
+                        _homeController.animateToTop();
+                      }
+                    },
+                  ),
                 ),
               ),
             ),
@@ -93,94 +106,74 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget searchBarAndUser(ThemeData theme) {
-    return DpadRegion(
-      region: 'search',
-      child: Row(
-        children: [
-          searchBar(theme),
-          const SizedBox(width: 4),
-          DpadFocusable(
-            builder: (context, hasFocus, child) => FocusEffects.scale(
-              context: context,
-              hasFocus: hasFocus,
-              child: child!,
-              scale: 1.1,
-            ),
-            onEnter: () => Get.toNamed('/whisper'),
-            child: Obx(
-              () => _homeController.accountService.isLogin.value
-                  ? msgBadge(_mainController)
-                  : const SizedBox.shrink(),
-            ),
-          ),
-          const SizedBox(width: 8),
-          DpadFocusable(
-            onEnter: _mainController.toMinePage,
-            builder: (context, hasFocus, child) => FocusEffects.scale(
-              context: context,
-              hasFocus: hasFocus,
-              child: child!,
-              scale: 1.1,
-            ),
-            child: Semantics(
-              label: "我的",
-              child: Obx(
-                () => _homeController.accountService.isLogin.value
-                    ? Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          NetworkImgLayer(
-                            type: ImageType.avatar,
-                            width: 34,
-                            height: 34,
-                            src: _homeController.accountService.face.value,
-                          ),
-                          Positioned.fill(
-                            child: Material(
-                              type: MaterialType.transparency,
-                              child: InkWell(
-                                onTap: _mainController.toMinePage,
-                                splashColor: theme.colorScheme.primaryContainer
-                                    .withValues(alpha: 0.3),
-                                customBorder: const CircleBorder(),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            right: -6,
-                            bottom: -6,
-                            child: Obx(
-                              () => MineController.anonymity.value
-                                  ? IgnorePointer(
-                                      child: Container(
-                                        padding: const EdgeInsets.all(2),
-                                        decoration: BoxDecoration(
-                                          color: theme
-                                              .colorScheme.secondaryContainer,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          size: 16,
-                                          MdiIcons.incognito,
-                                          color: theme.colorScheme
-                                              .onSecondaryContainer,
-                                        ),
-                                      ),
-                                    )
-                                  : const SizedBox.shrink(),
-                            ),
-                          ),
-                        ],
-                      )
-                    : defaultUser(
-                        theme: theme,
-                        onPressed: _mainController.toMinePage,
+    return Row(
+      children: [
+        searchBar(theme),
+        const SizedBox(width: 4),
+        Obx(
+          () => _homeController.accountService.isLogin.value
+              ? msgBadge(_mainController)
+              : const SizedBox.shrink(),
+        ),
+        const SizedBox(width: 8),
+        Semantics(
+          label: "我的",
+          child: Obx(
+            () => _homeController.accountService.isLogin.value
+                ? Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      NetworkImgLayer(
+                        type: ImageType.avatar,
+                        width: 34,
+                        height: 34,
+                        src: _homeController.accountService.face.value,
                       ),
-              ),
-            ),
+                      Positioned.fill(
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: InkWell(
+                            onTap: _mainController.toMinePage,
+                            splashColor: theme.colorScheme.primaryContainer
+                                .withValues(alpha: 0.3),
+                            customBorder: const CircleBorder(),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: -6,
+                        bottom: -6,
+                        child: Obx(
+                          () => MineController.anonymity.value
+                              ? IgnorePointer(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          theme.colorScheme.secondaryContainer,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      size: 16,
+                                      MdiIcons.incognito,
+                                      color: theme
+                                          .colorScheme
+                                          .onSecondaryContainer,
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ),
+                    ],
+                  )
+                : defaultUser(
+                    theme: theme,
+                    onPressed: _mainController.toMinePage,
+                  ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -214,14 +207,22 @@ class _HomePageState extends State<HomePage>
   Widget searchBar(ThemeData theme) {
     return Expanded(
       child: DpadFocusable(
+        builder: (context, hasFocus, isSelected, child) {
+          final color =
+              hasFocus ? Theme.of(context).colorScheme.primary : Colors.transparent;
+          return Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: color,
+                width: 2,
+              ),
+              borderRadius: const BorderRadius.all(Radius.circular(25)),
+            ),
+            child: child!,
+          );
+        },
         autofocus: true,
-        builder: (context, hasFocus, child) => FocusEffects.scale(
-          context: context,
-          hasFocus: hasFocus,
-          child: child!,
-          scale: 1.05,
-        ),
-        onEnter: () => Get.toNamed(
+        onClick: () => Get.toNamed(
           '/search',
           parameters: {
             if (_homeController.enableSearchWord)
@@ -231,41 +232,43 @@ class _HomePageState extends State<HomePage>
         child: SizedBox(
           height: 44,
           child: Material(
-          borderRadius: const BorderRadius.all(Radius.circular(25)),
-          color: theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.05),
-          child: InkWell(
             borderRadius: const BorderRadius.all(Radius.circular(25)),
-            splashColor: theme.colorScheme.primaryContainer.withValues(
-              alpha: 0.3,
-            ),
-            onTap: () => Get.toNamed(
-              '/search',
-              parameters: {
-                if (_homeController.enableSearchWord)
-                  'hintText': _homeController.defaultSearch.value,
-              },
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 14),
-                Icon(
-                  Icons.search_outlined,
-                  color: theme.colorScheme.onSecondaryContainer,
-                  semanticLabel: '搜索',
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Obx(
-                    () => Text(
-                      _homeController.defaultSearch.value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: theme.colorScheme.outline),
+            color:
+                theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.05),
+            child: InkWell(
+              borderRadius: const BorderRadius.all(Radius.circular(25)),
+              splashColor: theme.colorScheme.primaryContainer.withValues(
+                alpha: 0.3,
+              ),
+              onTap: () => Get.toNamed(
+                '/search',
+                parameters: {
+                  if (_homeController.enableSearchWord)
+                    'hintText': _homeController.defaultSearch.value,
+                },
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 14),
+                  Icon(
+                    Icons.search_outlined,
+                    color: theme.colorScheme.onSecondaryContainer,
+                    semanticLabel: '搜索',
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Obx(
+                      () => Text(
+                        _homeController.defaultSearch.value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: theme.colorScheme.outline),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 5),
-              ],
+                  const SizedBox(width: 5),
+                ],
+              ),
             ),
           ),
         ),

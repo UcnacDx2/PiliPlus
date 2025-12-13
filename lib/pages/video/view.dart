@@ -60,8 +60,8 @@ import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:floating/floating.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:dpad/dpad.dart';
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
@@ -1342,18 +1342,17 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     required double width,
     required double height,
     bool isPipMode = false,
-  }) => DpadRegion(
-        region: 'player_controls',
-        child: Obx(
-          key: videoDetailController.videoPlayerKey,
-          () => videoDetailController.videoState.value is! Success ||
-                  !videoDetailController.autoPlay.value ||
-                  plPlayerController?.videoController == null
-              ? const SizedBox.shrink()
-              : PLVideoPlayer(
-                  maxWidth: width,
-                  maxHeight: height,
-                  plPlayerController: plPlayerController!,
+  }) => Obx(
+    key: videoDetailController.videoPlayerKey,
+    () =>
+        videoDetailController.videoState.value is! Success ||
+            !videoDetailController.autoPlay.value ||
+            plPlayerController?.videoController == null
+        ? const SizedBox.shrink()
+        : PLVideoPlayer(
+            maxWidth: width,
+            maxHeight: height,
+            plPlayerController: plPlayerController!,
             videoDetailController: videoDetailController,
             introController: introController,
             headerControl: HeaderControl(
@@ -1483,14 +1482,27 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                 animToTop();
               }
             },
-            tabs: tabs.asMap().entries.map((entry) {
-              final index = entry.key;
-              final text = entry.value;
+            tabs: tabs.map((text) {
+              final index = tabs.indexOf(text);
               return DpadFocusable(
-                builder: (context, hasFocus, child) => child!,
-                onEnter: () => videoDetailController.tabCtr.animateTo(index),
-                child: Builder(
-                  builder: (context) {
+                  builder: (context, hasFocus, isSelected, child) {
+                    final color = hasFocus
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.transparent;
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: color,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                  onClick: () => videoDetailController.tabCtr.animateTo(index),
+                  child: Builder(builder: (context) {
                     if (text == '评论') {
                       return Obx(() {
                         final count = _videoReplyController.count.value;
@@ -1502,9 +1514,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                     } else {
                       return Tab(text: text);
                     }
-                  },
-                ),
-              );
+                  }));
             }).toList(),
           ),
         );
