@@ -66,6 +66,7 @@ import 'package:PiliPlus/pages/space_setting/view.dart';
 import 'package:PiliPlus/pages/sponsor_block/view.dart';
 import 'package:PiliPlus/pages/subscription/view.dart';
 import 'package:PiliPlus/pages/subscription_detail/view.dart';
+import 'package:PiliPlus/pages/tv_debug/dpad_test.dart';
 import 'package:PiliPlus/pages/video/view.dart';
 import 'package:PiliPlus/pages/webdav/view.dart';
 import 'package:PiliPlus/pages/webview/view.dart';
@@ -229,6 +230,7 @@ class Routes {
     CustomGetPage(name: '/sameFollowing', page: () => const FollowSamePage()),
     CustomGetPage(name: '/download', page: () => const DownloadPage()),
     CustomGetPage(name: '/dlna', page: () => const DLNAPage()),
+    CustomGetPage(name: '/dpadTest', page: () => const DpadTestPage()),
   ];
 }
 
