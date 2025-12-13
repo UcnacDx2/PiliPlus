@@ -892,4 +892,6 @@ abstract class Pref {
                 SettingBoxKey.useFirstFrameAsCover,
                 defaultValue: true,
             );
+    static bool get enableTVMode =>
+      GStorage.setting.get(SettingBoxKey.enableTVMode) ?? false;
 }

@@ -229,7 +229,8 @@ abstract class SettingBoxKey {
       navBarSort = 'navBarSort',
       tempPlayerConf = 'tempPlayerConf',
       reduceLuxColor = 'reduceLuxColor',
-      liveCdnUrl = 'liveCdnUrl';
+      liveCdnUrl = 'liveCdnUrl',
+      enableTVMode = 'enableTVMode';
 }
 
 abstract class LocalCacheKey {

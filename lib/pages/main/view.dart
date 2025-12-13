@@ -17,9 +17,13 @@ import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/utils/tv/focus_effects.dart';
+import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dpad/dpad.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -36,10 +40,13 @@ class _MainAppState extends State<MainApp>
     with RouteAware, WidgetsBindingObserver, WindowListener, TrayListener {
   final MainController _mainController = Get.put(MainController());
   late final _setting = GStorage.setting;
+  List<FocusNode> _focusNodes = [];
 
   @override
   void initState() {
     super.initState();
+    _focusNodes = List.generate(
+        _mainController.navigationBars.length, (index) => FocusNode());
     WidgetsBinding.instance.addObserver(this);
     if (Utils.isDesktop) {
       windowManager
@@ -95,6 +102,9 @@ class _MainAppState extends State<MainApp>
 
   @override
   void dispose() {
+    for (var node in _focusNodes) {
+      node.dispose();
+    }
     if (Utils.isDesktop) {
       trayManager.removeListener(this);
       windowManager.removeListener(this);
@@ -244,48 +254,50 @@ class _MainAppState extends State<MainApp>
         !_mainController.useSideBar && MediaQuery.sizeOf(context).isPortrait;
     Widget? bottomNav = useBottomNav
         ? _mainController.navigationBars.length > 1
-              ? _mainController.enableMYBar
-                    ? Obx(
-                        () => NavigationBar(
-                          maintainBottomViewPadding: true,
-                          onDestinationSelected: _mainController.setIndex,
-                          selectedIndex: _mainController.selectedIndex.value,
-                          destinations: _mainController.navigationBars
-                              .map(
-                                (e) => NavigationDestination(
-                                  label: e.label,
-                                  icon: _buildIcon(type: e),
-                                  selectedIcon: _buildIcon(
-                                    type: e,
-                                    selected: true,
+              ? (TVDetector.isTV || Pref.enableTVMode)
+                  ? _buildTVBottomNav(theme)
+                  : _mainController.enableMYBar
+                      ? Obx(
+                          () => NavigationBar(
+                            maintainBottomViewPadding: true,
+                            onDestinationSelected: _mainController.setIndex,
+                            selectedIndex: _mainController.selectedIndex.value,
+                            destinations: _mainController.navigationBars
+                                .map(
+                                  (e) => NavigationDestination(
+                                    label: e.label,
+                                    icon: _buildIcon(type: e),
+                                    selectedIcon: _buildIcon(
+                                      type: e,
+                                      selected: true,
+                                    ),
                                   ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      )
-                    : Obx(
-                        () => BottomNavigationBar(
-                          currentIndex: _mainController.selectedIndex.value,
-                          onTap: _mainController.setIndex,
-                          iconSize: 16,
-                          selectedFontSize: 12,
-                          unselectedFontSize: 12,
-                          type: BottomNavigationBarType.fixed,
-                          items: _mainController.navigationBars
-                              .map(
-                                (e) => BottomNavigationBarItem(
-                                  label: e.label,
-                                  icon: _buildIcon(type: e),
-                                  activeIcon: _buildIcon(
-                                    type: e,
-                                    selected: true,
+                                )
+                                .toList(),
+                          ),
+                        )
+                      : Obx(
+                          () => BottomNavigationBar(
+                            currentIndex: _mainController.selectedIndex.value,
+                            onTap: _mainController.setIndex,
+                            iconSize: 16,
+                            selectedFontSize: 12,
+                            unselectedFontSize: 12,
+                            type: BottomNavigationBarType.fixed,
+                            items: _mainController.navigationBars
+                                .map(
+                                  (e) => BottomNavigationBarItem(
+                                    label: e.label,
+                                    icon: _buildIcon(type: e),
+                                    activeIcon: _buildIcon(
+                                      type: e,
+                                      selected: true,
+                                    ),
                                   ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      )
+                                )
+                                .toList(),
+                          ),
+                        )
               : const SizedBox.shrink()
         : null;
     return PopScope(
@@ -474,6 +486,56 @@ class _MainAppState extends State<MainApp>
             },
           )
         : icon;
+  }
+
+  int _currentFocusIndex = 0;
+
+  Widget _buildTVBottomNav(ThemeData theme) {
+    return DpadRegion(
+      region: 'bottom_nav',
+      child: Container(
+        height: 60,
+        color: theme.colorScheme.surface,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: _mainController.navigationBars.mapWithIndex((i, e) {
+            final isSelected = _mainController.selectedIndex.value == i;
+            return DpadFocusable(
+              focusNode: _focusNodes[i],
+              autofocus: i == 0,
+              isEntryPoint: i == 0,
+              onFocus: (hasFocus) {
+                if (hasFocus) {
+                  setState(() {
+                    _currentFocusIndex = i;
+                  });
+                }
+              },
+              onPressed: () => _mainController.setIndex(i),
+              builder: (context, hasFocus) {
+                final color = isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface;
+                Widget child = Column(
+                  mainAxisAlignment.center,
+                  children: [
+                    _buildIcon(type: e, selected: isSelected),
+                    Text(
+                      e.label,
+                      style: TextStyle(color: color),
+                    ),
+                  ],
+                );
+                if (hasFocus) {
+                  child = TVFocusEffects.primary(context).build(context, child);
+                }
+                return child;
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
   }
 
   Widget userAndSearchVertical(ThemeData theme) {

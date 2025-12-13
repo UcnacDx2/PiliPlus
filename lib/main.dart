@@ -23,8 +23,11 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
+import 'package:PiliPlus/utils/tv/region_manager.dart';
+import 'package:PiliPlus/utils/tv/tv_detector.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
+import 'package:dpad/dpad.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/foundation.dart';
@@ -251,13 +254,18 @@ class MyApp extends StatelessWidget {
     Get.back();
   }
 
+  static KeyEventResult _handleTVBack() {
+    _onBack();
+    return KeyEventResult.handled;
+  }
+
   static Widget _build({
     ColorScheme? lightColorScheme,
     ColorScheme? darkColorScheme,
   }) {
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = FlexSchemeVariant.values[Pref.schemeVariant];
-    return GetMaterialApp(
+    Widget app = GetMaterialApp(
       title: Constants.appName,
       theme: ThemeUtils.getThemeData(
         colorScheme:
@@ -304,23 +312,6 @@ class MyApp extends StatelessWidget {
             ),
             child: child!,
           );
-          if (Utils.isDesktop) {
-            return Focus(
-              canRequestFocus: false,
-              onKeyEvent: (_, event) {
-                if (event.logicalKey == LogicalKeyboardKey.escape &&
-                    event is KeyDownEvent) {
-                  _onBack();
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.ignored;
-              },
-              child: MouseBackDetector(
-                onTapDown: _onBack,
-                child: child,
-              ),
-            );
-          }
           return child;
         },
       ),
@@ -340,6 +331,36 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
+    if (TVDetector.isTV || Pref.enableTVMode) {
+      app = DpadNavigator(
+        enabled: true,
+        focusMemory: const FocusMemoryOptions(enabled: true, maxHistory: 20),
+        regionNavigation: RegionNavigationOptions(
+          enabled: true,
+          rules: TVRegionManager.defaultRules,
+        ),
+        onBackPressed: () => _handleTVBack(),
+        child: app,
+      );
+    }
+    if (Utils.isDesktop && !(TVDetector.isTV || Pref.enableTVMode)) {
+      return Focus(
+        canRequestFocus: false,
+        onKeyEvent: (_, event) {
+          if (event.logicalKey == LogicalKeyboardKey.escape &&
+              event is KeyDownEvent) {
+            _onBack();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: MouseBackDetector(
+          onTapDown: _onBack,
+          child: app,
+        ),
+      );
+    }
+    return app;
   }
 
   @override
