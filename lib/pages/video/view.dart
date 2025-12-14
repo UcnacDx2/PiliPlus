@@ -43,6 +43,8 @@ import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
+import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
+import 'package:PiliPlus/plugin/pl_player/tv_view.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/plugin/pl_player/view.dart';
 import 'package:PiliPlus/services/service_locator.dart';
@@ -80,6 +82,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
   late final VideoDetailController videoDetailController;
   late final VideoReplyController _videoReplyController;
   PlPlayerController? plPlayerController;
+  
+  // TV模式标志
+  bool _isTvMode = false;
 
   // intro ctr
   late final CommonIntroController introController =
@@ -159,9 +164,20 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
 
   // 获取视频资源，初始化播放器
   Future<void> videoSourceInit() async {
+    // 检查是否为TV模式
+    _isTvMode = await Utils.isTvMode;
+    
     videoDetailController.queryVideoUrl();
     if (videoDetailController.autoPlay.value) {
-      plPlayerController = videoDetailController.plPlayerController;
+      // 根据TV模式选择不同的控制器
+      if (_isTvMode) {
+        // TV模式：使用TV专用控制器
+        plPlayerController = TvPlayerController.getInstance();
+      } else {
+        // Mobile/Desktop模式：使用原有控制器
+        plPlayerController = videoDetailController.plPlayerController;
+      }
+      
       plPlayerController!
         ..addStatusLister(playerListener)
         ..addPositionListener(positionListener);
@@ -1348,34 +1364,54 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
             !videoDetailController.autoPlay.value ||
             plPlayerController?.videoController == null
         ? const SizedBox.shrink()
-        : PLVideoPlayer(
-            maxWidth: width,
-            maxHeight: height,
-            plPlayerController: plPlayerController!,
-            videoDetailController: videoDetailController,
-            introController: introController,
-            headerControl: HeaderControl(
-              key: videoDetailController.headerCtrKey,
-              isPortrait: isPortrait,
-              controller: videoDetailController.plPlayerController,
-              videoDetailCtr: videoDetailController,
-              heroTag: heroTag,
-            ),
-            danmuWidget: isPipMode && pipNoDanmaku
-                ? null
-                : Obx(
-                    () => PlDanmaku(
-                      key: ValueKey(videoDetailController.cid.value),
-                      isPipMode: isPipMode,
-                      cid: videoDetailController.cid.value,
-                      playerController: plPlayerController!,
-                      isFullScreen: plPlayerController!.isFullScreen.value,
-                      isFileSource: videoDetailController.isFileSource,
-                    ),
-                  ),
-            showEpisodes: showEpisodes,
-            showViewPoints: showViewPoints,
-          ),
+        : _isTvMode
+            ? TvVideoPlayer(
+                maxWidth: width,
+                maxHeight: height,
+                tvPlayerController: plPlayerController as TvPlayerController,
+                videoDetailController: videoDetailController,
+                introController: introController,
+                danmuWidget: isPipMode && pipNoDanmaku
+                    ? null
+                    : Obx(
+                        () => PlDanmaku(
+                          key: ValueKey(videoDetailController.cid.value),
+                          isPipMode: isPipMode,
+                          cid: videoDetailController.cid.value,
+                          playerController: plPlayerController!,
+                          isFullScreen: plPlayerController!.isFullScreen.value,
+                          isFileSource: videoDetailController.isFileSource,
+                        ),
+                      ),
+              )
+            : PLVideoPlayer(
+                maxWidth: width,
+                maxHeight: height,
+                plPlayerController: plPlayerController!,
+                videoDetailController: videoDetailController,
+                introController: introController,
+                headerControl: HeaderControl(
+                  key: videoDetailController.headerCtrKey,
+                  isPortrait: isPortrait,
+                  controller: videoDetailController.plPlayerController,
+                  videoDetailCtr: videoDetailController,
+                  heroTag: heroTag,
+                ),
+                danmuWidget: isPipMode && pipNoDanmaku
+                    ? null
+                    : Obx(
+                        () => PlDanmaku(
+                          key: ValueKey(videoDetailController.cid.value),
+                          isPipMode: isPipMode,
+                          cid: videoDetailController.cid.value,
+                          playerController: plPlayerController!,
+                          isFullScreen: plPlayerController!.isFullScreen.value,
+                          isFileSource: videoDetailController.isFileSource,
+                        ),
+                      ),
+                showEpisodes: showEpisodes,
+                showViewPoints: showViewPoints,
+              ),
   );
 
   late ThemeData themeData;
