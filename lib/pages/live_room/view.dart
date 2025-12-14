@@ -199,6 +199,9 @@ class _LiveRoomPageState extends State<LiveRoomPage>
       child = PlayerFocus(
         plPlayerController: plPlayerController,
         onSendDanmaku: _liveRoomController.onSendDanmaku,
+        onShowMenu: () =>
+            (_liveRoomController.headerKey.currentState as LiveHeaderControlState?)
+                ?.showSettingSheet(),
         child: child,
       );
     }
@@ -559,95 +562,14 @@ class _LiveRoomPageState extends State<LiveRoomPage>
         //   onPressed: _liveRoomController.queryLiveUrl,
         //   icon: const Icon(Icons.refresh, size: 20),
         // ),
-        PopupMenuButton(
-          icon: const Icon(Icons.more_vert, size: 20),
-          itemBuilder: (BuildContext context) {
-            final liveUrl =
-                'https://live.bilibili.com/${_liveRoomController.roomId}';
-            return <PopupMenuEntry>[
-              PopupMenuItem(
-                onTap: () => Utils.copyText(liveUrl),
-                child: Row(
-                  spacing: 10,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.copy,
-                      size: 19,
-                      color: color,
-                    ),
-                    const Text('复制链接'),
-                  ],
-                ),
-              ),
-              if (Utils.isMobile)
-                PopupMenuItem(
-                  onTap: () => Utils.shareText(liveUrl),
-                  child: Row(
-                    spacing: 10,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.share,
-                        size: 19,
-                        color: color,
-                      ),
-                      const Text('分享直播间'),
-                    ],
-                  ),
-                ),
-              PopupMenuItem(
-                onTap: () => PageUtils.inAppWebview(liveUrl, off: true),
-                child: Row(
-                  spacing: 10,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.open_in_browser,
-                      size: 19,
-                      color: color,
-                    ),
-                    const Text('浏览器打开'),
-                  ],
-                ),
-              ),
-              if (_liveRoomController.roomInfoH5.value != null)
-                PopupMenuItem(
-                  onTap: () {
-                    try {
-                      RoomInfoH5Data roomInfo =
-                          _liveRoomController.roomInfoH5.value!;
-                      PageUtils.pmShare(
-                        this.context,
-                        content: {
-                          "cover": roomInfo.roomInfo!.cover!,
-                          "sourceID": _liveRoomController.roomId.toString(),
-                          "title": roomInfo.roomInfo!.title!,
-                          "url": liveUrl,
-                          "authorID": roomInfo.roomInfo!.uid.toString(),
-                          "source": "直播",
-                          "desc": roomInfo.roomInfo!.title!,
-                          "author": roomInfo.anchorInfo!.baseInfo!.uname,
-                        },
-                      );
-                    } catch (e) {
-                      SmartDialog.showToast(e.toString());
-                    }
-                  },
-                  child: Row(
-                    spacing: 10,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.forward_to_inbox,
-                        size: 19,
-                        color: color,
-                      ),
-                      const Text('分享至消息'),
-                    ],
-                  ),
-                ),
-            ];
+        Builder(
+          builder: (context) {
+            return IconButton(
+              icon: const Icon(Icons.more_vert, size: 20),
+              onPressed: () => (_liveRoomController.headerKey.currentState
+                      as LiveHeaderControlState?)
+                  ?.showSettingSheet(),
+            );
           },
         ),
       ],
