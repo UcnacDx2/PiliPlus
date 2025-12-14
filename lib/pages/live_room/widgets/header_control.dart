@@ -1,14 +1,21 @@
 import 'dart:io';
 
+import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/marquee.dart';
 import 'package:PiliPlus/pages/live_room/controller.dart';
-import 'package:PiliPlus/pages/video/widgets/header_control.dart';
+import 'package:PiliPlus/pages/video/introduction/ugc/widgets/action_item.dart';
+import 'package:PiliPlus/pages/video/widgets/header_control.dart'
+    show HeaderMixin, HeaderControlState, TimeBatteryMixin;
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/storage.dart';
+import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:floating/floating.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
