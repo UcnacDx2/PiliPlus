@@ -35,7 +35,7 @@ class _TvVideoPlayerState extends State<TvVideoPlayer> {
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent) {
             if (widget.plPlayerController.showControls.value) {
-              if (event.logicalKey == LogicalKeyboardKey.back ||
+              if (event.logicalKey == LogicalKeyboardKey.goBack ||
                   event.logicalKey == LogicalKeyboardKey.escape) {
                 widget.plPlayerController.showControls.value = false;
                 return KeyEventResult.handled;
