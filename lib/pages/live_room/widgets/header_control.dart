@@ -1,12 +1,16 @@
 import 'dart:io';
 
+import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/marquee.dart';
 import 'package:PiliPlus/models_new/live/live_room_info_h5/data.dart';
 import 'package:PiliPlus/pages/live_room/controller.dart';
 import 'package:PiliPlus/pages/video/widgets/header_control.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/storage.dart';
+import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:floating/floating.dart';
 import 'package:flutter/material.dart';
@@ -195,6 +199,142 @@ class LiveHeaderControlState extends State<LiveHeaderControl>
                     color: Colors.white,
                   ),
                 ),
+              ComBtn(
+                height: 30,
+                tooltip: '屏蔽',
+                icon: const Icon(
+                  size: 18,
+                  Icons.block,
+                  color: Colors.white,
+                ),
+                onTap: () {
+                  if (widget.liveController.isLogin) {
+                    Get.toNamed(
+                      '/liveDmBlockPage',
+                      parameters: {
+                        'roomId': widget.liveController.roomId.toString(),
+                      },
+                    );
+                  } else {
+                    SmartDialog.showToast('账号未登录');
+                  }
+                },
+              ),
+              Obx(
+                () {
+                  final enableShowLiveDanmaku =
+                      plPlayerController.enableShowDanmaku.value;
+                  return ComBtn(
+                    height: 30,
+                    tooltip: "${enableShowLiveDanmaku ? '关闭' : '开启'}弹幕",
+                    icon: enableShowLiveDanmaku
+                        ? const Icon(
+                            size: 18,
+                            CustomIcons.dm_on,
+                            color: Colors.white,
+                          )
+                        : const Icon(
+                            size: 18,
+                            CustomIcons.dm_off,
+                            color: Colors.white,
+                          ),
+                    onTap: () {
+                      final newVal = !enableShowLiveDanmaku;
+                      plPlayerController.enableShowDanmaku.value = newVal;
+                      if (!plPlayerController.tempPlayerConf) {
+                        GStorage.setting.put(
+                          SettingBoxKey.enableShowLiveDanmaku,
+                          newVal,
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
+              ComBtn(
+                height: 30,
+                tooltip: '弹幕设置',
+                icon: const Icon(
+                  size: 18,
+                  CustomIcons.dm_settings,
+                  color: Colors.white,
+                ),
+                onTap: () => (context as Element)
+                    .findAncestorStateOfType<State<StatefulWidget>>()
+                    ?.setState(() {
+                  (widget.liveController.headerKey.currentContext as Element)
+                      .findAncestorStateOfType<HeaderMixin>()
+                      ?.showSetDanmaku(isLive: true);
+                }),
+              ),
+              Obx(
+                () => PopupMenuButton<VideoFitType>(
+                  tooltip: '画面比例',
+                  initialValue: plPlayerController.videoFit.value,
+                  color: Colors.black.withValues(alpha: 0.8),
+                  itemBuilder: (context) {
+                    return VideoFitType.values
+                        .map(
+                          (boxFit) => PopupMenuItem<VideoFitType>(
+                            height: 35,
+                            padding: const EdgeInsets.only(left: 30),
+                            value: boxFit,
+                            onTap: () =>
+                                plPlayerController.toggleVideoFit(boxFit),
+                            child: Text(
+                              boxFit.desc,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      plPlayerController.videoFit.value.desc,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                ),
+              ),
+              Obx(
+                () => PopupMenuButton<int>(
+                  tooltip: '画质',
+                  padding: EdgeInsets.zero,
+                  initialValue: widget.liveController.currentQn,
+                  color: Colors.black.withValues(alpha: 0.8),
+                  itemBuilder: (context) {
+                    return widget.liveController.acceptQnList
+                        .map(
+                          (e) => PopupMenuItem<int>(
+                            height: 35,
+                            padding: const EdgeInsets.only(left: 30),
+                            value: e.code,
+                            onTap: () => widget.liveController.changeQn(e.code),
+                            child: Text(
+                              e.desc,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      widget.liveController.currentQnDesc.value,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
