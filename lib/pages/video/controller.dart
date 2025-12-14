@@ -1501,6 +1501,18 @@ class VideoDetailController extends GetxController
     }
   }
 
+  void toggleSubtitle() {
+    if (subtitles.isEmpty) {
+      SmartDialog.showToast('没有可用的字幕');
+      return;
+    }
+    if (vttSubtitlesIndex.value == 0) {
+      setSubtitle(1);
+    } else {
+      setSubtitle(0);
+    }
+  }
+
   // interactive video
   int? graphVersion;
   EdgeInfoData? steinEdgeInfo;
