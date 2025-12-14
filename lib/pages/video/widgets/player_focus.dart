@@ -1,282 +1,137 @@
-import 'dart:async';
-import 'dart:math' as math;
+import 'dart:io';
 
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
-import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
-import 'package:PiliPlus/utils/storage.dart';
-import 'package:PiliPlus/utils/storage_key.dart';
-import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'
-    show KeyDownEvent, KeyUpEvent, LogicalKeyboardKey, HardwareKeyboard;
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 
 class PlayerFocus extends StatelessWidget {
   const PlayerFocus({
-    super.key,
     required this.child,
     required this.plPlayerController,
-    this.introController,
+    required this.introController,
     required this.onSendDanmaku,
-    this.canPlay,
-    this.onSkipSegment,
+    required this.canPlay,
+    required this.onSkipSegment,
     this.onShowMenu,
+    super.key,
   });
 
   final Widget child;
   final PlPlayerController plPlayerController;
-  final CommonIntroController? introController;
+  final CommonIntroController introController;
   final VoidCallback onSendDanmaku;
+  final bool Function() canPlay;
+  final VoidCallback onSkipSegment;
   final VoidCallback? onShowMenu;
-  final bool Function()? canPlay;
-  final bool Function()? onSkipSegment;
-
-  static bool _shouldHandle(LogicalKeyboardKey logicalKey) {
-    return logicalKey == LogicalKeyboardKey.tab ||
-        logicalKey == LogicalKeyboardKey.arrowLeft ||
-        logicalKey == LogicalKeyboardKey.arrowRight ||
-        logicalKey == LogicalKeyboardKey.arrowUp ||
-        logicalKey == LogicalKeyboardKey.arrowDown;
-  }
 
   @override
   Widget build(BuildContext context) {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
-        final handled = _handleKey(event);
-        if (handled || _shouldHandle(event.logicalKey)) {
+        if (event is! KeyDownEvent) {
+          return KeyEventResult.ignored;
+        }
+
+        final bool shift = HardwareKeyboard.instance.logicalKeysPressed
+            .contains(LogicalKeyboardKey.shiftLeft);
+
+        final Duration seekDuration = Duration(
+          seconds: shift ? 3 : 5,
+        );
+
+        if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+          if (!canPlay()) return KeyEventResult.handled;
+          plPlayerController.onForward(seekDuration);
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+          if (!canPlay()) return KeyEventResult.handled;
+          plPlayerController.onBackward(seekDuration);
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          plPlayerController.setVolume(
+            (plPlayerController.volume.value + 0.05).clamp(0, 1),
+          );
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          plPlayerController.setVolume(
+            (plPlayerController.volume.value - 0.05).clamp(0, 1),
+          );
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.space) {
+          if (!canPlay()) return KeyEventResult.handled;
+          plPlayerController.onDoubleTapCenter();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyJ) {
+          if (!canPlay()) return KeyEventResult.handled;
+          plPlayerController.onBackward(const Duration(seconds: 10));
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyL) {
+          if (!canPlay()) return KeyEventResult.handled;
+          plPlayerController.onForward(const Duration(seconds: 10));
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyK) {
+          if (!canPlay()) return KeyEventResult.handled;
+          plPlayerController.onDoubleTapCenter();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.enter) {
+          onSendDanmaku();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyS) {
+          onSkipSegment();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyN) {
+          introController.nextPlay();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyP) {
+          if (shift) {
+            introController.prevPlay();
+          }
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyM) {
+          onShowMenu?.call();
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.period) {
+          if (shift) {
+            final double speed = plPlayerController.playbackSpeed;
+            if (speed < 8) {
+              plPlayerController.setPlaybackSpeed(
+                (speed + 0.25).clamp(0.25, 8),
+              );
+            }
+          }
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.comma) {
+          if (shift) {
+            final double speed = plPlayerController.playbackSpeed;
+            if (speed > 0.25) {
+              plPlayerController.setPlaybackSpeed(
+                (speed - 0.25).clamp(0.25, 8),
+              );
+            }
+          }
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.slash) {
+          if (shift) {
+            plPlayerController.setDefaultSpeed();
+          }
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.keyF ||
+            event.logicalKey == LogicalKeyboardKey.f11) {
+          plPlayerController.triggerFullScreen(
+            status: !plPlayerController.isFullScreen.value,
+          );
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+          if (plPlayerController.isFullScreen.value) {
+            plPlayerController.triggerFullScreen(status: false);
+          }
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
       },
       child: child,
     );
-  }
-
-  bool get isFullScreen => plPlayerController.isFullScreen.value;
-  bool get hasPlayer => plPlayerController.videoPlayerController != null;
-
-  bool _handleKey(KeyEvent event) {
-    final key = event.logicalKey;
-
-    final isKeyQ = key == LogicalKeyboardKey.keyQ;
-    if (isKeyQ || key == LogicalKeyboardKey.keyR) {
-      if (HardwareKeyboard.instance.isMetaPressed) {
-        return true;
-      }
-      if (!plPlayerController.isLive) {
-        if (event is KeyDownEvent) {
-          introController!.onStartTriple();
-        } else if (event is KeyUpEvent) {
-          introController!.onCancelTriple(isKeyQ);
-        }
-      }
-      return true;
-    }
-
-    final isArrowUp = key == LogicalKeyboardKey.arrowUp;
-    if (isArrowUp || key == LogicalKeyboardKey.arrowDown) {
-      if (event is! KeyDownEvent) return true;
-      if (isArrowUp) {
-        if (introController case final introController?) {
-          if (!introController.prevPlay()) {
-            SmartDialog.showToast('已经是第一集了');
-          }
-        }
-      } else {
-        if (introController case final introController?) {
-          if (!introController.nextPlay()) {
-            SmartDialog.showToast('已经是最后一集了');
-          }
-        }
-      }
-      return true;
-    }
-
-    if (key == LogicalKeyboardKey.arrowRight) {
-      if (!plPlayerController.isLive) {
-        if (event is KeyDownEvent) {
-          if (hasPlayer && !plPlayerController.longPressStatus.value) {
-            plPlayerController
-              ..cancelLongPressTimer()
-              ..longPressTimer ??= Timer(
-                const Duration(milliseconds: 200),
-                () => plPlayerController
-                  ..cancelLongPressTimer()
-                  ..setLongPressStatus(true),
-              );
-          }
-        } else if (event is KeyUpEvent) {
-          plPlayerController.cancelLongPressTimer();
-          if (hasPlayer) {
-            if (plPlayerController.longPressStatus.value) {
-              plPlayerController.setLongPressStatus(false);
-            } else {
-              plPlayerController.onForward(
-                plPlayerController.fastForBackwardDuration,
-              );
-            }
-          }
-        }
-      }
-      return true;
-    }
-
-    if (event is KeyDownEvent) {
-      final isDigit1 = key == LogicalKeyboardKey.digit1;
-      if (isDigit1 || key == LogicalKeyboardKey.digit2) {
-        if (HardwareKeyboard.instance.isShiftPressed && hasPlayer) {
-          final speed = isDigit1 ? 1.0 : 2.0;
-          if (speed != plPlayerController.playbackSpeed) {
-            plPlayerController.setPlaybackSpeed(speed);
-          }
-          SmartDialog.showToast('${speed}x播放');
-        }
-        return true;
-      }
-
-      switch (key) {
-        case LogicalKeyboardKey.space:
-          if (plPlayerController.isLive || canPlay!()) {
-            if (hasPlayer) {
-              plPlayerController.onDoubleTapCenter();
-            }
-          }
-          return true;
-
-        case LogicalKeyboardKey.keyF:
-          final isFullScreen = this.isFullScreen;
-          if (isFullScreen && plPlayerController.controlsLock.value) {
-            plPlayerController
-              ..controlsLock.value = false
-              ..showControls.value = false;
-          }
-          plPlayerController.triggerFullScreen(
-            status: !isFullScreen,
-            inAppFullScreen: HardwareKeyboard.instance.isShiftPressed,
-          );
-          return true;
-
-        case LogicalKeyboardKey.keyD:
-          final newVal = !plPlayerController.enableShowDanmaku.value;
-          plPlayerController.enableShowDanmaku.value = newVal;
-          if (!plPlayerController.tempPlayerConf) {
-            GStorage.setting.put(
-              plPlayerController.isLive
-                  ? SettingBoxKey.enableShowLiveDanmaku
-                  : SettingBoxKey.enableShowDanmaku,
-              newVal,
-            );
-          }
-          return true;
-
-        case LogicalKeyboardKey.keyP:
-          if (Utils.isDesktop && hasPlayer && !isFullScreen) {
-            plPlayerController
-              ..toggleDesktopPip()
-              ..controlsLock.value = false
-              ..showControls.value = false;
-          }
-          return true;
-
-        case LogicalKeyboardKey.keyM:
-          if (hasPlayer) {
-            final isMuted = !plPlayerController.isMuted;
-            plPlayerController.videoPlayerController!.setVolume(
-              isMuted ? 0 : plPlayerController.volume.value * 100,
-            );
-            plPlayerController.isMuted = isMuted;
-            SmartDialog.showToast('${isMuted ? '' : '取消'}静音');
-          }
-          return true;
-
-        case LogicalKeyboardKey.keyS:
-          if (hasPlayer && isFullScreen) {
-            plPlayerController.takeScreenshot();
-          }
-          return true;
-
-        case LogicalKeyboardKey.keyL:
-          if (isFullScreen || plPlayerController.isDesktopPip) {
-            plPlayerController.onLockControl(
-              !plPlayerController.controlsLock.value,
-            );
-          }
-          return true;
-
-        case LogicalKeyboardKey.enter:
-        case LogicalKeyboardKey.select:
-          if (onSkipSegment?.call() ?? false) {
-            return true;
-          }
-          if (plPlayerController.isLive || canPlay!()) {
-            if (hasPlayer) {
-              plPlayerController.onDoubleTapCenter();
-            }
-          }
-          return true;
-        case LogicalKeyboardKey.contextMenu:
-          if (plPlayerController.isLive || (canPlay?.call() ?? false)) {
-            if (hasPlayer) {
-              onShowMenu?.call();
-            }
-          }
-          return true;
-      }
-
-      if (!plPlayerController.isLive) {
-        switch (key) {
-          case LogicalKeyboardKey.arrowLeft:
-            if (hasPlayer) {
-              plPlayerController.onBackward(
-                plPlayerController.fastForBackwardDuration,
-              );
-            }
-            return true;
-
-          case LogicalKeyboardKey.keyW:
-            if (HardwareKeyboard.instance.isMetaPressed) {
-              return true;
-            }
-            introController?.actionCoinVideo();
-            return true;
-
-          case LogicalKeyboardKey.keyE:
-            introController?.actionFavVideo(isQuick: true);
-            return true;
-
-          case LogicalKeyboardKey.keyT || LogicalKeyboardKey.keyV:
-            introController?.viewLater();
-            return true;
-
-          case LogicalKeyboardKey.keyG:
-            if (introController case UgcIntroController ugcCtr) {
-              ugcCtr.actionRelationMod(Get.context!);
-            }
-            return true;
-
-          case LogicalKeyboardKey.bracketLeft:
-            if (introController case final introController?) {
-              if (!introController.prevPlay()) {
-                SmartDialog.showToast('已经是第一集了');
-              }
-            }
-            return true;
-
-          case LogicalKeyboardKey.bracketRight:
-            if (introController case final introController?) {
-              if (!introController.nextPlay()) {
-                SmartDialog.showToast('已经是最后一集了');
-              }
-            }
-            return true;
-        }
-      }
-    }
-
-    return false;
   }
 }
