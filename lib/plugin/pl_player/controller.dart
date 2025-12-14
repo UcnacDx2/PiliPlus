@@ -1345,6 +1345,12 @@ class PlPlayerController {
   Timer? volumeTimer;
   final RxBool volumeInterceptEventStream = false.obs;
 
+  double previousVolume = 1.0;
+
+  void togglePlay() {
+    onDoubleTapCenter();
+  }
+
   Future<void> setVolume(double volume) async {
     if (this.volume.value != volume) {
       this.volume.value = volume;
