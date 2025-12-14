@@ -97,7 +97,8 @@ class PlPlayerController {
   final Rx<Duration> buffered = Rx(Duration.zero);
   final RxInt bufferedSeconds = 0.obs;
 
-  int _playerCount = 0;
+  @protected
+  int playerCount = 0;
 
   late double lastPlaybackSpeed = 1.0;
   final RxDouble _playbackSpeed = Pref.playSpeedDefault.obs;
@@ -177,7 +178,8 @@ class PlPlayerController {
 
   late DataSource dataSource;
 
-  Timer? _timer;
+  @protected
+  Timer? timer;
   Timer? _timerForSeek;
   Timer? _timerForShowingVolume;
 
@@ -552,8 +554,7 @@ class PlPlayerController {
 
   Box video = GStorage.video;
 
-  // 添加一个私有构造函数
-  PlPlayerController._() {
+  PlPlayerController() {
     if (!Accounts.heartbeat.isLogin || Pref.historyPause) {
       enableHeart = false;
     }
@@ -575,13 +576,11 @@ class PlPlayerController {
     }
   }
 
-  // 获取实例 传参
-  static PlPlayerController getInstance({bool isLive = false}) {
-    // 如果实例尚未创建，则创建一个新实例
-    _instance ??= PlPlayerController._();
+  factory PlPlayerController.getInstance({bool isLive = false}) {
+    _instance ??= PlPlayerController();
     _instance!
       ..isLive = isLive
-      .._playerCount += 1;
+      ..playerCount += 1;
     return _instance!;
   }
 
@@ -659,7 +658,7 @@ class PlPlayerController {
         await pause(notify: false);
       }
 
-      if (_playerCount == 0) {
+      if (playerCount == 0) {
         return;
       }
       // 配置Player 音轨、字幕等等
@@ -1211,7 +1210,7 @@ class PlPlayerController {
         Timer t,
       ) async {
         //_timerForSeek = null;
-        if (_playerCount == 0) {
+        if (playerCount == 0) {
           _timerForSeek?.cancel();
           _timerForSeek = null;
         } else if (duration.value.inSeconds != 0) {
@@ -1266,7 +1265,7 @@ class PlPlayerController {
 
   /// 播放视频
   Future<void> play({bool repeat = false, bool hideControls = true}) async {
-    if (_playerCount == 0) return;
+    if (playerCount == 0) return;
     // 播放时自动隐藏控制条
     controls = !hideControls;
     // repeat为true，将从头播放
@@ -1298,14 +1297,14 @@ class PlPlayerController {
 
   /// 隐藏控制条
   void hideTaskControls() {
-    _timer?.cancel();
-    _timer = Timer(showControlDuration, () {
+    timer?.cancel();
+    timer = Timer(showControlDuration, () {
       if (!isSliderMoving.value &&
           !tripling &&
           playerStatus.value != PlayerStatus.paused) {
         controls = false;
       }
-      _timer = null;
+      timer = null;
     });
   }
 
@@ -1421,7 +1420,7 @@ class PlPlayerController {
 
   set controls(bool visible) {
     showControls.value = visible;
-    _timer?.cancel();
+    timer?.cancel();
     if (visible && playerStatus.value != PlayerStatus.paused) {
       hideTaskControls();
     }
@@ -1715,7 +1714,7 @@ class PlPlayerController {
   Future<void> dispose() async {
     // 每次减1，最后销毁
     cancelLongPressTimer();
-    if (!isCloseAll && _playerCount > 1) {
+    if (!isCloseAll && playerCount > 1) {
       _playerCount -= 1;
       _heartDuration = 0;
       if (!_isPreviousVideoPage) {
@@ -1723,7 +1722,7 @@ class PlPlayerController {
       }
       return;
     }
-    _playerCount = 0;
+    playerCount = 0;
     _stopListenerForVideoFit();
     _stopListenerForEnterFullScreen();
     disableAutoEnterPip();
@@ -1759,10 +1758,10 @@ class PlPlayerController {
   }
 
   static void updatePlayCount() {
-    if (_instance?._playerCount == 1) {
+    if (_instance?.playerCount == 1) {
       _instance?.dispose();
     } else {
-      _instance?._playerCount -= 1;
+      _instance?.playerCount -= 1;
     }
   }
 

@@ -1,64 +1,36 @@
+import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
-import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
+import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
+import 'package:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
 
 class TvTopControl extends StatelessWidget {
-  final TvPlayerController controller;
-
   const TvTopControl({
-    Key? key,
+    super.key,
     required this.controller,
-  }) : super(key: key);
+  });
+
+  final TvPlayerController controller;
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => Container(
+    return Focus(
+      focusNode: controller.focusNodeA,
+      child: Container(
         padding: const EdgeInsets.all(8.0),
-        color: Colors.black.withOpacity(0.5),
         child: Row(
           children: [
-            // Back button
-            FocusableActionDetector(
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
+            ComBtn(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onTap: () => Get.back(),
             ),
-
-            // Title
-            Expanded(
-              child: Text(
-                controller.plPlayerController.videoPlayerController?.state.playlist.medias.first.extras?['title'] ?? 'Video Title',
-                style: const TextStyle(color: Colors.white),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-
             const Spacer(),
-
-            // Play/Pause button
-            FocusableActionDetector(
-              child: IconButton(
-                icon: Icon(
-                  controller.plPlayerController.playerStatus.value == PlayerStatus.playing
-                      ? Icons.pause
-                      : Icons.play_arrow,
-                  color: Colors.white,
-                ),
-                onPressed: () => controller.plPlayerController.onDoubleTapCenter(),
-              ),
-            ),
-
-            // Next episode button
-            FocusableActionDetector(
-              child: IconButton(
-                icon: const Icon(Icons.skip_next, color: Colors.white),
-                onPressed: () {
-                  // Handle next episode
-                },
-              ),
+            PlayOrPauseButton(plPlayerController: controller),
+            ComBtn(
+              icon: const Icon(Icons.more_vert, color: Colors.white),
+              onTap: () {
+                // TODO: Implement settings sheet
+              },
             ),
           ],
         ),

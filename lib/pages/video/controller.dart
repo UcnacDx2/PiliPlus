@@ -121,7 +121,9 @@ class VideoDetailController extends GetxController
   final videoPlayerKey = GlobalKey();
   final childKey = GlobalKey<ScaffoldState>();
 
-  final plPlayerController = PlPlayerController.getInstance()
+  final plPlayerController = (Utils.isTvModeSync
+      ? TvPlayerController.getInstance()
+      : PlPlayerController.getInstance())
     ..brightness.value = -1;
   bool get setSystemBrightness => plPlayerController.setSystemBrightness;
 
@@ -150,6 +152,16 @@ class VideoDetailController extends GetxController
 
   bool get showRelatedVideo =>
       isFileSource ? false : plPlayerController.showRelatedVideo;
+
+  CommonIntroController get introController {
+    if (isFileSource) {
+      return Get.find<LocalIntroController>(tag: heroTag);
+    } else if (isUgc) {
+      return Get.find<UgcIntroController>(tag: heroTag);
+    } else {
+      return Get.find<PgcIntroController>(tag: heroTag);
+    }
+  }
 
   ScrollController? introScrollCtr;
   ScrollController get effectiveIntroScrollCtr =>

@@ -45,6 +45,7 @@ WebViewEnvironment? webViewEnvironment;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Utils.precacheIsTvMode();
   MediaKit.ensureInitialized();
   tmpDirPath = (await getTemporaryDirectory()).path;
   appSupportDirPath = (await getApplicationSupportDirectory()).path;

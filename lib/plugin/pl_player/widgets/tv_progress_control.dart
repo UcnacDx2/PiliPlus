@@ -1,19 +1,15 @@
+import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
-import 'package:PiliPlus/plugin/pl_player/utils/duration.dart';
 
 class TvProgressControl extends StatefulWidget {
+  const TvProgressControl({super.key, required this.controller});
+
   final TvPlayerController controller;
 
-  const TvProgressControl({
-    Key? key,
-    required this.controller,
-  }) : super(key: key);
-
   @override
-  _TvProgressControlState createState() => _TvProgressControlState();
+  State<TvProgressControl> createState() => _TvProgressControlState();
 }
 
 class _TvProgressControlState extends State<TvProgressControl> {
@@ -24,54 +20,48 @@ class _TvProgressControlState extends State<TvProgressControl> {
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent) {
           switch (event.logicalKey) {
-            case LogicalKeyboardKey.select: // OK key
-              widget.controller.plPlayerController.onDoubleTapCenter();
+            case LogicalKeyboardKey.select:
+              widget.controller.videoPlayerController?.playOrPause();
               return KeyEventResult.handled;
             case LogicalKeyboardKey.arrowLeft:
-              widget.controller.plPlayerController.onBackward(widget.controller.plPlayerController.fastForBackwardDuration);
+              widget.controller.seekTo(
+                widget.controller.position.value - const Duration(seconds: 10),
+              );
               return KeyEventResult.handled;
             case LogicalKeyboardKey.arrowRight:
-              widget.controller.plPlayerController.onForward(widget.controller.plPlayerController.fastForBackwardDuration);
+              widget.controller.seekTo(
+                widget.controller.position.value + const Duration(seconds: 10),
+              );
               return KeyEventResult.handled;
           }
         }
         return KeyEventResult.ignored;
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Obx(
-          () {
-            final position = widget.controller.plPlayerController.position.value;
-            final duration = widget.controller.plPlayerController.duration.value;
-            final progress = duration.inMilliseconds > 0
-                ? position.inMilliseconds / duration.inMilliseconds
-                : 0.0;
-
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: Colors.grey[700],
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      DurationUtils.formatDuration(position.inSeconds),
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                    Text(
-                      DurationUtils.formatDuration(duration.inSeconds),
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ],
-                )
-              ],
-            );
-          },
+      child: Obx(
+        () => Row(
+          children: [
+            Text(
+              widget.controller.position.value.toString().substring(2, 7),
+              style: const TextStyle(color: Colors.white),
+            ),
+            Expanded(
+              child: Slider(
+                value: widget.controller.position.value.inMilliseconds
+                    .toDouble(),
+                max: widget.controller.duration.value.inMilliseconds
+                    .toDouble(),
+                onChanged: (value) {
+                  widget.controller.seekTo(
+                    Duration(milliseconds: value.toInt()),
+                  );
+                },
+              ),
+            ),
+            Text(
+              widget.controller.duration.value.toString().substring(2, 7),
+              style: const TextStyle(color: Colors.white),
+            ),
+          ],
         ),
       ),
     );

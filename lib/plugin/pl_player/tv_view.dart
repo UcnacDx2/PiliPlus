@@ -1,83 +1,94 @@
+import 'package:PiliPlus/pages/video/controller.dart';
+import 'package:PiliPlus/pages/common/common_intro_controller.dart';
+import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
-import 'package:PiliPlus/plugin/pl_player/widgets/tv_bottom_control.dart';
-import 'package:PiliPlus/plugin/pl_player/widgets/tv_progress_control.dart';
-import 'package:PiliPlus/plugin/pl_player/widgets/tv_top_control.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'widgets/tv_top_control.dart';
+import 'widgets/tv_progress_control.dart';
+import 'widgets/tv_bottom_control.dart';
 
 class TvVideoPlayer extends StatefulWidget {
-  final TvPlayerController controller;
-
   const TvVideoPlayer({
-    Key? key,
-    required this.controller,
-  }) : super(key: key);
+    required this.maxWidth,
+    required this.maxHeight,
+    required this.plPlayerController,
+    this.videoDetailController,
+    this.introController,
+    required this.headerControl,
+    this.bottomControl,
+    this.danmuWidget,
+    this.showEpisodes,
+    this.showViewPoints,
+    this.fill = Colors.black,
+    this.alignment = Alignment.center,
+    super.key,
+  });
+
+  final double maxWidth;
+  final double maxHeight;
+  final PlPlayerController plPlayerController;
+  final VideoDetailController? videoDetailController;
+  final CommonIntroController? introController;
+  final Widget headerControl;
+  final Widget? bottomControl;
+  final Widget? danmuWidget;
+  final void Function()? showEpisodes;
+  final VoidCallback? showViewPoints;
+  final Color fill;
+  final Alignment alignment;
 
   @override
-  _TvVideoPlayerState createState() => _TvVideoPlayerState();
+  State<TvVideoPlayer> createState() => _TvVideoPlayerState();
 }
 
 class _TvVideoPlayerState extends State<TvVideoPlayer> {
+  late final TvPlayerController _controller =
+      widget.plPlayerController as TvPlayerController;
+
   @override
   Widget build(BuildContext context) {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
-        if (event.logicalKey == LogicalKeyboardKey.goBack) {
-          return widget.controller.handleBackKey();
+        if (_controller.showControls.value) {
+          return KeyEventResult.ignored;
+        } else {
+          return _controller.handleKeyEventWhenHidden(event);
         }
-        return widget.controller.handleKeyEventWhenHidden(event);
       },
       child: Stack(
-        alignment: Alignment.center,
         children: [
-          // Video player widget
-          Video(controller: widget.controller.plPlayerController.videoController!),
-
-          // TV-specific controls
-          Obx(() => Visibility(
-            visible: widget.controller.plPlayerController.showControls.value,
-            child: _buildTvControls(),
-          )),
+          SizedBox(
+            width: widget.maxWidth,
+            height: widget.maxHeight,
+            child: Video(
+              controller: _controller.videoController!,
+              fill: widget.fill,
+              alignment: widget.alignment,
+              fit: BoxFit.contain,
+            ),
+          ),
+          Obx(
+            () => _controller.showControls.value
+                ? Container(
+                    color: Colors.black.withAlpha(77),
+                    child: Column(
+                      children: [
+                        TvTopControl(controller: _controller),
+                        const Spacer(),
+                        TvProgressControl(controller: _controller),
+                        const Spacer(),
+                        TvBottomControl(controller: _controller),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTvControls() {
-    return Column(
-      children: [
-        // Top control bar
-        Focus(
-          focusNode: widget.controller.focusNodeA,
-          onFocusChange: (hasFocus) {
-            if (hasFocus) widget.controller.handleFocusChange(FocusArea.top);
-          },
-          child: TvTopControl(controller: widget.controller),
-        ),
-
-        const Spacer(),
-
-        // Progress bar
-        Focus(
-          focusNode: widget.controller.focusNodeB,
-          onFocusChange: (hasFocus) {
-            if (hasFocus) widget.controller.handleFocusChange(FocusArea.progress);
-          },
-          child: TvProgressControl(controller: widget.controller),
-        ),
-
-        // Bottom control bar
-        Focus(
-          focusNode: widget.controller.focusNodeC,
-          onFocusChange: (hasFocus) {
-            if (hasFocus) widget.controller.handleFocusChange(FocusArea.bottom);
-          },
-          child: TvBottomControl(controller: widget.controller),
-        ),
-      ],
     );
   }
 }

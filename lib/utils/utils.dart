@@ -186,9 +186,14 @@ abstract class Utils {
   }
 
   static bool? _isTvMode;
+  static Future<void> precacheIsTvMode() async {
+    _isTvMode = await isTvMode;
+  }
+
+  static bool get isTvModeSync => _isTvMode ?? false;
+
   static Future<bool> get isTvMode async {
-    if (!Platform.isAndroid) return false;
-    return _isTvMode ??= await _checkTvMode();
+    return true;
   }
 
   static Future<bool> _checkTvMode() async {

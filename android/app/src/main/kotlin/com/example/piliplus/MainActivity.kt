@@ -4,6 +4,7 @@ import android.app.PictureInPictureParams
 import android.app.SearchManager
 import android.app.UiModeManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -137,20 +138,13 @@ class MainActivity : AudioServiceActivity() {
                 }
 
                 "checkTvMode" -> {
-                    result.success(checkTvMode())
+                    val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+                    result.success(uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION)
                 }
 
                 else -> result.notImplemented()
             }
         }
-    }
-
-    private fun checkTvMode(): Boolean {
-        val uiModeManager = getSystemService(UI_MODE_SERVICE) as UiModeManager
-        if (uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION) {
-            return true
-        }
-        return packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     }
 
     private fun back() {
