@@ -130,6 +130,110 @@ mixin TimeBatteryMixin<T extends StatefulWidget> on State<T> {
     );
   }
 
+  /// 播放速度
+  void showSetSpeed() {
+    showBottomSheet(
+      (context, setState) {
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: Material(
+            clipBehavior: Clip.hardEdge,
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 45,
+                    child: Center(
+                      child: Text('选择播放速度', style: titleStyle),
+                    ),
+                  ),
+                ),
+                SliverList.builder(
+                  itemCount: PlPlayerController.speedList.length,
+                  itemBuilder: (context, index) {
+                    final i = PlPlayerController.speedList[index];
+                    return ListTile(
+                      dense: true,
+                      onTap: () {
+                        Get.back();
+                        plPlayerController.setPlaybackSpeed(i);
+                      },
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                      ),
+                      title: Text('${i}x'),
+                      trailing: plPlayerController.playbackSpeed == i
+                          ? Icon(
+                              Icons.done,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 画面缩放
+  void showSetFit() {
+    showBottomSheet(
+      (context, setState) {
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: Material(
+            clipBehavior: Clip.hardEdge,
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 45,
+                    child: Center(
+                      child: Text('选择画面缩放', style: titleStyle),
+                    ),
+                  ),
+                ),
+                SliverList.builder(
+                  itemCount: BoxFit.values.length,
+                  itemBuilder: (context, index) {
+                    final i = BoxFit.values[index];
+                    return ListTile(
+                      dense: true,
+                      onTap: () {
+                        Get.back();
+                        plPlayerController.setFit(i);
+                      },
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                      ),
+                      title: Text(i.name),
+                      trailing: plPlayerController.fit.value == i
+                          ? Icon(
+                              Icons.done,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   List<Widget>? get timeBatteryWidgets {
     if (_showCurrTime) {
       return [
@@ -1039,6 +1143,61 @@ class HeaderControlState extends State<HeaderControl>
                     leading: const Icon(Icons.image_outlined, size: 20),
                     title: const Text('保存封面', style: titleStyle),
                   ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                    showSetSpeed();
+                  },
+                  leading: const Icon(Icons.speed_outlined, size: 20),
+                  title: const Text('播放速度', style: titleStyle),
+                  subtitle: Obx(
+                    () => Text(
+                      '当前: ${plPlayerController.playbackSpeed}x',
+                      style: subTitleStyle,
+                    ),
+                  ),
+                ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                    showSetFit();
+                  },
+                  leading: const Icon(Icons.fit_screen_outlined, size: 20),
+                  title: const Text('画面缩放', style: titleStyle),
+                  subtitle: Obx(
+                    () => Text(
+                      '当前: ${plPlayerController.fit.value.name}',
+                      style: subTitleStyle,
+                    ),
+                  ),
+                ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                    plPlayerController.takeScreenshot();
+                  },
+                  leading: const Icon(Icons.screenshot_outlined, size: 20),
+                  title: const Text('截图', style: titleStyle),
+                ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                    plPlayerController
+                        .onLockControl(!plPlayerController.controlsLock.value);
+                  },
+                  leading: Obx(() => Icon(
+                      plPlayerController.controlsLock.value
+                          ? Icons.lock_open_outlined
+                          : Icons.lock_outline,
+                      size: 20)),
+                  title: Obx(() => Text(
+                      plPlayerController.controlsLock.value ? '解锁' : '锁定',
+                      style: titleStyle)),
+                ),
                 ListTile(
                   dense: true,
                   onTap: () {
