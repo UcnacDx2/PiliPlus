@@ -35,27 +35,14 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
   Function? onPause;
   Function(Duration position)? onSeek;
 
-  String? bvid;
   @override
   Future<void> play() async {
-    final bvid = this.bvid;
-    if (bvid != null) {
-      onPlay?.call() ??
-          PlPlayerController.playIfExists(
-            tag: bvid,
-          );
-    }
+    onPlay?.call() ?? PlPlayerController.playIfExists();
   }
 
   @override
   Future<void> pause() async {
-    final bvid = this.bvid;
-    if (bvid != null) {
-      await (onPause?.call() ??
-          PlPlayerController.pauseIfExists(
-            tag: bvid,
-          ));
-    }
+    await (onPause?.call() ?? PlPlayerController.pauseIfExists());
   }
 
   @override
@@ -65,11 +52,8 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
         updatePosition: position,
       ),
     );
-    final bvid = this.bvid;
-    if (bvid != null) {
-      await (onSeek?.call(position) ??
-          PlPlayerController.seekToIfExists(bvid, position, isSeek: false));
-    }
+    await (onSeek?.call(position) ??
+        PlPlayerController.seekToIfExists(position, isSeek: false));
   }
 
   Future<void> setMediaItem(MediaItem newMediaItem) async {
@@ -88,13 +72,9 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
     bool isBuffering,
     bool isLive,
   ) async {
-    final bvid = this.bvid;
     if (!enableBackgroundPlay ||
         _item.isEmpty ||
-        bvid == null ||
-        !PlPlayerController.instanceExists(
-          bvid,
-        )) {
+        !PlPlayerController.instanceExists()) {
       return;
     }
 
@@ -147,8 +127,7 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
     String? cover,
   }) {
     if (!enableBackgroundPlay) return;
-    final bvid = this.bvid;
-    if (bvid == null || !PlPlayerController.instanceExists(bvid)) {
+    if (!PlPlayerController.instanceExists()) {
       return;
     }
     if (data == null) return;
@@ -220,7 +199,7 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
       );
     }
     if (mediaItem == null) return;
-    if (bvid == null || !PlPlayerController.instanceExists(bvid!)) {
+    if (!PlPlayerController.instanceExists()) {
       return;
     }
     _item.add(mediaItem);
@@ -272,13 +251,9 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
   }
 
   void onPositionChange(Duration position) {
-    final bvid = this.bvid;
     if (!enableBackgroundPlay ||
         _item.isEmpty ||
-        bvid == null ||
-        !PlPlayerController.instanceExists(
-          bvid,
-        )) {
+        !PlPlayerController.instanceExists()) {
       return;
     }
 

@@ -61,7 +61,7 @@ class _TvBottomControlState extends State<TvBottomControl> {
       focusNode: widget.controller.focusNodeC,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withValues(alpha: 0.5),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -90,8 +90,7 @@ class _TvBottomControlState extends State<TvBottomControl> {
             itemBuilder: (context) {
               return _videoDetailController.data.supportFormats!.map((format) {
                 return PopupMenuItem<int>(
-                  value: format.quality!,
-                  child: Text(format.newDesc ?? ''),
+                  value: format.quality,
                   onTap: () async {
                     if (currentQa.code == format.quality) {
                       return;
@@ -102,21 +101,24 @@ class _TvBottomControlState extends State<TvBottomControl> {
                     _videoDetailController.currentVideoQa.value = newQa;
                     _videoDetailController.updatePlayer();
                     SmartDialog.showToast('画质已变为：${newQa.desc}');
-                  if (!widget.controller.tempPlayerConf) {
-                    GStorage.setting.put(
-                      await Utils.isWiFi
-                          ? SettingBoxKey.defaultVideoQa
-                          : SettingBoxKey.defaultVideoQaCellular,
-                      format.quality,
-                    );
-                  }
-                }},
-              );
-            }).toList();
-          },
-          child: _buildButtonContent(
-            icon: Icons.high_quality,
-            label: currentQa.shortDesc,
+                    if (!widget.controller.tempPlayerConf) {
+                      GStorage.setting.put(
+                        await Utils.isWiFi
+                            ? SettingBoxKey.defaultVideoQa
+                            : SettingBoxKey.defaultVideoQaCellular,
+                        format.quality,
+                      );
+                    }
+                  },
+                  child: Text(format.newDesc ?? ''),
+                );
+              }).toList();
+            },
+            child: _buildButtonContent(
+              focusNode: _qualityNode,
+              icon: Icons.high_quality,
+              label: currentQa.shortDesc,
+            ),
           ),
         );
       },
@@ -134,14 +136,16 @@ class _TvBottomControlState extends State<TvBottomControl> {
             return widget.controller.speedList.map((speed) {
               return PopupMenuItem<double>(
                 value: speed,
-                child: Text('${speed}X'),
                 onTap: () => widget.controller.setPlaybackSpeed(speed),
+                child: Text('${speed}X'),
               );
             }).toList();
           },
-        child: _buildButtonContent(
-          icon: Icons.speed,
-          label: '${widget.controller.playbackSpeed}X',
+          child: _buildButtonContent(
+            focusNode: _speedNode,
+            icon: Icons.speed,
+            label: '${widget.controller.playbackSpeed}X',
+          ),
         ),
       ),
     );
@@ -171,35 +175,10 @@ class _TvBottomControlState extends State<TvBottomControl> {
             },
             onSelected: (index) => _videoDetailController.setSubtitle(index),
             child: _buildButtonContent(
+              focusNode: _subtitleNode,
               icon: Icons.subtitles,
               label: '字幕',
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildButtonContent({required IconData icon, required String label}) {
-    return Builder(
-      builder: (context) {
-        final isFocused = Focus.of(context).hasFocus;
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: isFocused ? Colors.white.withOpacity(0.3) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: Colors.white),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            ],
           ),
         );
       },
@@ -221,13 +200,14 @@ class _TvBottomControlState extends State<TvBottomControl> {
             return pages!.map((page) {
               return PopupMenuItem<int>(
                 value: page.page,
-                child: Text(page.part ?? ''),
                 onTap: () =>
                     (introController as UgcIntroController).onChangeEpisode(page),
+                child: Text(page.part ?? ''),
               );
             }).toList();
           },
           child: _buildButtonContent(
+            focusNode: _episodeNode,
             icon: Icons.list,
             label: '选集',
           ),
@@ -247,16 +227,45 @@ class _TvBottomControlState extends State<TvBottomControl> {
             return VideoFitType.values.map((fit) {
               return PopupMenuItem<VideoFitType>(
                 value: fit,
-                child: Text(fit.desc),
                 onTap: () => widget.controller.toggleVideoFit(fit),
+                child: Text(fit.desc),
               );
             }).toList();
           },
-        child: _buildButtonContent(
-          icon: Icons.aspect_ratio,
-          label: widget.controller.videoFit.value.desc,
+          child: _buildButtonContent(
+            focusNode: _fitNode,
+            icon: Icons.aspect_ratio,
+            label: widget.controller.videoFit.value.desc,
+          ),
         ),
-      )),
+      ),
+    );
+  }
+
+  Widget _buildButtonContent({
+    required FocusNode focusNode,
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: focusNode.hasFocus
+            ? Colors.white.withValues(alpha: 0.3)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 }

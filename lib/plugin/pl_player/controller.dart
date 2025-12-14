@@ -505,8 +505,8 @@ class PlPlayerController {
     return _instances[tag];
   }
 
-  static bool instanceExists(String tag) {
-    return _instances.containsKey(tag);
+  static bool instanceExists() {
+    return instance != null;
   }
 
   static void setPlayCallBack(Function? playCallBack) {
@@ -515,43 +515,37 @@ class PlPlayerController {
 
   static Function? _playCallBack;
 
-  static void playIfExists({
-    required String tag,
-    bool repeat = false,
-    bool hideControls = true,
-  }) {
+  static void playIfExists({bool repeat = false, bool hideControls = true}) {
     _playCallBack?.call();
   }
 
-  static PlayerStatus? getPlayerStatusIfExists(String tag) {
-    return _instances[tag]?.playerStatus.value;
+  static PlayerStatus? getPlayerStatusIfExists() {
+    return instance?.playerStatus.value;
   }
 
   static Future<void> pauseIfExists({
-    required String tag,
     bool notify = true,
     bool isInterrupt = false,
   }) async {
-    final instance = _instances[tag];
+    final instance = PlPlayerController.instance;
     if (instance?.playerStatus.value == PlayerStatus.playing) {
       await instance?.pause(notify: notify, isInterrupt: isInterrupt);
     }
   }
 
   static Future<void> seekToIfExists(
-    String tag,
     Duration position, {
     bool isSeek = true,
   }) async {
-    await _instances[tag]?.seekTo(position, isSeek: isSeek);
+    await instance?.seekTo(position, isSeek: isSeek);
   }
 
-  static double? getVolumeIfExists(String tag) {
-    return _instances[tag]?.volume.value;
+  static double? getVolumeIfExists() {
+    return instance?.volume.value;
   }
 
-  static Future<void> setVolumeIfExists(String tag, double volumeNew) async {
-    await _instances[tag]?.setVolume(volumeNew);
+  static Future<void> setVolumeIfExists(double volumeNew) async {
+    await instance?.setVolume(volumeNew);
   }
 
   Box video = GStorage.video;
@@ -598,12 +592,19 @@ class PlPlayerController {
   static final Map<String, PlPlayerController> _instances = {};
   static String? _activeTag;
 
+  static void setActive(String tag) {
+    _activeTag = tag;
+  }
+
+  static void unsetActive(String tag) {
+    if (_activeTag == tag) {
+      _activeTag = null;
+    }
+  }
+
   static PlPlayerController? get instance {
     if (_activeTag != null) {
       return _instances[_activeTag];
-    }
-    if (_instances.isNotEmpty) {
-      return _instances.values.first;
     }
     return null;
   }
@@ -648,7 +649,6 @@ class PlPlayerController {
     int? mediaType,
   }) async {
     try {
-      _activeTag = bvid;
       this.dirPath = dirPath;
       this.typeTag = typeTag;
       this.mediaType = mediaType;
@@ -1002,7 +1002,7 @@ class PlPlayerController {
 
     // 自动播放
     if (_autoPlay) {
-      playIfExists(tag: _bvid!);
+      playIfExists();
       // await play(duration: duration);
     }
   }
@@ -1773,9 +1773,9 @@ class PlPlayerController {
     _videoPlayerController?.dispose();
     _videoPlayerController = null;
     _videoController = null;
-    _instances.removeWhere((key, value) => value == this);
-    if (_instances.isEmpty) {
-      _activeTag = null;
+    if (_bvid != null) {
+      _instances.remove(_bvid);
+      unsetActive(_bvid!);
     }
     videoPlayerServiceHandler?.clear();
   }

@@ -176,6 +176,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
           ? (PlPlayerController.getInstance<TvPlayerController>(
               tag: heroTag, create: () => TvPlayerController()))
           : videoDetailController.plPlayerController;
+      PlPlayerController.setActive(heroTag);
       plPlayerController!
         ..addStatusLister(playerListener)
         ..addPositionListener(positionListener);
@@ -321,6 +322,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       }
     }
     plPlayerController = videoDetailController.plPlayerController;
+    PlPlayerController.setActive(heroTag);
     videoDetailController.autoPlay.value = true;
     if (videoDetailController.plPlayerController.preInitPlayer) {
       await plPlayerController!.play();
@@ -335,6 +337,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
 
   @override
   void dispose() {
+    PlPlayerController.unsetActive(heroTag);
     plPlayerController
       ?..removeStatusLister(playerListener)
       ..removePositionListener(positionListener);
