@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/marquee.dart';
@@ -348,7 +349,7 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
                           final flipY = plPlayerController.flipY.value;
                           return ActionRowLineItem(
                             icon: Transform.rotate(
-                              angle: 1.5707963267948966, // pi / 2
+                              angle: math.pi / 2,
                               child: Icon(
                                 Icons.flip,
                                 size: 13,
