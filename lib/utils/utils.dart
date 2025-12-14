@@ -25,6 +25,28 @@ abstract class Utils {
   static final bool isDesktop =
       Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
+  static bool? _isTvMode;
+  static Future<bool> get isTvMode async {
+    // TODO: Replace with native TV mode detection
+    // TV mode detection is temporarily hardcoded to true for PC debugging.
+    // The final implementation is below, commented out.
+    return true;
+    /*
+    if (!Platform.isAndroid) return false;
+    return _isTvMode ??= await _checkTvMode();
+    */
+  }
+
+  static Future<bool> _checkTvMode() async {
+    try {
+      // Call Android native code via MethodChannel for detection.
+      final result = await channel.invokeMethod<bool>('checkTvMode');
+      return result ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   static const jsonEncoder = JsonEncoder.withIndent('    ');
 
   static Future<void> saveBytes2File({

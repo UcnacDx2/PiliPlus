@@ -40,9 +40,11 @@ class LiveRoomController extends GetxController {
 
   int roomId = Get.arguments;
   DanmakuController<DanmakuExtra>? danmakuController;
-  PlPlayerController plPlayerController = PlPlayerController.getInstance(
-    isLive: true,
-  );
+  PlPlayerController get plPlayerController =>
+      PlPlayerController.getInstance<PlPlayerController>(
+        tag: roomId.toString(),
+        create: () => PlPlayerController()..isLive = true,
+      );
 
   RxBool isLoaded = false.obs;
   Rx<RoomInfoH5Data?> roomInfoH5 = Rx<RoomInfoH5Data?>(null);

@@ -5,6 +5,11 @@ import 'package:audio_session/audio_session.dart';
 class AudioSessionHandler {
   late AudioSession session;
   bool _playInterrupted = false;
+  String? bvid;
+
+  void setBvid(String bvid) {
+    this.bvid = bvid;
+  }
 
   Future<bool> setActive(bool active) {
     return session.setActive(active);
@@ -19,26 +24,36 @@ class AudioSessionHandler {
     session.configure(const AudioSessionConfiguration.music());
 
     session.interruptionEventStream.listen((event) {
-      final playerStatus = PlPlayerController.getPlayerStatusIfExists();
-      // final player = PlPlayerController.getInstance();
+      final bvid = this.bvid;
+      if (bvid == null) return;
+      final playerStatus = PlPlayerController.getPlayerStatusIfExists(
+        bvid,
+      );
       if (event.begin) {
         if (playerStatus != PlayerStatus.playing) return;
-        // if (!player.playerStatus.playing) return;
         switch (event.type) {
           case AudioInterruptionType.duck:
             PlPlayerController.setVolumeIfExists(
-              (PlPlayerController.getVolumeIfExists() ?? 0) * 0.5,
+              bvid,
+              (PlPlayerController.getVolumeIfExists(
+                    bvid,
+                  ) ??
+                  0) *
+                  0.5,
             );
-            // player.setVolume(player.volume.value * 0.5);
             break;
           case AudioInterruptionType.pause:
-            PlPlayerController.pauseIfExists(isInterrupt: true);
-            // player.pause(isInterrupt: true);
+            PlPlayerController.pauseIfExists(
+              tag: bvid,
+              isInterrupt: true,
+            );
             _playInterrupted = true;
             break;
           case AudioInterruptionType.unknown:
-            PlPlayerController.pauseIfExists(isInterrupt: true);
-            // player.pause(isInterrupt: true);
+            PlPlayerController.pauseIfExists(
+              tag: bvid,
+              isInterrupt: true,
+            );
             _playInterrupted = true;
             break;
         }
@@ -46,13 +61,20 @@ class AudioSessionHandler {
         switch (event.type) {
           case AudioInterruptionType.duck:
             PlPlayerController.setVolumeIfExists(
-              (PlPlayerController.getVolumeIfExists() ?? 0) * 2,
+              bvid,
+              (PlPlayerController.getVolumeIfExists(
+                    bvid,
+                  ) ??
+                  0) *
+                  2,
             );
-            // player.setVolume(player.volume.value * 2);
             break;
           case AudioInterruptionType.pause:
-            if (_playInterrupted) PlPlayerController.playIfExists();
-            //player.play();
+            if (_playInterrupted) {
+              PlPlayerController.playIfExists(
+                tag: bvid,
+              );
+            }
             break;
           case AudioInterruptionType.unknown:
             break;
@@ -63,11 +85,10 @@ class AudioSessionHandler {
 
     // 耳机拔出暂停
     session.becomingNoisyEventStream.listen((_) {
-      PlPlayerController.pauseIfExists();
-      // final player = PlPlayerController.getInstance();
-      // if (player.playerStatus.playing) {
-      //   player.pause();
-      // }
+      final bvid = this.bvid;
+      if (bvid != null) {
+        PlPlayerController.pauseIfExists(tag: bvid);
+      }
     });
   }
 }

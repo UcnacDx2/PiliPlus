@@ -43,6 +43,7 @@ import 'package:PiliPlus/models_new/video/video_stein_edgeinfo/data.dart';
 import 'package:PiliPlus/pages/audio/view.dart';
 import 'package:PiliPlus/pages/search/widgets/search_text.dart';
 import 'package:PiliPlus/pages/video/download_panel/view.dart';
+import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/video/introduction/pgc/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/pages/video/medialist/view.dart';
@@ -121,8 +122,11 @@ class VideoDetailController extends GetxController
   final videoPlayerKey = GlobalKey();
   final childKey = GlobalKey<ScaffoldState>();
 
-  final plPlayerController = PlPlayerController.getInstance()
-    ..brightness.value = -1;
+  PlPlayerController get plPlayerController =>
+      PlPlayerController.getInstance<PlPlayerController>(
+        tag: heroTag,
+        create: () => PlPlayerController(),
+      );
   bool get setSystemBrightness => plPlayerController.setSystemBrightness;
 
   late VideoItem firstVideo;
@@ -1034,6 +1038,7 @@ class VideoDetailController extends GetxController
           return SendDanmakuPanel(
             cid: cid.value,
             bvid: bvid,
+            heroTag: heroTag,
             progress: plPlayerController.position.value.inMilliseconds,
             initialValue: savedDanmaku,
             onSave: (danmaku) => savedDanmaku = danmaku,
@@ -1813,6 +1818,10 @@ class VideoDetailController extends GetxController
     }
     return false;
   }
+
+  CommonIntroController get introController => isUgc
+      ? Get.find<UgcIntroController>(tag: heroTag)
+      : Get.find<PgcIntroController>(tag: heroTag);
 
   void toAudioPage() {
     int? id;

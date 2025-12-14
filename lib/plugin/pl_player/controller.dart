@@ -63,9 +63,6 @@ class PlPlayerController {
   Player? _videoPlayerController;
   VideoController? _videoController;
 
-  // 添加一个私有静态变量来保存实例
-  static PlPlayerController? _instance;
-
   // 流事件  监听播放状态变化
   // StreamSubscription? _playerEventSubs;
 
@@ -504,10 +501,12 @@ class PlPlayerController {
     }
   }
 
-  static PlPlayerController? get instance => _instance;
+  static PlPlayerController? getInstanceByTag(String tag) {
+    return _instances[tag];
+  }
 
-  static bool instanceExists() {
-    return _instance != null;
+  static bool instanceExists(String tag) {
+    return _instances.containsKey(tag);
   }
 
   static void setPlayCallBack(Function? playCallBack) {
@@ -516,44 +515,48 @@ class PlPlayerController {
 
   static Function? _playCallBack;
 
-  static void playIfExists({bool repeat = false, bool hideControls = true}) {
-    // await _instance?.play(repeat: repeat, hideControls: hideControls);
+  static void playIfExists({
+    required String tag,
+    bool repeat = false,
+    bool hideControls = true,
+  }) {
     _playCallBack?.call();
   }
 
-  // try to get PlayerStatus
-  static PlayerStatus? getPlayerStatusIfExists() {
-    return _instance?.playerStatus.value;
+  static PlayerStatus? getPlayerStatusIfExists(String tag) {
+    return _instances[tag]?.playerStatus.value;
   }
 
   static Future<void> pauseIfExists({
+    required String tag,
     bool notify = true,
     bool isInterrupt = false,
   }) async {
-    if (_instance?.playerStatus.value == PlayerStatus.playing) {
-      await _instance?.pause(notify: notify, isInterrupt: isInterrupt);
+    final instance = _instances[tag];
+    if (instance?.playerStatus.value == PlayerStatus.playing) {
+      await instance?.pause(notify: notify, isInterrupt: isInterrupt);
     }
   }
 
   static Future<void> seekToIfExists(
+    String tag,
     Duration position, {
     bool isSeek = true,
   }) async {
-    await _instance?.seekTo(position, isSeek: isSeek);
+    await _instances[tag]?.seekTo(position, isSeek: isSeek);
   }
 
-  static double? getVolumeIfExists() {
-    return _instance?.volume.value;
+  static double? getVolumeIfExists(String tag) {
+    return _instances[tag]?.volume.value;
   }
 
-  static Future<void> setVolumeIfExists(double volumeNew) async {
-    await _instance?.setVolume(volumeNew);
+  static Future<void> setVolumeIfExists(String tag, double volumeNew) async {
+    await _instances[tag]?.setVolume(volumeNew);
   }
 
   Box video = GStorage.video;
 
-  // 添加一个私有构造函数
-  PlPlayerController._() {
+  PlPlayerController() {
     if (!Accounts.heartbeat.isLogin || Pref.historyPause) {
       enableHeart = false;
     }
@@ -576,13 +579,33 @@ class PlPlayerController {
   }
 
   // 获取实例 传参
-  static PlPlayerController getInstance({bool isLive = false}) {
-    // 如果实例尚未创建，则创建一个新实例
-    _instance ??= PlPlayerController._();
-    _instance!
-      ..isLive = isLive
-      .._playerCount += 1;
-    return _instance!;
+  static T getInstance<T extends PlPlayerController>({
+    required String tag,
+    required T Function() create,
+  }) {
+    final instance = _instances[tag] as T?;
+    if (instance != null) {
+      instance._playerCount++;
+      return instance;
+    } else {
+      final newInstance = create();
+      newInstance._playerCount++;
+      _instances[tag] = newInstance;
+      return newInstance;
+    }
+  }
+
+  static final Map<String, PlPlayerController> _instances = {};
+  static String? _activeTag;
+
+  static PlPlayerController? get instance {
+    if (_activeTag != null) {
+      return _instances[_activeTag];
+    }
+    if (_instances.isNotEmpty) {
+      return _instances.values.first;
+    }
+    return null;
   }
 
   bool _processing = false;
@@ -625,6 +648,7 @@ class PlPlayerController {
     int? mediaType,
   }) async {
     try {
+      _activeTag = bvid;
       this.dirPath = dirPath;
       this.typeTag = typeTag;
       this.mediaType = mediaType;
@@ -958,7 +982,6 @@ class PlPlayerController {
 
   // 开始播放
   Future<void> _initializePlayer() async {
-    if (_instance == null) return;
     // 设置倍速
     if (isLive) {
       await setPlaybackSpeed(1.0);
@@ -979,7 +1002,7 @@ class PlPlayerController {
 
     // 自动播放
     if (_autoPlay) {
-      playIfExists();
+      playIfExists(tag: _bvid!);
       // await play(duration: duration);
     }
   }
@@ -1463,6 +1486,14 @@ class PlPlayerController {
       videoPlayerController!.state.completed ||
       (duration.value - position.value).inMilliseconds <= 50;
 
+  void togglePlayPause() {
+    if (playerStatus.value == PlayerStatus.playing) {
+      pause();
+    } else {
+      play();
+    }
+  }
+
   // 双击播放、暂停
   Future<void> onDoubleTapCenter() async {
     controls = true;
@@ -1734,18 +1765,6 @@ class PlPlayerController {
     _timer?.cancel();
     _timerForSeek?.cancel();
     _timerForShowingVolume?.cancel();
-    // _position.close();
-    // _playerEventSubs?.cancel();
-    // _sliderPosition.close();
-    // _sliderTempPosition.close();
-    // _isSliderMoving.close();
-    // _duration.close();
-    // _buffered.close();
-    // _showControls.close();
-    // _controlsLock.close();
-
-    // playerStatus.close();
-    // dataStatus.status.close();
 
     await removeListeners();
     if (playerStatus.playing) {
@@ -1754,15 +1773,21 @@ class PlPlayerController {
     _videoPlayerController?.dispose();
     _videoPlayerController = null;
     _videoController = null;
-    _instance = null;
+    _instances.removeWhere((key, value) => value == this);
+    if (_instances.isEmpty) {
+      _activeTag = null;
+    }
     videoPlayerServiceHandler?.clear();
   }
 
-  static void updatePlayCount() {
-    if (_instance?._playerCount == 1) {
-      _instance?.dispose();
-    } else {
-      _instance?._playerCount -= 1;
+  static void updatePlayCount(String tag) {
+    final instance = _instances[tag];
+    if (instance != null) {
+      if (instance._playerCount == 1) {
+        instance.dispose();
+      } else {
+        instance._playerCount -= 1;
+      }
     }
   }
 
