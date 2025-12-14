@@ -19,8 +19,10 @@ class _TvProgressControlState extends State<TvProgressControl> {
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent) {
           switch (event.logicalKey) {
-            case LogicalKeyboardKey.select: // OK键
-              widget.controller.togglePlayPause(); // 播放/暂停
+            case LogicalKeyboardKey.select:
+            case LogicalKeyboardKey.enter:
+            case LogicalKeyboardKey.gameButtonA:
+              widget.controller.togglePlayPause();
               return KeyEventResult.handled;
             case LogicalKeyboardKey.arrowLeft:
               // controller.seekBackward(); // 快退
@@ -28,7 +30,6 @@ class _TvProgressControlState extends State<TvProgressControl> {
             case LogicalKeyboardKey.arrowRight:
               // controller.seekForward(); // 快进
               return KeyEventResult.handled;
-            // 上下键移动焦点由框架自动处理
             default:
               return KeyEventResult.ignored;
           }

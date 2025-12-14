@@ -30,7 +30,9 @@ class TvPlayerController {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
     switch (event.logicalKey) {
-      case LogicalKeyboardKey.select: // OK/Enter
+      case LogicalKeyboardKey.select:
+      case LogicalKeyboardKey.enter:
+      case LogicalKeyboardKey.gameButtonA:
         showControlsAndFocus(FocusArea.progress);
         return KeyEventResult.handled;
       case LogicalKeyboardKey.arrowUp: // DPAD_UP
