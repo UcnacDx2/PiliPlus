@@ -1,19 +1,18 @@
 import 'dart:async';
 
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/widgets/focusable_btn.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
-import 'focusable_btn.dart';
-
 class PlayOrPauseButton extends StatefulWidget {
   final PlPlayerController plPlayerController;
-  final FocusNode? focusNode;
+  final FocusNode focusNode;
 
   const PlayOrPauseButton({
     super.key,
     required this.plPlayerController,
-    this.focusNode,
+    required this.focusNode,
   });
 
   @override

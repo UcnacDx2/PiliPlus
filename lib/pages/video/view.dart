@@ -45,6 +45,7 @@ import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/plugin/pl_player/view.dart';
+import 'package:PiliPlus/plugin/pl_player/widgets/tv_event_interceptor.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/services/shutdown_timer_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -1399,22 +1400,25 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       child = childWhenDisabledAlmostSquare;
     }
     if (videoDetailController.plPlayerController.keyboardControl) {
-      child = PlayerFocus(
-        plPlayerController: videoDetailController.plPlayerController,
-        introController: introController,
-        onSendDanmaku: videoDetailController.showShootDanmakuSheet,
-        canPlay: () {
-          if (videoDetailController.autoPlay.value) {
-            return true;
-          }
-          handlePlay();
-          return false;
-        },
-        onSkipSegment: videoDetailController.onSkipSegment,
-        onShowMenu: () => (videoDetailController.headerCtrKey.currentState
-                as HeaderControlState?)
-            ?.showSettingSheet(),
-        child: child,
+      child = TVEventInterceptor(
+        controller: videoDetailController.plPlayerController,
+        child: PlayerFocus(
+          plPlayerController: videoDetailController.plPlayerController,
+          introController: introController,
+          onSendDanmaku: videoDetailController.showShootDanmakuSheet,
+          canPlay: () {
+            if (videoDetailController.autoPlay.value) {
+              return true;
+            }
+            handlePlay();
+            return false;
+          },
+          onSkipSegment: videoDetailController.onSkipSegment,
+          onShowMenu: () => (videoDetailController.headerCtrKey.currentState
+                  as HeaderControlState?)
+              ?.showSettingSheet(),
+          child: child,
+        ),
       );
     }
     return videoDetailController.plPlayerController.darkVideoPage

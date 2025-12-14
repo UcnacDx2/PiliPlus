@@ -10,7 +10,6 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
     show KeyDownEvent, KeyUpEvent, LogicalKeyboardKey, HardwareKeyboard;
-import 'package:flutter/widgets.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
@@ -24,7 +23,6 @@ class PlayerFocus extends StatelessWidget {
     this.canPlay,
     this.onSkipSegment,
     this.onShowMenu,
-    this.focusNode,
   });
 
   final Widget child;
@@ -34,7 +32,6 @@ class PlayerFocus extends StatelessWidget {
   final VoidCallback? onShowMenu;
   final bool Function()? canPlay;
   final bool Function()? onSkipSegment;
-  final FocusNode? focusNode;
 
   static bool _shouldHandle(LogicalKeyboardKey logicalKey) {
     return logicalKey == LogicalKeyboardKey.tab ||
@@ -47,24 +44,8 @@ class PlayerFocus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Focus(
-      focusNode: focusNode,
       autofocus: true,
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent) {
-          bool handled = false;
-          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-            handled = node.focusInDirection(TraversalDirection.up);
-          } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-            handled = node.focusInDirection(TraversalDirection.down);
-          } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-            handled = node.focusInDirection(TraversalDirection.left);
-          } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-            handled = node.focusInDirection(TraversalDirection.right);
-          }
-          if (handled) {
-            return KeyEventResult.handled;
-          }
-        }
         final handled = _handleKey(event);
         if (handled || _shouldHandle(event.logicalKey)) {
           return KeyEventResult.handled;

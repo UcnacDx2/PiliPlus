@@ -1,56 +1,45 @@
 import 'package:flutter/material.dart';
 
 class FocusableBtn extends StatefulWidget {
-  final Widget icon;
+  final FocusNode focusNode;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onSecondaryTap;
-  final double width;
-  final double height;
+  final Widget icon;
   final String? tooltip;
-  final FocusNode? focusNode;
+  final double? width;
+  final double? height;
 
   const FocusableBtn({
-    super.key,
-    required this.icon,
+    Key? key,
+    required this.focusNode,
     this.onTap,
     this.onLongPress,
     this.onSecondaryTap,
-    this.width = 34,
-    this.height = 34,
+    required this.icon,
     this.tooltip,
-    this.focusNode,
-  });
+    this.width,
+    this.height,
+  }) : super(key: key);
 
   @override
-  State<FocusableBtn> createState() => _FocusableBtnState();
+  _FocusableBtnState createState() => _FocusableBtnState();
 }
 
 class _FocusableBtnState extends State<FocusableBtn> {
-  late final FocusNode _focusNode;
-  bool _isFocused = false;
-
   @override
   void initState() {
     super.initState();
-    _focusNode = widget.focusNode ?? FocusNode();
-    _focusNode.addListener(_onFocusChange);
+    widget.focusNode.addListener(_onFocusChange);
   }
 
   void _onFocusChange() {
-    if (_focusNode.hasFocus != _isFocused) {
-      setState(() {
-        _isFocused = _focusNode.hasFocus;
-      });
-    }
+    setState(() {});
   }
 
   @override
   void dispose() {
-    _focusNode.removeListener(_onFocusChange);
-    if (widget.focusNode == null) {
-      _focusNode.dispose();
-    }
+    widget.focusNode.removeListener(_onFocusChange);
     super.dispose();
   }
 
@@ -63,9 +52,11 @@ class _FocusableBtnState extends State<FocusableBtn> {
         onTap: widget.onTap,
         onLongPress: widget.onLongPress,
         onSecondaryTap: widget.onSecondaryTap,
-        child: DecoratedBox(
+        focusNode: widget.focusNode,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            border: _isFocused
+            border: widget.focusNode.hasFocus
                 ? Border.all(color: Colors.white, width: 2)
                 : null,
             borderRadius: BorderRadius.circular(4),

@@ -31,6 +31,7 @@ import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/services/service_locator.dart';
+import 'package:PiliPlus/plugin/pl_player/logic/tv_focus_manager.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
@@ -210,6 +211,8 @@ class PlPlayerController {
   late final RxBool flipY = false.obs;
 
   final RxBool isBuffering = true.obs;
+
+  final TVFocusManager tvFocusManager = TVFocusManager();
 
   /// 全屏方向
   bool get isVertical => _isVertical;
@@ -1714,6 +1717,7 @@ class PlPlayerController {
   bool isCloseAll = false;
   Future<void> dispose() async {
     // 每次减1，最后销毁
+    tvFocusManager.dispose();
     cancelLongPressTimer();
     if (!isCloseAll && _playerCount > 1) {
       _playerCount -= 1;
