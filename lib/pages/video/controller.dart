@@ -121,8 +121,11 @@ class VideoDetailController extends GetxController
   final videoPlayerKey = GlobalKey();
   final childKey = GlobalKey<ScaffoldState>();
 
-  final plPlayerController = PlPlayerController.getInstance()
-    ..brightness.value = -1;
+  PlPlayerController get plPlayerController =>
+      PlPlayerController.getInstance<PlPlayerController>(
+        tag: heroTag,
+        create: () => PlPlayerController(),
+      );
   bool get setSystemBrightness => plPlayerController.setSystemBrightness;
 
   late VideoItem firstVideo;
@@ -1034,6 +1037,7 @@ class VideoDetailController extends GetxController
           return SendDanmakuPanel(
             cid: cid.value,
             bvid: bvid,
+            heroTag: heroTag,
             progress: plPlayerController.position.value.inMilliseconds,
             initialValue: savedDanmaku,
             onSave: (danmaku) => savedDanmaku = danmaku,

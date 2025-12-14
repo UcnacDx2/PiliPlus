@@ -37,14 +37,19 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> play() async {
-    onPlay?.call() ?? PlPlayerController.playIfExists();
-    // player.play();
+    final instance = PlPlayerController.instance;
+    if (instance != null) {
+      onPlay?.call() ?? PlPlayerController.playIfExists(tag: instance.bvid);
+    }
   }
 
   @override
   Future<void> pause() async {
-    await (onPause?.call() ?? PlPlayerController.pauseIfExists());
-    // player.pause();
+    final instance = PlPlayerController.instance;
+    if (instance != null) {
+      await (onPause?.call() ??
+          PlPlayerController.pauseIfExists(tag: instance.bvid));
+    }
   }
 
   @override
@@ -54,9 +59,12 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
         updatePosition: position,
       ),
     );
-    await (onSeek?.call(position) ??
-        PlPlayerController.seekToIfExists(position, isSeek: false));
-    // await player.seekTo(position);
+    final instance = PlPlayerController.instance;
+    if (instance != null) {
+      await (onSeek?.call(position) ??
+          PlPlayerController.seekToIfExists(instance.bvid, position,
+              isSeek: false));
+    }
   }
 
   Future<void> setMediaItem(MediaItem newMediaItem) async {
@@ -75,9 +83,11 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
     bool isBuffering,
     bool isLive,
   ) async {
+    final instance = PlPlayerController.instance;
     if (!enableBackgroundPlay ||
         _item.isEmpty ||
-        !PlPlayerController.instanceExists()) {
+        instance == null ||
+        !PlPlayerController.instanceExists(tag: instance.bvid)) {
       return;
     }
 
@@ -134,7 +144,11 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
     //   debugPrint('当前调用栈为：');
     //   debugPrint(StackTrace.current);
     // }
-    if (!PlPlayerController.instanceExists()) return;
+    final instance = PlPlayerController.instance;
+    if (instance == null ||
+        !PlPlayerController.instanceExists(tag: instance.bvid)) {
+      return;
+    }
     if (data == null) return;
 
     late final id = '$cid$herotag';
@@ -255,9 +269,11 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
   }
 
   void onPositionChange(Duration position) {
+    final instance = PlPlayerController.instance;
     if (!enableBackgroundPlay ||
         _item.isEmpty ||
-        !PlPlayerController.instanceExists()) {
+        instance == null ||
+        !PlPlayerController.instanceExists(tag: instance.bvid)) {
       return;
     }
 

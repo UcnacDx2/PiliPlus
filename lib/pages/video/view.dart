@@ -173,7 +173,8 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     videoDetailController.queryVideoUrl();
     if (videoDetailController.autoPlay.value) {
       plPlayerController = _isTvMode
-          ? TvPlayerController.getInstance()
+          ? PlPlayerController.getInstance<TvPlayerController>(
+              tag: heroTag, create: () => TvPlayerController())
           : videoDetailController.plPlayerController;
       plPlayerController!
         ..addStatusLister(playerListener)
@@ -374,7 +375,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         videoDetailController.makeHeartBeat();
         plPlayerController!.dispose();
       } else {
-        PlPlayerController.updatePlayCount();
+        PlPlayerController.updatePlayCount(bvid);
       }
     }
     PageUtils.routeObserver.unsubscribe(this);

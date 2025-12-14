@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:piliplus/pages/video/controller.dart';
-import 'package:piliplus/plugin/pl_player/tv_controller.dart';
+import 'package:PiliPlus/pages/video/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
+import '../tv_controller.dart';
 
 class TvTopControl extends StatefulWidget {
   final TvPlayerController controller;
@@ -74,7 +75,7 @@ class _TvTopControlState extends State<TvTopControl> {
               actions: {
                 ActivateIntent:
                     CallbackAction<ActivateIntent>(onInvoke: (intent) {
-                  widget.controller.videoPlayerController!.playOrPause();
+                  widget.controller.togglePlayPause();
                 }),
               },
               child: Obx(

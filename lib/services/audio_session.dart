@@ -19,26 +19,28 @@ class AudioSessionHandler {
     session.configure(const AudioSessionConfiguration.music());
 
     session.interruptionEventStream.listen((event) {
-      final playerStatus = PlPlayerController.getPlayerStatusIfExists();
-      // final player = PlPlayerController.getInstance();
+      final instance = PlPlayerController.instance;
+      if (instance == null) return;
+      final playerStatus =
+          PlPlayerController.getPlayerStatusIfExists(tag: instance.bvid);
       if (event.begin) {
         if (playerStatus != PlayerStatus.playing) return;
-        // if (!player.playerStatus.playing) return;
         switch (event.type) {
           case AudioInterruptionType.duck:
             PlPlayerController.setVolumeIfExists(
-              (PlPlayerController.getVolumeIfExists() ?? 0) * 0.5,
+              instance.bvid,
+              (PlPlayerController.getVolumeIfExists(tag: instance.bvid) ?? 0) *
+                  0.5,
             );
-            // player.setVolume(player.volume.value * 0.5);
             break;
           case AudioInterruptionType.pause:
-            PlPlayerController.pauseIfExists(isInterrupt: true);
-            // player.pause(isInterrupt: true);
+            PlPlayerController.pauseIfExists(
+                tag: instance.bvid, isInterrupt: true);
             _playInterrupted = true;
             break;
           case AudioInterruptionType.unknown:
-            PlPlayerController.pauseIfExists(isInterrupt: true);
-            // player.pause(isInterrupt: true);
+            PlPlayerController.pauseIfExists(
+                tag: instance.bvid, isInterrupt: true);
             _playInterrupted = true;
             break;
         }
@@ -46,13 +48,15 @@ class AudioSessionHandler {
         switch (event.type) {
           case AudioInterruptionType.duck:
             PlPlayerController.setVolumeIfExists(
-              (PlPlayerController.getVolumeIfExists() ?? 0) * 2,
+              instance.bvid,
+              (PlPlayerController.getVolumeIfExists(tag: instance.bvid) ?? 0) *
+                  2,
             );
-            // player.setVolume(player.volume.value * 2);
             break;
           case AudioInterruptionType.pause:
-            if (_playInterrupted) PlPlayerController.playIfExists();
-            //player.play();
+            if (_playInterrupted) {
+              PlPlayerController.playIfExists(tag: instance.bvid);
+            }
             break;
           case AudioInterruptionType.unknown:
             break;
@@ -63,11 +67,10 @@ class AudioSessionHandler {
 
     // 耳机拔出暂停
     session.becomingNoisyEventStream.listen((_) {
-      PlPlayerController.pauseIfExists();
-      // final player = PlPlayerController.getInstance();
-      // if (player.playerStatus.playing) {
-      //   player.pause();
-      // }
+      final instance = PlPlayerController.instance;
+      if (instance != null) {
+        PlPlayerController.pauseIfExists(tag: instance.bvid);
+      }
     });
   }
 }

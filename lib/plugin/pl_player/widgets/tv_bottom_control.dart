@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:piliplus/models/common/video/video_quality.dart';
-import 'package:piliplus/plugin/pl_player/models/video_fit_type.dart';
-import 'package:piliplus/pages/video/controller.dart';
-import 'package:piliplus/plugin/pl_player/tv_controller.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:PiliPlus/models/common/video/video_quality.dart';
+import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
+import 'package:PiliPlus/pages/video/controller.dart';
+import '../tv_controller.dart';
+import 'package:PiliPlus/utils/storage.dart';
+import 'package:PiliPlus/utils/storage_key.dart';
+import 'package:PiliPlus/utils/utils.dart';
 
 class TvBottomControl extends StatefulWidget {
   final TvPlayerController controller;

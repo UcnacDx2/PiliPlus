@@ -556,8 +556,6 @@ class PlPlayerController {
 
   Box video = GStorage.video;
 
-  // Protected constructor for subclassing
-  @protected
   PlPlayerController() {
     if (!Accounts.heartbeat.isLogin || Pref.historyPause) {
       enableHeart = false;
@@ -598,6 +596,17 @@ class PlPlayerController {
   }
 
   static final Map<String, PlPlayerController> _instances = {};
+  static String? _activeTag;
+
+  static PlPlayerController? get instance {
+    if (_activeTag != null) {
+      return _instances[_activeTag];
+    }
+    if (_instances.isNotEmpty) {
+      return _instances.values.first;
+    }
+    return null;
+  }
 
   bool _processing = false;
   bool get processing => _processing;
@@ -639,6 +648,7 @@ class PlPlayerController {
     int? mediaType,
   }) async {
     try {
+      _activeTag = bvid;
       this.dirPath = dirPath;
       this.typeTag = typeTag;
       this.mediaType = mediaType;
@@ -1476,6 +1486,14 @@ class PlPlayerController {
       videoPlayerController!.state.completed ||
       (duration.value - position.value).inMilliseconds <= 50;
 
+  void togglePlayPause() {
+    if (playerStatus.value == PlayerStatus.playing) {
+      pause();
+    } else {
+      play();
+    }
+  }
+
   // 双击播放、暂停
   Future<void> onDoubleTapCenter() async {
     controls = true;
@@ -1756,6 +1774,9 @@ class PlPlayerController {
     _videoPlayerController = null;
     _videoController = null;
     _instances.removeWhere((key, value) => value == this);
+    if (_instances.isEmpty) {
+      _activeTag = null;
+    }
     videoPlayerServiceHandler?.clear();
   }
 

@@ -4,10 +4,10 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:piliplus/plugin/pl_player/tv_controller.dart';
-import 'package:piliplus/plugin/pl_player/widgets/tv_bottom_control.dart';
-import 'package:piliplus/plugin/pl_player/widgets/tv_progress_control.dart';
-import 'package:piliplus/plugin/pl_player/widgets/tv_top_control.dart';
+import 'tv_controller.dart';
+import 'widgets/tv_bottom_control.dart';
+import 'widgets/tv_progress_control.dart';
+import 'widgets/tv_top_control.dart';
 
 class TvVideoPlayer extends StatefulWidget {
   final TvPlayerController controller;
@@ -41,7 +41,9 @@ class _TvVideoPlayerState extends State<TvVideoPlayer> {
   void _startHideTimer() {
     _hideTimer?.cancel();
     _hideTimer = Timer(const Duration(seconds: 5), () {
-      widget.controller.showControls.value = false;
+      if (ModalRoute.of(context)?.isCurrent ?? false) {
+        widget.controller.showControls.value = false;
+      }
     });
   }
 
@@ -62,8 +64,10 @@ class _TvVideoPlayerState extends State<TvVideoPlayer> {
         // Reset timer on any key event
         if (widget.controller.showControls.value) {
           _startHideTimer();
+        } else {
+          return widget.controller.handleKeyEventWhenHidden(event);
         }
-        return widget.controller.handleKeyEventWhenHidden(event);
+        return KeyEventResult.ignored;
       },
       child: Stack(
         alignment: Alignment.center,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:piliplus/plugin/pl_player/controller.dart';
+import 'controller.dart';
 
 // Enum to represent the different focus areas in the TV player UI.
 enum FocusArea {
@@ -12,6 +12,8 @@ enum FocusArea {
 }
 
 class TvPlayerController extends PlPlayerController {
+  TvPlayerController() : super();
+
   // Focus nodes for the main UI areas.
   final FocusNode focusNodeA = FocusNode(); // Top controls
   final FocusNode focusNodeB = FocusNode(); // Progress bar
@@ -74,11 +76,11 @@ class TvPlayerController extends PlPlayerController {
     return KeyEventResult.ignored;
   }
 
-   @override
-  void dispose() {
+  @override
+  Future<void> dispose() async {
     focusNodeA.dispose();
     focusNodeB.dispose();
     focusNodeC.dispose();
-    super.dispose();
+    await super.dispose();
   }
 }

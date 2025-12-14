@@ -164,17 +164,22 @@ class _MainAppState extends State<MainApp>
 
   void _onHideWindow() {
     if (_mainController.pauseOnMinimize) {
-      _mainController.isPlaying =
-          PlPlayerController.instance?.playerStatus.value ==
-          PlayerStatus.playing;
-      PlPlayerController.pauseIfExists();
+      final instance = PlPlayerController.instance;
+      if (instance != null) {
+        _mainController.isPlaying =
+            instance.playerStatus.value == PlayerStatus.playing;
+        PlPlayerController.pauseIfExists(tag: instance.bvid);
+      }
     }
   }
 
   void _onShowWindow() {
     if (_mainController.pauseOnMinimize) {
       if (_mainController.isPlaying) {
-        PlPlayerController.playIfExists();
+        final instance = PlPlayerController.instance;
+        if (instance != null) {
+          PlPlayerController.playIfExists(tag: instance.bvid);
+        }
       }
     }
   }

@@ -21,6 +21,7 @@ class SendDanmakuPanel extends CommonTextPubPage {
   // video
   final dynamic cid;
   final dynamic bvid;
+  final String heroTag;
   final dynamic progress;
 
   final ValueChanged<DanmakuContentItem<DanmakuExtra>> callback;
@@ -36,6 +37,7 @@ class SendDanmakuPanel extends CommonTextPubPage {
     super.onSave,
     this.cid,
     this.bvid,
+    required this.heroTag,
     this.progress,
     required this.callback,
     required this.darkVideoPage,
@@ -481,7 +483,7 @@ class _SendDanmakuPanelState extends CommonTextPubPageState<SendDanmakuPanel> {
       if (response.dmid case final dmid?) {
         extra = VideoDanmaku(
           id: dmid,
-          mid: PlPlayerController.instance!.midHash,
+          mid: PlPlayerController.getInstanceByTag(widget.heroTag)!.midHash,
         );
       }
       widget.callback(

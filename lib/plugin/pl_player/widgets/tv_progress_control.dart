@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:piliplus/plugin/pl_player/tv_controller.dart';
-import 'package:piliplus/plugin/pl_player/utils/duration.dart';
+import '../tv_controller.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/duration.dart';
 
 class TvProgressControl extends StatefulWidget {
   final TvPlayerController controller;
@@ -27,7 +27,7 @@ class _TvProgressControlState extends State<TvProgressControl> {
       switch (event.logicalKey) {
         case LogicalKeyboardKey.select:
         case LogicalKeyboardKey.enter:
-          controller.videoPlayerController!.playOrPause();
+          controller.togglePlayPause();
           return KeyEventResult.handled;
         case LogicalKeyboardKey.arrowLeft:
           controller.seekTo(
