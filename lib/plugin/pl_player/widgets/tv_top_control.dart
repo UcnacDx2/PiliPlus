@@ -1,5 +1,6 @@
 import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 /// TV端顶部控制栏 (区域A)
