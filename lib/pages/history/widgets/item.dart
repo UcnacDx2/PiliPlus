@@ -30,6 +30,26 @@ class HistoryItem extends StatelessWidget {
     required this.onDelete,
   });
 
+  /// Convert history progress to string for navigation
+  /// 
+  /// Returns '0' if progress is -1 (fully watched video), otherwise returns the progress as string.
+  /// Progress value of -1 indicates the video has been fully watched in the history.
+  /// When navigating to such videos, we want to start from the beginning (position 0).
+  String? _getProgressString(int? progress) {
+    if (progress == null) return null;
+    return progress == -1 ? '0' : progress.toString();
+  }
+
+  /// Convert history progress to int for navigation
+  /// 
+  /// Returns 0 if progress is -1 (fully watched video), otherwise returns the progress.
+  /// Progress value of -1 indicates the video has been fully watched in the history.
+  /// When navigating to such videos, we want to start from the beginning (position 0).
+  int? _getProgressInt(int? progress) {
+    if (progress == null) return null;
+    return progress == -1 ? 0 : progress;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -68,13 +88,19 @@ class HistoryItem extends StatelessWidget {
                     SmartDialog.showToast('直播未开播');
                   }
                 } else if (business == 'pgc') {
-                  PageUtils.viewPgc(epId: item.history.epid);
+                  // Pass progress to video page, handling fully watched videos
+                  PageUtils.viewPgc(
+                    epId: item.history.epid,
+                    progress: _getProgressString(item.progress),
+                  );
                 } else if (business == 'cheese') {
                   if (item.uri?.isNotEmpty == true) {
+                    // Pass progress to video page, handling fully watched videos
                     PageUtils.viewPgcFromUri(
                       item.uri!,
                       isPgc: false,
                       aid: item.history.oid,
+                      progress: _getProgressString(item.progress),
                     );
                   }
                 } else {
@@ -86,12 +112,15 @@ class HistoryItem extends StatelessWidget {
                         part: item.history.page,
                       );
                   if (cid != null) {
+                    // Pass progress to video page, handling fully watched videos
+                    // progress == -1 means fully watched, should start from beginning
                     PageUtils.toVideoPage(
                       aid: aid,
                       bvid: bvid,
                       cid: cid,
                       cover: item.cover,
                       title: item.title,
+                      progress: _getProgressInt(item.progress),
                     );
                   }
                 }
