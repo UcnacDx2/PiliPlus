@@ -9,6 +9,7 @@ import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
 import 'package:PiliPlus/models_new/video/video_detail/section.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/pgc/controller.dart';
+import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/bottom_control_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
@@ -16,7 +17,7 @@ import 'package:PiliPlus/plugin/pl_player/view.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/focusable_wrapper.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/interactive_seek_bar.dart';
-import 'packagepackage:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
+import 'package:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
@@ -190,7 +191,9 @@ class BottomControl extends StatelessWidget {
   }
 
   Widget _buildMainControlRow(BuildContext context) {
-    final introController = videoDetailController.introController;
+    final introController = videoDetailController.isUgc
+        ? Get.find<UgcIntroController>()
+        : Get.find<PgcIntroController>();
     final videoDetail = introController.videoDetail.value;
     final isSeason = videoDetail.ugcSeason != null;
     final isPart = videoDetail.pages != null && videoDetail.pages!.length > 1;
@@ -224,7 +227,9 @@ class BottomControl extends StatelessWidget {
     final isNotFileSource = !controller.isFileSource;
     final flag =
         isFullScreen || controller.isDesktopPip || maxWidth >= 500;
-    final introController = videoDetailController.introController;
+    final introController = videoDetailController.isUgc
+        ? Get.find<UgcIntroController>()
+        : Get.find<PgcIntroController>();
     final videoDetail = introController.videoDetail.value;
     final isSeason = videoDetail.ugcSeason != null;
     final isPart = videoDetail.pages != null && videoDetail.pages!.length > 1;
@@ -268,7 +273,9 @@ class BottomControl extends StatelessWidget {
     final isLandscape = maxWidth > Get.height;
     final widgetWidth = isLandscape && isFullScreen ? 42.0 : 35.0;
 
-    final introController = videoDetailController.introController;
+    final introController = videoDetailController.isUgc
+        ? Get.find<UgcIntroController>()
+        : Get.find<PgcIntroController>();
     final videoDetail = introController.videoDetail.value;
     final isSeason = videoDetail.ugcSeason != null;
     final isPart = videoDetail.pages != null && videoDetail.pages!.length > 1;
@@ -596,7 +603,7 @@ class BottomControl extends StatelessWidget {
                           onTap: () =>
                               videoDetailController.setSubtitle(e.$1 + 1),
                           child: Text(
-                            e.$2.lanDoc,
+                            e.$2.lanDoc ?? '',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
