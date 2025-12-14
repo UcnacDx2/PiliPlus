@@ -43,6 +43,8 @@ import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
+import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
+import 'package:PiliPlus/plugin/pl_player/tv_view.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/plugin/pl_player/view.dart';
 import 'package:PiliPlus/services/service_locator.dart';
@@ -77,6 +79,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     with TickerProviderStateMixin, RouteAware, WidgetsBindingObserver {
   final heroTag = Get.arguments['heroTag'];
 
+  bool _isTvMode = false;
   late final VideoDetailController videoDetailController;
   late final VideoReplyController _videoReplyController;
   PlPlayerController? plPlayerController;
@@ -128,6 +131,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
   @override
   void initState() {
     super.initState();
+    _checkDeviceType();
 
     PlPlayerController.setPlayCallBack(playCallBack);
     videoDetailController = Get.put(VideoDetailController(), tag: heroTag);
@@ -157,15 +161,26 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     WidgetsBinding.instance.addObserver(this);
   }
 
+  Future<void> _checkDeviceType() async {
+    _isTvMode = await Utils.isTvMode;
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   // 获取视频资源，初始化播放器
   Future<void> videoSourceInit() async {
     videoDetailController.queryVideoUrl();
     if (videoDetailController.autoPlay.value) {
-      plPlayerController = videoDetailController.plPlayerController;
+      plPlayerController = _isTvMode
+          ? TvPlayerController.getInstance()
+          : videoDetailController.plPlayerController;
       plPlayerController!
         ..addStatusLister(playerListener)
         ..addPositionListener(positionListener);
-      await plPlayerController!.autoEnterFullscreen();
+      if (!_isTvMode) {
+        await plPlayerController!.autoEnterFullscreen();
+      }
     }
   }
 
@@ -1340,43 +1355,54 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
   Widget plPlayer({
     required double width,
     required double height,
-    bool isPipMode = false,
-  }) => Obx(
-    key: videoDetailController.videoPlayerKey,
-    () =>
-        videoDetailController.videoState.value is! Success ||
-            !videoDetailController.autoPlay.value ||
-            plPlayerController?.videoController == null
-        ? const SizedBox.shrink()
-        : PLVideoPlayer(
-            maxWidth: width,
-            maxHeight: height,
-            plPlayerController: plPlayerController!,
-            videoDetailController: videoDetailController,
-            introController: introController,
-            headerControl: HeaderControl(
-              key: videoDetailController.headerCtrKey,
-              isPortrait: isPortrait,
-              controller: videoDetailController.plPlayerController,
-              videoDetailCtr: videoDetailController,
+  }) =>
+      Obx(
+        key: videoDetailController.videoPlayerKey,
+        () {
+          if (videoDetailController.videoState.value is! Success ||
+              !videoDetailController.autoPlay.value ||
+              plPlayerController?.videoController == null) {
+            return const SizedBox.shrink();
+          }
+
+          if (_isTvMode) {
+            return TvVideoPlayer(
+              controller: plPlayerController! as TvPlayerController,
               heroTag: heroTag,
-            ),
-            danmuWidget: isPipMode && pipNoDanmaku
-                ? null
-                : Obx(
-                    () => PlDanmaku(
-                      key: ValueKey(videoDetailController.cid.value),
-                      isPipMode: isPipMode,
-                      cid: videoDetailController.cid.value,
-                      playerController: plPlayerController!,
-                      isFullScreen: plPlayerController!.isFullScreen.value,
-                      isFileSource: videoDetailController.isFileSource,
+            );
+          } else {
+            bool isPipMode = videoDetailController.plPlayerController.isPipMode;
+            return PLVideoPlayer(
+              maxWidth: width,
+              maxHeight: height,
+              plPlayerController: plPlayerController!,
+              videoDetailController: videoDetailController,
+              introController: introController,
+              headerControl: HeaderControl(
+                key: videoDetailController.headerCtrKey,
+                isPortrait: isPortrait,
+                controller: videoDetailController.plPlayerController,
+                videoDetailCtr: videoDetailController,
+                heroTag: heroTag,
+              ),
+              danmuWidget: isPipMode && pipNoDanmaku
+                  ? null
+                  : Obx(
+                      () => PlDanmaku(
+                        key: ValueKey(videoDetailController.cid.value),
+                        isPipMode: isPipMode,
+                        cid: videoDetailController.cid.value,
+                        playerController: plPlayerController!,
+                        isFullScreen: plPlayerController!.isFullScreen.value,
+                        isFileSource: videoDetailController.isFileSource,
+                      ),
                     ),
-                  ),
-            showEpisodes: showEpisodes,
-            showViewPoints: showViewPoints,
-          ),
-  );
+              showEpisodes: showEpisodes,
+              showViewPoints: showViewPoints,
+            );
+          }
+        },
+      );
 
   late ThemeData themeData;
   late bool isPortrait;
@@ -1388,7 +1414,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
   Widget build(BuildContext context) {
     Widget child;
     if (videoDetailController.plPlayerController.isPipMode) {
-      child = plPlayer(width: maxWidth, height: maxHeight, isPipMode: true);
+      child = plPlayer(width: maxWidth, height: maxHeight);
     } else if (!videoDetailController.horizontalScreen) {
       child = childWhenDisabled;
     } else if (maxWidth / maxHeight >= kScreenRatio) {
