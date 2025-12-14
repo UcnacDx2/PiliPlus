@@ -128,7 +128,7 @@ abstract class Pref {
     return SegmentType.values.map(
       (item) {
         final String e = list[item.index];
-        final color = e.isNotEmpty ? int.tryParse('FF$e', radix: 16) : null;
+        final color = e.isNotEmpty ? int.tryParse('FF\$e', radix: 16) : null;
         return color != null ? Color(color) : item.color;
       },
     ).toList();
