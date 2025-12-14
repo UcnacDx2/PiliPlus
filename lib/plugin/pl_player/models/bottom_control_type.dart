@@ -5,5 +5,7 @@ enum BottomControlType {
   time,
   fullscreen,
   viewPoints,
+  superResolution,
+  qa,
   aiTranslate,
 }

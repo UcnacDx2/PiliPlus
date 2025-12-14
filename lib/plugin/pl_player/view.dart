@@ -881,9 +881,11 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final flag =
         isFullScreen || plPlayerController.isDesktopPip || maxWidth >= 500;
     List<BottomControlType> userSpecifyItemRight = [
+      if (plPlayerController.isAnim) BottomControlType.superResolution,
       if (isNotFileSource && plPlayerController.showViewPoints)
         BottomControlType.viewPoints,
       if (isNotFileSource) BottomControlType.aiTranslate,
+      if (isNotFileSource && flag) BottomControlType.qa,
       if (!plPlayerController.isDesktopPip) BottomControlType.fullscreen,
     ];
 

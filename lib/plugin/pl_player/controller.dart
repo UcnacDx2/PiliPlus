@@ -135,7 +135,6 @@ class PlPlayerController {
   bool _isVertical = false;
 
   /// 视频比例
-  final Rx<BoxFit> fit = Rx(BoxFit.contain);
   final Rx<VideoFitType> videoFit = Rx(VideoFitType.contain);
 
   StreamSubscription<DataStatus>? _dataListenerForVideoFit;
@@ -1896,16 +1895,5 @@ class PlPlayerController {
         SmartDialog.showToast('截图失败');
       }
     });
-  }
-
-  void setFit(BoxFit fit) {
-    this.fit.value = fit;
-    update();
-  }
-
-  void setPlaybackSpeed(double speed) {
-    _playbackSpeed.value = speed;
-    videoPlayerController?.setRate(speed);
-    update();
   }
 }
