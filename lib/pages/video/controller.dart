@@ -1253,6 +1253,7 @@ class VideoDetailController extends GetxController
       tryLook: plPlayerController.tryLook,
       videoType: _actualVideoType ?? videoType,
       language: currLang.value,
+      account: Accounts.history,
     );
 
     if (result.isSuccess) {
@@ -1267,12 +1268,16 @@ class VideoDetailController extends GetxController
       if (progress != null) {
         this.defaultST = Duration(milliseconds: progress);
         args['progress'] = null;
-      } else {
-        this.defaultST =
-            defaultST ??
-            (data.lastPlayTime == null
-                ? Duration.zero
-                : Duration(milliseconds: data.lastPlayTime!));
+      } else if (defaultST == null) {
+        if (data.lastPlayTime != null &&
+            data.timeLength != null &&
+            data.lastPlayTime! >= data.timeLength! - 400) {
+          this.defaultST = Duration.zero;
+        } else {
+          this.defaultST = data.lastPlayTime != null
+              ? Duration(milliseconds: data.lastPlayTime!)
+              : Duration.zero;
+        }
       }
 
       if (!isUgc && !fromReset && plPlayerController.enablePgcSkip) {
