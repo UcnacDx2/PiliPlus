@@ -4,6 +4,7 @@ class ComBtn extends StatelessWidget {
   final Widget icon;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onSecondaryTap;
   final double width;
   final double height;
   final String? tooltip;
@@ -14,6 +15,7 @@ class ComBtn extends StatelessWidget {
     required this.icon,
     this.onTap,
     this.onLongPress,
+    this.onSecondaryTap,
     this.width = 34,
     this.height = 34,
     this.tooltip,
@@ -25,11 +27,14 @@ class ComBtn extends StatelessWidget {
     final child = SizedBox(
       width: width,
       height: height,
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        autofocus: autofocus,
-        child: Center(child: icon),
+      child: GestureDetector(
+        onSecondaryTap: onSecondaryTap,
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          autofocus: autofocus,
+          child: Center(child: icon),
+        ),
       ),
     );
     if (tooltip != null) {
