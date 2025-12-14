@@ -1351,21 +1351,40 @@ class HeaderControlState extends State<HeaderControl>
                   leading: const Icon(CustomIcons.dm_settings, size: 20),
                   title: const Text('弹幕设置', style: titleStyle),
                 ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                    showSetSubtitle();
+                  },
+                  leading: const Icon(Icons.subtitles_outlined, size: 20),
+                  title: const Text('字幕设置', style: titleStyle),
+                ),
+                if (videoDetailCtr.subtitles.isNotEmpty)
+                  ListTile(
+                    dense: true,
+                    onTap: () {
+                      Get.back();
+                      showSelectSubtitle();
+                    },
+                    leading: const Icon(Icons.subtitles_outlined, size: 20),
+                    title: const Text('选择字幕', style: titleStyle),
+                  ),
                 Obx(() {
-                  final list = videoDetailController.dmTrend.value?.dataOrNull;
+                  final list = videoDetailCtr.dmTrend.value?.dataOrNull;
                   if (list != null && list.isNotEmpty) {
                     return ListTile(
                       dense: true,
                       onTap: () {
-                        videoDetailController.showDmTrendChart.value =
-                            !videoDetailController.showDmTrendChart.value;
+                        videoDetailCtr.showDmTrendChart.value =
+                            !videoDetailCtr.showDmTrendChart.value;
                       },
                       leading: const Icon(Icons.show_chart, size: 20),
                       title: const Text('高能进度条', style: titleStyle),
                       trailing: Switch(
-                        value: videoDetailController.showDmTrendChart.value,
+                        value: videoDetailCtr.showDmTrendChart.value,
                         onChanged: (value) {
-                          videoDetailController.showDmTrendChart.value = value;
+                          videoDetailCtr.showDmTrendChart.value = value;
                         },
                       ),
                     );
@@ -1408,25 +1427,6 @@ class HeaderControlState extends State<HeaderControl>
                     },
                   ),
                 ),
-                ListTile(
-                  dense: true,
-                  onTap: () {
-                    Get.back();
-                    showSetSubtitle();
-                  },
-                  leading: const Icon(Icons.subtitles_outlined, size: 20),
-                  title: const Text('字幕设置', style: titleStyle),
-                ),
-                if (videoDetailCtr.subtitles.isNotEmpty)
-                  ListTile(
-                    dense: true,
-                    onTap: () {
-                      Get.back();
-                      showSelectSubtitle();
-                    },
-                    leading: const Icon(Icons.subtitles_outlined, size: 20),
-                    title: const Text('选择字幕', style: titleStyle),
-                  ),
                 ListTile(
                   dense: true,
                   onTap: () async {
@@ -2968,6 +2968,7 @@ class HeaderControlState extends State<HeaderControl>
                       color: Colors.white,
                     ),
                   ),
+                ),
                 ),
               ],
               SizedBox(
