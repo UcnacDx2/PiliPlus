@@ -1,14 +1,20 @@
 import 'dart:io';
 
+import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/marquee.dart';
+import 'package:PiliPlus/models_new/live/live_room_info_h5/data.dart';
 import 'package:PiliPlus/pages/live_room/controller.dart';
 import 'package:PiliPlus/pages/video/widgets/header_control.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/storage.dart';
+import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:floating/floating.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -34,11 +40,308 @@ class LiveHeaderControl extends StatefulWidget {
   final LiveRoomController liveController;
 
   @override
-  State<LiveHeaderControl> createState() => _LiveHeaderControlState();
+  State<LiveHeaderControl> createState() => LiveHeaderControlState();
 }
 
-class _LiveHeaderControlState extends State<LiveHeaderControl>
+class LiveHeaderControlState extends State<LiveHeaderControl>
     with TimeBatteryMixin {
+  void showSettingSheet() {
+    final liveUrl = 'https://live.bilibili.com/${widget.liveController.roomId}';
+    PageUtils.showVideoBottomSheet(
+      context,
+      isFullScreen: () => isFullScreen,
+      child: Material(
+        color: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            children: [
+              ComBtn(
+                height: 30,
+                tooltip: '发弹幕',
+                autofocus: true,
+                icon: const Icon(
+                  size: 18,
+                  Icons.comment_outlined,
+                  color: Colors.white,
+                ),
+                onTap: widget.onSendDanmaku,
+              ),
+              Obx(
+                () {
+                  final onlyPlayAudio = plPlayerController.onlyPlayAudio.value;
+                  return ComBtn(
+                    height: 30,
+                    tooltip: '仅播放音频',
+                    onTap: () {
+                      plPlayerController.onlyPlayAudio.value = !onlyPlayAudio;
+                      widget.onPlayAudio();
+                    },
+                    icon: onlyPlayAudio
+                        ? const Icon(
+                            size: 18,
+                            MdiIcons.musicCircle,
+                            color: Colors.white,
+                          )
+                        : const Icon(
+                            size: 18,
+                            MdiIcons.musicCircleOutline,
+                            color: Colors.white,
+                          ),
+                  );
+                },
+              ),
+              if (Platform.isAndroid || (Utils.isDesktop && !isFullScreen))
+                ComBtn(
+                  height: 30,
+                  tooltip: '画中画',
+                  onTap: () async {
+                    if (Utils.isDesktop) {
+                      plPlayerController.toggleDesktopPip();
+                      return;
+                    }
+                    if (await Floating().isPipAvailable) {
+                      plPlayerController
+                        ..showControls.value = false
+                        ..enterPip();
+                    }
+                  },
+                  icon: const Icon(
+                    size: 18,
+                    Icons.picture_in_picture_outlined,
+                    color: Colors.white,
+                  ),
+                ),
+              ComBtn(
+                height: 30,
+                tooltip: '定时关闭',
+                onTap: () => PageUtils.scheduleExit(context, isFullScreen, true),
+                icon: const Icon(
+                  size: 18,
+                  Icons.schedule,
+                  color: Colors.white,
+                ),
+              ),
+              ComBtn(
+                height: 30,
+                tooltip: '播放信息',
+                onTap: () => HeaderControlState.showPlayerInfo(
+                  context,
+                  plPlayerController: plPlayerController,
+                ),
+                icon: const Icon(
+                  size: 18,
+                  Icons.info_outline,
+                  color: Colors.white,
+                ),
+              ),
+              ComBtn(
+                height: 30,
+                tooltip: '复制链接',
+                onTap: () => Utils.copyText(liveUrl),
+                icon: const Icon(
+                  size: 18,
+                  Icons.copy,
+                  color: Colors.white,
+                ),
+              ),
+              if (Utils.isMobile)
+                ComBtn(
+                  height: 30,
+                  tooltip: '分享直播间',
+                  onTap: () => Utils.shareText(liveUrl),
+                  icon: const Icon(
+                    size: 18,
+                    Icons.share,
+                    color: Colors.white,
+                  ),
+                ),
+              ComBtn(
+                height: 30,
+                tooltip: '浏览器打开',
+                onTap: () => PageUtils.inAppWebview(liveUrl, off: true),
+                icon: const Icon(
+                  size: 18,
+                  Icons.open_in_browser,
+                  color: Colors.white,
+                ),
+              ),
+              if (widget.liveController.roomInfoH5.value != null)
+                ComBtn(
+                  height: 30,
+                  tooltip: '分享至消息',
+                  onTap: () {
+                    try {
+                      RoomInfoH5Data roomInfo =
+                          widget.liveController.roomInfoH5.value!;
+                      PageUtils.pmShare(
+                        context,
+                        content: {
+                          "cover": roomInfo.roomInfo!.cover!,
+                          "sourceID": widget.liveController.roomId.toString(),
+                          "title": roomInfo.roomInfo!.title!,
+                          "url": liveUrl,
+                          "authorID": roomInfo.roomInfo!.uid.toString(),
+                          "source": "直播",
+                          "desc": roomInfo.roomInfo!.title!,
+                          "author": roomInfo.anchorInfo!.baseInfo!.uname,
+                        },
+                      );
+                    } catch (e) {
+                      SmartDialog.showToast(e.toString());
+                    }
+                  },
+                  icon: const Icon(
+                    size: 18,
+                    Icons.forward_to_inbox,
+                    color: Colors.white,
+                  ),
+                ),
+              ComBtn(
+                height: 30,
+                tooltip: '屏蔽',
+                icon: const Icon(
+                  size: 18,
+                  Icons.block,
+                  color: Colors.white,
+                ),
+                onTap: () {
+                  if (widget.liveController.isLogin) {
+                    Get.toNamed(
+                      '/liveDmBlockPage',
+                      parameters: {
+                        'roomId': widget.liveController.roomId.toString(),
+                      },
+                    );
+                  } else {
+                    SmartDialog.showToast('账号未登录');
+                  }
+                },
+              ),
+              Obx(
+                () {
+                  final enableShowLiveDanmaku =
+                      plPlayerController.enableShowDanmaku.value;
+                  return ComBtn(
+                    height: 30,
+                    tooltip: "${enableShowLiveDanmaku ? '关闭' : '开启'}弹幕",
+                    icon: enableShowLiveDanmaku
+                        ? const Icon(
+                            size: 18,
+                            CustomIcons.dm_on,
+                            color: Colors.white,
+                          )
+                        : const Icon(
+                            size: 18,
+                            CustomIcons.dm_off,
+                            color: Colors.white,
+                          ),
+                    onTap: () {
+                      final newVal = !enableShowLiveDanmaku;
+                      plPlayerController.enableShowDanmaku.value = newVal;
+                      if (!plPlayerController.tempPlayerConf) {
+                        GStorage.setting.put(
+                          SettingBoxKey.enableShowLiveDanmaku,
+                          newVal,
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
+              ComBtn(
+                height: 30,
+                tooltip: '弹幕设置',
+                icon: const Icon(
+                  size: 18,
+                  CustomIcons.dm_settings,
+                  color: Colors.white,
+                ),
+                onTap: () => (context as Element)
+                    .findAncestorStateOfType<State<StatefulWidget>>()
+                    ?.setState(() {
+                  (widget.liveController.headerKey.currentContext as Element)
+                      .findAncestorStateOfType<HeaderMixin>()
+                      ?.showSetDanmaku(isLive: true);
+                }),
+              ),
+              Obx(
+                () => PopupMenuButton<VideoFitType>(
+                  tooltip: '画面比例',
+                  initialValue: plPlayerController.videoFit.value,
+                  color: Colors.black.withValues(alpha: 0.8),
+                  itemBuilder: (context) {
+                    return VideoFitType.values
+                        .map(
+                          (boxFit) => PopupMenuItem<VideoFitType>(
+                            height: 35,
+                            padding: const EdgeInsets.only(left: 30),
+                            value: boxFit,
+                            onTap: () =>
+                                plPlayerController.toggleVideoFit(boxFit),
+                            child: Text(
+                              boxFit.desc,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      plPlayerController.videoFit.value.desc,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                ),
+              ),
+              Obx(
+                () => PopupMenuButton<int>(
+                  tooltip: '画质',
+                  padding: EdgeInsets.zero,
+                  initialValue: widget.liveController.currentQn,
+                  color: Colors.black.withValues(alpha: 0.8),
+                  itemBuilder: (context) {
+                    return widget.liveController.acceptQnList
+                        .map(
+                          (e) => PopupMenuItem<int>(
+                            height: 35,
+                            padding: const EdgeInsets.only(left: 30),
+                            value: e.code,
+                            onTap: () => widget.liveController.changeQn(e.code),
+                            child: Text(
+                              e.desc,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      widget.liveController.currentQnDesc.value,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   late final plPlayerController = widget.plPlayerController;
 
@@ -59,7 +362,6 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
     Widget child;
     child = Obx(
       () => MarqueeText(
-        key: titleKey,
         liveController.title.value,
         spacing: 30,
         velocity: 30,
@@ -123,79 +425,10 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
           const SizedBox(width: 10),
           ComBtn(
             height: 30,
-            tooltip: '发弹幕',
+            tooltip: '更多',
+            onTap: showSettingSheet,
             icon: const Icon(
-              size: 18,
-              Icons.comment_outlined,
-              color: Colors.white,
-            ),
-            onTap: widget.onSendDanmaku,
-          ),
-          Obx(
-            () {
-              final onlyPlayAudio = plPlayerController.onlyPlayAudio.value;
-              return ComBtn(
-                height: 30,
-                tooltip: '仅播放音频',
-                onTap: () {
-                  plPlayerController.onlyPlayAudio.value = !onlyPlayAudio;
-                  widget.onPlayAudio();
-                },
-                icon: onlyPlayAudio
-                    ? const Icon(
-                        size: 18,
-                        MdiIcons.musicCircle,
-                        color: Colors.white,
-                      )
-                    : const Icon(
-                        size: 18,
-                        MdiIcons.musicCircleOutline,
-                        color: Colors.white,
-                      ),
-              );
-            },
-          ),
-          if (Platform.isAndroid || (Utils.isDesktop && !isFullScreen))
-            ComBtn(
-              height: 30,
-              tooltip: '画中画',
-              onTap: () async {
-                if (Utils.isDesktop) {
-                  plPlayerController.toggleDesktopPip();
-                  return;
-                }
-                if (await Floating().isPipAvailable) {
-                  plPlayerController
-                    ..showControls.value = false
-                    ..enterPip();
-                }
-              },
-              icon: const Icon(
-                size: 18,
-                Icons.picture_in_picture_outlined,
-                color: Colors.white,
-              ),
-            ),
-          ComBtn(
-            height: 30,
-            tooltip: '定时关闭',
-            onTap: () => PageUtils.scheduleExit(context, isFullScreen, true),
-            icon: const Icon(
-              size: 18,
-              Icons.schedule,
-              color: Colors.white,
-            ),
-          ),
-          ComBtn(
-            height: 30,
-            tooltip: '播放信息',
-            onTap: () => HeaderControlState.showPlayerInfo(
-              context,
-              plPlayerController: plPlayerController,
-            ),
-            icon: const Icon(
-              size: 18,
-              Icons.info_outline,
+              Icons.more_vert_outlined,
               color: Colors.white,
             ),
           ),

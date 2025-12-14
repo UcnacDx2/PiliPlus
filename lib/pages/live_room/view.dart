@@ -199,6 +199,12 @@ class _LiveRoomPageState extends State<LiveRoomPage>
       child = PlayerFocus(
         plPlayerController: plPlayerController,
         onSendDanmaku: _liveRoomController.onSendDanmaku,
+        onShowMenu: () {
+          if (isFullScreen) {
+            (_liveRoomController.headerKey.currentState as LiveHeaderControlState?)
+                ?.showSettingSheet();
+          }
+        },
         child: child,
       );
     }

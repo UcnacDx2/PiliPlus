@@ -8,6 +8,7 @@ class ComBtn extends StatelessWidget {
   final double width;
   final double height;
   final String? tooltip;
+  final bool autofocus;
 
   const ComBtn({
     super.key,
@@ -18,6 +19,7 @@ class ComBtn extends StatelessWidget {
     this.width = 34,
     this.height = 34,
     this.tooltip,
+    this.autofocus = false,
   });
 
   @override
@@ -26,11 +28,13 @@ class ComBtn extends StatelessWidget {
       width: width,
       height: height,
       child: GestureDetector(
-        onTap: onTap,
-        onLongPress: onLongPress,
         onSecondaryTap: onSecondaryTap,
-        behavior: HitTestBehavior.opaque,
-        child: icon,
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          autofocus: autofocus,
+          child: Center(child: icon),
+        ),
       ),
     );
     if (tooltip != null) {
