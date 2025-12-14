@@ -1,4 +1,5 @@
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
+import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -74,6 +75,22 @@ class TvPlayerController extends PlPlayerController {
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
+  }
+
+  // Toggles the play/pause state of the video.
+  @override
+  void togglePlayPause() {
+    if (super.playerStatus.value == PlayerStatus.playing) {
+      super.pause();
+    } else {
+      super.play();
+    }
+  }
+
+  // Seeks the video to a specific position.
+  @override
+  Future<void> seekTo(Duration position, {bool isSeek = true}) async {
+    return super.seekTo(position, isSeek: isSeek);
   }
 
   @override

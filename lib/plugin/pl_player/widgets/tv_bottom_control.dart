@@ -90,7 +90,7 @@ class _TvBottomControlState extends State<TvBottomControl> {
             itemBuilder: (context) {
               return _videoDetailController.data.supportFormats!.map((format) {
                 return PopupMenuItem<int>(
-                  value: format.quality,
+                  value: format.quality!,
                   child: Text(format.newDesc ?? ''),
                   onTap: () async {
                     if (currentQa.code == format.quality) {
@@ -143,7 +143,7 @@ class _TvBottomControlState extends State<TvBottomControl> {
           icon: Icons.speed,
           label: '${widget.controller.playbackSpeed}X',
         ),
-      )),
+      ),
     );
   }
 
@@ -256,7 +256,7 @@ class _TvBottomControlState extends State<TvBottomControl> {
           icon: Icons.aspect_ratio,
           label: widget.controller.videoFit.value.desc,
         ),
-      ),
+      )),
     );
   }
 }
