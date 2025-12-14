@@ -1,6 +1,5 @@
-import 'package:PiliPlus/common/style.dart';
+import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
-import 'package:PiliPlus/common/widgets/flutter/layout_builder.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/progress_bar/video_progress_indicator.dart';
 import 'package:PiliPlus/common/widgets/select_mask.dart';
@@ -8,14 +7,13 @@ import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models_new/history/list.dart';
-import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
 import 'package:PiliPlus/pages/common/multi_select/base.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
-import 'package:flutter/material.dart' hide LayoutBuilder;
+import 'package:PiliPlus/utils/utils.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -80,47 +78,40 @@ class HistoryItem extends StatelessWidget {
                     );
                   }
                 } else {
-                  int? cid = item.history.cid;
-                  Dimension? dimension;
-                  if (cid == null) {
-                    if (await SearchHttp.ab2cWithDimension(
-                          aid: aid,
-                          bvid: bvid,
-                          part: item.history.page,
-                        )
-                        case final res?) {
-                      cid = res.cid;
-                      dimension = res.dimension;
-                    }
-                  }
+                  int? cid =
+                      item.history.cid ??
+                      await SearchHttp.ab2c(
+                        aid: aid,
+                        bvid: bvid,
+                        part: item.history.page,
+                      );
                   if (cid != null) {
-                    // TODO: dimension
                     PageUtils.toVideoPage(
                       aid: aid,
                       bvid: bvid,
                       cid: cid,
                       cover: item.cover,
                       title: item.title,
-                      dimension: dimension,
+                      progress: item.progress,
                     );
                   }
                 }
               },
         onLongPress: onLongPress,
-        onSecondaryTap: PlatformUtils.isMobile ? null : onLongPress,
+        onSecondaryTap: Utils.isMobile ? null : onLongPress,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: Style.safeSpace,
+                horizontal: StyleString.safeSpace,
                 vertical: 5,
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AspectRatio(
-                    aspectRatio: Style.aspectRatio,
+                    aspectRatio: StyleString.aspectRatio,
                     child: LayoutBuilder(
                       builder: (context, boxConstraints) {
                         double maxWidth = boxConstraints.maxWidth;
@@ -167,17 +158,14 @@ class HistoryItem extends StatelessWidget {
                                 left: 0,
                                 right: 0,
                                 bottom: 0,
-                                child: VideoProgressIndicator(
-                                  color: theme.colorScheme.primary,
-                                  backgroundColor:
-                                      theme.colorScheme.secondaryContainer,
-                                  progress: item.progress == -1
+                                child: videoProgressIndicator(
+                                  item.progress == -1
                                       ? 1
                                       : item.progress! / item.duration!,
                                 ),
                               ),
                             Positioned.fill(
-                              child: selectMask(theme, item.checked),
+                              child: selectMask(theme, item.checked == true),
                             ),
                           ],
                         );
@@ -192,66 +180,74 @@ class HistoryItem extends StatelessWidget {
             Positioned(
               right: 12,
               bottom: 0,
-              width: 29,
-              height: 29,
-              child: PopupMenuButton(
-                padding: EdgeInsets.zero,
-                tooltip: '功能菜单',
-                icon: Icon(
-                  Icons.more_vert_outlined,
-                  color: theme.colorScheme.outline,
-                  size: 18,
-                ),
-                position: PopupMenuPosition.under,
-                itemBuilder: (_) => [
-                  if (item.authorMid != null &&
-                      item.authorName?.isNotEmpty == true)
-                    PopupMenuItem(
-                      onTap: () => Get.toNamed('/member?mid=${item.authorMid}'),
-                      height: 38,
-                      child: Row(
-                        children: [
-                          const Icon(
-                            MdiIcons.accountCircleOutline,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '访问：${item.authorName}',
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (business != 'pgc' &&
-                      item.badge != '番剧' &&
-                      item.tagName?.contains('动画') != true &&
-                      business != 'live' &&
-                      business?.contains('article') != true)
-                    PopupMenuItem(
-                      onTap: () =>
-                          UserHttp.toViewLater(bvid: item.history.bvid),
-                      height: 38,
-                      child: const Row(
-                        children: [
-                          Icon(Icons.watch_later_outlined, size: 16),
-                          SizedBox(width: 6),
-                          Text('稍后再看', style: TextStyle(fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                  PopupMenuItem(
-                    onTap: () => onDelete(item.kid!, business!),
-                    height: 38,
-                    child: const Row(
-                      children: [
-                        Icon(Icons.close_outlined, size: 16),
-                        SizedBox(width: 6),
-                        Text('删除记录', style: TextStyle(fontSize: 13)),
-                      ],
-                    ),
+              child: SizedBox(
+                width: 29,
+                height: 29,
+                child: PopupMenuButton<String>(
+                  padding: EdgeInsets.zero,
+                  tooltip: '功能菜单',
+                  icon: Icon(
+                    Icons.more_vert_outlined,
+                    color: theme.colorScheme.outline,
+                    size: 18,
                   ),
-                ],
+                  position: PopupMenuPosition.under,
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                        if (item.authorMid != null &&
+                            item.authorName?.isNotEmpty == true)
+                          PopupMenuItem<String>(
+                            onTap: () =>
+                                Get.toNamed('/member?mid=${item.authorMid}'),
+                            height: 35,
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  MdiIcons.accountCircleOutline,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '访问：${item.authorName}',
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (business != 'pgc' &&
+                            item.badge != '番剧' &&
+                            item.tagName?.contains('动画') != true &&
+                            business != 'live' &&
+                            business?.contains('article') != true)
+                          PopupMenuItem<String>(
+                            onTap: () async {
+                              var res = await UserHttp.toViewLater(
+                                bvid: item.history.bvid,
+                              );
+                              SmartDialog.showToast(res['msg']);
+                            },
+                            height: 35,
+                            child: const Row(
+                              children: [
+                                Icon(Icons.watch_later_outlined, size: 16),
+                                SizedBox(width: 6),
+                                Text('稍后再看', style: TextStyle(fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                        PopupMenuItem<String>(
+                          onTap: () => onDelete(item.kid!, business!),
+                          height: 35,
+                          child: const Row(
+                            children: [
+                              Icon(Icons.close_outlined, size: 16),
+                              SizedBox(width: 6),
+                              Text('删除记录', style: TextStyle(fontSize: 13)),
+                            ],
+                          ),
+                        ),
+                      ],
+                ),
               ),
             ),
           ],
