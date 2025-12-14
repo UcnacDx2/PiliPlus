@@ -46,6 +46,8 @@ abstract class CommonIntroController extends GetxController
 
   StatDetail? getStat();
 
+  Future<bool> onChangeEpisode(dynamic episode);
+
   @override
   void updateFavCount(int count) {
     getStat()?.favorite += count;
