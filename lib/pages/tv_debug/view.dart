@@ -20,6 +20,12 @@ class TvDebugPage extends StatelessWidget {
           ),
           const Divider(),
           ListTile(
+            onTap: () => Get.toNamed('/accountSwitch'),
+            leading: const Icon(Icons.switch_account_outlined),
+            title: const Text('切换账户'),
+          ),
+          const Divider(),
+          ListTile(
             onTap: () => Get.toNamed('/download'),
             leading: const Icon(Icons.download_outlined),
             title: const Text('离线缓存'),
