@@ -437,12 +437,12 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: secondaryControls.map((controlType) {
-                      final isFirst = controlType == secondaryControls.first;
+                      final isFitButton = controlType == BottomControlType.fit;
                       return _buildControlButton(
                         controlType,
                         videoDetailController,
                         isLandscape,
-                        focusNode: isFirst
+                        focusNode: isFitButton
                             ? plPlayerController.secondaryControlsFocusNode
                             : null,
                       );

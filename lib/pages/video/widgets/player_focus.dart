@@ -84,15 +84,6 @@ class PlayerFocus extends StatelessWidget {
         return KeyEventResult.handled;
     }
 
-    if (key == LogicalKeyboardKey.arrowLeft) {
-        plPlayerController.onBackward(plPlayerController.fastForBackwardDuration);
-        return KeyEventResult.handled;
-    }
-
-    if (key == LogicalKeyboardKey.arrowRight) {
-        plPlayerController.onForward(plPlayerController.fastForBackwardDuration);
-        return KeyEventResult.handled;
-    }
 
     // If no global hotkey was matched, ignore the event.
     return KeyEventResult.ignored;
