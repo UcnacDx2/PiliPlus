@@ -131,6 +131,60 @@ mixin TimeBatteryMixin<T extends StatefulWidget> on State<T> {
     );
   }
 
+  /// 选择字幕
+  void showSelectSubtitle() {
+    showBottomSheet(
+      (context, setState) {
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: Material(
+            clipBehavior: Clip.hardEdge,
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 45,
+                    child: Center(
+                      child: Text('选择字幕', style: titleStyle),
+                    ),
+                  ),
+                ),
+                SliverList.builder(
+                  itemCount: videoDetailCtr.subtitles.length + 1,
+                  itemBuilder: (context, index) {
+                    final bool isCurrent = videoDetailCtr.subtitle.value == index;
+                    return ListTile(
+                      dense: true,
+                      onTap: () {
+                        Get.back();
+                        videoDetailCtr.setSubtitle(index);
+                      },
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                      ),
+                      title: Text(index == 0
+                          ? '关闭'
+                          : videoDetailCtr.subtitles[index - 1].lanDoc!),
+                      trailing: isCurrent
+                          ? Icon(
+                              Icons.done,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   List<Widget>? get timeBatteryWidgets {
     if (_showCurrTime) {
       return [
@@ -1320,6 +1374,23 @@ class HeaderControlState extends State<HeaderControl>
                     },
                     secondary: const Icon(Icons.comment_outlined, size: 20),
                     title: const Text('弹幕', style: titleStyle),
+                  ),
+                  ListTile(
+                    dense: true,
+                    onTap: () {
+                      Get.back();
+                      showSelectSubtitle();
+                    },
+                    leading: const Icon(Icons.subtitles_outlined, size: 20),
+                    title: const Text('字幕', style: titleStyle),
+                  ),
+                  SwitchListTile(
+                    value: videoDetailCtr.vttSubtitlesIndex.value > 0,
+                    onChanged: (value) {
+                      videoDetailCtr.setSubtitle(value ? 1 : 0);
+                    },
+                    secondary: const Icon(Icons.subtitles_outlined, size: 20),
+                    title: const Text('开启字幕', style: titleStyle),
                   ),
                   ListTile(
                     dense: true,
