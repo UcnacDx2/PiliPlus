@@ -7,6 +7,7 @@ import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class BottomControl extends StatelessWidget {
@@ -105,6 +106,26 @@ class BottomControl extends StatelessWidget {
                 children: [
                   Focus(
                     focusNode: controller.progressFocusNode,
+                    onKey: (node, event) {
+                      if (event is KeyDownEvent) {
+                        if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                          controller.onBackward(
+                              controller.fastForBackwardDuration);
+                          return KeyEventResult.handled;
+                        }
+                        if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                          controller.onForward(
+                              controller.fastForBackwardDuration);
+                          return KeyEventResult.handled;
+                        }
+                        if (event.logicalKey == LogicalKeyboardKey.select ||
+                            event.logicalKey == LogicalKeyboardKey.enter) {
+                          controller.togglePlay();
+                          return KeyEventResult.handled;
+                        }
+                      }
+                      return KeyEventResult.ignored;
+                    },
                     child: progressBar(),
                   ),
                   if (controller.enableBlock &&

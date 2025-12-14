@@ -20,7 +20,7 @@ class PlayerFocus extends StatelessWidget {
       autofocus: true,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent) {
-          return _handleGlobalKeys(event);
+          return _handleKeyEvent(event);
         }
         return KeyEventResult.ignored;
       },
@@ -28,73 +28,73 @@ class PlayerFocus extends StatelessWidget {
     );
   }
 
-  KeyEventResult _handleGlobalKeys(KeyDownEvent event) {
+  KeyEventResult _handleKeyEvent(KeyDownEvent event) {
     final key = event.logicalKey;
 
-    // Layer 1: Controls are hidden. Handle waking up the controls.
+    // Layer 1: Controls are hidden. D-pad events should wake them up.
     if (!plPlayerController.showControls.value) {
-      if (key == LogicalKeyboardKey.select ||
-          key == LogicalKeyboardKey.enter ||
-          key == LogicalKeyboardKey.arrowUp ||
-          key == LogicalKeyboardKey.arrowDown) {
+      if (key == LogicalKeyboardKey.arrowUp ||
+          key == LogicalKeyboardKey.arrowDown ||
+          key == LogicalKeyboardKey.select ||
+          key == LogicalKeyboardKey.enter) {
 
-        plPlayerController.controls = true;
+        plPlayerController.showControls.value = true;
 
-        // Delay to allow the UI to build before requesting focus.
-        Future.delayed(const Duration(milliseconds: 50), () {
-          if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
-            plPlayerController.progressFocusNode.requestFocus();
-          } else if (key == LogicalKeyboardKey.arrowUp) {
+        // Use a post-frame callback to ensure widgets are built before requesting focus.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (key == LogicalKeyboardKey.arrowUp) {
             plPlayerController.mainControlsFocusNode.requestFocus();
           } else if (key == LogicalKeyboardKey.arrowDown) {
             plPlayerController.secondaryControlsFocusNode.requestFocus();
+          } else { // select or enter
+            plPlayerController.progressFocusNode.requestFocus();
           }
         });
 
-        // This key press was used to show the controls, so we handle it.
         return KeyEventResult.handled;
       }
     }
-    // Layer 2: Controls are visible. Handle navigation and actions.
+    // Layer 2: Controls are visible. Let the Focus widgets with onKey handlers do their job.
+    // The global handler should now only care about global hotkeys.
     else {
-      // Special handling when the progress bar is focused.
-      if (plPlayerController.progressFocusNode.hasFocus) {
-        if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
-          plPlayerController.onDoubleTapCenter(); // Toggles play/pause
-          return KeyEventResult.handled;
-        }
-        if (key == LogicalKeyboardKey.arrowLeft) {
-          plPlayerController.onBackward(plPlayerController.fastForBackwardDuration);
-          return KeyEventResult.handled;
-        }
-        if (key == LogicalKeyboardKey.arrowRight) {
-          plPlayerController.onForward(plPlayerController.fastForBackwardDuration);
-          return KeyEventResult.handled;
-        }
-        // Let Up/Down fall through to allow default focus traversal.
-      }
+        // The individual Focus widgets on the control rows and progress bar will handle
+        // arrow key navigation and actions. We don't need to do anything here for that.
     }
 
-    // Handle global hotkeys regardless of control visibility
+    // --- Global Hotkeys (work whether controls are visible or not) ---
+
     if (key == LogicalKeyboardKey.keyF) {
       plPlayerController.triggerFullScreen();
       return KeyEventResult.handled;
     }
+
     if (key == LogicalKeyboardKey.keyM) {
-       final isMuted = !plPlayerController.isMuted;
-       plPlayerController.videoPlayerController!.setVolume(
-         isMuted ? 0 : plPlayerController.volume.value * 100,
-       );
-       plPlayerController.isMuted = isMuted;
+       final currentVolume = plPlayerController.volume.value;
+       if (currentVolume > 0) {
+         plPlayerController.previousVolume = currentVolume;
+         plPlayerController.setVolume(0);
+       } else {
+         plPlayerController.setVolume(plPlayerController.previousVolume);
+       }
       return KeyEventResult.handled;
     }
-     if (key == LogicalKeyboardKey.space) {
-        plPlayerController.onDoubleTapCenter();
+
+     if (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.mediaPlayPause) {
+        plPlayerController.togglePlay();
         return KeyEventResult.handled;
     }
 
+    if (key == LogicalKeyboardKey.arrowLeft) {
+        plPlayerController.onBackward(plPlayerController.fastForBackwardDuration);
+        return KeyEventResult.handled;
+    }
 
-    // If no specific action was taken, let the event be handled by others.
+    if (key == LogicalKeyboardKey.arrowRight) {
+        plPlayerController.onForward(plPlayerController.fastForBackwardDuration);
+        return KeyEventResult.handled;
+    }
+
+    // If no global hotkey was matched, ignore the event.
     return KeyEventResult.ignored;
   }
 }

@@ -346,7 +346,14 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       ],
     ];
 
-    return FocusTraversalGroup(
+    return Focus(
+      onKey: (node, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
       child: Row(
         children: [
           ...mainLeft.map(
@@ -412,7 +419,14 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       BottomControlType.more,
     ];
 
-    return FocusTraversalGroup(
+    return Focus(
+      onKey: (node, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
       child: Row(
         children: [
           Expanded(
