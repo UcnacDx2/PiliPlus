@@ -26,6 +26,7 @@ import 'package:PiliPlus/models_new/video/video_note_list/data.dart';
 import 'package:PiliPlus/models_new/video/video_play_info/data.dart';
 import 'package:PiliPlus/models_new/video/video_relation/data.dart';
 import 'package:PiliPlus/utils/accounts.dart';
+import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/utils/app_sign.dart';
 import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/global_data.dart';
@@ -200,6 +201,7 @@ class VideoHttp {
     required bool tryLook,
     required VideoType videoType,
     String? language,
+    Account? account,
   }) async {
     final params = await WbiSign.makSign({
       'avid': ?avid,
@@ -225,6 +227,7 @@ class VideoHttp {
       var res = await Request().get(
         videoType.api,
         queryParameters: params,
+        options: Options(extra: {'account': account}),
       );
 
       if (res.data['code'] == 0) {
@@ -257,6 +260,7 @@ class VideoHttp {
           seasonId: seasonId,
           tryLook: tryLook,
           videoType: VideoType.pgc,
+          account: account,
         );
       }
       return Error(_parseVideoErr(res.data['code'], res.data['message']));
