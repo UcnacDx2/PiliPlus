@@ -155,7 +155,7 @@ mixin TimeBatteryMixin<T extends StatefulWidget> on State<T> {
                 SliverList.builder(
                   itemCount: videoDetailCtr.subtitles.length + 1,
                   itemBuilder: (context, index) {
-                    final bool isCurrent = videoDetailCtr.subtitle.value == index;
+                    final bool isCurrent = videoDetailCtr.vttSubtitlesIndex.value == index;
                     return ListTile(
                       dense: true,
                       onTap: () {
@@ -1383,14 +1383,6 @@ class HeaderControlState extends State<HeaderControl>
                     },
                     leading: const Icon(Icons.subtitles_outlined, size: 20),
                     title: const Text('字幕', style: titleStyle),
-                  ),
-                  SwitchListTile(
-                    value: videoDetailCtr.vttSubtitlesIndex.value > 0,
-                    onChanged: (value) {
-                      videoDetailCtr.setSubtitle(value ? 1 : 0);
-                    },
-                    secondary: const Icon(Icons.subtitles_outlined, size: 20),
-                    title: const Text('开启字幕', style: titleStyle),
                   ),
                   ListTile(
                     dense: true,
