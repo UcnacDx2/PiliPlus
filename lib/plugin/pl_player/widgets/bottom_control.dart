@@ -7,13 +7,13 @@ import 'package:PiliPlus/models/common/super_resolution_type.dart';
 import 'package:PiliPlus/models/common/video/video_quality.dart';
 import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
 import 'package:PiliPlus/models_new/video/video_detail/section.dart';
+import 'package:PiliPlus/models_new/video/video_detail/ugc_season.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/pgc/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/bottom_control_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
-import 'package:PiliPlus/plugin/pl_player/view.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/focusable_wrapper.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/interactive_seek_bar.dart';
@@ -37,11 +37,22 @@ class BottomControl extends StatelessWidget {
     required this.controller,
     required this.videoDetailController,
     required this.maxWidth,
+    this.showEpisodes,
+    this.showViewPoints,
   });
 
   final PlPlayerController controller;
   final VideoDetailController videoDetailController;
   final double maxWidth;
+  final void Function([
+    int?,
+    UgcSeason?,
+    List<ugc.BaseEpisodeItem>?,
+    String?,
+    int?,
+    int?,
+  ])? showEpisodes;
+  final VoidCallback? showViewPoints;
 
   @override
   Widget build(BuildContext context) {
@@ -153,37 +164,6 @@ class BottomControl extends StatelessWidget {
                   ),
                 ),
               ),
-            if (controller.showViewPoints &&
-                videoDetailController.viewPointList.isNotEmpty &&
-                videoDetailController.showVP.value) ...[
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 5.25,
-                child: IgnorePointer(
-                  child: RepaintBoundary(
-                    child: CustomPaint(
-                      key: const Key('viewPointList'),
-                      size: const Size(double.infinity, 3.5),
-                      painter: SegmentProgressBar(
-                        segmentColors: videoDetailController.viewPointList,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              if (!Utils.isMobile)
-                buildViewPointWidget(
-                  videoDetailController,
-                  controller,
-                  8.75,
-                  maxWidth - 40,
-                ),
-            ],
-            if (videoDetailController.showDmTrendChart.value)
-              if (videoDetailController.dmTrend.value?.dataOrNull
-                  case final list?)
-                buildDmChart(primary, list, videoDetailController, 4.5),
           ],
         ),
       ),
@@ -263,10 +243,30 @@ class BottomControl extends StatelessWidget {
 
   Widget _buildControlItem(BottomControlType type, BuildContext context) {
     FocusNode? focusNode;
-    if (type == BottomControlType.playOrPause) {
-      focusNode = controller.tvFocusManager.playButtonNode;
-    } else if (type == BottomControlType.qa) {
-      focusNode = controller.tvFocusManager.qualityButtonNode;
+    switch (type) {
+      case BottomControlType.playOrPause:
+        focusNode = controller.tvFocusManager.playButtonNode;
+        break;
+      case BottomControlType.qa:
+        focusNode = controller.tvFocusManager.qualityButtonNode;
+        break;
+      case BottomControlType.superResolution:
+        focusNode = controller.tvFocusManager.superResolutionButtonNode;
+        break;
+      case BottomControlType.fit:
+        focusNode = controller.tvFocusManager.fitButtonNode;
+        break;
+      case BottomControlType.speed:
+        focusNode = controller.tvFocusManager.speedButtonNode;
+        break;
+      case BottomControlType.subtitle:
+        focusNode = controller.tvFocusManager.subtitleButtonNode;
+        break;
+      case BottomControlType.aiTranslate:
+        focusNode = controller.tvFocusManager.aiTranslateButtonNode;
+        break;
+      default:
+        break;
     }
 
     final isFullScreen = controller.isFullScreen.value;
@@ -389,7 +389,9 @@ class BottomControl extends StatelessWidget {
           () => PopupMenuButton<SuperResolutionType>(
             tooltip: '超分辨率',
             requestFocus: true,
-            onCanceled: () {},
+            onCanceled: () {
+              controller.tvFocusManager.superResolutionButtonNode.requestFocus();
+            },
             initialValue: controller.superResolutionType.value,
             color: Colors.black.withAlpha(204),
             itemBuilder: (context) {
@@ -432,7 +434,7 @@ class BottomControl extends StatelessWidget {
                     child: const Icon(MdiIcons.viewHeadline,
                         size: 22, color: Colors.white),
                   ),
-                  onTap: () => Get.find<PLVideoPlayer>().showViewPoints?.call(),
+                  onTap: () => showViewPoints?.call(),
                   onLongPress: () {
                     Feedback.forLongPress(context);
                     videoDetailController.showVP.value =
@@ -454,7 +456,7 @@ class BottomControl extends StatelessWidget {
           onTap: () {
             if (videoDetailController.isFileSource) return;
             if (isPlayAll && !isPart) {
-              Get.find<PLVideoPlayer>().showEpisodes?.call();
+              showEpisodes?.call();
               return;
             }
             int? index;
@@ -481,7 +483,7 @@ class BottomControl extends StatelessWidget {
               episodes =
                   (introController as PgcIntroController).pgcItem.episodes!;
             }
-            Get.find<PLVideoPlayer>().showEpisodes?.call(
+            showEpisodes?.call(
                   index,
                   isSeason ? videoDetail.ugcSeason! : null,
                   isSeason ? null : episodes,
@@ -499,7 +501,9 @@ class BottomControl extends StatelessWidget {
           () => PopupMenuButton<VideoFitType>(
             tooltip: '画面比例',
             requestFocus: true,
-            onCanceled: () {},
+            onCanceled: () {
+              controller.tvFocusManager.fitButtonNode.requestFocus();
+            },
             initialValue: controller.videoFit.value,
             color: Colors.black.withAlpha(204),
             itemBuilder: (context) {
@@ -537,7 +541,9 @@ class BottomControl extends StatelessWidget {
               return PopupMenuButton<String>(
                 tooltip: '翻译',
                 requestFocus: true,
-                onCanceled: () {},
+                onCanceled: () {
+                  controller.tvFocusManager.aiTranslateButtonNode.requestFocus();
+                },
                 initialValue: videoDetailController.currLang.value,
                 color: Colors.black.withAlpha(204),
                 itemBuilder: (context) {
@@ -582,7 +588,9 @@ class BottomControl extends StatelessWidget {
               : PopupMenuButton<int>(
                   tooltip: '字幕',
                   requestFocus: true,
-                  onCanceled: () {},
+                  onCanceled: () {
+                    controller.tvFocusManager.subtitleButtonNode.requestFocus();
+                  },
                   initialValue: videoDetailController.vttSubtitlesIndex.value
                       .clamp(0, videoDetailController.subtitles.length),
                   color: Colors.black.withAlpha(204),
@@ -630,7 +638,9 @@ class BottomControl extends StatelessWidget {
           () => PopupMenuButton<double>(
             tooltip: '倍速',
             requestFocus: true,
-            onCanceled: () {},
+            onCanceled: () {
+              controller.tvFocusManager.speedButtonNode.requestFocus();
+            },
             initialValue: controller.playbackSpeed,
             color: Colors.black.withAlpha(204),
             itemBuilder: (context) {

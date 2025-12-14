@@ -1066,6 +1066,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         maxWidth: maxWidth,
                         controller: plPlayerController,
                         videoDetailController: videoDetailController,
+                        showEpisodes: widget.showEpisodes,
+                        showViewPoints: widget.showViewPoints,
                       ),
                 ),
               ],
