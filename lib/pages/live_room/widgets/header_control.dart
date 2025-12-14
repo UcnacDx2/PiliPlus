@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/marquee.dart';
 import 'package:PiliPlus/pages/live_room/controller.dart';
-import 'package:PiliPlus/pages/video/introduction/ugc/widgets/action_item.dart';
+import 'package:PiliPlus/pages/video/introduction/ugc/widgets/menu_row.dart';
 import 'package:PiliPlus/pages/video/widgets/header_control.dart'
     show HeaderMixin, HeaderControlState, TimeBatteryMixin;
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
