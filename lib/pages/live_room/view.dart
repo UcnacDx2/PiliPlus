@@ -199,6 +199,7 @@ class _LiveRoomPageState extends State<LiveRoomPage>
       child = PlayerFocus(
         plPlayerController: plPlayerController,
         onSendDanmaku: _liveRoomController.onSendDanmaku,
+        canPlay: () => true,
         child: child,
       );
     }
