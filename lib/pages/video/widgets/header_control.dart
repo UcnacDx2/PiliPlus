@@ -1385,7 +1385,7 @@ class HeaderControlState extends State<HeaderControl>
                     title: const Text('字幕', style: titleStyle),
                   ),
                   SwitchListTile(
-                    value: videoDetailCtr.subtitle.value > 0,
+                    value: videoDetailCtr.vttSubtitlesIndex.value > 0,
                     onChanged: (value) {
                       videoDetailCtr.setSubtitle(value ? 1 : 0);
                     },
