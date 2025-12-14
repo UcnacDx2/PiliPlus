@@ -451,41 +451,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           }
           return const SizedBox.shrink();
         },
-      ),
-
-      /// 超分辨率
-      BottomControlType.superResolution => Obx(
-        () => PopupMenuButton<SuperResolutionType>(
-          tooltip: '超分辨率',
-          requestFocus: false,
-          initialValue: plPlayerController.superResolutionType.value,
-          color: Colors.black.withValues(alpha: 0.8),
-          itemBuilder: (context) {
-            return SuperResolutionType.values
-                .map(
-                  (type) => PopupMenuItem<SuperResolutionType>(
-                    height: 35,
-                    padding: const EdgeInsets.only(left: 30),
-                    value: type,
-                    onTap: () => plPlayerController.setShader(type),
-                    child: Text(
-                      type.title,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                    ),
-                  ),
-                )
-                .toList();
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              plPlayerController.superResolutionType.value.title,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
-            ),
-          ),
-        ),
-      ),
-
       /// 分段信息
       BottomControlType.viewPoints => Obx(
         () => videoDetailController.viewPointList.isEmpty
@@ -813,15 +778,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     List<BottomControlType> userSpecifyItemRight = [
       if (isNotFileSource && plPlayerController.showDmChart)
         BottomControlType.dmChart,
-      if (plPlayerController.isAnim) BottomControlType.superResolution,
       if (isNotFileSource && plPlayerController.showViewPoints)
         BottomControlType.viewPoints,
       if (isNotFileSource && anySeason) BottomControlType.episode,
-      if (flag) BottomControlType.fit,
       if (isNotFileSource) BottomControlType.aiTranslate,
-      BottomControlType.subtitle,
-      BottomControlType.speed,
-      if (isNotFileSource && flag) BottomControlType.qa,
       if (!plPlayerController.isDesktopPip) BottomControlType.fullscreen,
     ];
 

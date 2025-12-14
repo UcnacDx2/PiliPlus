@@ -1101,6 +1101,24 @@ class HeaderControlState extends State<HeaderControl>
                 ListTile(
                   dense: true,
                   onTap: () {
+                    final isMuted = !plPlayerController.isMuted;
+                    plPlayerController.videoPlayerController!.setVolume(
+                      isMuted ? 0 : plPlayerController.volume.value * 100,
+                    );
+                    plPlayerController.isMuted = isMuted;
+                  },
+                  leading: Obx(() => Icon(
+                      plPlayerController.isMuted
+                          ? Icons.volume_off_outlined
+                          : Icons.volume_up_outlined,
+                      size: 20)),
+                  title: Obx(() =>
+                      Text(plPlayerController.isMuted ? '取消静音' : '静音',
+                          style: titleStyle)),
+                ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
                     Get.back();
                     introController.viewLater();
                   },
@@ -1334,6 +1352,101 @@ class HeaderControlState extends State<HeaderControl>
                       }
                     },
                   ),
+                if (!isFileSource) ...[
+                  ListTile(
+                    dense: true,
+                    onTap: () {
+                      Get.back();
+                      showSetVideoQa();
+                    },
+                    leading: const Icon(Icons.play_circle_outline, size: 20),
+                    title: const Text('选择画质', style: titleStyle),
+                    subtitle: Text(
+                      '当前画质 ${videoDetailCtr.currentVideoQa.value?.desc}',
+                      style: subTitleStyle,
+                    ),
+                  ),
+                  ListTile(
+                    dense: true,
+                    onTap: () {
+                      Get.back();
+                      showSetSubtitle();
+                    },
+                    leading: const Icon(Icons.subtitles_outlined, size: 20),
+                    title: const Text('字幕设置', style: titleStyle),
+                  ),
+                ],
+                ListTile(
+                  dense: true,
+                  leading: const Icon(
+                    Icons.stay_current_landscape_outlined,
+                    size: 20,
+                  ),
+                  title: Row(
+                    children: [
+                      const Text(
+                        '超分辨率',
+                        strutStyle: StrutStyle(leading: 0, height: 1),
+                        style: TextStyle(
+                          height: 1,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Builder(
+                        builder: (context) => PopupMenuButton(
+                          initialValue:
+                              plPlayerController.superResolutionType.value,
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  widget
+                                      .controller
+                                      .superResolutionType
+                                      .value
+                                      .title,
+                                  strutStyle: const StrutStyle(
+                                    leading: 0,
+                                    height: 1,
+                                  ),
+                                  style: TextStyle(
+                                    height: 1,
+                                    fontSize: 14,
+                                    color: theme.colorScheme.secondary,
+                                  ),
+                                ),
+                                Icon(
+                                  MdiIcons.unfoldMoreHorizontal,
+                                  size: MediaQuery.textScalerOf(
+                                    context,
+                                  ).scale(14),
+                                  color: theme.colorScheme.secondary,
+                                ),
+                              ],
+                            ),
+                          ),
+                          onSelected: (value) {
+                            plPlayerController.setShader(value);
+                            if (context.mounted) {
+                              (context as Element).markNeedsBuild();
+                            }
+                          },
+                          itemBuilder: (context) => SuperResolutionType.values
+                              .map(
+                                (item) => PopupMenuItem(
+                                  value: item,
+                                  child: Text(item.title),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
