@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,6 +23,12 @@ class TvPlayerController extends PlPlayerController {
 
   // 当前激活的焦点区域
   final Rx<FocusArea> currentFocusArea = FocusArea.none.obs;
+
+  // 自动隐藏计时器
+  Timer? _autoHideTimer;
+  
+  // 是否有二级菜单打开（如果有则暂停自动隐藏）
+  final RxBool hasSecondaryMenu = false.obs;
 
   // 添加一个私有静态变量来保存TV实例
   static TvPlayerController? _tvInstance;
@@ -137,16 +145,50 @@ class TvPlayerController extends PlPlayerController {
 
   /// 启动自动隐藏计时器
   void startAutoHideTimer() {
-    // TODO: 实现自动隐藏逻辑
-    // 复用父类的自动隐藏机制或重新实现
+    // 取消现有计时器
+    cancelAutoHideTimer();
+    
+    // 如果有二级菜单打开，不启动计时器
+    if (hasSecondaryMenu.value) {
+      return;
+    }
+    
+    // 5秒后自动隐藏控制条
+    _autoHideTimer = Timer(const Duration(seconds: 5), () {
+      if (showControls.value && !hasSecondaryMenu.value) {
+        hideControls();
+      }
+    });
+  }
+
+  /// 取消自动隐藏计时器
+  void cancelAutoHideTimer() {
+    _autoHideTimer?.cancel();
+    _autoHideTimer = null;
+  }
+
+  /// 隐藏控制条
+  void hideControls() {
+    showControls.value = false;
+    currentFocusArea.value = FocusArea.none;
+    focusNodeA.unfocus();
+    focusNodeB.unfocus();
+    focusNodeC.unfocus();
+  }
+
+  /// 重置自动隐藏计时器（用户有操作时调用）
+  void resetAutoHideTimer() {
+    if (showControls.value) {
+      startAutoHideTimer();
+    }
   }
 
   /// 返回键处理
   KeyEventResult handleBackKey() {
     if (showControls.value) {
       // 隐藏遮罩
-      showControls.value = false;
-      currentFocusArea.value = FocusArea.none;
+      hideControls();
+      cancelAutoHideTimer();
       return KeyEventResult.handled;
     } else {
       // 退出播放器（交给上层处理）
@@ -171,6 +213,8 @@ class TvPlayerController extends PlPlayerController {
     } else {
       seekTo(duration.value);
     }
+    // 重置自动隐藏计时器
+    resetAutoHideTimer();
   }
 
   /// 快退
@@ -181,10 +225,13 @@ class TvPlayerController extends PlPlayerController {
     } else {
       seekTo(Duration.zero);
     }
+    // 重置自动隐藏计时器
+    resetAutoHideTimer();
   }
 
   @override
   void dispose() {
+    cancelAutoHideTimer();
     focusNodeA.dispose();
     focusNodeB.dispose();
     focusNodeC.dispose();
