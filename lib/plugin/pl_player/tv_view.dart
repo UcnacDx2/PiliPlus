@@ -78,14 +78,25 @@ class _TvVideoPlayerState extends State<TvVideoPlayer> {
           children: [
             // 视频播放层
             Center(
-              child: AspectRatio(
-                aspectRatio: 16 / 9, // TODO: 根据实际视频比例调整
-                child: Video(
-                  controller: videoController,
-                  fill: widget.fill,
-                  alignment: widget.alignment,
-                ),
-              ),
+              child: Obx(() {
+                // 获取视频尺寸，如果无效则使用16:9
+                final videoWidth = videoController.player.state.width;
+                final videoHeight = videoController.player.state.height;
+                final aspectRatio = (videoWidth != null && 
+                                     videoHeight != null && 
+                                     videoHeight > 0)
+                    ? videoWidth / videoHeight
+                    : 16 / 9;
+                
+                return AspectRatio(
+                  aspectRatio: aspectRatio,
+                  child: Video(
+                    controller: videoController,
+                    fill: widget.fill,
+                    alignment: widget.alignment,
+                  ),
+                );
+              }),
             ),
 
             // 弹幕层

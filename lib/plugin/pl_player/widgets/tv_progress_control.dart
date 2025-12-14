@@ -93,8 +93,12 @@ class _TvProgressControlState extends State<TvProgressControl> {
                 return const SizedBox.shrink();
               }
 
-              final progress = position.inMilliseconds / duration.inMilliseconds;
-              final bufferedProgress = buffered.inMilliseconds / duration.inMilliseconds;
+              final progress = duration.inMilliseconds > 0
+                  ? position.inMilliseconds / duration.inMilliseconds
+                  : 0.0;
+              final bufferedProgress = duration.inMilliseconds > 0
+                  ? buffered.inMilliseconds / duration.inMilliseconds
+                  : 0.0;
 
               return Stack(
                 children: [

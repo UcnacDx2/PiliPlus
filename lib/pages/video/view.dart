@@ -12,6 +12,7 @@ import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/main.dart';
 import 'package:PiliPlus/models/common/episode_panel_type.dart';
+import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models_new/pgc/pgc_info_model/result.dart';
 import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
 import 'package:PiliPlus/models_new/video/video_detail/page.dart';
@@ -172,7 +173,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       // 根据TV模式选择不同的控制器
       if (_isTvMode) {
         // TV模式：使用TV专用控制器
-        plPlayerController = TvPlayerController.getInstance();
+        plPlayerController = TvPlayerController.getInstance(
+          isLive: videoDetailController.videoType == VideoType.live,
+        );
       } else {
         // Mobile/Desktop模式：使用原有控制器
         plPlayerController = videoDetailController.plPlayerController;
