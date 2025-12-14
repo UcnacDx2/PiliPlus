@@ -1087,6 +1087,77 @@ class HeaderControlState extends State<HeaderControl>
     );
   }
 
+  /// 字幕选择
+  void showSelectSubtitle() {
+    showBottomSheet(
+      (context, setState) {
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: Material(
+            clipBehavior: Clip.hardEdge,
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 45,
+                    child: Center(
+                      child: Text('选择字幕', style: titleStyle),
+                    ),
+                  ),
+                ),
+                SliverList.builder(
+                  itemCount: videoDetailCtr.subtitles.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return ListTile(
+                        dense: true,
+                        onTap: () {
+                          Get.back();
+                          videoDetailCtr.setSubtitle(0);
+                        },
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                        ),
+                        title: const Text('关闭字幕'),
+                        trailing: videoDetailCtr.vttSubtitlesIndex.value == 0
+                            ? Icon(
+                                Icons.done,
+                                color: theme.colorScheme.primary,
+                              )
+                            : null,
+                      );
+                    }
+                    final subtitle = videoDetailCtr.subtitles[index - 1];
+                    return ListTile(
+                      dense: true,
+                      onTap: () {
+                        Get.back();
+                        videoDetailCtr.setSubtitle(index);
+                      },
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                      ),
+                      title: Text(subtitle.lanDoc ?? ''),
+                      trailing: videoDetailCtr.vttSubtitlesIndex.value == index
+                          ? Icon(
+                              Icons.done,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   /// 设置面板
   void showSettingSheet() {
     showBottomSheet(
@@ -1293,39 +1364,43 @@ class HeaderControlState extends State<HeaderControl>
                     title: const Text('选集', style: titleStyle),
                   ),
                 if (videoDetailCtr.dmTrend.value?.dataOrNull != null)
-                  SwitchListTile(
-                    value: videoDetailCtr.showDmTrendChart.value,
-                    onChanged: (value) {
-                      videoDetailCtr.showDmTrendChart.value = value;
-                      if (!plPlayerController.tempPlayerConf) {
-                        setting.put(
-                          'showDmTrendChart',
-                          value,
-                        );
-                      }
-                    },
-                    secondary: const Icon(Icons.show_chart_outlined, size: 20),
-                    title: const Text('高能进度条', style: titleStyle),
+                  Obx(
+                    () => SwitchListTile(
+                      value: videoDetailCtr.showDmTrendChart.value,
+                      onChanged: (value) {
+                        videoDetailCtr.showDmTrendChart.value = value;
+                        if (!plPlayerController.tempPlayerConf) {
+                          setting.put(
+                            'showDmTrendChart',
+                            value,
+                          );
+                        }
+                      },
+                      secondary: const Icon(Icons.show_chart_outlined, size: 20),
+                      title: const Text('高能进度条', style: titleStyle),
+                    ),
                   ),
-                  SwitchListTile(
-                    value: plPlayerController.enableShowDanmaku.value,
-                    onChanged: (value) {
-                      plPlayerController.enableShowDanmaku.value = value;
-                      if (!plPlayerController.tempPlayerConf) {
-                        setting.put(
-                          SettingBoxKey.enableShowDanmaku,
-                          value,
-                        );
-                      }
-                    },
-                    secondary: const Icon(Icons.comment_outlined, size: 20),
-                    title: const Text('弹幕', style: titleStyle),
+                  Obx(
+                    () => SwitchListTile(
+                      value: plPlayerController.enableShowDanmaku.value,
+                      onChanged: (value) {
+                        plPlayerController.enableShowDanmaku.value = value;
+                        if (!plPlayerController.tempPlayerConf) {
+                          setting.put(
+                            SettingBoxKey.enableShowDanmaku,
+                            value,
+                          );
+                        }
+                      },
+                      secondary: const Icon(Icons.comment_outlined, size: 20),
+                      title: const Text('弹幕', style: titleStyle),
+                    ),
                   ),
                   ListTile(
                     dense: true,
                     onTap: () {
                       Get.back();
-                      showSetSubtitle();
+                      showSelectSubtitle();
                     },
                     leading: const Icon(Icons.subtitles_outlined, size: 20),
                     title: const Text('字幕', style: titleStyle),
