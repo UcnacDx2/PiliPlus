@@ -1401,6 +1401,16 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     if (videoDetailController.plPlayerController.keyboardControl) {
       child = PlayerFocus(
         plPlayerController: videoDetailController.plPlayerController,
+        introController: introController,
+        onSendDanmaku: videoDetailController.showShootDanmakuSheet,
+        canPlay: () {
+          if (videoDetailController.autoPlay.value) {
+            return true;
+          }
+          handlePlay();
+          return false;
+        },
+        onSkipSegment: videoDetailController.onSkipSegment,
         child: child,
       );
     }

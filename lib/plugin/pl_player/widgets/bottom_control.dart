@@ -93,98 +93,131 @@ class BottomControl extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          buildMainControls(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
-            child: Obx(
-              () => Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Focus(
-                    focusNode: controller.progressFocusNode,
-                    onKey: (node, event) {
-                      if (event is KeyDownEvent) {
-                        if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                          controller.onBackward(
-                              controller.fastForBackwardDuration);
-                          return KeyEventResult.handled;
-                        }
-                        if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-                          controller.onForward(
-                              controller.fastForBackwardDuration);
-                          return KeyEventResult.handled;
-                        }
-                        if (event.logicalKey == LogicalKeyboardKey.select ||
-                            event.logicalKey == LogicalKeyboardKey.enter) {
-                          controller.togglePlay();
-                          return KeyEventResult.handled;
-                        }
-                      }
-                      return KeyEventResult.ignored;
-                    },
-                    child: progressBar(),
+      child: FocusScope(
+        child: Focus(
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent) {
+              final key = event.logicalKey;
+              if (controller.mainControlsFocusNode.hasFocus) {
+                if (key == LogicalKeyboardKey.arrowDown) {
+                  controller.progressFocusNode.requestFocus();
+                  return KeyEventResult.handled;
+                }
+                if (key == LogicalKeyboardKey.arrowUp) {
+                  // Focus Trap: Do nothing if at the top boundary
+                  return KeyEventResult.handled;
+                }
+              } else if (controller.progressFocusNode.hasFocus) {
+                if (key == LogicalKeyboardKey.arrowUp) {
+                  controller.mainControlsFocusNode.requestFocus();
+                  return KeyEventResult.handled;
+                }
+                if (key == LogicalKeyboardKey.arrowDown) {
+                  controller.secondaryControlsFocusNode.requestFocus();
+                  return KeyEventResult.handled;
+                }
+                if (key == LogicalKeyboardKey.arrowLeft) {
+                  controller.onBackward(controller.fastForBackwardDuration);
+                  return KeyEventResult.handled;
+                }
+                if (key == LogicalKeyboardKey.arrowRight) {
+                  controller.onForward(controller.fastForBackwardDuration);
+                  return KeyEventResult.handled;
+                }
+                if (key == LogicalKeyboardKey.select ||
+                    key == LogicalKeyboardKey.enter) {
+                  controller.togglePlay();
+                  return KeyEventResult.handled;
+                }
+              } else if (controller.secondaryControlsFocusNode.hasFocus) {
+                if (key == LogicalKeyboardKey.arrowUp) {
+                  controller.progressFocusNode.requestFocus();
+                  return KeyEventResult.handled;
+                }
+                if (key == LogicalKeyboardKey.arrowDown) {
+                  // Focus Trap: Do nothing if at the bottom boundary
+                  return KeyEventResult.handled;
+                }
+              }
+            }
+            return KeyEventResult.ignored;
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              buildMainControls(),
+              Focus(
+                focusNode: controller.progressFocusNode,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 7),
+                  child: Obx(
+                    () => Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        progressBar(),
+                        if (controller.enableBlock &&
+                            videoDetailController
+                                .segmentProgressList.isNotEmpty)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 5.25,
+                          child: IgnorePointer(
+                            child: RepaintBoundary(
+                              child: CustomPaint(
+                                key: const Key('segmentList'),
+                                size: const Size(double.infinity, 3.5),
+                                painter: SegmentProgressBar(
+                                  segmentColors:
+                                      videoDetailController.segmentProgressList,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (controller.showViewPoints &&
+                          videoDetailController.viewPointList.isNotEmpty &&
+                          videoDetailController.showVP.value) ...[
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 5.25,
+                          child: IgnorePointer(
+                            child: RepaintBoundary(
+                              child: CustomPaint(
+                                key: const Key('viewPointList'),
+                                size: const Size(double.infinity, 3.5),
+                                painter: SegmentProgressBar(
+                                  segmentColors:
+                                      videoDetailController.viewPointList,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (!Utils.isMobile)
+                          buildViewPointWidget(
+                            videoDetailController,
+                            controller,
+                            8.75,
+                            maxWidth - 40,
+                          ),
+                      ],
+                      if (videoDetailController.showDmTrendChart.value)
+                        if (videoDetailController.dmTrend.value?.dataOrNull
+                            case final list?)
+                          buildDmChart(
+                              primary, list, videoDetailController, 4.5),
+                    ],
                   ),
-                  if (controller.enableBlock &&
-                      videoDetailController.segmentProgressList.isNotEmpty)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 5.25,
-                      child: IgnorePointer(
-                        child: RepaintBoundary(
-                          child: CustomPaint(
-                            key: const Key('segmentList'),
-                            size: const Size(double.infinity, 3.5),
-                            painter: SegmentProgressBar(
-                              segmentColors:
-                                  videoDetailController.segmentProgressList,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (controller.showViewPoints &&
-                      videoDetailController.viewPointList.isNotEmpty &&
-                      videoDetailController.showVP.value) ...[
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 5.25,
-                      child: IgnorePointer(
-                        child: RepaintBoundary(
-                          child: CustomPaint(
-                            key: const Key('viewPointList'),
-                            size: const Size(double.infinity, 3.5),
-                            painter: SegmentProgressBar(
-                              segmentColors:
-                                  videoDetailController.viewPointList,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (!Utils.isMobile)
-                      buildViewPointWidget(
-                        videoDetailController,
-                        controller,
-                        8.75,
-                        maxWidth - 40,
-                      ),
-                  ],
-                  if (videoDetailController.showDmTrendChart.value)
-                    if (videoDetailController.dmTrend.value?.dataOrNull
-                        case final list?)
-                      buildDmChart(primary, list, videoDetailController, 4.5),
-                ],
+                ),
               ),
             ),
+            buildSecondaryControls(),
+          ],
           ),
-          buildSecondaryControls(),
-        ],
+        ),
       ),
     );
   }

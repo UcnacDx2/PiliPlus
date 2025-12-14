@@ -12,6 +12,7 @@ import 'package:PiliPlus/models_new/live/live_room_info_h5/data.dart';
 import 'package:PiliPlus/models_new/live/live_superchat/item.dart';
 import 'package:PiliPlus/pages/danmaku/danmaku_model.dart';
 import 'package:PiliPlus/pages/live_room/controller.dart';
+import 'package:PiliPlus/pages/live_room/widgets/dummy_intro_controller.dart';
 import 'package:PiliPlus/pages/live_room/superchat/superchat_card.dart';
 import 'package:PiliPlus/pages/live_room/superchat/superchat_panel.dart';
 import 'package:PiliPlus/pages/live_room/widgets/bottom_control.dart';
@@ -198,6 +199,10 @@ class _LiveRoomPageState extends State<LiveRoomPage>
     if (plPlayerController.keyboardControl) {
       child = PlayerFocus(
         plPlayerController: plPlayerController,
+        onSendDanmaku: _liveRoomController.onSendDanmaku,
+        canPlay: () => true,
+        onSkipSegment: () {},
+        introController: DummyIntroController(),
         child: child,
       );
     }

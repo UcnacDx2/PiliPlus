@@ -336,46 +336,37 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final isPart = videoDetail.pages != null && videoDetail.pages!.length > 1;
     final isPgc = !videoDetailController.isUgc;
     final isPlayAll = videoDetailController.isPlayAll;
-    final anySeason = isSeason || isPart || isPgc || isPlayAll;
 
     List<BottomControlType> mainLeft = [
       BottomControlType.playOrPause,
-      if (!plPlayerController.isFileSource || anySeason) ...[
+      if (!plPlayerController.isFileSource ||
+          (isSeason || isPart || isPgc || isPlayAll)) ...[
         BottomControlType.pre,
         BottomControlType.next,
       ],
     ];
 
-    return Focus(
-      onKey: (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.arrowUp) {
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
-      child: Row(
-        children: [
-          ...mainLeft.map(
-            (controlType) {
-              final isFirst = controlType == mainLeft.first;
-              return _buildControlButton(
-                controlType,
-                videoDetailController,
-                isLandscape,
-                focusNode:
-                    isFirst ? plPlayerController.mainControlsFocusNode : null,
-              );
-            },
-          ),
-          const Spacer(),
-          _buildControlButton(
-            BottomControlType.time,
-            videoDetailController,
-            isLandscape,
-          ),
-        ],
-      ),
+    return Row(
+      children: [
+        ...mainLeft.map(
+          (controlType) {
+            final isFirst = controlType == mainLeft.first;
+            return _buildControlButton(
+              controlType,
+              videoDetailController,
+              isLandscape,
+              focusNode:
+                  isFirst ? plPlayerController.mainControlsFocusNode : null,
+            );
+          },
+        ),
+        const Spacer(),
+        _buildControlButton(
+          BottomControlType.time,
+          videoDetailController,
+          isLandscape,
+        ),
+      ],
     );
   }
 
@@ -388,7 +379,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final isPart = videoDetail.pages != null && videoDetail.pages!.length > 1;
     final isPgc = !videoDetailController.isUgc;
     final isPlayAll = videoDetailController.isPlayAll;
-    final anySeason = isSeason || isPart || isPgc || isPlayAll;
     final isFullScreen = this.isFullScreen;
 
     final flag =
@@ -399,8 +389,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       if (plPlayerController.isAnim) BottomControlType.superResolution,
       if (!plPlayerController.isFileSource && plPlayerController.showViewPoints)
         BottomControlType.viewPoints,
-      if (!plPlayerController.isFileSource && anySeason)
-        BottomControlType.episode,
+      if (!plPlayerController.isFileSource &&
+          (isSeason || isPart || isPgc || isPlayAll)) BottomControlType.episode,
       if (flag) BottomControlType.fit,
       if (!plPlayerController.isFileSource) BottomControlType.aiTranslate,
       BottomControlType.subtitle,
@@ -419,41 +409,32 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       BottomControlType.more,
     ];
 
-    return Focus(
-      onKey: (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.arrowDown) {
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
-      child: Row(
-        children: [
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) => FittedBox(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: secondaryControls.map((controlType) {
-                      final isFitButton = controlType == BottomControlType.fit;
-                      return _buildControlButton(
-                        controlType,
-                        videoDetailController,
-                        isLandscape,
-                        focusNode: isFitButton
-                            ? plPlayerController.secondaryControlsFocusNode
-                            : null,
-                      );
-                    }).toList(),
-                  ),
+    return Row(
+      children: [
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) => FittedBox(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: secondaryControls.map((controlType) {
+                    final isFirst = controlType == secondaryControls.first;
+                    return _buildControlButton(
+                      controlType,
+                      videoDetailController,
+                      isLandscape,
+                      focusNode: isFirst
+                          ? plPlayerController.secondaryControlsFocusNode
+                          : null,
+                    );
+                  }).toList(),
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -468,7 +449,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final isPart = videoDetail.pages != null && videoDetail.pages!.length > 1;
     final isPgc = !videoDetailController.isUgc;
     final isPlayAll = videoDetailController.isPlayAll;
-    final anySeason = isSeason || isPart || isPgc || isPlayAll;
     final isFullScreen = this.isFullScreen;
     final double widgetWidth = isLandscape && isFullScreen ? 42 : 35;
 
