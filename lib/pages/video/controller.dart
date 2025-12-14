@@ -1462,6 +1462,7 @@ class VideoDetailController extends GetxController
   RxList<Subtitle> subtitles = RxList<Subtitle>();
   late final Map<int, String> vttSubtitles = {};
   late final RxInt vttSubtitlesIndex = (-1).obs;
+  RxInt get currentSubtitleIndex => vttSubtitlesIndex;
   late final RxBool showVP = true.obs;
   late final RxList<Segment> viewPointList = <Segment>[].obs;
 

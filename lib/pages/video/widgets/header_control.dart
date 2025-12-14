@@ -2328,7 +2328,40 @@ class HeaderControlState extends State<HeaderControl>
                     height: 45,
                     child: Center(child: Text('字幕设置', style: titleStyle)),
                   ),
-                  const SizedBox(height: 10),
+                  SwitchListTile(
+                    value: videoDetailCtr.currentSubtitleIndex.value != 0,
+                    onChanged: (value) {
+                      setState(() {
+                        if (value) {
+                          if (videoDetailCtr.subtitles.isNotEmpty) {
+                            videoDetailCtr.setSubtitle(1);
+                          }
+                        } else {
+                          videoDetailCtr.setSubtitle(0);
+                        }
+                      });
+                    },
+                    title: const Text('开启字幕'),
+                  ),
+                  if (videoDetailCtr.currentSubtitleIndex.value != 0)
+                    ...videoDetailCtr.subtitles.map((e) {
+                      final index = videoDetailCtr.subtitles.indexOf(e) + 1;
+                      final isCurr =
+                          videoDetailCtr.currentSubtitleIndex.value == index;
+                      return ListTile(
+                        dense: true,
+                        onTap: () {
+                          videoDetailCtr.setSubtitle(index);
+                          setState(() {});
+                        },
+                        title: Text(e.lanDoc!),
+                        trailing: isCurr
+                            ? Icon(Icons.done,
+                                color: theme.colorScheme.primary)
+                            : null,
+                      );
+                    }).toList(),
+                  const Divider(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
