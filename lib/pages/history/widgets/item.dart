@@ -11,6 +11,9 @@ import 'package:PiliPlus/pages/common/multi_select/base.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
+import 'package:PiliPlus/models/common/account_type.dart';
+import 'package:PiliPlus/pages/history/controller.dart';
+import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -86,15 +89,23 @@ class HistoryItem extends StatelessWidget {
                         part: item.history.page,
                       );
                   if (cid != null) {
+                    final historyMid = Get.find<HistoryController>(
+                      tag: ctr is HistoryController ? ctr.type ?? 'all' : null,
+                    ).account.mid;
+                    final videoMid = Accounts.get(AccountType.video).mid;
                     PageUtils.toVideoPage(
                       aid: aid,
                       bvid: bvid,
                       cid: cid,
                       cover: item.cover,
                       title: item.title,
-                      progress: item.progress == null
+                      progress: historyMid == videoMid
                           ? null
-                          : (item.progress == -1 ? 0 : item.progress! * 1000),
+                          : (item.progress == null
+                              ? null
+                              : (item.progress == -1
+                                  ? 0
+                                  : item.progress! * 1000)),
                     );
                   }
                 }
