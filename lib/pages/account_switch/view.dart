@@ -65,6 +65,7 @@ class _AccountSwitchPageState extends State<AccountSwitchPage> {
               focusNode: _focusNodes[index],
               onTap: () async {
                 await Accounts.set(AccountType.main, profile);
+                await Accounts.set(AccountType.heartbeat, profile);
                 Get.back();
               },
               child: Column(
