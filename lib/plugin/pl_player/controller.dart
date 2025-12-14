@@ -59,9 +59,15 @@ import 'package:path/path.dart' as path;
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'logic/tv_focus_manager.dart';
+import 'models/bottom_control_type.dart';
+
 class PlPlayerController {
   Player? _videoPlayerController;
   VideoController? _videoController;
+
+  // --- 新增：TV模式焦点管理 ---
+  final TVFocusManager tvFocusManager = TVFocusManager();
 
   // 添加一个私有静态变量来保存实例
   static PlPlayerController? _instance;
@@ -1713,6 +1719,7 @@ class PlPlayerController {
 
   bool isCloseAll = false;
   Future<void> dispose() async {
+    tvFocusManager.dispose();
     // 每次减1，最后销毁
     cancelLongPressTimer();
     if (!isCloseAll && _playerCount > 1) {
