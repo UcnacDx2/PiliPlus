@@ -5,8 +5,26 @@ class TvTopControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text("TV Top Control"),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        FocusableActionDetector(
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {},
+          ),
+        ),
+        const Text(
+          'TV Top Control',
+          style: TextStyle(color: Colors.white),
+        ),
+        FocusableActionDetector(
+          child: IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {},
+          ),
+        ),
+      ],
     );
   }
 }

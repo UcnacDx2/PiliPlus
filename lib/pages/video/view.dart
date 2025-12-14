@@ -1365,7 +1365,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                 ? TvVideoPlayer(
                     plPlayerController: plPlayerController!,
                     headerControl: const TvTopControl(),
-                    bottomControl: const TvBottomControl(),
+                    bottomControl: TvBottomControl(
+                      controller: plPlayerController!,
+                    ),
                   )
                 : PLVideoPlayer(
                     maxWidth: width,
