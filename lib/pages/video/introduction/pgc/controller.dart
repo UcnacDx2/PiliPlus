@@ -30,6 +30,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
+import 'package:PiliPlus/common/widgets/episode_panel.dart';
 
 class PgcIntroController extends CommonIntroController {
   int? seasonId;
@@ -504,5 +505,16 @@ class PgcIntroController extends CommonIntroController {
     } else {
       SmartDialog.showToast(res['msg']);
     }
+  }
+
+  void showEpisodePanel() {
+    PageUtils.showVideoBottomSheet(
+      Get.context!,
+      child: EpisodePanel(
+        controller: this,
+        heroTag: heroTag,
+      ),
+      isFullScreen: () => videoDetailCtr.plPlayerController.isFullScreen.value,
+    );
   }
 }

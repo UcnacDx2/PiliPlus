@@ -1788,6 +1788,7 @@ class PlPlayerController {
   late final RxBool showPreview = false.obs;
   late final showSeekPreview = Pref.showSeekPreview;
   late final previewIndex = RxnInt();
+  final RxBool showDmTrendChart = true.obs;
 
   void updatePreviewIndex(int seconds) {
     if (videoShot == null) {

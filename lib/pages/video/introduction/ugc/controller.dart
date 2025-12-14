@@ -43,6 +43,7 @@ import 'package:expandable/expandable.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:PiliPlus/common/widgets/episode_panel.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 
 class UgcIntroController extends CommonIntroController with ReloadMixin {
@@ -778,6 +779,17 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
       bvid,
       cid.value,
       videoDetail.value.owner?.mid,
+    );
+  }
+
+  void showEpisodePanel() {
+    PageUtils.showVideoBottomSheet(
+      Get.context!,
+      child: EpisodePanel(
+        controller: this,
+        heroTag: heroTag,
+      ),
+      isFullScreen: () => videoDetailCtr.plPlayerController.isFullScreen.value,
     );
   }
 }

@@ -1661,6 +1661,18 @@ class VideoDetailController extends GetxController
     if (isFileSource) {
       cacheLocalProgress();
     }
+  }
+
+  void showEpisodePanel() {
+    if (isUgc) {
+      try {
+        Get.find<UgcIntroController>(tag: heroTag).showEpisodePanel();
+      } catch (_) {}
+    } else {
+      try {
+        Get.find<PgcIntroController>(tag: heroTag).showEpisodePanel();
+      } catch (_) {}
+    }
     introScrollCtr?.dispose();
     introScrollCtr = null;
     tabCtr.dispose();
