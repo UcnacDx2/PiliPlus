@@ -92,7 +92,9 @@ class HistoryItem extends StatelessWidget {
                       cid: cid,
                       cover: item.cover,
                       title: item.title,
-                      progress: item.progress == -1 ? 0 : item.progress,
+                      progress: item.progress == null
+                          ? null
+                          : (item.progress == -1 ? 0 : item.progress! * 1000),
                     );
                   }
                 }
