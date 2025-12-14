@@ -207,6 +207,8 @@ class TvPlayerController extends PlPlayerController {
 
   /// 快进
   void seekForward() {
+    if (duration.value <= Duration.zero) return;
+    
     final newPosition = position.value + fastForBackwardDuration;
     if (newPosition < duration.value) {
       seekTo(newPosition);
@@ -219,6 +221,8 @@ class TvPlayerController extends PlPlayerController {
 
   /// 快退
   void seekBackward() {
+    if (duration.value <= Duration.zero) return;
+    
     final newPosition = position.value - fastForBackwardDuration;
     if (newPosition > Duration.zero) {
       seekTo(newPosition);

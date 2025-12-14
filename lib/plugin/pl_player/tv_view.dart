@@ -9,6 +9,9 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+/// 默认视频宽高比（16:9）
+const double kDefaultVideoAspectRatio = 16.0 / 9.0;
+
 /// TV端播放器视图
 /// 专为TV遥控器交互设计，移除触摸手势，使用焦点管理系统
 class TvVideoPlayer extends StatefulWidget {
@@ -79,14 +82,14 @@ class _TvVideoPlayerState extends State<TvVideoPlayer> {
             // 视频播放层
             Center(
               child: Obx(() {
-                // 获取视频尺寸，如果无效则使用16:9
+                // 获取视频尺寸，如果无效则使用默认16:9
                 final videoWidth = videoController.player.state.width;
                 final videoHeight = videoController.player.state.height;
                 final aspectRatio = (videoWidth != null && 
                                      videoHeight != null && 
                                      videoHeight > 0)
                     ? videoWidth / videoHeight
-                    : 16 / 9;
+                    : kDefaultVideoAspectRatio;
                 
                 return AspectRatio(
                   aspectRatio: aspectRatio,
