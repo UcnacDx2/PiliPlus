@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:flutter/material.dart';
@@ -9,20 +7,20 @@ class PlayerFocus extends StatelessWidget {
   const PlayerFocus({
     required this.child,
     required this.plPlayerController,
-    required this.introController,
+    this.introController,
     required this.onSendDanmaku,
     required this.canPlay,
-    required this.onSkipSegment,
+    this.onSkipSegment,
     this.onShowMenu,
     super.key,
   });
 
   final Widget child;
   final PlPlayerController plPlayerController;
-  final CommonIntroController introController;
+  final CommonIntroController? introController;
   final VoidCallback onSendDanmaku;
   final bool Function() canPlay;
-  final VoidCallback onSkipSegment;
+  final VoidCallback? onSkipSegment;
   final VoidCallback? onShowMenu;
 
   @override
@@ -79,14 +77,14 @@ class PlayerFocus extends StatelessWidget {
           onSendDanmaku();
           return KeyEventResult.handled;
         } else if (event.logicalKey == LogicalKeyboardKey.keyS) {
-          onSkipSegment();
+          onSkipSegment?.call();
           return KeyEventResult.handled;
         } else if (event.logicalKey == LogicalKeyboardKey.keyN) {
-          introController.nextPlay();
+          introController?.nextPlay();
           return KeyEventResult.handled;
         } else if (event.logicalKey == LogicalKeyboardKey.keyP) {
           if (shift) {
-            introController.prevPlay();
+            introController?.prevPlay();
           }
           return KeyEventResult.handled;
         } else if (event.logicalKey == LogicalKeyboardKey.keyM) {
