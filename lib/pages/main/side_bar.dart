@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
-class MainSideBar extends StatelessWidget {
+class MainSideBar extends StatefulWidget {
   final MainController mainController;
   final ThemeData theme;
 
@@ -20,10 +20,23 @@ class MainSideBar extends StatelessWidget {
   });
 
   @override
+  State<MainSideBar> createState() => _MainSideBarState();
+}
+
+class _MainSideBarState extends State<MainSideBar> {
+  bool _isFocused = false;
+
+  @override
   Widget build(BuildContext context) {
     return Obx(
       () => FocusScope(
-        key: ValueKey(mainController.selectedIndex.value),
+        onFocusChange: (value) {
+          if (_isFocused != value) {
+            setState(() {
+              _isFocused = value;
+            });
+          }
+        },
         child: Container(
           width: 80,
           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -38,7 +51,7 @@ class MainSideBar extends StatelessWidget {
                 onPressed: () => Get.toNamed('/search'),
               ),
               const SizedBox(height: 10),
-              ...mainController.navigationBars.map(
+              ...widget.mainController.navigationBars.map(
                 _buildNavItem,
               ),
               const Spacer(),
@@ -58,7 +71,7 @@ class MainSideBar extends StatelessWidget {
 
   Widget _buildNavItem(NavigationBarType type) {
     return Obx(() {
-      final selected = mainController.selectedIndex.value == type.index;
+      final selected = widget.mainController.selectedIndex.value == type.index;
       final icon = selected ? type.selectIcon : type.icon;
 
       Widget child = type == NavigationBarType.dynamics
@@ -68,13 +81,15 @@ class MainSideBar extends StatelessWidget {
       return Focus(
         key: ValueKey(type.index),
         autofocus: selected,
+        canRequestFocus: selected || _isFocused,
         onFocusChange: (hasFocus) {
-          if (hasFocus) {
-            mainController.setIndex(type.index);
+          if (hasFocus &&
+              type.index != widget.mainController.selectedIndex.value) {
+            widget.mainController.setIndex(type.index);
           }
         },
         child: InkWell(
-          onTap: () => mainController.setIndex(type.index),
+          onTap: () => widget.mainController.setIndex(type.index),
           borderRadius: BorderRadius.circular(50),
           child: Container(
             width: 50,
@@ -82,15 +97,15 @@ class MainSideBar extends StatelessWidget {
             margin: const EdgeInsets.symmetric(vertical: 5),
             decoration: selected
                 ? BoxDecoration(
-                    color: theme.colorScheme.secondaryContainer,
+                    color: widget.theme.colorScheme.secondaryContainer,
                     shape: BoxShape.circle,
                   )
                 : null,
             child: IconTheme(
               data: IconThemeData(
                 color: selected
-                    ? theme.colorScheme.onSecondaryContainer
-                    : theme.colorScheme.onSurfaceVariant,
+                    ? widget.theme.colorScheme.onSecondaryContainer
+                    : widget.theme.colorScheme.onSurfaceVariant,
               ),
               child: Center(child: child),
             ),
@@ -101,10 +116,10 @@ class MainSideBar extends StatelessWidget {
   }
 
   Widget _buildDynamicBadge(Widget icon) {
-    final dynCount = mainController.dynCount.value;
+    final dynCount = widget.mainController.dynCount.value;
     return Badge(
       isLabelVisible: dynCount > 0,
-      label: mainController.dynamicBadgeMode == DynamicBadgeMode.number
+      label: widget.mainController.dynamicBadgeMode == DynamicBadgeMode.number
           ? Text(dynCount.toString())
           : null,
       padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -116,7 +131,7 @@ class MainSideBar extends StatelessWidget {
     return Semantics(
       label: "我的",
       child: Obx(
-        () => mainController.accountService.isLogin.value
+        () => widget.mainController.accountService.isLogin.value
             ? Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -124,15 +139,15 @@ class MainSideBar extends StatelessWidget {
                     type: ImageType.avatar,
                     width: 34,
                     height: 34,
-                    src: mainController.accountService.face.value,
+                    src: widget.mainController.accountService.face.value,
                   ),
                   Positioned.fill(
                     child: Material(
                       type: MaterialType.transparency,
                       child: InkWell(
-                        onTap: mainController.toMinePage,
-                        splashColor:
-                            theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        onTap: widget.mainController.toMinePage,
+                        splashColor: widget.theme.colorScheme.primaryContainer
+                            .withValues(alpha: 0.3),
                         customBorder: const CircleBorder(),
                       ),
                     ),
@@ -146,13 +161,15 @@ class MainSideBar extends StatelessWidget {
                               child: Container(
                                 padding: const EdgeInsets.all(2),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.secondaryContainer,
+                                  color: widget
+                                      .theme.colorScheme.secondaryContainer,
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
                                   size: 16,
                                   MdiIcons.incognito,
-                                  color: theme.colorScheme.onSecondaryContainer,
+                                  color: widget
+                                      .theme.colorScheme.onSecondaryContainer,
                                 ),
                               ),
                             )
@@ -162,8 +179,8 @@ class MainSideBar extends StatelessWidget {
                 ],
               )
             : defaultUser(
-                theme: theme,
-                onPressed: mainController.toMinePage,
+                theme: widget.theme,
+                onPressed: widget.mainController.toMinePage,
               ),
       ),
     );
