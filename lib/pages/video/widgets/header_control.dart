@@ -1321,14 +1321,15 @@ class HeaderControlState extends State<HeaderControl>
                     secondary: const Icon(Icons.comment_outlined, size: 20),
                     title: const Text('弹幕', style: titleStyle),
                   ),
-                  ListTile(
-                    dense: true,
-                    onTap: () {
-                      Get.back();
-                      showSetSubtitle();
-                    },
-                    leading: const Icon(Icons.subtitles_outlined, size: 20),
-                    title: const Text('字幕', style: titleStyle),
+                  Obx(
+                    () => SwitchListTile(
+                      value: videoDetailCtr.vttSubtitlesIndex.value != 0,
+                      onChanged: (value) {
+                        videoDetailCtr.toggleSubtitle();
+                      },
+                      secondary: const Icon(Icons.subtitles_outlined, size: 20),
+                      title: const Text('字幕', style: titleStyle),
+                    ),
                   ),
                 ListTile(
                   dense: true,
