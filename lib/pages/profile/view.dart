@@ -26,11 +26,11 @@ class ProfilePage extends GetView<ProfileController> {
               crossAxisSpacing: 20,
               mainAxisSpacing: 20,
             ),
-            itemCount: controller.accounts.length,
+            itemCount: controller.profiles.length,
             itemBuilder: (context, index) {
-              final account = controller.accounts[index];
+              final profile = controller.profiles[index];
               return GestureDetector(
-                onTap: () => controller.switchAccount(account),
+                onTap: () => controller.switchAccount(profile.account),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -38,14 +38,16 @@ class ProfilePage extends GetView<ProfileController> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: NetworkImgLayer(
-                          src: account.face,
+                          src: profile.userInfo.face,
+                          width: 100,
+                          height: 100,
                           type: ImageType.avatar,
                         ),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      account.uname ?? 'Guest',
+                      profile.userInfo.uname ?? 'Guest',
                       style: theme.textTheme.titleMedium,
                     ),
                   ],
