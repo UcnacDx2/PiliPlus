@@ -1337,7 +1337,6 @@ class HeaderControlState extends State<HeaderControl>
                 ListTile(
                   dense: true,
                   onTap: () {
-                    Get.back();
                     showSetAspectRatio();
                   },
                   leading: const Icon(Icons.aspect_ratio_outlined, size: 20),
