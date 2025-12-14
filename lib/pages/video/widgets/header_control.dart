@@ -1277,13 +1277,13 @@ class HeaderControlState extends State<HeaderControl>
                         widget.showEpisodes!(
                           0,
                           null,
-                          videoDetail.episodes,
+                          videoDetail.pages,
                           null,
                           null,
-                          videoDetail.episodes
+                          videoDetail.pages
                               .firstWhere(
                                 (e) => e.cid == videoDetailCtr.cid.value,
-                                orElse: () => videoDetail.episodes.first,
+                                orElse: () => videoDetail.pages.first,
                               )
                               .cid,
                         );
