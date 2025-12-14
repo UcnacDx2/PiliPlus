@@ -377,36 +377,36 @@ class _MainAppState extends State<MainApp>
                                   ),
                                 ],
                               )
-                            : _mainController.tvStyleSidebar
-                                ? MainSideBar(
-                                    mainController: _mainController,
-                                    theme: theme,
-                                  )
-                                : Obx(
-                                    () => NavigationRail(
-                                      groupAlignment: 0.5,
-                                      selectedIndex:
-                                          _mainController.selectedIndex.value,
-                                      onDestinationSelected:
-                                          _mainController.setIndex,
-                                      labelType:
-                                          NavigationRailLabelType.selected,
-                                      leading: userAndSearchVertical(theme),
-                                      destinations: _mainController
-                                          .navigationBars
-                                          .map(
-                                            (e) => NavigationRailDestination(
-                                              label: Text(e.label),
-                                              icon: _buildIcon(type: e),
-                                              selectedIcon: _buildIcon(
-                                                type: e,
-                                                selected: true,
+                              : _mainController.tvStyleSidebar
+                                  ? MainSideBar(
+                                      mainController: _mainController,
+                                      theme: theme,
+                                    )
+                                  : Obx(
+                                      () => NavigationRail(
+                                        groupAlignment: 0.5,
+                                        selectedIndex:
+                                            _mainController.selectedIndex.value,
+                                        onDestinationSelected:
+                                            _mainController.setIndex,
+                                        labelType:
+                                            NavigationRailLabelType.selected,
+                                        leading: userAndSearchVertical(theme),
+                                        destinations: _mainController
+                                            .navigationBars
+                                            .map(
+                                              (e) => NavigationRailDestination(
+                                                label: Text(e.label),
+                                                icon: _buildIcon(type: e),
+                                                selectedIcon: _buildIcon(
+                                                  type: e,
+                                                  selected: true,
+                                                ),
                                               ),
-                                            ),
-                                          )
-                                          .toList(),
-                                    ),
-                                  )
+                                            )
+                                            .toList(),
+                                      ),
+                                    )
                       : Container(
                           padding: const EdgeInsets.only(top: 10),
                           width: 80,
@@ -547,11 +547,12 @@ class _MainAppState extends State<MainApp>
           ),
         ),
         const SizedBox(height: 8),
-        Obx(
-          () => _mainController.accountService.isLogin.value
-              ? msgBadge(_mainController)
-              : const SizedBox.shrink(),
-        ),
+        if (!_mainController.tvStyleSidebar)
+          Obx(
+            () => _mainController.accountService.isLogin.value
+                ? msgBadge(_mainController)
+                : const SizedBox.shrink(),
+          ),
         IconButton(
           tooltip: '搜索',
           icon: const Icon(
