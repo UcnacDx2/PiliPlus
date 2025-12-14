@@ -1296,7 +1296,9 @@ class HeaderControlState extends State<HeaderControl>
                   SwitchListTile(
                     value: videoDetailCtr.showDmTrendChart.value,
                     onChanged: (value) {
-                      videoDetailCtr.showDmTrendChart.value = value;
+                      setState(
+                        () => videoDetailCtr.showDmTrendChart.value = value,
+                      );
                       if (!plPlayerController.tempPlayerConf) {
                         setting.put(
                           'showDmTrendChart',
@@ -1310,7 +1312,9 @@ class HeaderControlState extends State<HeaderControl>
                   SwitchListTile(
                     value: plPlayerController.enableShowDanmaku.value,
                     onChanged: (value) {
-                      plPlayerController.enableShowDanmaku.value = value;
+                      setState(
+                        () => plPlayerController.enableShowDanmaku.value = value,
+                      );
                       if (!plPlayerController.tempPlayerConf) {
                         setting.put(
                           SettingBoxKey.enableShowDanmaku,
