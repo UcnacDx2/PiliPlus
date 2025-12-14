@@ -1330,6 +1330,23 @@ class HeaderControlState extends State<HeaderControl>
                     leading: const Icon(Icons.subtitles_outlined, size: 20),
                     title: const Text('字幕', style: titleStyle),
                   ),
+                  SwitchListTile(
+                    value: videoDetailCtr.subtitle.value > 0,
+                    onChanged: (value) {
+                      videoDetailCtr.setSubtitle(value ? 1 : 0);
+                    },
+                    secondary: const Icon(Icons.subtitles_outlined, size: 20),
+                    title: const Text('开启字幕', style: titleStyle),
+                  ),
+                  ListTile(
+                    dense: true,
+                    onTap: () {
+                      Get.back();
+                      showSetSubtitle();
+                    },
+                    leading: const Icon(Icons.subtitles_outlined, size: 20),
+                    title: const Text('字幕', style: titleStyle),
+                  ),
                 ListTile(
                   dense: true,
                   onTap: () {
