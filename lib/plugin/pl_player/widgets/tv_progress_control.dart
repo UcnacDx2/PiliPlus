@@ -25,12 +25,14 @@ class _TvProgressControlState extends State<TvProgressControl> {
               return KeyEventResult.handled;
             case LogicalKeyboardKey.arrowLeft:
               widget.controller.seekTo(
-                widget.controller.position.value - const Duration(seconds: 10),
+                widget.controller.position.value -
+                    widget.controller.fastForBackwardDuration,
               );
               return KeyEventResult.handled;
             case LogicalKeyboardKey.arrowRight:
               widget.controller.seekTo(
-                widget.controller.position.value + const Duration(seconds: 10),
+                widget.controller.position.value +
+                    widget.controller.fastForBackwardDuration,
               );
               return KeyEventResult.handled;
           }

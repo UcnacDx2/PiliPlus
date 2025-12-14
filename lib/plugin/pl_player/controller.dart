@@ -29,6 +29,7 @@ import 'package:PiliPlus/plugin/pl_player/models/heart_beat_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
+import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -577,7 +578,13 @@ class PlPlayerController {
   }
 
   factory PlPlayerController.getInstance({bool isLive = false}) {
-    _instance ??= PlPlayerController();
+    if (_instance == null) {
+      if (Utils.isTvModeSync) {
+        _instance = TvPlayerController();
+      } else {
+        _instance = PlPlayerController();
+      }
+    }
     _instance!
       ..isLive = isLive
       ..playerCount += 1;
@@ -1180,7 +1187,7 @@ class PlPlayerController {
     // if (position >= duration.value) {
     //   position = duration.value - const Duration(milliseconds: 100);
     // }
-    if (_playerCount == 0) {
+    if (playerCount == 0) {
       return;
     }
     if (position < Duration.zero) {
@@ -1715,7 +1722,7 @@ class PlPlayerController {
     // 每次减1，最后销毁
     cancelLongPressTimer();
     if (!isCloseAll && playerCount > 1) {
-      _playerCount -= 1;
+      playerCount -= 1;
       _heartDuration = 0;
       if (!_isPreviousVideoPage) {
         pause();
@@ -1730,7 +1737,7 @@ class PlPlayerController {
     dmState.clear();
     _clearPreview();
     Utils.channel.setMethodCallHandler(null);
-    _timer?.cancel();
+    timer?.cancel();
     _timerForSeek?.cancel();
     _timerForShowingVolume?.cancel();
     // _position.close();

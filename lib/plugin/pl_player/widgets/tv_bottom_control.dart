@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/widgets/pair.dart';
 import 'package:PiliPlus/plugin/pl_player/models/bottom_control_type.dart';
 import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
@@ -28,14 +29,23 @@ import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/local/controller.dart';
 
 class TvBottomControl extends StatelessWidget {
-  const TvBottomControl({super.key, required this.controller});
+  const TvBottomControl({
+    super.key,
+    required this.controller,
+    required this.videoDetailController,
+    required this.introController,
+    this.showEpisodes,
+    this.showViewPoints,
+  });
 
   final TvPlayerController controller;
+  final VideoDetailController videoDetailController;
+  final CommonIntroController introController;
+  final Function? showEpisodes;
+  final VoidCallback? showViewPoints;
 
   @override
   Widget build(BuildContext context) {
-    final VideoDetailController videoDetailController = Get.find();
-    final CommonIntroController introController = videoDetailController.introController;
     final videoDetail = introController.videoDetail.value;
     final isSeason = videoDetail.ugcSeason != null;
     final isPart = videoDetail.pages != null && videoDetail.pages!.length > 1;
@@ -53,14 +63,14 @@ class TvBottomControl extends StatelessWidget {
               _buildProgressWidget(bottomControl, videoDetailController, true, introController),
         );
 
-    final isNotFileSource = !controller.plPlayerController.isFileSource;
+    final isNotFileSource = !controller.isFileSource;
 
     List<BottomControlType> userSpecifyItemRight = [
-      if (isNotFileSource && controller.plPlayerController.showDmChart)
+      if (isNotFileSource && controller.showDmChart)
         BottomControlType.dmChart,
-      if (controller.plPlayerController.isAnim)
+      if (controller.isAnim)
         BottomControlType.superResolution,
-      if (isNotFileSource && controller.plPlayerController.showViewPoints)
+      if (isNotFileSource && controller.showViewPoints)
         BottomControlType.viewPoints,
       if (isNotFileSource && anySeason) BottomControlType.episode,
       if (flag) BottomControlType.fit,
@@ -101,10 +111,10 @@ class TvBottomControl extends StatelessWidget {
     switch (bottomControl) {
       case BottomControlType.playOrPause:
         return PlayOrPauseButton(
-          plPlayerController: controller.plPlayerController,
+          plPlayerController: controller,
         );
       case BottomControlType.qa:
-        return _buildQaButton();
+        return _buildQaButton(videoDetailController);
       case BottomControlType.speed:
         return _buildSpeedButton();
       case BottomControlType.subtitle:
@@ -120,164 +130,252 @@ class TvBottomControl extends StatelessWidget {
             color: Colors.white,
           ),
           onTap: () {
-            // TODO
+            if (videoDetailController.isFileSource) {
+              // TODO
+              return;
+            }
+            // part -> playAll -> season(pgc)
+            if (isPlayAll && !isPart) {
+              videoDetailController.showMediaListPanel(Get.context!);
+              return;
+            }
+            int? index;
+            int currentCid = controller.cid!;
+            String bvid = controller.bvid;
+            List<ugc.BaseEpisodeItem> episodes = [];
+            if (isSeason) {
+              final List<SectionItem> sections =
+                  videoDetail.ugcSeason!.sections!;
+              for (int i = 0; i < sections.length; i++) {
+                final List<EpisodeItem> episodesList = sections[i].episodes!;
+                for (int j = 0; j < episodesList.length; j++) {
+                  if (episodesList[j].cid == controller.cid) {
+                    index = i;
+                    episodes = episodesList;
+                    break;
+                  }
+                }
+              }
+            } else if (isPart) {
+              episodes = videoDetail.pages!;
+            } else if (isPgc) {
+              episodes =
+                  (introController as PgcIntroController).pgcItem.episodes!;
+            }
+            showEpisodes?.call(
+              index,
+              isSeason ? videoDetail.ugcSeason! : null,
+              isSeason ? null : episodes,
+              bvid,
+              IdUtils.bv2av(bvid),
+              isSeason && isPart
+                  ? videoDetailController.seasonCid ?? currentCid
+                  : currentCid,
+            );
           },
         );
       case BottomControlType.fit:
         return Obx(
-          () => PopupMenuButton<VideoFitType>(
+          () => _buildMenuButton(
             tooltip: '画面比例',
-            requestFocus: false,
-            initialValue: controller.plPlayerController.videoFit.value,
-            color: Colors.black.withValues(alpha: 0.8),
-            itemBuilder: (context) {
-              return VideoFitType.values
-                  .map(
-                    (boxFit) => PopupMenuItem<VideoFitType>(
-                      height: 35,
-                      padding: const EdgeInsets.only(left: 30),
-                      value: boxFit,
-                      onTap: () => controller.plPlayerController.toggleVideoFit(boxFit),
-                      child: Text(
-                        boxFit.desc,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
-                      ),
-                    ),
-                  )
-                  .toList();
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                controller.plPlayerController.videoFit.value.desc,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-              ),
-            ),
+            label: controller.videoFit.value.desc,
+            items: VideoFitType.values
+                .map(
+                  (fit) => Pair(
+                    first: fit.desc,
+                    second: () => controller.toggleVideoFit(fit),
+                  ),
+                )
+                .toList(),
           ),
         );
       default:
         return const SizedBox.shrink();
+      case BottomControlType.aiTranslate:
+        return Obx(
+          () {
+            final list = videoDetailController.languages.value;
+            if (list != null && list.isNotEmpty) {
+              return _buildMenuButton(
+                tooltip: '翻译',
+                label: '翻译',
+                items: [
+                  Pair(
+                    '关闭翻译',
+                    () => videoDetailController.setLanguage(''),
+                  ),
+                  ...list.map(
+                    (e) => Pair(
+                      e.title!,
+                      () => videoDetailController.setLanguage(e.lang!),
+                    ),
+                  ),
+                ],
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        );
+      case BottomControlType.viewPoints:
+        return Obx(
+          () => videoDetailController.viewPointList.isEmpty
+              ? const SizedBox.shrink()
+              : ComBtn(
+                  width: widgetWidth,
+                  height: 30,
+                  tooltip: '分段信息',
+                  icon: Transform.rotate(
+                    angle: math.pi / 2,
+                    child: const Icon(
+                      MdiIcons.viewHeadline,
+                      size: 22,
+                      color: Colors.white,
+                    ),
+                  ),
+                  onTap: showViewPoints,
+                  onLongPress: () {
+                    Feedback.forLongPress(Get.context!);
+                    videoDetailController.showVP.value =
+                        !videoDetailController.showVP.value;
+                  },
+                  onSecondaryTap: Utils.isMobile
+                      ? null
+                      : () => videoDetailController.showVP.value =
+                            !videoDetailController.showVP.value,
+                ),
+        );
+      case BottomControlType.superResolution:
+        return Obx(
+          () => _buildMenuButton(
+            tooltip: '超分辨率',
+            label: controller.superResolutionType.value.title,
+            items: SuperResolutionType.values
+                .map(
+                  (type) => Pair(
+                    first: type.title,
+                    second: () => controller.setShader(type),
+                  ),
+                )
+                .toList(),
+          ),
+        );
+
+      case BottomControlType.dmChart:
+        return Obx(
+          () {
+            final list = videoDetailController.dmTrend.value?.dataOrNull;
+            if (list != null && list.isNotEmpty) {
+              return ComBtn(
+                width: widgetWidth,
+                height: 30,
+                tooltip: '高能进度条',
+                icon: videoDetailController.showDmTrendChart.value
+                    ? const Icon(
+                        Icons.show_chart,
+                        size: 22,
+                        color: Colors.white,
+                      )
+                    : const Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            Icons.show_chart,
+                            size: 22,
+                            color: Colors.white,
+                          ),
+                          Icon(
+                            Icons.hide_source,
+                            size: 22,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                onTap: () => videoDetailController.showDmTrendChart.value =
+                    !videoDetailController.showDmTrendChart.value,
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        );
     }
   }
 
-  Widget _buildQaButton() {
-    return Obx(
-      () {
-        final VideoDetailController videoDetailController = Get.find();
-        final VideoQuality? currentVideoQa =
-            videoDetailController.currentVideoQa.value;
-        if (currentVideoQa == null) {
-          return const SizedBox.shrink();
+  Widget _buildQaButton(VideoDetailController videoDetailController) {
+    return Obx(() {
+      final VideoQuality? currentVideoQa =
+          videoDetailController.currentVideoQa.value;
+      if (currentVideoQa == null) {
+        return const SizedBox.shrink();
+      }
+      final PlayUrlModel videoInfo = videoDetailController.data;
+      if (videoInfo.dash == null) {
+        return const SizedBox.shrink();
+      }
+      final List<FormatItem> videoFormat = videoInfo.supportFormats!;
+      final int totalQaSam = videoFormat.length;
+      int userfulQaSam = 0;
+      final List<VideoItem> video = videoInfo.dash!.video!;
+      final Set<int> idSet = {};
+      for (final VideoItem item in video) {
+        final int id = item.id!;
+        if (!idSet.contains(id)) {
+          idSet.add(id);
+          userfulQaSam++;
         }
-        final PlayUrlModel videoInfo = videoDetailController.data;
-        if (videoInfo.dash == null) {
-          return const SizedBox.shrink();
-        }
-        final List<FormatItem> videoFormat = videoInfo.supportFormats!;
-        final int totalQaSam = videoFormat.length;
-        int userfulQaSam = 0;
-        final List<VideoItem> video = videoInfo.dash!.video!;
-        final Set<int> idSet = {};
-        for (final VideoItem item in video) {
-          final int id = item.id!;
-          if (!idSet.contains(id)) {
-            idSet.add(id);
-            userfulQaSam++;
-          }
-        }
-        return PopupMenuButton<int>(
-          tooltip: '画质',
-          initialValue: currentVideoQa.code,
-          color: Colors.black.withValues(alpha: 0.8),
-          itemBuilder: (context) {
-            return List.generate(
-              totalQaSam,
-              (index) {
-                final item = videoFormat[index];
-                final enabled = index >= totalQaSam - userfulQaSam;
-                return PopupMenuItem<int>(
-                  enabled: enabled,
-                  height: 35,
-                  padding: const EdgeInsets.only(left: 15, right: 10),
-                  value: item.quality,
-                  onTap: () async {
-                    if (currentVideoQa.code == item.quality) {
-                      return;
+      }
+      return _buildMenuButton(
+        tooltip: '画质',
+        label: currentVideoQa.shortDesc,
+        items: List.generate(
+          totalQaSam,
+          (index) {
+            final item = videoFormat[index];
+            final enabled = index >= totalQaSam - userfulQaSam;
+            return Pair(
+              first: item.newDesc ?? '',
+              second: enabled
+                  ? () async {
+                      if (currentVideoQa.code == item.quality) {
+                        return;
+                      }
+                      final int quality = item.quality!;
+                      final newQa = VideoQuality.fromCode(quality);
+                      controller.cacheVideoQa = newQa.code;
+                      videoDetailController
+                        ..currentVideoQa.value = newQa
+                        ..updatePlayer();
+                      SmartDialog.showToast("画质已变为：${newQa.desc}");
+                      if (!controller.tempPlayerConf) {
+                        GStorage.setting.put(
+                          await Utils.isWiFi
+                              ? SettingBoxKey.defaultVideoQa
+                              : SettingBoxKey.defaultVideoQaCellular,
+                          quality,
+                        );
+                      }
                     }
-                    final int quality = item.quality!;
-                    final newQa = VideoQuality.fromCode(quality);
-                    videoDetailController
-                      ..cacheVideoQa = newQa.code
-                      ..currentVideoQa.value = newQa
-                      ..updatePlayer();
-
-                    SmartDialog.showToast("画质已变为：${newQa.desc}");
-
-                    if (!controller.tempPlayerConf) {
-                      GStorage.setting.put(
-                        await Utils.isWiFi
-                            ? SettingBoxKey.defaultVideoQa
-                            : SettingBoxKey.defaultVideoQaCellular,
-                        quality,
-                      );
-                    }
-                  },
-                  child: Text(
-                    item.newDesc ?? '',
-                    style: enabled
-                        ? const TextStyle(color: Colors.white, fontSize: 13)
-                        : const TextStyle(
-                            color: Color(0x62FFFFFF),
-                            fontSize: 13,
-                          ),
-                  ),
-                );
-              },
+                  : () {},
             );
           },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              currentVideoQa.shortDesc,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
-            ),
-          ),
-        );
-      },
-    );
+        ),
+      );
+    });
   }
 
   Widget _buildSpeedButton() {
     return Obx(
-      () => PopupMenuButton<double>(
+      () => _buildMenuButton(
         tooltip: '倍速',
-        initialValue: controller.playbackSpeed,
-        color: Colors.black.withValues(alpha: 0.8),
-        itemBuilder: (context) {
-          return controller.speedList
-              .map(
-                (double speed) => PopupMenuItem<double>(
-                  height: 35,
-                  padding: const EdgeInsets.only(left: 30),
-                  value: speed,
-                  onTap: () => controller.setPlaybackSpeed(speed),
-                  child: Text(
-                    "${speed}X",
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    semanticsLabel: "$speed倍速",
-                  ),
-                ),
-              )
-              .toList();
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            "${controller.playbackSpeed}X",
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-            semanticsLabel: "${controller.playbackSpeed}倍速",
-          ),
-        ),
+        label: "${controller.playbackSpeed}X",
+        items: controller.speedList
+            .map(
+              (speed) => Pair(
+                first: "${speed}X",
+                second: () => controller.setPlaybackSpeed(speed),
+              ),
+            )
+            .toList(),
       ),
     );
   }
@@ -286,62 +384,75 @@ class TvBottomControl extends StatelessWidget {
     return Obx(
       () => videoDetailController.subtitles.isEmpty
           ? const SizedBox.shrink()
-          : PopupMenuButton<int>(
+          : _buildMenuButton(
               tooltip: '字幕',
-              initialValue:
-                  videoDetailController.vttSubtitlesIndex.value.clamp(
-                0,
-                videoDetailController.subtitles.length,
-              ),
-              color: Colors.black.withValues(alpha: 0.8),
-              itemBuilder: (context) {
-                return [
-                  PopupMenuItem<int>(
-                    value: 0,
-                    height: 35,
-                    onTap: () => videoDetailController.setSubtitle(0),
-                    child: const Text(
-                      "关闭字幕",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                      ),
-                    ),
+              label: '字幕',
+              items: [
+                Pair(
+                  '关闭字幕',
+                  () => videoDetailController.setSubtitle(0),
+                ),
+                ...videoDetailController.subtitles.indexed.map(
+                  (e) => Pair(
+                    e.$2.lanDoc!,
+                    () => videoDetailController.setSubtitle(e.$1 + 1),
                   ),
-                  ...videoDetailController.subtitles.indexed.map((e) {
-                    return PopupMenuItem<int>(
-                      value: e.$1 + 1,
-                      height: 35,
-                      onTap: () => videoDetailController.setSubtitle(e.$1 + 1),
-                      child: Text(
-                        e.$2.lanDoc!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
-                      ),
-                    );
-                  }),
-                ];
-              },
-              child: SizedBox(
-                width: 42,
-                height: 30,
-                child: videoDetailController.vttSubtitlesIndex.value == 0
-                    ? const Icon(
-                        Icons.closed_caption_off_outlined,
-                        size: 22,
-                        color: Colors.white,
-                      )
-                    : const Icon(
-                        Icons.closed_caption_off_rounded,
-                        size: 22,
-                        color: Colors.white,
-                      ),
-              ),
+                ),
+              ],
             ),
+    );
+  }
+
+  Widget _buildMenuButton({
+    required String tooltip,
+    required String label,
+    required List<Pair<String, VoidCallback>> items,
+  }) {
+    return Builder(
+      builder: (context) {
+        return ComBtn(
+          tooltip: tooltip,
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: Colors.black.withOpacity(0.8),
+                content: SizedBox(
+                  width: 250, // A bit wider for text
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: items.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(color: Colors.grey, height: 1),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return ListTile(
+                        autofocus: index == 0, // Autofocus the first item
+                        title: Text(
+                          item.first,
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 14),
+                        ),
+                        onTap: () {
+                          item.second();
+                          Navigator.of(context).pop();
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+            ),
+          ),
+        );
+      },
     );
   }
 }

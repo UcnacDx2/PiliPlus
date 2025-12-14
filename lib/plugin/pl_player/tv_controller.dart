@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
@@ -17,17 +19,7 @@ class TvPlayerController extends PlPlayerController {
 
   final Rx<FocusArea> currentFocusArea = FocusArea.none.obs;
 
-  static TvPlayerController? _instance;
-
   TvPlayerController();
-
-  factory TvPlayerController.getInstance({bool isLive = false}) {
-    _instance ??= TvPlayerController();
-    _instance!
-      ..isLive = isLive
-      ..playerCount += 1;
-    return _instance!;
-  }
 
   void showControlsAndFocus(FocusArea area) {
     showControls.value = true;
@@ -78,7 +70,9 @@ class TvPlayerController extends PlPlayerController {
   void startAutoHideTimer() {
     timer?.cancel();
     timer = Timer(showControlDuration, () {
-      showControls.value = false;
+      if (playerStatus.value != PlayerStatus.paused) {
+        showControls.value = false;
+      }
     });
   }
 }

@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
+import 'package:PiliPlus/models_new/video/video_detail/ugc_season.dart';
 import 'widgets/tv_top_control.dart';
 import 'widgets/tv_progress_control.dart';
 import 'widgets/tv_bottom_control.dart';
@@ -35,7 +37,14 @@ class TvVideoPlayer extends StatefulWidget {
   final Widget headerControl;
   final Widget? bottomControl;
   final Widget? danmuWidget;
-  final void Function()? showEpisodes;
+  final void Function([
+    int?,
+    UgcSeason?,
+    List<ugc.BaseEpisodeItem>?,
+    String?,
+    int?,
+    int?,
+  ])? showEpisodes;
   final VoidCallback? showViewPoints;
   final Color fill;
   final Alignment alignment;
@@ -53,6 +62,9 @@ class _TvVideoPlayerState extends State<TvVideoPlayer> {
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
+        if (event.logicalKey == LogicalKeyboardKey.goBack) {
+          return _controller.handleBackKey();
+        }
         if (_controller.showControls.value) {
           return KeyEventResult.ignored;
         } else {
@@ -81,7 +93,13 @@ class _TvVideoPlayerState extends State<TvVideoPlayer> {
                         const Spacer(),
                         TvProgressControl(controller: _controller),
                         const Spacer(),
-                        TvBottomControl(controller: _controller),
+                        TvBottomControl(
+                          controller: _controller,
+                          videoDetailController: widget.videoDetailController!,
+                          introController: widget.introController!,
+                          showEpisodes: widget.showEpisodes,
+                          showViewPoints: widget.showViewPoints,
+                        ),
                       ],
                     ),
                   )
