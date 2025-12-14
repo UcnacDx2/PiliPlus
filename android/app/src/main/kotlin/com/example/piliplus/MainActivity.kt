@@ -135,6 +135,17 @@ class MainActivity : AudioServiceActivity() {
                     }
                 }
 
+                // TV模式检测 - 预留接口，暂未实现
+                "checkTvMode" -> {
+                    // TODO: 后期实现真实的TV设备检测
+                    // 方法1: 检测 PackageManager.FEATURE_LEANBACK
+                    // val hasLeanback = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                    // 方法2: 检测 UiModeManager.UI_MODE_TYPE_TELEVISION
+                    // val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+                    // val isTv = uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
+                    result.success(false)
+                }
+
                 else -> result.notImplemented()
             }
         }

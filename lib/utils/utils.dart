@@ -105,6 +105,26 @@ abstract class Utils {
         .contains('ipad');
   }
 
+  // TV模式检测标志位 - 暂时默认为true，便于PC端调试
+  // TODO: 后期实现真实的TV设备检测
+  static bool? _isTvMode;
+  static Future<bool> get isTvMode async {
+    // 暂时不检测，直接返回默认值（true = TV模式）
+    // 如果需要禁用TV模式，可以手动设置 _isTvMode = false
+    return _isTvMode ?? true;
+  }
+
+  // 预留：未来通过MethodChannel调用原生代码检测TV设备
+  static Future<bool> _checkTvMode() async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final result = await channel.invokeMethod<bool>('checkTvMode');
+      return result ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   static Future<Rect?> get sharePositionOrigin async {
     if (await isIpad) {
       final size = Get.size;
