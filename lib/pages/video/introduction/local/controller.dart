@@ -36,6 +36,9 @@ class LocalIntroController extends CommonIntroController {
   StatDetail? getStat() => null;
 
   @override
+  Future<bool> onChangeEpisode(episode) async => false;
+
+  @override
   bool get isShowOnlineTotal => false;
 
   late final Set<String> aidSet = {};

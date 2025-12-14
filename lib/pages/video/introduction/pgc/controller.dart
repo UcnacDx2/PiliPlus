@@ -276,6 +276,7 @@ class PgcIntroController extends CommonIntroController {
   }
 
   // 修改分P或番剧分集
+  @override
   Future<bool> onChangeEpisode(BaseEpisodeItem episode) async {
     try {
       final int epId = episode.epId ?? episode.id!;
