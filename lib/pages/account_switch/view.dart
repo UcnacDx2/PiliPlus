@@ -66,6 +66,7 @@ class _AccountSwitchPageState extends State<AccountSwitchPage> {
               onTap: () async {
                 await Accounts.set(AccountType.main, profile);
                 await Accounts.set(AccountType.heartbeat, profile);
+                await Accounts.set(AccountType.recommend, profile);
                 Get.back();
               },
               child: Column(
