@@ -21,32 +21,37 @@ class MainSideBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 80,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        children: [
-          IconButton(
-            tooltip: '搜索',
-            icon: const Icon(
-              Icons.search_outlined,
-              semanticLabel: '搜索',
-            ),
-            onPressed: () => Get.toNamed('/search'),
+    return Obx(
+      () => FocusScope(
+        key: ValueKey(mainController.selectedIndex.value),
+        child: Container(
+          width: 80,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Column(
+            children: [
+              IconButton(
+                tooltip: '搜索',
+                icon: const Icon(
+                  Icons.search_outlined,
+                  semanticLabel: '搜索',
+                ),
+                onPressed: () => Get.toNamed('/search'),
+              ),
+              const SizedBox(height: 10),
+              ...mainController.navigationBars.map(
+                _buildNavItem,
+              ),
+              const Spacer(),
+              _buildAvatar(),
+              const SizedBox(height: 10),
+              IconButton(
+                tooltip: '设置',
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () => Get.toNamed('/setting'),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          ...mainController.navigationBars.map(
-            _buildNavItem,
-          ),
-          const Spacer(),
-          _buildAvatar(),
-          const SizedBox(height: 10),
-          IconButton(
-            tooltip: '设置',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Get.toNamed('/setting'),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -61,6 +66,7 @@ class MainSideBar extends StatelessWidget {
           : icon;
 
       return Focus(
+        key: ValueKey(type.index),
         autofocus: selected,
         onFocusChange: (hasFocus) {
           if (hasFocus) {

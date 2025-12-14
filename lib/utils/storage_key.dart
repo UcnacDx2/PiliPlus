@@ -148,7 +148,8 @@ abstract class SettingBoxKey {
       setSystemBrightness = 'setSystemBrightness',
       downloadPath = 'downloadPath',
       followOrderType = 'followOrderType',
-      useFirstFrameAsCover = 'useFirstFrameAsCover';
+      useFirstFrameAsCover = 'useFirstFrameAsCover',
+      useTVStyleSidebar = 'useTVStyleSidebar';
 
   static const String minimizeOnExit = 'minimizeOnExit',
       windowSize = 'windowSize',

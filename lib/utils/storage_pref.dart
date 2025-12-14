@@ -892,4 +892,9 @@ abstract class Pref {
                 SettingBoxKey.useFirstFrameAsCover,
                 defaultValue: true,
             );
+
+    static bool get useTVStyleSidebar => _setting.get(
+                SettingBoxKey.useTVStyleSidebar,
+                defaultValue: false,
+            );
 }

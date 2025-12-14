@@ -79,6 +79,20 @@ List<SettingsModel> get styleSettings => [
   ),
   SettingsModel(
     settingsType: SettingsType.sw1tch,
+    title: '窄边栏模式',
+    subtitle: '开启后侧边栏只显示图标，不显示文字，且支持DPAD焦点切换页面',
+    leading: const Icon(Icons.vertical_split_outlined),
+    setKey: SettingBoxKey.useTVStyleSidebar,
+    defaultVal: false,
+    needReboot: true,
+    onChanged: (value) {
+      if (value) {
+        GStorage.setting.put(SettingBoxKey.optTabletNav, false);
+      }
+    },
+  ),
+  SettingsModel(
+    settingsType: SettingsType.sw1tch,
     title: 'App字体字重',
     subtitle: '点击设置',
     setKey: SettingBoxKey.appFontWeight,

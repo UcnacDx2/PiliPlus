@@ -58,6 +58,7 @@ class MainController extends GetxController
   final useSideBar = Pref.useSideBar;
   final mainTabBarView = Pref.mainTabBarView;
   late final optTabletNav = Pref.optTabletNav;
+  late final tvStyleSidebar = Pref.useTVStyleSidebar;
 
   late bool directExitOnBack = Pref.directExitOnBack;
   late bool showTrayIcon = Pref.showTrayIcon;
