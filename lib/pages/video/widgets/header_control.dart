@@ -1307,6 +1307,29 @@ class HeaderControlState extends State<HeaderControl>
                     secondary: const Icon(Icons.show_chart_outlined, size: 20),
                     title: const Text('高能进度条', style: titleStyle),
                   ),
+                  SwitchListTile(
+                    value: plPlayerController.enableShowDanmaku.value,
+                    onChanged: (value) {
+                      plPlayerController.enableShowDanmaku.value = value;
+                      if (!plPlayerController.tempPlayerConf) {
+                        setting.put(
+                          SettingBoxKey.enableShowDanmaku,
+                          value,
+                        );
+                      }
+                    },
+                    secondary: const Icon(Icons.comment_outlined, size: 20),
+                    title: const Text('弹幕', style: titleStyle),
+                  ),
+                  ListTile(
+                    dense: true,
+                    onTap: () {
+                      Get.back();
+                      showSetSubtitle();
+                    },
+                    leading: const Icon(Icons.subtitles_outlined, size: 20),
+                    title: const Text('字幕', style: titleStyle),
+                  ),
                 ListTile(
                   dense: true,
                   onTap: () {
