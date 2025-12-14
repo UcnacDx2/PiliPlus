@@ -1296,13 +1296,15 @@ class HeaderControlState extends State<HeaderControl>
                   SwitchListTile(
                     value: videoDetailCtr.showDmTrendChart.value,
                     onChanged: (value) {
-                      videoDetailCtr.showDmTrendChart.value = value;
-                      if (!plPlayerController.tempPlayerConf) {
-                        setting.put(
-                          'showDmTrendChart',
-                          value,
-                        );
-                      }
+                      setState(() {
+                        videoDetailCtr.showDmTrendChart.value = value;
+                        if (!plPlayerController.tempPlayerConf) {
+                          setting.put(
+                            'showDmTrendChart',
+                            value,
+                          );
+                        }
+                      });
                     },
                     secondary: const Icon(Icons.show_chart_outlined, size: 20),
                     title: const Text('高能进度条', style: titleStyle),
@@ -1310,13 +1312,15 @@ class HeaderControlState extends State<HeaderControl>
                   SwitchListTile(
                     value: plPlayerController.enableShowDanmaku.value,
                     onChanged: (value) {
-                      plPlayerController.enableShowDanmaku.value = value;
-                      if (!plPlayerController.tempPlayerConf) {
-                        setting.put(
-                          SettingBoxKey.enableShowDanmaku,
-                          value,
-                        );
-                      }
+                      setState(() {
+                        plPlayerController.enableShowDanmaku.value = value;
+                        if (!plPlayerController.tempPlayerConf) {
+                          setting.put(
+                            SettingBoxKey.enableShowDanmaku,
+                            value,
+                          );
+                        }
+                      });
                     },
                     secondary: const Icon(Icons.comment_outlined, size: 20),
                     title: const Text('弹幕', style: titleStyle),
@@ -1325,7 +1329,7 @@ class HeaderControlState extends State<HeaderControl>
                     dense: true,
                     onTap: () {
                       Get.back();
-                      showSetSubtitle();
+                      showSelectSubtitle();
                     },
                     leading: const Icon(Icons.subtitles_outlined, size: 20),
                     title: const Text('字幕', style: titleStyle),
@@ -1643,7 +1647,7 @@ class HeaderControlState extends State<HeaderControl>
                   dense: true,
                   onTap: () {
                     Get.back();
-                    showSetSubtitle();
+                    showSubtitleSettings();
                   },
                   leading: const Icon(Icons.subtitles_outlined, size: 20),
                   title: const Text('字幕设置', style: titleStyle),
@@ -2233,8 +2237,63 @@ class HeaderControlState extends State<HeaderControl>
     );
   }
 
+  /// 选择字幕
+  void showSelectSubtitle() {
+    showBottomSheet(
+      (context, setState) {
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: Material(
+            clipBehavior: Clip.hardEdge,
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 45,
+                    child: Center(
+                      child: Text('选择字幕', style: titleStyle),
+                    ),
+                  ),
+                ),
+                SliverList.builder(
+                  itemCount: videoDetailCtr.subtitles.length + 1,
+                  itemBuilder: (context, index) {
+                    final isSelected =
+                        videoDetailCtr.vttSubtitlesIndex.value == index;
+                    return ListTile(
+                      dense: true,
+                      onTap: () {
+                        Get.back();
+                        videoDetailCtr.setSubtitle(index);
+                      },
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                      ),
+                      title: Text(index == 0
+                          ? '关闭字幕'
+                          : videoDetailCtr.subtitles[index - 1].lanDoc!),
+                      trailing: isSelected
+                          ? Icon(
+                              Icons.done,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   /// 字幕设置
-  void showSetSubtitle() {
+  void showSubtitleSettings() {
     double subtitleFontScale = plPlayerController.subtitleFontScale;
     double subtitleFontScaleFS = plPlayerController.subtitleFontScaleFS;
     int subtitlePaddingH = plPlayerController.subtitlePaddingH;
