@@ -1280,10 +1280,10 @@ class HeaderControlState extends State<HeaderControl>
                           videoDetail.pages,
                           null,
                           null,
-                          videoDetail.pages
+                          videoDetail.pages!
                               .firstWhere(
                                 (e) => e.cid == videoDetailCtr.cid.value,
-                                orElse: () => videoDetail.pages.first,
+                                orElse: () => videoDetail.pages!.first,
                               )
                               .cid,
                         );
