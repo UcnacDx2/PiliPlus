@@ -16,8 +16,11 @@ class ProfilePage extends GetView<ProfileController> {
         centerTitle: true,
       ),
       body: Center(
-        child: Obx(
-          () => GridView.builder(
+        child: Obx(() {
+          if (controller.isLoading.value) {
+            return const CircularProgressIndicator();
+          }
+          return GridView.builder(
             shrinkWrap: true,
             padding: const EdgeInsets.all(20),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -54,8 +57,8 @@ class ProfilePage extends GetView<ProfileController> {
                 ),
               );
             },
-          ),
-        ),
+          );
+        }),
       ),
     );
   }
