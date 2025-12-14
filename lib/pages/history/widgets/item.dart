@@ -68,13 +68,21 @@ class HistoryItem extends StatelessWidget {
                     SmartDialog.showToast('直播未开播');
                   }
                 } else if (business == 'pgc') {
-                  PageUtils.viewPgc(epId: item.history.epid);
+                  // Pass progress to video page, handling fully watched videos
+                  final progress = item.progress == -1 ? '0' : item.progress?.toString();
+                  PageUtils.viewPgc(
+                    epId: item.history.epid,
+                    progress: progress,
+                  );
                 } else if (business == 'cheese') {
                   if (item.uri?.isNotEmpty == true) {
+                    // Pass progress to video page, handling fully watched videos
+                    final progress = item.progress == -1 ? '0' : item.progress?.toString();
                     PageUtils.viewPgcFromUri(
                       item.uri!,
                       isPgc: false,
                       aid: item.history.oid,
+                      progress: progress,
                     );
                   }
                 } else {
@@ -86,12 +94,16 @@ class HistoryItem extends StatelessWidget {
                         part: item.history.page,
                       );
                   if (cid != null) {
+                    // Pass progress to video page, handling fully watched videos
+                    // progress == -1 means fully watched, should start from beginning
+                    final progress = item.progress == -1 ? 0 : item.progress;
                     PageUtils.toVideoPage(
                       aid: aid,
                       bvid: bvid,
                       cid: cid,
                       cover: item.cover,
                       title: item.title,
+                      progress: progress,
                     );
                   }
                 }
