@@ -28,42 +28,40 @@ class _MainSideBarState extends State<MainSideBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => FocusScope(
-        onFocusChange: (value) {
-          if (_isFocused != value) {
-            setState(() {
-              _isFocused = value;
-            });
-          }
-        },
-        child: Container(
-          width: 80,
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Column(
-            children: [
-              IconButton(
-                tooltip: '搜索',
-                icon: const Icon(
-                  Icons.search_outlined,
-                  semanticLabel: '搜索',
-                ),
-                onPressed: () => Get.toNamed('/search'),
+    return FocusScope(
+      onFocusChange: (value) {
+        if (_isFocused != value) {
+          setState(() {
+            _isFocused = value;
+          });
+        }
+      },
+      child: Container(
+        width: 80,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Column(
+          children: [
+            IconButton(
+              tooltip: '搜索',
+              icon: const Icon(
+                Icons.search_outlined,
+                semanticLabel: '搜索',
               ),
-              const SizedBox(height: 10),
-              ...widget.mainController.navigationBars.map(
-                _buildNavItem,
-              ),
-              const Spacer(),
-              _buildAvatar(),
-              const SizedBox(height: 10),
-              IconButton(
-                tooltip: '设置',
-                icon: const Icon(Icons.settings_outlined),
-                onPressed: () => Get.toNamed('/setting'),
-              ),
-            ],
-          ),
+              onPressed: () => Get.toNamed('/search'),
+            ),
+            const SizedBox(height: 10),
+            ...widget.mainController.navigationBars.map(
+              _buildNavItem,
+            ),
+            const Spacer(),
+            _buildAvatar(),
+            const SizedBox(height: 10),
+            IconButton(
+              tooltip: '设置',
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => Get.toNamed('/setting'),
+            ),
+          ],
         ),
       ),
     );
