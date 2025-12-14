@@ -30,6 +30,20 @@ class HistoryItem extends StatelessWidget {
     required this.onDelete,
   });
 
+  /// Convert history progress to string for navigation
+  /// Returns '0' if progress is -1 (fully watched), otherwise returns the progress as string
+  String? _getProgressString(int? progress) {
+    if (progress == null) return null;
+    return progress == -1 ? '0' : progress.toString();
+  }
+
+  /// Convert history progress to int for navigation
+  /// Returns 0 if progress is -1 (fully watched), otherwise returns the progress
+  int? _getProgressInt(int? progress) {
+    if (progress == null) return null;
+    return progress == -1 ? 0 : progress;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -69,20 +83,18 @@ class HistoryItem extends StatelessWidget {
                   }
                 } else if (business == 'pgc') {
                   // Pass progress to video page, handling fully watched videos
-                  final progress = item.progress == -1 ? '0' : item.progress?.toString();
                   PageUtils.viewPgc(
                     epId: item.history.epid,
-                    progress: progress,
+                    progress: _getProgressString(item.progress),
                   );
                 } else if (business == 'cheese') {
                   if (item.uri?.isNotEmpty == true) {
                     // Pass progress to video page, handling fully watched videos
-                    final progress = item.progress == -1 ? '0' : item.progress?.toString();
                     PageUtils.viewPgcFromUri(
                       item.uri!,
                       isPgc: false,
                       aid: item.history.oid,
-                      progress: progress,
+                      progress: _getProgressString(item.progress),
                     );
                   }
                 } else {
@@ -96,14 +108,13 @@ class HistoryItem extends StatelessWidget {
                   if (cid != null) {
                     // Pass progress to video page, handling fully watched videos
                     // progress == -1 means fully watched, should start from beginning
-                    final progress = item.progress == -1 ? 0 : item.progress;
                     PageUtils.toVideoPage(
                       aid: aid,
                       bvid: bvid,
                       cid: cid,
                       cover: item.cover,
                       title: item.title,
-                      progress: progress,
+                      progress: _getProgressInt(item.progress),
                     );
                   }
                 }
