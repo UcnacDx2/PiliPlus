@@ -1251,12 +1251,43 @@ class HeaderControlState extends State<HeaderControl>
                     leading: const Icon(Icons.picture_in_picture_outlined, size: 20),
                     title: const Text('画中画', style: titleStyle),
                   ),
-                if (widget.showEpisodes != null)
+                if (widget.showEpisodes != null && !videoDetailCtr.isPlayAll)
                   ListTile(
                     dense: true,
                     onTap: () {
                       Get.back();
-                      widget.showEpisodes!();
+                      if (videoDetailCtr.isUgc) {
+                        final videoDetail =
+                            (introController as UgcIntroController)
+                                .videoDetail
+                                .value;
+                        widget.showEpisodes!(
+                          0,
+                          videoDetail.ugcSeason,
+                          videoDetail.pages,
+                          videoDetail.bvid,
+                          videoDetail.aid,
+                          videoDetail.cid,
+                        );
+                      } else {
+                        final videoDetail =
+                            (introController as PgcIntroController)
+                                .videoDetail
+                                .value;
+                        widget.showEpisodes!(
+                          0,
+                          null,
+                          videoDetail.episodes,
+                          null,
+                          null,
+                          videoDetail.episodes
+                              .firstWhere(
+                                (e) => e.cid == videoDetailCtr.cid.value,
+                                orElse: () => videoDetail.episodes.first,
+                              )
+                              .cid,
+                        );
+                      }
                     },
                     leading: const Icon(Icons.playlist_play_outlined, size: 20),
                     title: const Text('选集', style: titleStyle),
