@@ -57,6 +57,7 @@ class LiveHeaderControlState extends State<LiveHeaderControl>
               ComBtn(
                 height: 30,
                 tooltip: '发弹幕',
+                autofocus: true,
                 icon: const Icon(
                   size: 18,
                   Icons.comment_outlined,
@@ -221,7 +222,6 @@ class LiveHeaderControlState extends State<LiveHeaderControl>
     Widget child;
     child = Obx(
       () => MarqueeText(
-        key: titleKey,
         liveController.title.value,
         spacing: 30,
         velocity: 30,
