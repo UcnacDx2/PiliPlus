@@ -34,6 +34,7 @@ import 'package:PiliPlus/pages/video/introduction/ugc/widgets/action_item.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/menu_row.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
+import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -802,6 +803,7 @@ class HeaderControl extends StatefulWidget {
     required this.controller,
     required this.videoDetailCtr,
     required this.heroTag,
+    this.showEpisodes,
     super.key,
   });
 
@@ -809,6 +811,7 @@ class HeaderControl extends StatefulWidget {
   final PlPlayerController controller;
   final VideoDetailController videoDetailCtr;
   final String heroTag;
+  final Function? showEpisodes;
 
   @override
   State<HeaderControl> createState() => HeaderControlState();
@@ -980,6 +983,110 @@ class HeaderControlState extends State<HeaderControl>
     }
   }
 
+  /// 画面比例
+  void showSetAspectRatio() {
+    showBottomSheet(
+      (context, setState) {
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: Material(
+            clipBehavior: Clip.hardEdge,
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 45,
+                    child: Center(
+                      child: Text('选择画面比例', style: titleStyle),
+                    ),
+                  ),
+                ),
+                SliverList.builder(
+                  itemCount: VideoFitType.values.length,
+                  itemBuilder: (context, index) {
+                    final i = VideoFitType.values[index];
+                    return ListTile(
+                      dense: true,
+                      onTap: () {
+                        Get.back();
+                        plPlayerController.toggleVideoFit(i);
+                      },
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                      ),
+                      title: Text(i.desc),
+                      trailing: plPlayerController.videoFit.value == i
+                          ? Icon(
+                              Icons.done,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 播放速度
+  void showSetSpeed() {
+    showBottomSheet(
+      (context, setState) {
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: Material(
+            clipBehavior: Clip.hardEdge,
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 45,
+                    child: Center(
+                      child: Text('选择播放速度', style: titleStyle),
+                    ),
+                  ),
+                ),
+                SliverList.builder(
+                  itemCount: plPlayerController.speedList.length,
+                  itemBuilder: (context, index) {
+                    final i = plPlayerController.speedList[index];
+                    return ListTile(
+                      dense: true,
+                      onTap: () {
+                        Get.back();
+                        plPlayerController.setPlaybackSpeed(i);
+                      },
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                      ),
+                      title: Text('${i}x'),
+                      trailing: plPlayerController.playbackSpeed == i
+                          ? Icon(
+                              Icons.done,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   /// 设置面板
   void showSettingSheet() {
     showBottomSheet(
@@ -1039,6 +1146,165 @@ class HeaderControlState extends State<HeaderControl>
                     leading: const Icon(Icons.image_outlined, size: 20),
                     title: const Text('保存封面', style: titleStyle),
                   ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                    showSetSpeed();
+                  },
+                  leading: const Icon(Icons.speed_outlined, size: 20),
+                  title: const Text('播放速度', style: titleStyle),
+                  subtitle: Text(
+                    '${plPlayerController.playbackSpeed}x',
+                    style: subTitleStyle,
+                  ),
+                ),
+                if (Platform.isAndroid || (Utils.isDesktop && !isFullScreen))
+                  ListTile(
+                    dense: true,
+                    onTap: () async {
+                      Get.back();
+                      if (Utils.isDesktop) {
+                        plPlayerController.toggleDesktopPip();
+                        return;
+                      }
+                      if (await Floating().isPipAvailable) {
+                        plPlayerController.showControls.value = false;
+                        if (context.mounted &&
+                            !videoPlayerServiceHandler!.enableBackgroundPlay) {
+                          final theme = Theme.of(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Column(
+                                children: [
+                                  const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.check,
+                                        color: Colors.green,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        '画中画',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  const Text(
+                                    '建议开启【后台音频服务】\n'
+                                    '避免画中画没有暂停按钮',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      TextButton(
+                                        style: ButtonStyle(
+                                          foregroundColor:
+                                              WidgetStatePropertyAll(
+                                            theme
+                                                .snackBarTheme
+                                                .actionTextColor,
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          plPlayerController.setBackgroundPlay(
+                                            true,
+                                          );
+                                          SmartDialog.showToast("请重新载入本页面刷新");
+                                        },
+                                        child: const Text('启用后台音频服务'),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      TextButton(
+                                        style: ButtonStyle(
+                                          foregroundColor:
+                                              WidgetStatePropertyAll(
+                                            theme
+                                                .snackBarTheme
+                                                .actionTextColor,
+                                          ),
+                                        ),
+                                        onPressed: () {},
+                                        child: const Text('不启用'),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              duration: const Duration(seconds: 2),
+                              showCloseIcon: true,
+                            ),
+                          );
+                          await Future.delayed(const Duration(seconds: 3));
+                        }
+                        if (!context.mounted) return;
+                        plPlayerController.enterPip();
+                      }
+                    },
+                    leading: const Icon(Icons.picture_in_picture_outlined, size: 20),
+                    title: const Text('画中画', style: titleStyle),
+                  ),
+                if (widget.showEpisodes != null)
+                  ListTile(
+                    dense: true,
+                    onTap: () {
+                      Get.back();
+                      widget.showEpisodes!();
+                    },
+                    leading: const Icon(Icons.playlist_play_outlined, size: 20),
+                    title: const Text('选集', style: titleStyle),
+                  ),
+                if (videoDetailCtr.dmTrend.value?.dataOrNull != null)
+                  SwitchListTile(
+                    value: videoDetailCtr.showDmTrendChart.value,
+                    onChanged: (value) {
+                      videoDetailCtr.showDmTrendChart.value = value;
+                      if (!plPlayerController.tempPlayerConf) {
+                        setting.put(
+                          'showDmTrendChart',
+                          value,
+                        );
+                      }
+                    },
+                    secondary: const Icon(Icons.show_chart_outlined, size: 20),
+                    title: const Text('高能进度条', style: titleStyle),
+                  ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                    showSetAspectRatio();
+                  },
+                  leading: const Icon(Icons.aspect_ratio_outlined, size: 20),
+                  title: const Text('画面比例', style: titleStyle),
+                  subtitle: Text(
+                    plPlayerController.videoFit.value.desc,
+                    style: subTitleStyle,
+                  ),
+                ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.back();
+                  },
+                  leading: const Icon(Icons.arrow_back, size: 20),
+                  title: const Text('返回', style: titleStyle),
+                ),
+                ListTile(
+                  dense: true,
+                  onTap: () {
+                    Get.until((route) => route.isFirst);
+                  },
+                  leading: const Icon(Icons.home, size: 20),
+                  title: const Text('返回主页', style: titleStyle),
+                ),
                 ListTile(
                   dense: true,
                   onTap: () {
