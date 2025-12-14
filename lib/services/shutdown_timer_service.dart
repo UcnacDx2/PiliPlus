@@ -116,8 +116,9 @@ class ShutdownTimerService with WidgetsBindingObserver {
       _showTimeUpButPauseDialog();
       return;
     }
-    PlayerStatus? playerStatus =
-        PlPlayerController.getPlayerStatusIfExists(tag: instance.bvid);
+    PlayerStatus? playerStatus = PlPlayerController.getPlayerStatusIfExists(
+      tag: instance.bvid,
+    );
     if (!exitApp && !waitForPlayingCompleted) {
       // if (!plPlayerController.playerStatus.playing) {
       if (playerStatus == PlayerStatus.paused ||
@@ -156,15 +157,20 @@ class ShutdownTimerService with WidgetsBindingObserver {
       return;
     }
     if (exitApp) {
-      PlPlayerController.pauseIfExists(tag: instance.bvid);
+      PlPlayerController.pauseIfExists(
+        tag: instance.bvid,
+      );
       //退出app
       exit(0);
     } else {
       //暂停播放
-      PlayerStatus? playerStatus =
-          PlPlayerController.getPlayerStatusIfExists(tag: instance.bvid);
+      PlayerStatus? playerStatus = PlPlayerController.getPlayerStatusIfExists(
+        tag: instance.bvid,
+      );
       if (playerStatus == PlayerStatus.playing) {
-        PlPlayerController.pauseIfExists(tag: instance.bvid);
+        PlPlayerController.pauseIfExists(
+          tag: instance.bvid,
+        );
         waitForPlayingCompleted = true;
         SmartDialog.showToast("已暂停播放");
       } else {

@@ -21,26 +21,34 @@ class AudioSessionHandler {
     session.interruptionEventStream.listen((event) {
       final instance = PlPlayerController.instance;
       if (instance == null) return;
-      final playerStatus =
-          PlPlayerController.getPlayerStatusIfExists(tag: instance.bvid);
+      final playerStatus = PlPlayerController.getPlayerStatusIfExists(
+        tag: instance.bvid,
+      );
       if (event.begin) {
         if (playerStatus != PlayerStatus.playing) return;
         switch (event.type) {
           case AudioInterruptionType.duck:
             PlPlayerController.setVolumeIfExists(
               instance.bvid,
-              (PlPlayerController.getVolumeIfExists(tag: instance.bvid) ?? 0) *
+              (PlPlayerController.getVolumeIfExists(
+                    tag: instance.bvid,
+                  ) ??
+                  0) *
                   0.5,
             );
             break;
           case AudioInterruptionType.pause:
             PlPlayerController.pauseIfExists(
-                tag: instance.bvid, isInterrupt: true);
+              tag: instance.bvid,
+              isInterrupt: true,
+            );
             _playInterrupted = true;
             break;
           case AudioInterruptionType.unknown:
             PlPlayerController.pauseIfExists(
-                tag: instance.bvid, isInterrupt: true);
+              tag: instance.bvid,
+              isInterrupt: true,
+            );
             _playInterrupted = true;
             break;
         }
@@ -49,13 +57,18 @@ class AudioSessionHandler {
           case AudioInterruptionType.duck:
             PlPlayerController.setVolumeIfExists(
               instance.bvid,
-              (PlPlayerController.getVolumeIfExists(tag: instance.bvid) ?? 0) *
+              (PlPlayerController.getVolumeIfExists(
+                    tag: instance.bvid,
+                  ) ??
+                  0) *
                   2,
             );
             break;
           case AudioInterruptionType.pause:
             if (_playInterrupted) {
-              PlPlayerController.playIfExists(tag: instance.bvid);
+              PlPlayerController.playIfExists(
+                tag: instance.bvid,
+              );
             }
             break;
           case AudioInterruptionType.unknown:

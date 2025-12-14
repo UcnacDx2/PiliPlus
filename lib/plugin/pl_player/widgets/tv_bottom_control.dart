@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:PiliPlus/models/common/video/video_quality.dart';
-import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
-import '../tv_controller.dart';
+import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
+import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:get/get.dart';
 
 class TvBottomControl extends StatefulWidget {
   final TvPlayerController controller;
@@ -81,22 +81,23 @@ class _TvBottomControlState extends State<TvBottomControl> {
         final currentQa = _videoDetailController.currentVideoQa.value;
         if (currentQa == null) return const SizedBox.shrink();
 
-        return PopupMenuButton<int>(
+        return Focus(
           focusNode: _qualityNode,
-          tooltip: '画质',
-          initialValue: currentQa.code,
-          itemBuilder: (context) {
-            return _videoDetailController.data.supportFormats!.map((format) {
-              return PopupMenuItem<int>(
-                value: format.quality,
-                child: Text(format.newDesc ?? ''),
-                onTap: () async {
-                  if (currentQa.code == format.quality) {
-                    return;
-                  }
-                  final newQa = VideoQuality.fromCode(format.quality);
-                  _videoDetailController
-                    ..plPlayerController.cacheVideoQa = newQa.code
+          child: PopupMenuButton<int>(
+            tooltip: '画质',
+            initialValue: currentQa.code,
+            itemBuilder: (context) {
+              return _videoDetailController.data.supportFormats!.map((format) {
+                return PopupMenuItem<int>(
+                  value: format.quality,
+                  child: Text(format.newDesc ?? ''),
+                  onTap: () async {
+                    if (currentQa.code == format.quality) {
+                      return;
+                    }
+                    final newQa = VideoQuality.fromCode(format.quality!);
+                    _videoDetailController
+                      ..plPlayerController.cacheVideoQa = newQa.code
                     ..currentVideoQa.value = newQa
                     ..updatePlayer();
                   SmartDialog.showToast('画质已变为：${newQa.desc}');
@@ -123,24 +124,25 @@ class _TvBottomControlState extends State<TvBottomControl> {
 
   Widget _buildSpeedMenu() {
     return Obx(
-      () => PopupMenuButton<double>(
+      () => Focus(
         focusNode: _speedNode,
-        tooltip: '倍速',
-        initialValue: widget.controller.playbackSpeed,
-        itemBuilder: (context) {
-          return widget.controller.speedList.map((speed) {
-            return PopupMenuItem<double>(
-              value: speed,
-              child: Text('${speed}X'),
-              onTap: () => widget.controller.setPlaybackSpeed(speed),
-            );
-          }).toList();
-        },
+        child: PopupMenuButton<double>(
+          tooltip: '倍速',
+          initialValue: widget.controller.playbackSpeed,
+          itemBuilder: (context) {
+            return widget.controller.speedList.map((speed) {
+              return PopupMenuItem<double>(
+                value: speed,
+                child: Text('${speed}X'),
+                onTap: () => widget.controller.setPlaybackSpeed(speed),
+              );
+            }).toList();
+          },
         child: _buildButtonContent(
           icon: Icons.speed,
           label: '${widget.controller.playbackSpeed}X',
         ),
-      ),
+      )),
     );
   }
 
@@ -150,25 +152,27 @@ class _TvBottomControlState extends State<TvBottomControl> {
         if (_videoDetailController.subtitles.isEmpty) {
           return const SizedBox.shrink();
         }
-        return PopupMenuButton<int>(
+        return Focus(
           focusNode: _subtitleNode,
-          tooltip: '字幕',
-          initialValue: _videoDetailController.vttSubtitlesIndex.value,
-          itemBuilder: (context) {
-            return [
-              const PopupMenuItem<int>(value: 0, child: Text('关闭字幕')),
-              ..._videoDetailController.subtitles.indexed.map((e) {
-                return PopupMenuItem<int>(
-                  value: e.$1 + 1,
-                  child: Text(e.$2.lanDoc),
-                );
-              }),
-            ];
-          },
-          onSelected: (index) => _videoDetailController.setSubtitle(index),
-          child: _buildButtonContent(
-            icon: Icons.subtitles,
-            label: '字幕',
+          child: PopupMenuButton<int>(
+            tooltip: '字幕',
+            initialValue: _videoDetailController.vttSubtitlesIndex.value,
+            itemBuilder: (context) {
+              return [
+                const PopupMenuItem<int>(value: 0, child: Text('关闭字幕')),
+                ..._videoDetailController.subtitles.indexed.map((e) {
+                  return PopupMenuItem<int>(
+                    value: e.$1 + 1,
+                    child: Text(e.$2.lanDoc!),
+                  );
+                }),
+              ];
+            },
+            onSelected: (index) => _videoDetailController.setSubtitle(index),
+            child: _buildButtonContent(
+              icon: Icons.subtitles,
+              label: '字幕',
+            ),
           ),
         );
       },
@@ -203,25 +207,28 @@ class _TvBottomControlState extends State<TvBottomControl> {
 
   Widget _buildEpisodeMenu() {
     return Obx(() {
-      final introController = _videoDetailController.introController;
-      if (introController.videoDetail.value.pages?.isEmpty ?? true) {
+      final pages = _videoDetailController.introController.videoDetail.value.pages;
+      if (pages?.isEmpty ?? true) {
         return const SizedBox.shrink();
       }
-      return PopupMenuButton<int>(
+      return Focus(
         focusNode: _episodeNode,
-        tooltip: '选集',
-        itemBuilder: (context) {
-          return introController.videoDetail.value.pages!.map((page) {
-            return PopupMenuItem<int>(
-              value: page.page,
-              child: Text(page.part),
-              onTap: () => introController.onChangeEpisode(page),
-            );
-          }).toList();
-        },
-        child: _buildButtonContent(
-          icon: Icons.list,
-          label: '选集',
+        child: PopupMenuButton<int>(
+          tooltip: '选集',
+          itemBuilder: (context) {
+            return pages!.map((page) {
+              return PopupMenuItem<int>(
+                value: page.page,
+                child: Text(page.part),
+                onTap: () =>
+                    _videoDetailController.introController.onChangeEpisode(page),
+              );
+            }).toList();
+          },
+          child: _buildButtonContent(
+            icon: Icons.list,
+            label: '选集',
+          ),
         ),
       );
     });
@@ -229,24 +236,25 @@ class _TvBottomControlState extends State<TvBottomControl> {
 
   Widget _buildFitMenu() {
     return Obx(
-      () => PopupMenuButton<VideoFitType>(
+      () => Focus(
         focusNode: _fitNode,
-        tooltip: '画面比例',
-        initialValue: widget.controller.videoFit.value,
-        itemBuilder: (context) {
-          return VideoFitType.values.map((fit) {
-            return PopupMenuItem<VideoFitType>(
-              value: fit,
-              child: Text(fit.desc),
-              onTap: () => widget.controller.toggleVideoFit(fit),
-            );
-          }).toList();
-        },
-        child: _buildButtonContent(
+        child: PopupMenuButton<VideoFitType>(
+          tooltip: '画面比例',
+          initialValue: widget.controller.videoFit.value,
+          itemBuilder: (context) {
+            return VideoFitType.values.map((fit) {
+              return PopupMenuItem<VideoFitType>(
+                value: fit,
+                child: Text(fit.desc),
+                onTap: () => widget.controller.toggleVideoFit(fit),
+              );
+            }).toList();
+          },
+        child: _buildButton-content(
           icon: Icons.aspect_ratio,
           label: widget.controller.videoFit.value.desc,
         ),
-      ),
+      )),
     );
   }
 }

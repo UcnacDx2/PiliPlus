@@ -1,8 +1,8 @@
+import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
+import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../tv_controller.dart';
-import 'package:PiliPlus/plugin/pl_player/utils/duration.dart';
 
 class TvProgressControl extends StatefulWidget {
   final TvPlayerController controller;

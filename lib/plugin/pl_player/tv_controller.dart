@@ -1,7 +1,7 @@
+import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'controller.dart';
 
 // Enum to represent the different focus areas in the TV player UI.
 enum FocusArea {
@@ -43,7 +43,7 @@ class TvPlayerController extends PlPlayerController {
 
   // Method to show the controls and set focus to a specific area.
   void showControlsAndFocus(FocusArea area) {
-    showControls.value = true;
+    super.showControls.value = true;
     currentFocusArea.value = area;
 
     switch (area) {
@@ -69,18 +69,18 @@ class TvPlayerController extends PlPlayerController {
   KeyEventResult handleBackKey(KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
-    if (showControls.value) {
-      showControls.value = false;
+    if (super.showControls.value) {
+      super.showControls.value = false;
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
   }
 
   @override
-  Future<void> dispose() async {
+  Future<void> dispose() {
     focusNodeA.dispose();
     focusNodeB.dispose();
     focusNodeC.dispose();
-    await super.dispose();
+    return super.dispose();
   }
 }

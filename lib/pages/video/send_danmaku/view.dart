@@ -483,7 +483,8 @@ class _SendDanmakuPanelState extends CommonTextPubPageState<SendDanmakuPanel> {
       if (response.dmid case final dmid?) {
         extra = VideoDanmaku(
           id: dmid,
-          mid: PlPlayerController.getInstanceByTag(widget.heroTag)!.midHash,
+          mid:
+              PlPlayerController.getInstanceByTag(widget.heroTag)!.midHash,
         );
       }
       widget.callback(

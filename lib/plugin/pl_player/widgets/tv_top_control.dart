@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
-import '../tv_controller.dart';
+import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class TvTopControl extends StatefulWidget {
   final TvPlayerController controller;
@@ -64,7 +64,7 @@ class _TvTopControlState extends State<TvTopControl> {
             // Video title
             Obx(
               () => Text(
-                _videoDetailController.videoTitle.value,
+                _videoDetailController.introController.videoDetail.value.title,
                 style: const TextStyle(color: Colors.white, fontSize: 18),
               ),
             ),

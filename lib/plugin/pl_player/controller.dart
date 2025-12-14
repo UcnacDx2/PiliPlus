@@ -1002,7 +1002,7 @@ class PlPlayerController {
 
     // 自动播放
     if (_autoPlay) {
-      playIfExists();
+      playIfExists(tag: _bvid!);
       // await play(duration: duration);
     }
   }
