@@ -35,24 +35,25 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
   Function? onPause;
   Function(Duration position)? onSeek;
 
+  String? bvid;
   @override
   Future<void> play() async {
-    final instance = PlPlayerController.instance;
-    if (instance != null) {
+    final bvid = this.bvid;
+    if (bvid != null) {
       onPlay?.call() ??
           PlPlayerController.playIfExists(
-            tag: instance.bvid,
+            tag: bvid,
           );
     }
   }
 
   @override
   Future<void> pause() async {
-    final instance = PlPlayerController.instance;
-    if (instance != null) {
+    final bvid = this.bvid;
+    if (bvid != null) {
       await (onPause?.call() ??
           PlPlayerController.pauseIfExists(
-            tag: instance.bvid,
+            tag: bvid,
           ));
     }
   }
@@ -64,11 +65,10 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
         updatePosition: position,
       ),
     );
-    final instance = PlPlayerController.instance;
-    if (instance != null) {
+    final bvid = this.bvid;
+    if (bvid != null) {
       await (onSeek?.call(position) ??
-          PlPlayerController.seekToIfExists(instance.bvid, position,
-              isSeek: false));
+          PlPlayerController.seekToIfExists(bvid, position, isSeek: false));
     }
   }
 
@@ -88,12 +88,12 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
     bool isBuffering,
     bool isLive,
   ) async {
-    final instance = PlPlayerController.instance;
+    final bvid = this.bvid;
     if (!enableBackgroundPlay ||
         _item.isEmpty ||
-        instance == null ||
+        bvid == null ||
         !PlPlayerController.instanceExists(
-          tag: instance.bvid,
+          bvid,
         )) {
       return;
     }
@@ -147,15 +147,8 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
     String? cover,
   }) {
     if (!enableBackgroundPlay) return;
-    // if (kDebugMode) {
-    //   debugPrint('当前调用栈为：');
-    //   debugPrint(StackTrace.current);
-    // }
-    final instance = PlPlayerController.instance;
-    if (instance == null ||
-        !PlPlayerController.instanceExists(
-          tag: instance.bvid,
-        )) {
+    final bvid = this.bvid;
+    if (bvid == null || !PlPlayerController.instanceExists(bvid)) {
       return;
     }
     if (data == null) return;
@@ -227,9 +220,7 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
       );
     }
     if (mediaItem == null) return;
-    final instance = PlPlayerController.instance;
-    // if (kDebugMode) debugPrint("exist: ${PlPlayerController.instanceExists()}");
-    if (instance == null || !PlPlayerController.instanceExists(tag: instance.bvid)) {
+    if (bvid == null || !PlPlayerController.instanceExists(bvid!)) {
       return;
     }
     _item.add(mediaItem);
@@ -281,12 +272,12 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
   }
 
   void onPositionChange(Duration position) {
-    final instance = PlPlayerController.instance;
+    final bvid = this.bvid;
     if (!enableBackgroundPlay ||
         _item.isEmpty ||
-        instance == null ||
+        bvid == null ||
         !PlPlayerController.instanceExists(
-          tag: instance.bvid,
+          bvid,
         )) {
       return;
     }

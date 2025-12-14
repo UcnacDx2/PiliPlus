@@ -1819,6 +1819,10 @@ class VideoDetailController extends GetxController
     return false;
   }
 
+  CommonIntroController get introController => isUgc
+      ? Get.find<UgcIntroController>(tag: heroTag)
+      : Get.find<PgcIntroController>(tag: heroTag);
+
   void toAudioPage() {
     int? id;
     int? extraId;

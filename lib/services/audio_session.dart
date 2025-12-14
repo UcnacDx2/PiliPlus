@@ -5,6 +5,11 @@ import 'package:audio_session/audio_session.dart';
 class AudioSessionHandler {
   late AudioSession session;
   bool _playInterrupted = false;
+  String? bvid;
+
+  void setBvid(String bvid) {
+    this.bvid = bvid;
+  }
 
   Future<bool> setActive(bool active) {
     return session.setActive(active);
@@ -19,19 +24,19 @@ class AudioSessionHandler {
     session.configure(const AudioSessionConfiguration.music());
 
     session.interruptionEventStream.listen((event) {
-      final instance = PlPlayerController.instance;
-      if (instance == null) return;
+      final bvid = this.bvid;
+      if (bvid == null) return;
       final playerStatus = PlPlayerController.getPlayerStatusIfExists(
-        tag: instance.bvid,
+        bvid,
       );
       if (event.begin) {
         if (playerStatus != PlayerStatus.playing) return;
         switch (event.type) {
           case AudioInterruptionType.duck:
             PlPlayerController.setVolumeIfExists(
-              instance.bvid,
+              bvid,
               (PlPlayerController.getVolumeIfExists(
-                    tag: instance.bvid,
+                    bvid,
                   ) ??
                   0) *
                   0.5,
@@ -39,14 +44,14 @@ class AudioSessionHandler {
             break;
           case AudioInterruptionType.pause:
             PlPlayerController.pauseIfExists(
-              tag: instance.bvid,
+              tag: bvid,
               isInterrupt: true,
             );
             _playInterrupted = true;
             break;
           case AudioInterruptionType.unknown:
             PlPlayerController.pauseIfExists(
-              tag: instance.bvid,
+              tag: bvid,
               isInterrupt: true,
             );
             _playInterrupted = true;
@@ -56,9 +61,9 @@ class AudioSessionHandler {
         switch (event.type) {
           case AudioInterruptionType.duck:
             PlPlayerController.setVolumeIfExists(
-              instance.bvid,
+              bvid,
               (PlPlayerController.getVolumeIfExists(
-                    tag: instance.bvid,
+                    bvid,
                   ) ??
                   0) *
                   2,
@@ -67,7 +72,7 @@ class AudioSessionHandler {
           case AudioInterruptionType.pause:
             if (_playInterrupted) {
               PlPlayerController.playIfExists(
-                tag: instance.bvid,
+                tag: bvid,
               );
             }
             break;
@@ -80,9 +85,9 @@ class AudioSessionHandler {
 
     // 耳机拔出暂停
     session.becomingNoisyEventStream.listen((_) {
-      final instance = PlPlayerController.instance;
-      if (instance != null) {
-        PlPlayerController.pauseIfExists(tag: instance.bvid);
+      final bvid = this.bvid;
+      if (bvid != null) {
+        PlPlayerController.pauseIfExists(tag: bvid);
       }
     });
   }

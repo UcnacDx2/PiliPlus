@@ -27,6 +27,7 @@ abstract class Utils {
 
   static bool? _isTvMode;
   static Future<bool> get isTvMode async {
+    // TODO: Replace with native TV mode detection
     // TV mode detection is temporarily hardcoded to true for PC debugging.
     // The final implementation is below, commented out.
     return true;

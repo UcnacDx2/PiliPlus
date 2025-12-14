@@ -18,6 +18,12 @@ class ShutdownTimerService with WidgetsBindingObserver {
   bool waitForPlayingCompleted = false;
   bool isWaiting = false;
   bool isInBackground = false;
+  String? bvid;
+
+  void setBvid(String bvid) {
+    this.bvid = bvid;
+  }
+
   factory ShutdownTimerService() => _instance;
 
   ShutdownTimerService._internal() {
@@ -110,17 +116,15 @@ class ShutdownTimerService with WidgetsBindingObserver {
       _showShutdownDialog();
       return;
     }
-    // PlPlayerController plPlayerController = PlPlayerController.getInstance();
-    final instance = PlPlayerController.instance;
-    if (instance == null) {
+    final bvid = this.bvid;
+    if (bvid == null) {
       _showTimeUpButPauseDialog();
       return;
     }
     PlayerStatus? playerStatus = PlPlayerController.getPlayerStatusIfExists(
-      tag: instance.bvid,
+      bvid,
     );
     if (!exitApp && !waitForPlayingCompleted) {
-      // if (!plPlayerController.playerStatus.playing) {
       if (playerStatus == PlayerStatus.paused ||
           playerStatus == PlayerStatus.completed) {
         //仅提示用户
@@ -151,25 +155,25 @@ class ShutdownTimerService with WidgetsBindingObserver {
   }
 
   void _executeShutdown() {
-    final instance = PlPlayerController.instance;
-    if (instance == null) {
+    final bvid = this.bvid;
+    if (bvid == null) {
       SmartDialog.showToast("当前未播放");
       return;
     }
     if (exitApp) {
       PlPlayerController.pauseIfExists(
-        tag: instance.bvid,
+        tag: bvid,
       );
       //退出app
       exit(0);
     } else {
       //暂停播放
       PlayerStatus? playerStatus = PlPlayerController.getPlayerStatusIfExists(
-        tag: instance.bvid,
+        bvid,
       );
       if (playerStatus == PlayerStatus.playing) {
         PlPlayerController.pauseIfExists(
-          tag: instance.bvid,
+          tag: bvid,
         );
         waitForPlayingCompleted = true;
         SmartDialog.showToast("已暂停播放");

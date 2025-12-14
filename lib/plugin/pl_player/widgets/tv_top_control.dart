@@ -64,7 +64,7 @@ class _TvTopControlState extends State<TvTopControl> {
             // Video title
             Obx(
               () => Text(
-                _videoDetailController.introController.videoDetail.value.title,
+                _videoDetailController.introController.videoDetail.value.title ?? '',
                 style: const TextStyle(color: Colors.white, fontSize: 18),
               ),
             ),

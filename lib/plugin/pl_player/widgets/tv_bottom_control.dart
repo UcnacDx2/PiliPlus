@@ -2,6 +2,7 @@ import 'package:PiliPlus/models/common/video/video_quality.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
+import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/utils.dart';
@@ -96,11 +97,11 @@ class _TvBottomControlState extends State<TvBottomControl> {
                       return;
                     }
                     final newQa = VideoQuality.fromCode(format.quality!);
-                    _videoDetailController
-                      ..plPlayerController.cacheVideoQa = newQa.code
-                    ..currentVideoQa.value = newQa
-                    ..updatePlayer();
-                  SmartDialog.showToast('画质已变为：${newQa.desc}');
+                    _videoDetailController.plPlayerController.cacheVideoQa =
+                        newQa.code;
+                    _videoDetailController.currentVideoQa.value = newQa;
+                    _videoDetailController.updatePlayer();
+                    SmartDialog.showToast('画质已变为：${newQa.desc}');
                   if (!widget.controller.tempPlayerConf) {
                     GStorage.setting.put(
                       await Utils.isWiFi
@@ -109,7 +110,7 @@ class _TvBottomControlState extends State<TvBottomControl> {
                       format.quality,
                     );
                   }
-                },
+                }},
               );
             }).toList();
           },
@@ -207,7 +208,8 @@ class _TvBottomControlState extends State<TvBottomControl> {
 
   Widget _buildEpisodeMenu() {
     return Obx(() {
-      final pages = _videoDetailController.introController.videoDetail.value.pages;
+      final introController = _videoDetailController.introController;
+      final pages = introController.videoDetail.value.pages;
       if (pages?.isEmpty ?? true) {
         return const SizedBox.shrink();
       }
@@ -219,9 +221,9 @@ class _TvBottomControlState extends State<TvBottomControl> {
             return pages!.map((page) {
               return PopupMenuItem<int>(
                 value: page.page,
-                child: Text(page.part),
+                child: Text(page.part ?? ''),
                 onTap: () =>
-                    _videoDetailController.introController.onChangeEpisode(page),
+                    (introController as UgcIntroController).onChangeEpisode(page),
               );
             }).toList();
           },
@@ -250,11 +252,11 @@ class _TvBottomControlState extends State<TvBottomControl> {
               );
             }).toList();
           },
-        child: _buildButton-content(
+        child: _buildButtonContent(
           icon: Icons.aspect_ratio,
           label: widget.controller.videoFit.value.desc,
         ),
-      )),
+      ),
     );
   }
 }
