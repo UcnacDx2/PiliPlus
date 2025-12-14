@@ -14,6 +14,7 @@ import 'package:PiliPlus/models_new/live/live_room_play_info/codec.dart';
 import 'package:PiliPlus/models_new/live/live_superchat/item.dart';
 import 'package:PiliPlus/pages/danmaku/danmaku_model.dart';
 import 'package:PiliPlus/pages/live_room/send_danmaku/view.dart';
+import 'package:PiliPlus/pages/live_room/widgets/header_control.dart';
 import 'package:PiliPlus/pages/video/widgets/header_control.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/data_source.dart';
@@ -113,7 +114,7 @@ class LiveRoomController extends GetxController {
 
   final showSuperChat = Pref.showSuperChat;
 
-  final headerKey = GlobalKey<TimeBatteryMixin>();
+  final headerKey = GlobalKey<LiveHeaderControlState>();
 
   final RxString title = ''.obs;
 

@@ -16,7 +16,8 @@ import 'package:PiliPlus/pages/live_room/superchat/superchat_card.dart';
 import 'package:PiliPlus/pages/live_room/superchat/superchat_panel.dart';
 import 'package:PiliPlus/pages/live_room/widgets/bottom_control.dart';
 import 'package:PiliPlus/pages/live_room/widgets/chat_panel.dart';
-import 'package:PiliPlus/pages/live_room/widgets/header_control.dart';
+import 'package:PiliPlus/pages/live_room/widgets/header_control.dart'
+    show LiveHeaderControl, LiveHeaderControlState;
 import 'package:PiliPlus/pages/video/widgets/player_focus.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
@@ -199,6 +200,12 @@ class _LiveRoomPageState extends State<LiveRoomPage>
       child = PlayerFocus(
         plPlayerController: plPlayerController,
         onSendDanmaku: _liveRoomController.onSendDanmaku,
+        onShowMenu: () {
+          final headerState = _liveRoomController.headerKey.currentState;
+          if (headerState is LiveHeaderControlState) {
+            headerState.showSettingSheet();
+          }
+        },
         child: child,
       );
     }
