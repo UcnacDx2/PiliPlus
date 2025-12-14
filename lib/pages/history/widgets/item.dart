@@ -90,7 +90,9 @@ class HistoryItem extends StatelessWidget {
                       );
                   if (cid != null) {
                     final historyMid = Get.find<HistoryController>(
-                      tag: ctr is HistoryController ? ctr.type ?? 'all' : null,
+                      tag: ctr is HistoryController
+                          ? (ctr as HistoryController).type ?? 'all'
+                          : null,
                     ).account.mid;
                     final videoMid = Accounts.get(AccountType.video).mid;
                     PageUtils.toVideoPage(
