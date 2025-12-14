@@ -3,9 +3,7 @@ enum BottomControlType {
   pre,
   next,
   time,
-  episode,
   fullscreen,
   viewPoints,
-  dmChart,
   aiTranslate,
 }

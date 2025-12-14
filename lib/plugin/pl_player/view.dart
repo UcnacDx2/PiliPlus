@@ -451,6 +451,41 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           }
           return const SizedBox.shrink();
         },
+      ),
+
+      /// 超分辨率
+      BottomControlType.superResolution => Obx(
+        () => PopupMenuButton<SuperResolutionType>(
+          tooltip: '超分辨率',
+          requestFocus: false,
+          initialValue: plPlayerController.superResolutionType.value,
+          color: Colors.black.withValues(alpha: 0.8),
+          itemBuilder: (context) {
+            return SuperResolutionType.values
+                .map(
+                  (type) => PopupMenuItem<SuperResolutionType>(
+                    height: 35,
+                    padding: const EdgeInsets.only(left: 30),
+                    value: type,
+                    onTap: () => plPlayerController.setShader(type),
+                    child: Text(
+                      type.title,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                )
+                .toList();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              plPlayerController.superResolutionType.value.title,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+            ),
+          ),
+        ),
+      ),
+
       /// 分段信息
       BottomControlType.viewPoints => Obx(
         () => videoDetailController.viewPointList.isEmpty
@@ -533,6 +568,39 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 : currentCid,
           );
         },
+      ),
+
+      /// 画面比例
+      BottomControlType.fit => Obx(
+        () => PopupMenuButton<VideoFitType>(
+          tooltip: '画面比例',
+          requestFocus: false,
+          initialValue: plPlayerController.videoFit.value,
+          color: Colors.black.withValues(alpha: 0.8),
+          itemBuilder: (context) {
+            return VideoFitType.values
+                .map(
+                  (boxFit) => PopupMenuItem<VideoFitType>(
+                    height: 35,
+                    padding: const EdgeInsets.only(left: 30),
+                    value: boxFit,
+                    onTap: () => plPlayerController.toggleVideoFit(boxFit),
+                    child: Text(
+                      boxFit.desc,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                )
+                .toList();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              plPlayerController.videoFit.value.desc,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+            ),
+          ),
+        ),
       ),
 
       BottomControlType.aiTranslate => Obx(
@@ -651,6 +719,43 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         ),
                 ),
               ),
+      ),
+
+      /// 播放速度
+      BottomControlType.speed => Obx(
+        () => PopupMenuButton<double>(
+          tooltip: '倍速',
+          requestFocus: false,
+          initialValue: plPlayerController.playbackSpeed,
+          color: Colors.black.withValues(alpha: 0.8),
+          itemBuilder: (context) {
+            return plPlayerController.speedList
+                .map(
+                  (double speed) => PopupMenuItem<double>(
+                    height: 35,
+                    padding: const EdgeInsets.only(left: 30),
+                    value: speed,
+                    onTap: () => plPlayerController.setPlaybackSpeed(speed),
+                    child: Text(
+                      "${speed}X",
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      semanticsLabel: "$speed倍速",
+                    ),
+                  ),
+                )
+                .toList();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              "${plPlayerController.playbackSpeed}X",
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              semanticsLabel: "${plPlayerController.playbackSpeed}倍速",
+            ),
+          ),
+        ),
+      ),
+
       BottomControlType.qa => Obx(
         () {
           final VideoQuality? currentVideoQa =
@@ -776,11 +881,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final flag =
         isFullScreen || plPlayerController.isDesktopPip || maxWidth >= 500;
     List<BottomControlType> userSpecifyItemRight = [
-      if (isNotFileSource && plPlayerController.showDmChart)
-        BottomControlType.dmChart,
       if (isNotFileSource && plPlayerController.showViewPoints)
         BottomControlType.viewPoints,
-      if (isNotFileSource && anySeason) BottomControlType.episode,
       if (isNotFileSource) BottomControlType.aiTranslate,
       if (!plPlayerController.isDesktopPip) BottomControlType.fullscreen,
     ];
