@@ -11,7 +11,6 @@ import 'package:PiliPlus/models/user/info.dart';
 import 'package:PiliPlus/models_new/fav/fav_folder/list.dart';
 import 'package:PiliPlus/pages/common/common_page.dart';
 import 'package:PiliPlus/pages/home/view.dart';
-import 'package:PiliPlus/pages/login/controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/pages/mine/widgets/item.dart';
@@ -187,7 +186,7 @@ class _MediaPageState extends CommonPageState<MinePage, MineController>
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           tooltip: '设置账号模式',
-          onPressed: () => LoginPageController.switchAccountDialog(context),
+          onPressed: () => Get.toNamed('/profile'),
           icon: const Icon(Icons.switch_account_outlined),
         ),
         Obx(
