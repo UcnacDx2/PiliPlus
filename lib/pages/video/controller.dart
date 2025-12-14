@@ -389,7 +389,7 @@ class VideoDetailController extends GetxController
               try {
                 Get.find<UgcIntroController>(
                   tag: heroTag,
-                ).onChangeEpisode(item.cid!);
+                ).onChangeEpisode(item);
               } catch (_) {}
               break;
             }
@@ -412,8 +412,7 @@ class VideoDetailController extends GetxController
         mediaList: mediaList,
         onChangeEpisode: (episode) {
           try {
-            Get.find<UgcIntroController>(tag: heroTag)
-                .onChangeEpisode(episode.cid!);
+            Get.find<UgcIntroController>(tag: heroTag).onChangeEpisode(episode);
           } catch (_) {}
         },
         panelTitle: watchLaterTitle,
@@ -967,7 +966,7 @@ class VideoDetailController extends GetxController
                         Get.find<UgcIntroController>(tag: heroTag);
                     Part part =
                         ugcIntroController.videoDetail.value.pages![item];
-                    ugcIntroController.onChangeEpisode(part.cid!);
+                    ugcIntroController.onChangeEpisode(part);
                     SmartDialog.showToast('已跳至第${item + 1}P');
                   } catch (e) {
                     if (kDebugMode) debugPrint('$e');

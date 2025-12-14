@@ -1360,16 +1360,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
               controller: videoDetailController.plPlayerController,
               videoDetailCtr: videoDetailController,
               heroTag: heroTag,
-              showEpisodes: () => showEpisodes(
-                null,
-                null,
-                videoDetailController.isUgc
-                    ? ugcIntroController.videoDetail.value.pages
-                    : pgcIntroController.pgcItem.episodes,
-                videoDetailController.bvid,
-                videoDetailController.aid,
-                videoDetailController.cid.value,
-              ),
+              showEpisodes: showEpisodes,
             ),
             danmuWidget: isPipMode && pipNoDanmaku
                 ? null
@@ -1722,7 +1713,8 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                 ),
                                 onPressed: () {
                                   ugcIntroController.onChangeEpisode(
-                                    item.cid!,
+                                    item,
+                                    isStein: true,
                                   );
                                   videoDetailController.getSteinEdgeInfo(
                                     item.id,
@@ -1932,14 +1924,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                     aid: videoDetailController.aid,
                     cid: videoDetailController.cid.value,
                     isReversed: videoDetail.isPageReversed,
-                    onChangeEpisode: (episode) async {
-                      if (videoDetailController.isUgc) {
-                        ugcIntroController.onChangeEpisode(episode.cid!);
-                      } else {
-                        pgcIntroController.onChangeEpisode(episode.cid!);
-                      }
-                      return true;
-                    },
+                    onChangeEpisode: videoDetailController.isUgc
+                        ? ugcIntroController.onChangeEpisode
+                        : pgcIntroController.onChangeEpisode,
                     showTitle: false,
                     isSupportReverse: videoDetailController.isUgc,
                     onReverse: () => onReversePlay(isSeason: false),
@@ -1988,14 +1975,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                       .ugcSeason!
                       .sections![videoDetailController.seasonIndex.value]
                       .isReversed,
-                  onChangeEpisode: (episode) async {
-                    if (videoDetailController.isUgc) {
-                      ugcIntroController.onChangeEpisode(episode.cid!);
-                    } else {
-                      pgcIntroController.onChangeEpisode(episode.cid!);
-                    }
-                    return true;
-                  },
+                  onChangeEpisode: videoDetailController.isUgc
+                      ? ugcIntroController.onChangeEpisode
+                      : pgcIntroController.onChangeEpisode,
                   showTitle: false,
                   isSupportReverse: videoDetailController.isUgc,
                   onReverse: () => onReversePlay(isSeason: true),
@@ -2081,14 +2063,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                 .isReversed
           : ugcIntroController.videoDetail.value.isPageReversed,
       isSupportReverse: videoDetailController.isUgc,
-      onChangeEpisode: (episode) async {
-        if (videoDetailController.isUgc) {
-          ugcIntroController.onChangeEpisode(episode.cid!);
-        } else {
-          pgcIntroController.onChangeEpisode(episode.cid!);
-        }
-        return true;
-      },
+      onChangeEpisode: videoDetailController.isUgc
+          ? ugcIntroController.onChangeEpisode
+          : pgcIntroController.onChangeEpisode,
       onClose: Get.back,
       onReverse: () {
         Get.back();
@@ -2146,7 +2123,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
             .episodes!
             .first;
         if (episode.cid != videoDetailController.cid.value) {
-          ugcIntroController.onChangeEpisode(episode.cid!);
+          ugcIntroController.onChangeEpisode(episode);
           videoDetailController.seasonCid = episode.cid;
         } else {
           videoDetailController
@@ -2166,7 +2143,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         // switch to first episode
         var episode = videoDetail.pages!.first;
         if (episode.cid != videoDetailController.cid.value) {
-          ugcIntroController.onChangeEpisode(episode.cid!);
+          ugcIntroController.onChangeEpisode(episode);
         } else {
           videoDetailController.cid.refresh();
         }

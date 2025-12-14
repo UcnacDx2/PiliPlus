@@ -60,7 +60,6 @@ abstract class CommonIntroController extends GetxController
 
   void actionCoinVideo();
   void actionShareVideo(BuildContext context);
-  void onChangeEpisode(int cid);
 
   // 同时观看
   final bool isShowOnlineTotal = Pref.enableOnlineTotal;

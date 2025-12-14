@@ -460,15 +460,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
   }
 
   // 修改分P或番剧分集
-  @override
-  void onChangeEpisode(int cid) {
-    final pages = videoDetail.value.pages;
-    if (pages == null) return;
-    final episode = pages.firstWhere((e) => e.cid == cid);
-    _onChangeEpisode(episode);
-  }
-
-  Future<bool> _onChangeEpisode(
+  Future<bool> onChangeEpisode(
     BaseEpisodeItem episode, {
     bool isStein = false,
   }) async {
@@ -621,7 +613,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
     }
 
     if (cid != this.cid.value) {
-      _onChangeEpisode(episodes[prevIndex]);
+      onChangeEpisode(episodes[prevIndex]);
       return true;
     } else {
       return false;
@@ -712,7 +704,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
       }
 
       if (cid != this.cid.value) {
-        _onChangeEpisode(episodes[nextIndex]);
+        onChangeEpisode(episodes[nextIndex]);
         return true;
       } else {
         return false;
@@ -742,7 +734,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
     }
 
     final firstItem = relatedCtr.loadingState.value.data!.first;
-    _onChangeEpisode(
+    onChangeEpisode(
       BaseEpisodeItem(
         aid: firstItem.aid,
         bvid: firstItem.bvid,

@@ -275,15 +275,7 @@ class PgcIntroController extends CommonIntroController {
   }
 
   // 修改分P或番剧分集
-  @override
-  void onChangeEpisode(int cid) {
-    final episodes = pgcItem.episodes;
-    if (episodes == null) return;
-    final episode = episodes.firstWhere((e) => e.cid == cid);
-    _onChangeEpisode(episode);
-  }
-
-  Future<bool> _onChangeEpisode(BaseEpisodeItem episode) async {
+  Future<bool> onChangeEpisode(BaseEpisodeItem episode) async {
     try {
       final int epId = episode.epId ?? episode.id!;
       final String bvid = episode.bvid ?? this.bvid;
@@ -381,7 +373,7 @@ class PgcIntroController extends CommonIntroController {
         return false;
       }
     }
-    _onChangeEpisode(episodes[prevIndex]);
+    onChangeEpisode(episodes[prevIndex]);
     return true;
   }
 
@@ -407,7 +399,7 @@ class PgcIntroController extends CommonIntroController {
           return false;
         }
       }
-      _onChangeEpisode(episodes[nextIndex]);
+      onChangeEpisode(episodes[nextIndex]);
       return true;
     } catch (_) {
       return false;

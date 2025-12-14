@@ -30,6 +30,8 @@ import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/local/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/pgc/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
+import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
+import 'package:PiliPlus/models_new/video/video_detail/ugc_season.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/action_item.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/menu_row.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
@@ -811,7 +813,9 @@ class HeaderControl extends StatefulWidget {
   final PlPlayerController controller;
   final VideoDetailController videoDetailCtr;
   final String heroTag;
-  final void Function()? showEpisodes;
+  final void Function(
+          [int?, UgcSeason?, List<ugc.BaseEpisodeItem>?, String?, int?, int?])?
+      showEpisodes;
 
   @override
   State<HeaderControl> createState() => HeaderControlState();
@@ -1172,18 +1176,6 @@ class HeaderControlState extends State<HeaderControl>
   }
 
   /// 设置面板
-  void showEpisodePanel() {
-    if (videoDetailCtr.isUgc) {
-      try {
-        Get.find<UgcIntroController>(tag: heroTag);
-      } catch (_) {}
-    } else {
-      try {
-        Get.find<PgcIntroController>(tag: heroTag);
-      } catch (_) {}
-    }
-  }
-
   void showSettingSheet() {
     showBottomSheet(
       (context, setState) {
@@ -1231,12 +1223,12 @@ class HeaderControlState extends State<HeaderControl>
                 ListTile(
                   dense: true,
                   onTap: () {
-                    final newVal = !plPlayerController.showDmTrendChart.value;
-                    plPlayerController.showDmTrendChart.value = newVal;
+                    final newVal = !videoDetailCtr.showDmTrendChart.value;
+                    videoDetailCtr.showDmTrendChart.value = newVal;
                     SmartDialog.showToast(newVal ? '高能进度条已开启' : '高能进度条已关闭');
                   },
                   leading: Obx(() => Icon(
-                      plPlayerController.showDmTrendChart.value
+                      videoDetailCtr.showDmTrendChart.value
                           ? Icons.show_chart_outlined
                           : Icons.bar_chart_outlined,
                       size: 20)),

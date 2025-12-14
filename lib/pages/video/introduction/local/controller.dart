@@ -1,5 +1,4 @@
 import 'package:PiliPlus/models_new/download/bili_download_entry_info.dart';
-import 'package:PiliPlus/models_new/video/video_detail/episode.dart';
 import 'package:PiliPlus/models_new/video/video_detail/stat_detail.dart';
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/download/controller.dart';
@@ -35,12 +34,6 @@ class LocalIntroController extends CommonIntroController {
 
   @override
   StatDetail? getStat() => null;
-
-  @override
-  void onChangeEpisode(int cid) {
-    final episode = list.firstWhere((e) => e.cid == cid);
-    playIndex(list.indexOf(episode), entry: episode);
-  }
 
   @override
   bool get isShowOnlineTotal => false;
