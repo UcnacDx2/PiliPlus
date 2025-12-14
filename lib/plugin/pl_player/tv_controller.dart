@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart'
+    show KeyDownEvent, KeyEvent, KeyEventResult, LogicalKeyboardKey;
 import 'package:get/get.dart';
 
 /// TV端焦点区域枚举

@@ -1,6 +1,7 @@
 import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart'
+    show KeyDownEvent, KeyEvent, KeyEventResult, LogicalKeyboardKey;
 import 'package:get/get.dart';
 
 /// TV端底部功能区 (区域C)

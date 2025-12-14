@@ -5,7 +5,8 @@ import 'package:PiliPlus/plugin/pl_player/widgets/tv_bottom_control.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/tv_progress_control.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/tv_top_control.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart'
+    show KeyDownEvent, KeyEvent, KeyEventResult, LogicalKeyboardKey;
 import 'package:get/get.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 

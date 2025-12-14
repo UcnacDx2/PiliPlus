@@ -1,7 +1,8 @@
 import 'package:PiliPlus/plugin/pl_player/tv_controller.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart'
+    show KeyDownEvent, KeyEvent, KeyEventResult, LogicalKeyboardKey;
 import 'package:get/get.dart';
 
 /// TV端进度条控制 (区域B)
