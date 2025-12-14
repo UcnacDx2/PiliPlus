@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../pages/common/common_intro_controller.dart';
-import '../../utils/utils.dart';
 
 class EpisodePanel extends StatelessWidget {
   final CommonIntroController controller;
@@ -80,11 +79,6 @@ class EpisodePanel extends StatelessWidget {
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${formatViewCount(controller.videoDetail.value.stat?.view)}观看',
-                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                               const SizedBox(height: 4),
                               Text(

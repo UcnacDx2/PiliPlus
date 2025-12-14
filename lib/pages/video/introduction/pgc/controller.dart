@@ -30,7 +30,6 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:PiliPlus/common/widgets/episode_panel.dart';
 
 class PgcIntroController extends CommonIntroController {
   int? seasonId;
@@ -277,7 +276,14 @@ class PgcIntroController extends CommonIntroController {
 
   // 修改分P或番剧分集
   @override
-  Future<bool> onChangeEpisode(BaseEpisodeItem episode) async {
+  void onChangeEpisode(int cid) {
+    final episodes = pgcItem.episodes;
+    if (episodes == null) return;
+    final episode = episodes.firstWhere((e) => e.cid == cid);
+    _onChangeEpisode(episode);
+  }
+
+  Future<bool> _onChangeEpisode(BaseEpisodeItem episode) async {
     try {
       final int epId = episode.epId ?? episode.id!;
       final String bvid = episode.bvid ?? this.bvid;
@@ -375,7 +381,7 @@ class PgcIntroController extends CommonIntroController {
         return false;
       }
     }
-    onChangeEpisode(episodes[prevIndex]);
+    _onChangeEpisode(episodes[prevIndex]);
     return true;
   }
 
@@ -401,7 +407,7 @@ class PgcIntroController extends CommonIntroController {
           return false;
         }
       }
-      onChangeEpisode(episodes[nextIndex]);
+      _onChangeEpisode(episodes[nextIndex]);
       return true;
     } catch (_) {
       return false;
@@ -506,16 +512,5 @@ class PgcIntroController extends CommonIntroController {
     } else {
       SmartDialog.showToast(res['msg']);
     }
-  }
-
-  void showEpisodePanel() {
-    PageUtils.showVideoBottomSheet(
-      Get.context!,
-      child: EpisodePanel(
-        controller: this,
-        heroTag: heroTag,
-      ),
-      isFullScreen: () => videoDetailCtr.plPlayerController.isFullScreen.value,
-    );
   }
 }

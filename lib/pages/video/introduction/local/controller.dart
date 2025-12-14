@@ -37,7 +37,10 @@ class LocalIntroController extends CommonIntroController {
   StatDetail? getStat() => null;
 
   @override
-  Future<bool> onChangeEpisode(BaseEpisodeItem episode) async => false;
+  void onChangeEpisode(int cid) {
+    final episode = list.firstWhere((e) => e.cid == cid);
+    playIndex(list.indexOf(episode), entry: episode);
+  }
 
   @override
   bool get isShowOnlineTotal => false;

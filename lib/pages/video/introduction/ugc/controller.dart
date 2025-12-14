@@ -43,7 +43,6 @@ import 'package:expandable/expandable.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:PiliPlus/common/widgets/episode_panel.dart';
 import 'package:get/get.dart' hide ContextExtensionss;
 
 class UgcIntroController extends CommonIntroController with ReloadMixin {
@@ -462,7 +461,14 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
 
   // 修改分P或番剧分集
   @override
-  Future<bool> onChangeEpisode(
+  void onChangeEpisode(int cid) {
+    final pages = videoDetail.value.pages;
+    if (pages == null) return;
+    final episode = pages.firstWhere((e) => e.cid == cid);
+    _onChangeEpisode(episode);
+  }
+
+  Future<bool> _onChangeEpisode(
     BaseEpisodeItem episode, {
     bool isStein = false,
   }) async {
@@ -615,7 +621,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
     }
 
     if (cid != this.cid.value) {
-      onChangeEpisode(episodes[prevIndex]);
+      _onChangeEpisode(episodes[prevIndex]);
       return true;
     } else {
       return false;
@@ -706,7 +712,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
       }
 
       if (cid != this.cid.value) {
-        onChangeEpisode(episodes[nextIndex]);
+        _onChangeEpisode(episodes[nextIndex]);
         return true;
       } else {
         return false;
@@ -736,7 +742,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
     }
 
     final firstItem = relatedCtr.loadingState.value.data!.first;
-    onChangeEpisode(
+    _onChangeEpisode(
       BaseEpisodeItem(
         aid: firstItem.aid,
         bvid: firstItem.bvid,
@@ -780,17 +786,6 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
       bvid,
       cid.value,
       videoDetail.value.owner?.mid,
-    );
-  }
-
-  void showEpisodePanel() {
-    PageUtils.showVideoBottomSheet(
-      Get.context!,
-      child: EpisodePanel(
-        controller: this,
-        heroTag: heroTag,
-      ),
-      isFullScreen: () => videoDetailCtr.plPlayerController.isFullScreen.value,
     );
   }
 }

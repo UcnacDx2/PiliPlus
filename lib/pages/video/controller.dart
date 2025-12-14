@@ -389,7 +389,7 @@ class VideoDetailController extends GetxController
               try {
                 Get.find<UgcIntroController>(
                   tag: heroTag,
-                ).onChangeEpisode(item);
+                ).onChangeEpisode(item.cid!);
               } catch (_) {}
               break;
             }
@@ -412,7 +412,8 @@ class VideoDetailController extends GetxController
         mediaList: mediaList,
         onChangeEpisode: (episode) {
           try {
-            Get.find<UgcIntroController>(tag: heroTag).onChangeEpisode(episode);
+            Get.find<UgcIntroController>(tag: heroTag)
+                .onChangeEpisode(episode.cid!);
           } catch (_) {}
         },
         panelTitle: watchLaterTitle,
@@ -966,7 +967,7 @@ class VideoDetailController extends GetxController
                         Get.find<UgcIntroController>(tag: heroTag);
                     Part part =
                         ugcIntroController.videoDetail.value.pages![item];
-                    ugcIntroController.onChangeEpisode(part);
+                    ugcIntroController.onChangeEpisode(part.cid!);
                     SmartDialog.showToast('已跳至第${item + 1}P');
                   } catch (e) {
                     if (kDebugMode) debugPrint('$e');
@@ -1660,18 +1661,6 @@ class VideoDetailController extends GetxController
   void onClose() {
     if (isFileSource) {
       cacheLocalProgress();
-    }
-  }
-
-  void showEpisodePanel() {
-    if (isUgc) {
-      try {
-        Get.find<UgcIntroController>(tag: heroTag).showEpisodePanel();
-      } catch (_) {}
-    } else {
-      try {
-        Get.find<PgcIntroController>(tag: heroTag).showEpisodePanel();
-      } catch (_) {}
     }
     introScrollCtr?.dispose();
     introScrollCtr = null;

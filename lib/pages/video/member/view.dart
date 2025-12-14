@@ -188,11 +188,12 @@ class _HorizontalMemberPageState extends State<HorizontalMemberPage> {
                       onTap: () {
                         Get.back();
                         widget.ugcIntroController.onChangeEpisode(
-                          BaseEpisodeItem(
+                          (BaseEpisodeItem(
                             bvid: videoItem.bvid,
                             cid: videoItem.cid,
                             cover: videoItem.cover,
-                          ),
+                          ))
+                              .cid!,
                         );
                       },
                     ),

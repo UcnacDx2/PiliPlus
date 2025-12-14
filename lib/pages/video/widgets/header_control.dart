@@ -803,6 +803,7 @@ class HeaderControl extends StatefulWidget {
     required this.controller,
     required this.videoDetailCtr,
     required this.heroTag,
+    this.showEpisodes,
     super.key,
   });
 
@@ -810,6 +811,7 @@ class HeaderControl extends StatefulWidget {
   final PlPlayerController controller;
   final VideoDetailController videoDetailCtr;
   final String heroTag;
+  final void Function()? showEpisodes;
 
   @override
   State<HeaderControl> createState() => HeaderControlState();
@@ -1170,6 +1172,18 @@ class HeaderControlState extends State<HeaderControl>
   }
 
   /// 设置面板
+  void showEpisodePanel() {
+    if (videoDetailCtr.isUgc) {
+      try {
+        Get.find<UgcIntroController>(tag: heroTag);
+      } catch (_) {}
+    } else {
+      try {
+        Get.find<PgcIntroController>(tag: heroTag);
+      } catch (_) {}
+    }
+  }
+
   void showSettingSheet() {
     showBottomSheet(
       (context, setState) {
@@ -1207,7 +1221,9 @@ class HeaderControlState extends State<HeaderControl>
                   dense: true,
                   onTap: () {
                     Get.back();
-                    videoDetailCtr.showEpisodePanel();
+                    if (widget.showEpisodes != null) {
+                      widget.showEpisodes!();
+                    }
                   },
                   leading: const Icon(Icons.video_library_outlined, size: 20),
                   title: const Text('选集', style: titleStyle),

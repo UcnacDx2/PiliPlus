@@ -83,7 +83,8 @@ class _PgcIntroPageState extends State<PgcIntroPage> {
               heroTag: widget.heroTag,
               pages: item.episodes!,
               cid: videoDetailCtr.cid.value,
-              onChangeEpisode: introController.onChangeEpisode,
+              onChangeEpisode: (episode) =>
+                  introController.onChangeEpisode(episode.cid!),
               showEpisodes: widget.showEpisodes,
               newEp: item.newEp,
             ),

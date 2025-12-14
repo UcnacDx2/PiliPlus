@@ -176,9 +176,10 @@ class _PagesPanelState extends State<PagesPanel> {
                         Get.back();
                       }
                       widget.ugcIntroController.onChangeEpisode(
-                        item
-                          ..bvid ??= widget.bvid
-                          ..cover ??= widget.cover,
+                        (item
+                              ..bvid ??= widget.bvid
+                              ..cover ??= widget.cover)
+                            .cid!,
                       );
                       if (widget.list != null &&
                           widget
