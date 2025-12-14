@@ -184,4 +184,20 @@ abstract class Utils {
   static void reportError(Object exception, [StackTrace? stack]) {
     Catcher2.reportCheckedError(exception, stack);
   }
+
+  static bool? _isTvMode;
+  static Future<bool> get isTvMode async {
+    if (!Platform.isAndroid) return false;
+    return _isTvMode ??= await _checkTvMode();
+  }
+
+  static Future<bool> _checkTvMode() async {
+    try {
+      // 通过 MethodChannel 调用 Android 原生代码检测
+      final result = await channel.invokeMethod<bool>('checkTvMode');
+      return result ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
 }
