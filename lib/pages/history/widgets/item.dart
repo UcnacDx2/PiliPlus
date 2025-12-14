@@ -31,14 +31,20 @@ class HistoryItem extends StatelessWidget {
   });
 
   /// Convert history progress to string for navigation
-  /// Returns '0' if progress is -1 (fully watched), otherwise returns the progress as string
+  /// 
+  /// Returns '0' if progress is -1 (fully watched video), otherwise returns the progress as string.
+  /// Progress value of -1 indicates the video has been fully watched in the history.
+  /// When navigating to such videos, we want to start from the beginning (position 0).
   String? _getProgressString(int? progress) {
     if (progress == null) return null;
     return progress == -1 ? '0' : progress.toString();
   }
 
   /// Convert history progress to int for navigation
-  /// Returns 0 if progress is -1 (fully watched), otherwise returns the progress
+  /// 
+  /// Returns 0 if progress is -1 (fully watched video), otherwise returns the progress.
+  /// Progress value of -1 indicates the video has been fully watched in the history.
+  /// When navigating to such videos, we want to start from the beginning (position 0).
   int? _getProgressInt(int? progress) {
     if (progress == null) return null;
     return progress == -1 ? 0 : progress;
