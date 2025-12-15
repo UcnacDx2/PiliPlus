@@ -1,7 +1,7 @@
+import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
-import 'package:PiliPlus/plugin/pl_player/models/duration.dart';
 
 class SeekIndicator extends StatelessWidget {
   final PlPlayerController controller;
@@ -33,7 +33,7 @@ class SeekIndicator extends StatelessWidget {
               ),
               const SizedBox(height: 8.0),
               Obx(() => Text(
-                '${controller.sliderPosition.value.format()} / ${controller.duration.value.format()}',
+                '${DurationUtils.formatDuration(controller.sliderPosition.value.inSeconds)} / ${DurationUtils.formatDuration(controller.duration.value.inSeconds)}',
                 style: const TextStyle(
                   fontSize: 12.0,
                   color: Colors.white,
