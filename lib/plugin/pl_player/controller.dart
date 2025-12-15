@@ -124,6 +124,15 @@ class PlPlayerController {
   /// 是否长按倍速
   final RxBool longPressStatus = false.obs;
 
+  /// 是否在拖拽进度
+  final RxBool isSeeking = false.obs;
+
+  /// 是否在快进
+  final RxBool isSeekingForward = false.obs;
+
+  /// 拖拽进度条展示/隐藏
+  final RxBool showSeekIndicator = false.obs;
+
   /// 屏幕锁 为true时，关闭控制栏
   final RxBool controlsLock = false.obs;
 
@@ -1431,6 +1440,46 @@ class PlPlayerController {
   void cancelLongPressTimer() {
     longPressTimer?.cancel();
     longPressTimer = null;
+  }
+
+  Timer? _seekingTimer;
+  void startSeeking(bool isForward) {
+    if (isLive || controlsLock.value || isSeeking.value) return;
+
+    isSeeking.value = true;
+    isSeekingForward.value = isForward;
+    showSeekIndicator.value = true;
+    _videoPlayerController?.pause();
+    _seekingTimer?.cancel();
+    _seekingTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
+      updateSeekPosition(isForward);
+    });
+  }
+
+  void updateSeekPosition(bool isForward) {
+    final newPosition = isForward
+        ? sliderPosition.value + const Duration(seconds: 1)
+        : sliderPosition.value - const Duration(seconds: 1);
+
+    if (newPosition >= Duration.zero && newPosition <= duration.value) {
+      sliderPosition.value = newPosition;
+      updateSliderPositionSecond();
+    }
+  }
+
+  void endSeeking() {
+    _seekingTimer?.cancel();
+    if (isSeeking.value) {
+      seekTo(sliderPosition.value).then((_) {
+        if (playerStatus.value != PlayerStatus.playing) {
+          play();
+        }
+      });
+    }
+    isSeeking.value = false;
+    Future.delayed(const Duration(seconds: 1), () {
+      showSeekIndicator.value = false;
+    });
   }
 
   /// 设置长按倍速状态 live模式下禁用

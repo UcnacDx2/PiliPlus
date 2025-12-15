@@ -99,23 +99,54 @@ class PlayerFocus extends StatelessWidget {
     if (key == LogicalKeyboardKey.arrowRight) {
       if (!plPlayerController.isLive) {
         if (event is KeyDownEvent) {
-          if (hasPlayer && !plPlayerController.longPressStatus.value) {
+          if (hasPlayer && !plPlayerController.isSeeking.value) {
             plPlayerController
               ..cancelLongPressTimer()
               ..longPressTimer ??= Timer(
                 const Duration(milliseconds: 200),
-                () => plPlayerController
-                  ..cancelLongPressTimer()
-                  ..setLongPressStatus(true),
+                () {
+                  plPlayerController.cancelLongPressTimer();
+                  plPlayerController.startSeeking(true);
+                },
               );
           }
         } else if (event is KeyUpEvent) {
           plPlayerController.cancelLongPressTimer();
           if (hasPlayer) {
-            if (plPlayerController.longPressStatus.value) {
-              plPlayerController.setLongPressStatus(false);
+            if (plPlayerController.isSeeking.value) {
+              plPlayerController.endSeeking();
             } else {
               plPlayerController.onForward(
+                plPlayerController.fastForBackwardDuration,
+              );
+            }
+          }
+        }
+      }
+      return true;
+    }
+
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      if (!plPlayerController.isLive) {
+        if (event is KeyDownEvent) {
+          if (hasPlayer && !plPlayerController.isSeeking.value) {
+            plPlayerController
+              ..cancelLongPressTimer()
+              ..longPressTimer ??= Timer(
+                const Duration(milliseconds: 200),
+                () {
+                  plPlayerController.cancelLongPressTimer();
+                  plPlayerController.startSeeking(false);
+                },
+              );
+          }
+        } else if (event is KeyUpEvent) {
+          plPlayerController.cancelLongPressTimer();
+          if (hasPlayer) {
+            if (plPlayerController.isSeeking.value) {
+              plPlayerController.endSeeking();
+            } else {
+              plPlayerController.onBackward(
                 plPlayerController.fastForBackwardDuration,
               );
             }
@@ -229,14 +260,6 @@ class PlayerFocus extends StatelessWidget {
 
       if (!plPlayerController.isLive) {
         switch (key) {
-          case LogicalKeyboardKey.arrowLeft:
-            if (hasPlayer) {
-              plPlayerController.onBackward(
-                plPlayerController.fastForBackwardDuration,
-              );
-            }
-            return true;
-
           case LogicalKeyboardKey.keyW:
             if (HardwareKeyboard.instance.isMetaPressed) {
               return true;

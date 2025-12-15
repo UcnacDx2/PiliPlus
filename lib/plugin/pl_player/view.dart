@@ -48,6 +48,7 @@ import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/forward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/mpv_convert_webp.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
+import 'package:PiliPlus/plugin/pl_player/widgets/seek_indicator.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/extension.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
@@ -1624,6 +1625,16 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
             ),
           ),
         ),
+
+        /// 拖拽进度条
+        if (!isLive)
+          IgnorePointer(
+            ignoring: true,
+            child: Align(
+              alignment: Alignment.center,
+              child: SeekIndicator(controller: plPlayerController),
+            ),
+          ),
 
         // 头部、底部控制条
         Positioned.fill(
