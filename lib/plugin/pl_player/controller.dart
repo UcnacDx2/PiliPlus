@@ -124,6 +124,15 @@ class PlPlayerController {
   /// 是否长按倍速
   final RxBool longPressStatus = false.obs;
 
+  /// 是否在拖拽进度
+  final RxBool isSeeking = false.obs;
+
+  /// 是否在快进
+  final RxBool isSeekingForward = false.obs;
+
+  /// 拖拽进度条展示/隐藏
+  final RxBool showSeekIndicator = false.obs;
+
   /// 屏幕锁 为true时，关闭控制栏
   final RxBool controlsLock = false.obs;
 
@@ -645,6 +654,9 @@ class PlPlayerController {
       _isVertical = isVertical ?? false;
       _aid = aid;
       _bvid = bvid;
+      if (bvid != null && cid != null) {
+        getVideoShot();
+      }
       this.cid = cid;
       _epid = epid;
       _seasonId = seasonId;
@@ -1431,6 +1443,81 @@ class PlPlayerController {
   void cancelLongPressTimer() {
     longPressTimer?.cancel();
     longPressTimer = null;
+  }
+
+  DateTime? _seekStartTime;
+
+  Duration _getSeekStep() {
+    int baseStep = 1;
+    if (videoShot case Success<VideoShotData> success) {
+      final data = success.response;
+      if (data.index.length > 1) {
+        baseStep = (data.index[1] - data.index[0]).ceil();
+      }
+    }
+
+    final seekDuration = _seekStartTime != null
+        ? DateTime.now().difference(_seekStartTime!)
+        : Duration.zero;
+
+    int multiplier = 1;
+    if (seekDuration.inSeconds >= 10) {
+      multiplier = 10;
+    } else if (seekDuration.inSeconds >= 5) {
+      multiplier = 5;
+    } else if (seekDuration.inSeconds >= 2) {
+      multiplier = 2;
+    }
+
+    double videoDurationFactor = 1.0;
+    if (duration.value.inMinutes > 60) {
+      videoDurationFactor = 4.0;
+    } else if (duration.value.inMinutes > 30) {
+      videoDurationFactor = 2.0;
+    }
+
+    return Duration(seconds: (baseStep * multiplier * videoDurationFactor).round());
+  }
+
+  Timer? _seekingTimer;
+  void startSeeking(bool isForward) {
+    if (isLive || controlsLock.value || isSeeking.value) return;
+
+    _seekStartTime = DateTime.now();
+    isSeeking.value = true;
+    isSeekingForward.value = isForward;
+    showSeekIndicator.value = true;
+    _videoPlayerController?.pause();
+    _seekingTimer?.cancel();
+    _seekingTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
+      updateSeekPosition(isForward);
+    });
+  }
+
+  void updateSeekPosition(bool isForward) {
+    final step = _getSeekStep();
+    final newPosition = isForward
+        ? sliderPosition.value + step
+        : sliderPosition.value - step;
+
+    if (newPosition >= Duration.zero && newPosition <= duration.value) {
+      sliderPosition.value = newPosition;
+      updateSliderPositionSecond();
+    }
+  }
+
+  void endSeeking() {
+    _seekingTimer?.cancel();
+    _seekStartTime = null;
+    if (isSeeking.value) {
+      seekTo(sliderPosition.value).then((_) {
+        play();
+      });
+    }
+    isSeeking.value = false;
+    Future.delayed(const Duration(seconds: 1), () {
+      showSeekIndicator.value = false;
+    });
   }
 
   /// 设置长按倍速状态 live模式下禁用
