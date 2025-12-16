@@ -1452,7 +1452,7 @@ class PlPlayerController {
     if (videoShot case Success<VideoShotData> success) {
       final data = success.response;
       if (data.index.length > 1) {
-        baseStep = (data.index[1] - data.index[0]).toInt();
+        baseStep = (data.index[1] - data.index[0]).ceil();
       }
     }
 
