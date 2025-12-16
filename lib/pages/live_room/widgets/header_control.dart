@@ -39,6 +39,14 @@ class LiveHeaderControl extends StatefulWidget {
 
 class _LiveHeaderControlState extends State<LiveHeaderControl>
     with TimeBatteryMixin {
+  final GlobalKey _menuKey = GlobalKey();
+
+  void showMenu() {
+    final PopupMenuButtonState? menuButtonState =
+        _menuKey.currentState as PopupMenuButtonState?;
+    menuButtonState?.showButtonMenu();
+  }
+
   @override
   late final plPlayerController = widget.plPlayerController;
 
@@ -121,86 +129,65 @@ class _LiveHeaderControlState extends State<LiveHeaderControl>
           child,
           ...?timeBatteryWidgets,
           const SizedBox(width: 10),
-          ComBtn(
-            height: 30,
-            tooltip: '发弹幕',
-            icon: const Icon(
-              size: 18,
-              Icons.comment_outlined,
-              color: Colors.white,
-            ),
-            onTap: widget.onSendDanmaku,
-          ),
-          Obx(
-            () {
-              final onlyPlayAudio = plPlayerController.onlyPlayAudio.value;
-              return ComBtn(
-                height: 30,
-                tooltip: '仅播放音频',
-                onTap: () {
-                  plPlayerController.onlyPlayAudio.value = !onlyPlayAudio;
-                  widget.onPlayAudio();
-                },
-                icon: onlyPlayAudio
-                    ? const Icon(
-                        size: 18,
-                        MdiIcons.musicCircle,
-                        color: Colors.white,
-                      )
-                    : const Icon(
-                        size: 18,
-                        MdiIcons.musicCircleOutline,
-                        color: Colors.white,
-                      ),
-              );
-            },
-          ),
-          if (Platform.isAndroid || (Utils.isDesktop && !isFullScreen))
-            ComBtn(
-              height: 30,
-              tooltip: '画中画',
-              onTap: () async {
-                if (Utils.isDesktop) {
-                  plPlayerController.toggleDesktopPip();
-                  return;
-                }
-                if (await Floating().isPipAvailable) {
-                  plPlayerController
-                    ..showControls.value = false
-                    ..enterPip();
-                }
-              },
-              icon: const Icon(
-                size: 18,
-                Icons.picture_in_picture_outlined,
-                color: Colors.white,
-              ),
-            ),
-          ComBtn(
-            height: 30,
-            tooltip: '定时关闭',
-            onTap: () => PageUtils.scheduleExit(context, isFullScreen, true),
-            icon: const Icon(
-              size: 18,
-              Icons.schedule,
-              color: Colors.white,
-            ),
-          ),
-          ComBtn(
-            height: 30,
-            tooltip: '播放信息',
-            onTap: () => HeaderControlState.showPlayerInfo(
-              context,
-              plPlayerController: plPlayerController,
-            ),
-            icon: const Icon(
-              size: 18,
-              Icons.info_outline,
-              color: Colors.white,
-            ),
-          ),
+          _moreBtn(),
         ],
       ),
+    );
+  }
+
+  Widget _moreBtn() {
+    return PopupMenuButton(
+      key: _menuKey,
+      icon: const Icon(
+        Icons.more_vert,
+        color: Colors.white,
+        size: 18,
+      ),
+      tooltip: '更多选项',
+      itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+        PopupMenuItem(
+          onTap: widget.onSendDanmaku,
+          child: const Text('发弹幕'),
+        ),
+        PopupMenuItem(
+          onTap: () {
+            plPlayerController.onlyPlayAudio.value =
+                !plPlayerController.onlyPlayAudio.value;
+            widget.onPlayAudio();
+          },
+          child: Obx(
+            () => Text(
+              plPlayerController.onlyPlayAudio.value ? '关闭仅音频' : '仅播放音频',
+            ),
+          ),
+        ),
+        if (Platform.isAndroid || (Utils.isDesktop && !isFullScreen))
+          PopupMenuItem(
+            onTap: () async {
+              if (Utils.isDesktop) {
+                plPlayerController.toggleDesktopPip();
+                return;
+              }
+              if (await Floating().isPipAvailable) {
+                plPlayerController
+                  ..showControls.value = false
+                  ..enterPip();
+              }
+            },
+            child: const Text('画中画'),
+          ),
+        PopupMenuItem(
+          onTap: () => PageUtils.scheduleExit(context, isFullScreen, true),
+          child: const Text('定时关闭'),
+        ),
+        PopupMenuItem(
+          onTap: () => HeaderControlState.showPlayerInfo(
+            context,
+            plPlayerController: plPlayerController,
+          ),
+          child: const Text('播放信息'),
+        ),
+      ],
     );
   }
 }
