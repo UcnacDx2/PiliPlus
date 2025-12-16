@@ -654,6 +654,9 @@ class PlPlayerController {
       _isVertical = isVertical ?? false;
       _aid = aid;
       _bvid = bvid;
+      if (bvid != null && cid != null) {
+        getVideoShot();
+      }
       this.cid = cid;
       _epid = epid;
       _seasonId = seasonId;
@@ -1445,19 +1448,35 @@ class PlPlayerController {
   DateTime? _seekStartTime;
 
   Duration _getSeekStep() {
-    if (_seekStartTime == null) {
-      return const Duration(seconds: 1);
+    int baseStep = 1;
+    if (videoShot case Success<VideoShotData> success) {
+      final data = success.response;
+      if (data.index.length > 1) {
+        baseStep = (data.index[1] - data.index[0]).toInt();
+      }
     }
-    final seekDuration = DateTime.now().difference(_seekStartTime!);
-    if (seekDuration.inSeconds < 2) {
-      return const Duration(seconds: 1);
-    } else if (seekDuration.inSeconds < 5) {
-      return const Duration(seconds: 2);
-    } else if (seekDuration.inSeconds < 10) {
-      return const Duration(seconds: 5);
-    } else {
-      return const Duration(seconds: 10);
+
+    final seekDuration = _seekStartTime != null
+        ? DateTime.now().difference(_seekStartTime!)
+        : Duration.zero;
+
+    int multiplier = 1;
+    if (seekDuration.inSeconds >= 10) {
+      multiplier = 10;
+    } else if (seekDuration.inSeconds >= 5) {
+      multiplier = 5;
+    } else if (seekDuration.inSeconds >= 2) {
+      multiplier = 2;
     }
+
+    double videoDurationFactor = 1.0;
+    if (duration.value.inMinutes > 60) {
+      videoDurationFactor = 4.0;
+    } else if (duration.value.inMinutes > 30) {
+      videoDurationFactor = 2.0;
+    }
+
+    return Duration(seconds: (baseStep * multiplier * videoDurationFactor).round());
   }
 
   Timer? _seekingTimer;
@@ -1492,9 +1511,7 @@ class PlPlayerController {
     _seekStartTime = null;
     if (isSeeking.value) {
       seekTo(sliderPosition.value).then((_) {
-        if (playerStatus.value != PlayerStatus.playing) {
-          play();
-        }
+        play();
       });
     }
     isSeeking.value = false;
