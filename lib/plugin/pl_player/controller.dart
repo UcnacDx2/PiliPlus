@@ -1442,10 +1442,29 @@ class PlPlayerController {
     longPressTimer = null;
   }
 
+  DateTime? _seekStartTime;
+
+  Duration _getSeekStep() {
+    if (_seekStartTime == null) {
+      return const Duration(seconds: 1);
+    }
+    final seekDuration = DateTime.now().difference(_seekStartTime!);
+    if (seekDuration.inSeconds < 2) {
+      return const Duration(seconds: 1);
+    } else if (seekDuration.inSeconds < 5) {
+      return const Duration(seconds: 2);
+    } else if (seekDuration.inSeconds < 10) {
+      return const Duration(seconds: 5);
+    } else {
+      return const Duration(seconds: 10);
+    }
+  }
+
   Timer? _seekingTimer;
   void startSeeking(bool isForward) {
     if (isLive || controlsLock.value || isSeeking.value) return;
 
+    _seekStartTime = DateTime.now();
     isSeeking.value = true;
     isSeekingForward.value = isForward;
     showSeekIndicator.value = true;
@@ -1457,9 +1476,10 @@ class PlPlayerController {
   }
 
   void updateSeekPosition(bool isForward) {
+    final step = _getSeekStep();
     final newPosition = isForward
-        ? sliderPosition.value + const Duration(seconds: 1)
-        : sliderPosition.value - const Duration(seconds: 1);
+        ? sliderPosition.value + step
+        : sliderPosition.value - step;
 
     if (newPosition >= Duration.zero && newPosition <= duration.value) {
       sliderPosition.value = newPosition;
@@ -1469,6 +1489,7 @@ class PlPlayerController {
 
   void endSeeking() {
     _seekingTimer?.cancel();
+    _seekStartTime = null;
     if (isSeeking.value) {
       seekTo(sliderPosition.value).then((_) {
         if (playerStatus.value != PlayerStatus.playing) {
