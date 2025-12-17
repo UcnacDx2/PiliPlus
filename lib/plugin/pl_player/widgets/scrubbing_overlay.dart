@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/models_new/video/video_shot/data.dart';
 import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/plugin/pl_player/widgets/mpv_convert_webp.dart';
 
 class ScrubbingOverlay extends StatelessWidget {
   final PlPlayerController controller;
@@ -67,19 +68,38 @@ class ScrubbingOverlay extends StatelessWidget {
         );
       }
       final data = (videoShot as Success<VideoShotData>).response;
-      final seconds = controller.scrubbingPosition.value.inSeconds;
-      final index = data.index.lastWhere((i) => i <= seconds, orElse: () => -1);
-      if (index == -1) {
+      final imageUrl = _getThumbnailUrl(data);
+      if (imageUrl == null) {
         return const SizedBox(width: 160, height: 90);
       }
-
-      return MpvConvertWebp(
-        imgUrl: data.image.first,
-        seconds: controller.scrubbingPosition.value.inSeconds,
-        videoShot: data,
+      return NetworkImgLayer(
+        src: imageUrl,
         width: 160,
         height: 90,
       );
     });
+  }
+
+  String? _getThumbnailUrl(VideoShotData data) {
+    if (data.image.isEmpty) return null;
+
+    final seconds = controller.scrubbingPosition.value.inSeconds;
+    int index = -1;
+    for (var i = 0; i < data.index.length; i++) {
+      if (data.index[i] >= seconds) {
+        index = i;
+        break;
+      }
+    }
+    if (index == -1) return null;
+
+    final row = (index / data.imgXLen).floor();
+    final col = index % data.imgXLen;
+
+    final x = col * data.imgXSize;
+    final y = row * data.imgYSize;
+
+    final url = data.image.first;
+    return '$url?crop=${x.toInt()}_${y.toInt()}_${data.imgXSize.toInt()}_${data.imgYSize.toInt()}';
   }
 }

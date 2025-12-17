@@ -1663,7 +1663,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         ),
                       ),
                 ),
-                  ScrubbingOverlay(controller: widget.controller),
+                  ScrubbingOverlay(controller: controller),
               ],
             ),
           ),
