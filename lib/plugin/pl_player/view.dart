@@ -41,11 +41,12 @@ import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/gesture_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
+import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/app_bar_ani.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/scrubbing_overlay.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/backward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/bottom_control.dart';
-import 'packagepackage:PiliPlus/plugin/pl_player/widgets/video_gestures.dart';
+import 'package:PiliPlus/plugin/pl_player/widgets/video_gestures.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/forward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/mpv_convert_webp.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
@@ -1663,7 +1664,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         ),
                       ),
                 ),
-                  ScrubbingOverlay(controller: controller),
+                  ScrubbingOverlay(controller: widget.controller),
               ],
             ),
           ),

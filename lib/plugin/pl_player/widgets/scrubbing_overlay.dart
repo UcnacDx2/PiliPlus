@@ -55,7 +55,7 @@ class ScrubbingOverlay extends StatelessWidget {
   Widget _buildThumbnail() {
     return Obx(() {
       final videoShot = controller.videoShot;
-      if (videoShot == null || videoShot.value.response == null) {
+      if (videoShot == null || videoShot is! Success<VideoShotData>) {
         return const SizedBox(
           width: 160,
           height: 90,
@@ -64,37 +64,20 @@ class ScrubbingOverlay extends StatelessWidget {
           ),
         );
       }
-      final data = videoShot.value.response!;
-      final imageUrl = _getThumbnailUrl(data);
-      if (imageUrl == null) {
+      final data = (videoShot as Success<VideoShotData>).response;
+      final seconds = controller.scrubbingPosition.value.inSeconds;
+      final index = data.index.lastWhere((i) => i <= seconds, orElse: () => -1);
+      if (index == -1) {
         return const SizedBox(width: 160, height: 90);
       }
-      return NetworkImgLayer(
-        src: imageUrl,
+
+      return MpvConvertWebp(
+        imgUrl: data.image.first,
+        seconds: controller.scrubbingPosition.value.inSeconds,
+        videoShot: data,
         width: 160,
         height: 90,
       );
     });
-  }
-
-  String? _getThumbnailUrl(VideoShotData data) {
-    if (data.image.isEmpty) return null;
-
-    final seconds = controller.scrubbingPosition.value.inSeconds;
-    final index = data.index.indexWhere((t) => t >= seconds);
-    if (index == -1) return null;
-
-    final pvT = data.pvT;
-    final pvX = data.pvX;
-    final pvY = data.pvY;
-
-    final row = (index / pvX).floor();
-    final col = index % pvX;
-
-    final x = col * pvT.width;
-    final y = row * pvT.height;
-
-    final url = data.image.first;
-    return '$url?crop=${x}_${y}_${pvT.width}_${pvT.height}';
   }
 }
