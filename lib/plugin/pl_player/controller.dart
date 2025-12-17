@@ -124,6 +124,11 @@ class PlPlayerController {
   /// 是否长按倍速
   final RxBool longPressStatus = false.obs;
 
+  /// 是否正在拖拽
+  final RxBool isScrubbing = false.obs;
+  final Rx<Duration> scrubbingPosition = Rx(Duration.zero);
+  int scrubbingSpeed = 1;
+
   /// 屏幕锁 为true时，关闭控制栏
   final RxBool controlsLock = false.obs;
 
@@ -1895,5 +1900,37 @@ class PlPlayerController {
         SmartDialog.showToast('截图失败');
       }
     });
+  }
+
+  void startScrubbing() {
+    if (isLive) return;
+    isScrubbing.value = true;
+    scrubbingPosition.value = position.value;
+    if (showSeekPreview && videoShot == null) {
+      getVideoShot();
+    }
+    videoPlayerController?.pause();
+  }
+
+  void updateScrubbing(bool forward) {
+    if (!isScrubbing.value) return;
+
+    final newPosition = scrubbingPosition.value +
+        Duration(seconds: forward ? scrubbingSpeed : -scrubbingSpeed);
+    scrubbingPosition.value = newPosition.clamp(Duration.zero, duration.value);
+
+    if (scrubbingSpeed < 64) {
+      scrubbingSpeed *= 2;
+    }
+  }
+
+  void endScrubbing() {
+    if (!isScrubbing.value) return;
+
+    seekTo(scrubbingPosition.value).then((_) {
+      videoPlayerController?.play();
+    });
+    isScrubbing.value = false;
+    scrubbingSpeed = 1;
   }
 }

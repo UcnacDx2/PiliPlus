@@ -42,6 +42,7 @@ import 'package:PiliPlus/plugin/pl_player/models/gesture_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/app_bar_ani.dart';
+import 'package:PiliPlus/plugin/pl_player/widgets/scrubbing_overlay.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/backward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/bottom_control.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
@@ -119,6 +120,7 @@ class PLVideoPlayer extends StatefulWidget {
 
 class _PLVideoPlayerState extends State<PLVideoPlayer>
     with WidgetsBindingObserver, TickerProviderStateMixin {
+  PlPlayerController get controller => widget.plPlayerController;
   void onDoubleTapCenter() {}
   void onDoubleTapSeekBackward() {}
   void onDoubleTapSeekForward() {}
@@ -1662,6 +1664,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         ),
                       ),
                 ),
+                  ScrubbingOverlay(controller: controller),
               ],
             ),
           ),
