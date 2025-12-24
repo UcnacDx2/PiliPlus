@@ -68,6 +68,12 @@ class TvDebugPage extends StatelessWidget {
           ),
           const Divider(),
           ListTile(
+            onTap: () => Get.toNamed('/profile'),
+            leading: const Icon(Icons.switch_account_outlined),
+            title: const Text('切换账号'),
+          ),
+          const Divider(),
+          ListTile(
             onTap: () => Get.changeThemeMode(ThemeMode.light),
             leading: const Icon(Icons.light_mode_outlined),
             title: const Text('切换到浅色主题'),

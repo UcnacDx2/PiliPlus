@@ -45,6 +45,8 @@ import 'package:PiliPlus/pages/msg_feed_top/sys_msg/view.dart';
 import 'package:PiliPlus/pages/music/view.dart';
 import 'package:PiliPlus/pages/popular_precious/view.dart';
 import 'package:PiliPlus/pages/popular_series/view.dart';
+import 'package:PiliPlus/pages/profile/controller.dart';
+import 'package:PiliPlus/pages/profile/view.dart';
 import 'package:PiliPlus/pages/search/view.dart';
 import 'package:PiliPlus/pages/search_result/view.dart';
 import 'package:PiliPlus/pages/search_trending/view.dart';
@@ -225,6 +227,13 @@ class Routes {
       name: '/popularPrecious',
       page: () => const PopularPreciousPage(),
     ),
+    CustomGetPage(
+      name: '/profile',
+      page: () => const ProfilePage(),
+      binding: BindingsBuilder(
+        () => Get.lazyPut(() => ProfileController()),
+      ),
+    ),
     CustomGetPage(name: '/audio', page: () => const AudioPage()),
     CustomGetPage(name: '/mainReply', page: () => const MainReplyPage()),
     CustomGetPage(name: '/followed', page: () => const FollowedPage()),
@@ -241,6 +250,7 @@ class CustomGetPage<T> extends GetPage<T> {
   CustomGetPage({
     required super.name,
     required super.page,
+    super.binding,
     super.popGesture = false,
     super.fullscreenDialog = false,
     super.showCupertinoParallax = false,
