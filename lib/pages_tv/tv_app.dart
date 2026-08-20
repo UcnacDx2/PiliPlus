@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:material_ui/material_ui.dart' hide GlobalMaterialLocalizations, ThemeData, ColorScheme;
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/custom_toast.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
@@ -18,9 +18,9 @@ import 'package:PiliPlus/utils/theme_utils.dart';
 class TVApp extends StatelessWidget {
   const TVApp({super.key});
 
-  static ColorScheme? _light, _dark;
+  static dynamic _light, _dark;
 
-  static (ThemeData, ThemeData) getAllTheme() {
+  static (dynamic, dynamic) getAllTheme() {
     final dynamicColor = _light != null && _dark != null && Pref.dynamicColor;
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = Pref.schemeVariant;
