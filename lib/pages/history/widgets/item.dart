@@ -10,6 +10,8 @@ import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models_new/history/list.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
 import 'package:PiliPlus/pages/common/multi_select/base.dart';
+import 'package:PiliPlus/pages/history/controller.dart';
+import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
@@ -94,7 +96,10 @@ class HistoryItem extends StatelessWidget {
                     }
                   }
                   if (cid != null) {
-                    // TODO: dimension
+                    final historyMid = ctr is HistoryController
+                        ? (ctr as HistoryController).account.mid
+                        : Accounts.history.mid;
+                    final videoMid = Accounts.video.mid;
                     PageUtils.toVideoPage(
                       aid: aid,
                       bvid: bvid,
@@ -102,6 +107,13 @@ class HistoryItem extends StatelessWidget {
                       cover: item.cover,
                       title: item.title,
                       dimension: dimension,
+                      progress: historyMid == videoMid
+                          ? null
+                          : item.progress == null
+                              ? null
+                              : item.progress == -1
+                                  ? 0
+                                  : item.progress! * 1000,
                     );
                   }
                 }
