@@ -227,15 +227,15 @@ jobs:
 
             - name: Flutter Build TV Dev arm64 Apk
               if: ${{ github.event_name == 'pull_request' }}
-              run: flutter build apk --flavor tv -t lib/main_tv.dart --release --target-platform android-arm64 --pub
+              run: flutter build apk --flavor tv -t lib/main_tv.dart --release --target-platform android-arm64 --split-per-abi --pub
 
             - name: Flutter Build TV Dev arm Apk
               if: ${{ github.event_name == 'pull_request' }}
-              run: flutter build apk --flavor tv -t lib/main_tv.dart --release --target-platform android-arm --pub
+              run: flutter build apk --flavor tv -t lib/main_tv.dart --release --target-platform android-arm --split-per-abi --pub
 
             - name: Flutter Build TV Dev x64 Apk
               if: ${{ github.event_name == 'pull_request' }}
-              run: flutter build apk --flavor tv -t lib/main_tv.dart --release --target-platform android-x64 --pub
+              run: flutter build apk --flavor tv -t lib/main_tv.dart --release --target-platform android-x64 --split-per-abi --pub
 
             - name: Rename
               run: |
