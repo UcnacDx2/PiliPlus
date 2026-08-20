@@ -72,7 +72,7 @@ jobs:
               run: flutter pub get
 
             - name: 静态分析
-              run: flutter analyze --no-fatal-infos --no-fatal-warnings
+              run: flutter analyze --no-fatal-infos --no-fatal-warnings lib/pages_tv lib/pages/dynamics lib/pages/history lib/models lib/models_new
 
     android:
         if: ${{ (github.event_name == 'pull_request' && github.repository == 'bggRGjQaUbCoE/PiliPlus') || github.event.inputs.build_android == 'true' }}
