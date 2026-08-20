@@ -10,4 +10,6 @@ abstract final class PlatformUtils {
 
   @pragma("vm:platform-const")
   static final bool isDarwin = Platform.isIOS || Platform.isMacOS;
+
+  static bool isTV = false;
 }

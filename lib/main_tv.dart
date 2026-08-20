@@ -45,6 +45,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
 
+  PlatformUtils.isTV = true;
+
   await _initAppPath();
   try {
     await GStorage.init();
