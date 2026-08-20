@@ -186,7 +186,7 @@ class _VideoCardVState extends State<VideoCardV> {
             child: VideoPopupMenu(
               iconSize: 17,
               videoItem: videoItem,
-              onRemove: onRemove,
+              onRemove: widget.onRemove,
             ),
           ),
       ],
@@ -265,6 +265,8 @@ class _VideoCardVState extends State<VideoCardV> {
       ),
     );
   }
+
+
 
   static final shortFormat = DateFormat('M-d');
   static final longFormat = DateFormat('yy-M-d');

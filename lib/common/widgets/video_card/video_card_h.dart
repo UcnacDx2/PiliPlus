@@ -85,7 +85,7 @@ class _VideoCardHState extends State<VideoCardH> {
             onLongPress: onLongPress,
             onSecondaryTap: PlatformUtils.isMobile ? null : onLongPress,
             onTap:
-                onTap ??
+                widget.onTap ??
                 () async {
                   if (videoItem.isPugv ?? false) {
                     PageUtils.viewPugv(seasonId: videoItem.seasonId);
@@ -215,7 +215,7 @@ class _VideoCardHState extends State<VideoCardH> {
             child: VideoPopupMenu(
               iconSize: 17,
               videoItem: videoItem,
-              onRemove: onRemove,
+              onRemove: widget.onRemove,
             ),
           ),
         ],
