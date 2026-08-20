@@ -76,8 +76,8 @@ class TVApp extends StatelessWidget {
       getPages: TVRoutes.getPages,
       defaultTransition: Transition.fadeIn,
       builder: FlutterSmartDialog.init(
-        toastBuilder: (msg) => CustomToast(msg: msg),
-        loadingBuilder: (msg) => LoadingWidget(msg: msg),
+        toastBuilder: (msg) => CustomToast(msg),
+        loadingBuilder: (msg) => LoadingWidget(msg),
         builder: (context, child) {
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(
