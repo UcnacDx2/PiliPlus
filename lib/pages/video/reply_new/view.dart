@@ -352,7 +352,7 @@ class _ReplyPageState extends CommonRichTextPubPageState<ReplyPage> {
                     final res = await plPlayerController
                         .plPlayerController
                         .videoPlayerController
-                        ?.screenshot(format: .png);
+                        ?.screenshot();
                     if (res != null) {
                       final path =
                           '$tmpDirPath/${Utils.generateRandomString(8)}.png';
