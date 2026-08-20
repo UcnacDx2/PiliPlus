@@ -44,6 +44,8 @@ class PlayerFocus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TV 端由播放器内的 TVPlayerControls 处理遥控器事件，避免与桌面快捷键重复响应。
+    if (PlatformUtils.isTV) return child;
     return Focus(
       autofocus: true,
       onKeyEvent: (node, event) {
