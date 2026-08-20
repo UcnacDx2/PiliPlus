@@ -59,8 +59,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls> {
   }
 
   void _seekRelative(int seconds) {
-    final current = _ctr.position;
-    final target = current + Duration(seconds: seconds);
+    final target = Duration(seconds: _ctr.position.value + seconds);
     _ctr.seekTo(target);
   }
 
@@ -250,9 +249,9 @@ class _TVPlayerControlsState extends State<TVPlayerControls> {
 
   Widget _buildProgressBar(ThemeData theme) {
     return Obx(() {
-      final pos = _ctr.sliderPositionSeconds.value.toDouble();
-      final dur = _ctr.duration.value.inSeconds.toDouble();
-      final buf = _ctr.bufferedSeconds.value.toDouble();
+      final pos = _ctr.position.value.toDouble();
+      final dur = _ctr.duration.value.toDouble();
+      final buf = _ctr.buffered.value.toDouble();
       final max = dur > 0 ? dur : 1.0;
       return Row(
         children: [
