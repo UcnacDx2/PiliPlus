@@ -93,6 +93,10 @@ class _TVHistoryPageState extends State<TVHistoryPage> {
                             title: item.title ?? '',
                             subtitle: item.authorName ?? '',
                             coverUrl: item.cover,
+                            bvid: history.bvid ??
+                                (history.oid != null
+                                    ? IdUtils.av2bv(history.oid!)
+                                    : null),
                             autoFocus: i == 0,
                             width: double.infinity,
                             onSelect: () {

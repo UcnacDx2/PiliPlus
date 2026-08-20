@@ -118,6 +118,12 @@ class _TVRankPageState extends State<TVRankPage> {
                                   title: title,
                                   subtitle: subtitle,
                                   coverUrl: cover,
+                                  firstFrameUrl: item is HotVideoItemModel
+                                      ? item.firstFrame
+                                      : null,
+                                  bvid: item is HotVideoItemModel
+                                      ? item.bvid
+                                      : null,
                                   badge: '#${i + 1}',
                                   width: double.infinity,
                                   onSelect: () {

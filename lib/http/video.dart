@@ -47,6 +47,28 @@ import 'package:protobuf/protobuf.dart';
 abstract final class VideoHttp {
   static RegExp zoneRegExp = RegExp(Pref.banWordForZone, caseSensitive: false);
   static bool enableFilter = zoneRegExp.pattern.isNotEmpty;
+  static final Map<String, Future<String?>> _firstFrameCache = {};
+
+  static Future<String?> getVideoFirstFrame(String? bvid) {
+    if (bvid == null || bvid.isEmpty) return Future<String?>.value();
+    return _firstFrameCache.putIfAbsent(bvid, () async {
+      try {
+        final res = await Request().get(
+          Api.ab2c,
+          queryParameters: {'bvid': bvid},
+        );
+        if (res.data['code'] == 0) {
+          final list = res.data['data'] as List?;
+          if (list != null && list.isNotEmpty) {
+            return list.first['first_frame'] as String?;
+          }
+        }
+      } catch (_) {
+        _firstFrameCache.remove(bvid);
+      }
+      return null;
+    });
+  }
 
   // 首页推荐视频
   static Future<LoadingState<List<RcmdVideoItemModel>>> rcmdVideoList({

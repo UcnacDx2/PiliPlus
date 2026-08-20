@@ -92,6 +92,10 @@ class _TVLaterPageState extends State<TVLaterPage> {
                             title: item.title ?? '',
                             subtitle: item.owner?.name ?? '',
                             coverUrl: item.pic,
+                            bvid: item.bvid ??
+                                (item.aid != null
+                                    ? IdUtils.av2bv(item.aid!)
+                                    : null),
                             autoFocus: i == 0,
                             width: double.infinity,
                             onSelect: () {

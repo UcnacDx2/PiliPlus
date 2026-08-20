@@ -190,6 +190,10 @@ class _TVSearchPageState extends State<TVSearchPage> {
                                         subtitle: item.author ?? '',
                                         coverUrl: _fixCover(
                                             item.cover),
+                                        bvid: item.bvid ??
+                                            (item.aid != null
+                                                ? IdUtils.av2bv(item.aid!)
+                                                : null),
                                         width: double.infinity,
                                         autoFocus: i == 0,
                                         onSelect: () {

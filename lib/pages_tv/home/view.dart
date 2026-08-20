@@ -165,6 +165,8 @@ class _TVHomePageState extends State<TVHomePage> {
                     title: item.title ?? '',
                     subtitle: item.owner?.name ?? '',
                     coverUrl: item.cover,
+                    firstFrameUrl: item.firstFrame,
+                    bvid: item.bvid,
                     autoFocus: i == 0,
                     onSelect: () => _navigateToVideo(item),
                   );
@@ -191,6 +193,8 @@ class _TVHomePageState extends State<TVHomePage> {
                     title: item.title ?? '',
                     subtitle: item.owner?.name ?? '',
                     coverUrl: item.cover,
+                    firstFrameUrl: item.firstFrame,
+                    bvid: item.bvid,
                     onSelect: () => _navigateToVideo(item),
                   );
                 },

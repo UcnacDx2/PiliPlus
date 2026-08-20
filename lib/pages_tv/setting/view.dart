@@ -25,6 +25,7 @@ class _TVSettingPageState extends State<TVSettingPage> {
   late final _enableDanmaku = Pref.enableShowDanmaku.obs;
   late final _enableHA = Pref.enableHA.obs;
   late final _enableLog = Pref.enableLog.obs;
+  late final _useFirstFrameAsCover = Pref.useFirstFrameAsCover.obs;
 
   @override
   Widget build(BuildContext context) {
@@ -100,6 +101,16 @@ class _TVSettingPageState extends State<TVSettingPage> {
               },
             ),
 
+            _buildToggleItem(
+              icon: Icons.photo_library_outlined,
+              title: '使用视频第一帧作为封面',
+              subtitle: '会额外请求视频首帧，关闭后使用投稿封面',
+              value: _useFirstFrameAsCover,
+              onChanged: (val) {
+                _useFirstFrameAsCover.value = val;
+                GStorage.setting.put(SettingBoxKey.useFirstFrameAsCover, val);
+              },
+            ),
             const SizedBox(height: 16),
             _SectionTitle('画质设置', theme),
             TVFocusWrapper(
@@ -174,6 +185,7 @@ class _TVSettingPageState extends State<TVSettingPage> {
     required String title,
     required RxBool value,
     required ValueChanged<bool> onChanged,
+    String? subtitle,
   }) {
     final theme = Theme.of(context);
     return Obx(() => TVFocusWrapper(
@@ -183,6 +195,7 @@ class _TVSettingPageState extends State<TVSettingPage> {
           child: ListTile(
             leading: Icon(icon, color: theme.colorScheme.primary),
             title: Text(title),
+            subtitle: subtitle == null ? null : Text(subtitle),
             trailing: Switch(
               value: value.value,
               onChanged: onChanged,
