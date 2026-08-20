@@ -1049,6 +1049,7 @@ class DynamicArchiveModel {
     this.badge,
     this.bvid,
     this.cover,
+    this.firstFrame,
     this.durationText,
     this.jumpUrl,
     this.stat,
@@ -1063,6 +1064,7 @@ class DynamicArchiveModel {
   Badge? badge;
   String? bvid;
   String? cover;
+  String? firstFrame;
   String? durationText;
   String? jumpUrl;
   Stat? stat;
@@ -1077,6 +1079,7 @@ class DynamicArchiveModel {
     badge = json['badge'] == null ? null : Badge.fromJson(json['badge']);
     bvid = json['bvid'] ?? json['epid'].toString() ?? ' ';
     cover = json['cover'];
+    firstFrame = json['first_frame'];
     durationText = json['duration_text'];
     jumpUrl = json['jump_url'];
     stat = json['stat'] != null ? Stat.fromJson(json['stat']) : null;

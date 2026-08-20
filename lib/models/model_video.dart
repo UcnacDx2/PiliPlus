@@ -11,6 +11,7 @@ abstract class BaseSimpleVideoItemModel {
 abstract class BaseVideoItemModel extends BaseSimpleVideoItemModel {
   int? aid;
   String? desc;
+  String? firstFrame;
   int? pubdate;
   bool isFollowed = false;
 }
