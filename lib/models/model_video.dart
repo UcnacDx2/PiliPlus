@@ -3,6 +3,7 @@ abstract class BaseSimpleVideoItemModel {
   String? bvid;
   int? cid;
   String? cover;
+  String? firstFrame;
   int duration = -1;
   late BaseOwner owner;
   late BaseStat stat;
