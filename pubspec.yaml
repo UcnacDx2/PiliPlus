@@ -172,10 +172,7 @@ dependencies:
   # 代理
   # system_proxy: ^0.1.0
   # pip
-  floating:
-    git:
-      url: https://github.com/bggRGjQaUbCoE/floating.git
-      ref: a66ec0b9dabde6b5880a3f4f3425e57842a38e51
+  floating: ^3.0.0
   # html解析
   html: ^0.15.4
   # html渲染
