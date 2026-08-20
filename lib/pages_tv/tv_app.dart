@@ -1,17 +1,18 @@
+import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/custom_toast.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/pages_tv/tv_routes.dart';
+import 'package:PiliPlus/utils/extension/core_palettes_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
-import 'package:dynamic_color/dynamic_color.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:get/get.dart';
 
 class TVApp extends StatelessWidget {
   const TVApp({super.key});
@@ -42,10 +43,13 @@ class TVApp extends StatelessWidget {
   static Future<bool> initPlatformState() async {
     if (_light != null || _dark != null) return true;
     try {
-      final corePalette = await DynamicColorPlugin.getCorePalette();
-      if (corePalette != null) {
-        _light = corePalette.toColorScheme();
-        _dark = corePalette.toColorScheme(brightness: Brightness.dark);
+      final colors = await DynamicColorPlugin.channel.invokeMethod(
+        DynamicColorPlugin.methodName,
+      );
+      if (colors != null) {
+        final corePalettes = CorePalettesExt.fromList(colors.toList());
+        _light = corePalettes.toColorScheme();
+        _dark = corePalettes.toColorScheme(brightness: Brightness.dark);
         return true;
       }
     } on PlatformException {
@@ -76,8 +80,8 @@ class TVApp extends StatelessWidget {
       getPages: TVRoutes.getPages,
       defaultTransition: Transition.fadeIn,
       builder: FlutterSmartDialog.init(
-        toastBuilder: (msg) => CustomToast(msg),
-        loadingBuilder: (msg) => LoadingWidget(msg),
+        toastBuilder: CustomToast.new,
+        loadingBuilder: LoadingWidget.new,
         builder: (context, child) {
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(
