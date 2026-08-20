@@ -66,7 +66,7 @@ class _TVDynamicsPageState extends State<TVDynamicsPage> {
                           return TVCard(
                             title: archive?.title ?? item.idStr ?? '',
                             subtitle: author?.name ?? '',
-                            coverUrl: archive?.cover,
+                            coverUrl: archive?.firstFrame ?? archive?.cover,
                             autoFocus: i == 0,
                             width: double.infinity,
                             onSelect: () {
