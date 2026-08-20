@@ -63,6 +63,20 @@ class _TVSettingPageState extends State<TVSettingPage> {
                 ),
               );
             }),
+            if (Accounts.account.length > 1)
+              TVFocusWrapper(
+                scaleFactor: 1.02,
+                borderRadius: 12,
+                onSelect: () => Get.toNamed('/tvAccountSwitch'),
+                child: ListTile(
+                  leading: Icon(
+                    Icons.switch_account,
+                    color: theme.colorScheme.primary,
+                  ),
+                  title: const Text('切换账号'),
+                  subtitle: Text('已保存  个账号'),
+                ),
+              ),
 
             const SizedBox(height: 16),
             _SectionTitle('播放设置', theme),

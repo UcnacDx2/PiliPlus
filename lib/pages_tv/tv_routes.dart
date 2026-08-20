@@ -3,6 +3,7 @@ import 'package:PiliPlus/pages/member/view.dart';
 import 'package:PiliPlus/pages/search/view.dart';
 import 'package:PiliPlus/pages/search_result/view.dart';
 import 'package:PiliPlus/pages/video/view.dart';
+import 'package:PiliPlus/pages_tv/account_switch/view.dart';
 import 'package:PiliPlus/pages_tv/dynamics/view.dart';
 import 'package:PiliPlus/pages_tv/favorite/view.dart';
 import 'package:PiliPlus/pages_tv/history/view.dart';
@@ -29,6 +30,10 @@ class TVRoutes {
     GetPage(name: '/tvDynamics', page: () => const TVDynamicsPage()),
     GetPage(name: '/tvRank', page: () => const TVRankPage()),
     GetPage(name: '/tvLogin', page: () => const TVLoginPage()),
+    GetPage(
+      name: '/tvAccountSwitch',
+      page: () => const TVAccountSwitchPage(),
+    ),
     GetPage(name: '/tvSetting', page: () => const TVSettingPage()),
     GetPage(name: '/videoV', page: () => const VideoDetailPageV()),
     GetPage(name: '/liveRoom', page: () => const LiveRoomPage()),
