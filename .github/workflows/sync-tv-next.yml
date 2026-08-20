@@ -70,11 +70,20 @@ jobs:
         shell: pwsh
         run: lib/scripts/patch.ps1 android
 
-      - name: Build Android TV ABIs
+      - name: Build Android TV arm64
         run: >-
           flutter build apk --flavor tv -t lib/main_tv.dart --release
-          --split-per-abi
-          --target-platform android-arm,android-arm64,android-x64
+          --target-platform android-arm64
+
+      - name: Build Android TV arm
+        run: >-
+          flutter build apk --flavor tv -t lib/main_tv.dart --release
+          --target-platform android-arm
+
+      - name: Build Android TV x64
+        run: >-
+          flutter build apk --flavor tv -t lib/main_tv.dart --release
+          --target-platform android-x64
 
       - name: Push rebased TV patch branch
         run: git push --force-with-lease origin HEAD:tv-next
