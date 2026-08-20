@@ -147,6 +147,7 @@ abstract final class SettingBoxKey {
       setSystemBrightness = 'setSystemBrightness',
       downloadPath = 'downloadPath',
       followOrderType = 'followOrderType',
+      useFirstFrameAsCover = 'useFirstFrameAsCover',
       enableImgMenu = 'enableImgMenu',
       showDynDispute = 'showDynDispute',
       touchSlopH = 'touchSlopH',

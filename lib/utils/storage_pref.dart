@@ -999,6 +999,11 @@ abstract final class Pref {
         defaultValue: FollowOrderType.def.index,
       )];
 
+  static bool get useFirstFrameAsCover => _setting.get(
+    SettingBoxKey.useFirstFrameAsCover,
+    defaultValue: true,
+  );
+
   static bool get enableImgMenu =>
       _setting.get(SettingBoxKey.enableImgMenu, defaultValue: false);
 

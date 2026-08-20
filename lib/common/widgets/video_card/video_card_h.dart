@@ -6,16 +6,18 @@ import 'package:PiliPlus/common/widgets/progress_bar/video_progress_indicator.da
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
 import 'package:PiliPlus/http/search.dart';
+import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/horizontal_video_model.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:material_ui/material_ui.dart';
 
 // 视频卡片 - 水平布局
-class VideoCardH extends StatelessWidget {
+class VideoCardH extends StatefulWidget {
   const VideoCardH({
     super.key,
     required this.videoItem,
@@ -27,6 +29,44 @@ class VideoCardH extends StatelessWidget {
   final VoidCallback? onTap;
   final ValueChanged<int>? onViewLater;
   final VoidCallback? onRemove;
+
+@override
+  State<VideoCardH> createState() => _VideoCardHState();
+}
+
+class _VideoCardHState extends State<VideoCardH> {
+  String? _fetchedFirstFrame;
+
+  HorizontalVideoModel get videoItem => widget.videoItem;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFirstFrame();
+  }
+
+  @override
+  void didUpdateWidget(covariant VideoCardH oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.videoItem.bvid != widget.videoItem.bvid ||
+        oldWidget.videoItem.firstFrame != widget.videoItem.firstFrame) {
+      _fetchedFirstFrame = null;
+      _loadFirstFrame();
+    }
+  }
+
+  Future<void> _loadFirstFrame() async {
+    if (!Pref.useFirstFrameAsCover ||
+        videoItem.firstFrame != null ||
+        videoItem.bvid == null) {
+      return;
+    }
+    final requestedBvid = videoItem.bvid;
+    final firstFrame = await VideoHttp.getVideoFirstFrame(requestedBvid);
+    if (mounted && requestedBvid == videoItem.bvid && firstFrame != null) {
+      setState(() => _fetchedFirstFrame = firstFrame);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +147,11 @@ class VideoCardH extends StatelessWidget {
                           clipBehavior: .none,
                           children: [
                             NetworkImgLayer(
-                              src: videoItem.cover,
+                              src: Pref.useFirstFrameAsCover
+                                  ? (videoItem.firstFrame ??
+                                        _fetchedFirstFrame ??
+                                        videoItem.cover)
+                                  : videoItem.cover,
                               width: maxWidth,
                               height: maxHeight,
                             ),
