@@ -2044,6 +2044,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       return _TVPlayerKeyHandler(
         plPlayerController: plPlayerController,
         videoDetailController: widget.videoDetailController,
+        introController: widget.introController,
+        showEpisodes: widget.showEpisodes,
         child: child,
       );
     }
@@ -2478,11 +2480,22 @@ class _TVPlayerKeyHandler extends StatefulWidget {
   const _TVPlayerKeyHandler({
     required this.plPlayerController,
     this.videoDetailController,
+    this.introController,
+    this.showEpisodes,
     required this.child,
   });
 
   final PlPlayerController plPlayerController;
   final VideoDetailController? videoDetailController;
+  final CommonIntroController? introController;
+  final void Function([
+    int?,
+    UgcSeason?,
+    List<ugc.BaseEpisodeItem>?,
+    String?,
+    int?,
+    int?,
+  ])? showEpisodes;
   final Widget child;
 
   @override
@@ -2505,6 +2518,12 @@ class _TVPlayerKeyHandlerState extends State<_TVPlayerKeyHandler> {
 
   List<_TVBtnItem> get _buttons {
     final items = <_TVBtnItem>[
+      if (widget.introController != null) ...[
+        _TVBtnItem(Icons.skip_previous, '上一集', _playPrevious),
+        _TVBtnItem(Icons.skip_next, '下一集', _playNext),
+        if (widget.showEpisodes != null)
+          _TVBtnItem(Icons.video_library_outlined, '选集', _showEpisodePicker),
+      ],
       _TVBtnItem(Icons.speed, '${ctr.playbackSpeed}x', _showSpeedPicker),
       if (widget.videoDetailController != null)
         _TVBtnItem(
@@ -2517,6 +2536,12 @@ class _TVPlayerKeyHandlerState extends State<_TVPlayerKeyHandler> {
         '弹幕设置',
         _showDanmakuSettings,
       ),
+      if (widget.videoDetailController != null)
+        _TVBtnItem(
+          Icons.closed_caption_outlined,
+          '字幕',
+          _showSubtitlePicker,
+        ),
       _TVBtnItem(Icons.aspect_ratio, '画面比例', _showFitPicker),
     ];
     return items;
@@ -2926,6 +2951,75 @@ class _TVPlayerKeyHandlerState extends State<_TVPlayerKeyHandler> {
     _isSubMenuOpen.value = false;
     _resetHideTimer();
     return result;
+  }
+
+  void _playPrevious() {
+    if (widget.introController?.prevPlay() != true) {
+      SmartDialog.showToast('已经是第一集了');
+    }
+  }
+
+  void _playNext() {
+    if (widget.introController?.nextPlay() != true) {
+      SmartDialog.showToast('已经是最后一集了');
+    }
+  }
+
+  void _showEpisodePicker() {
+    final introController = widget.introController;
+    final showEpisodes = widget.showEpisodes;
+    if (introController == null || showEpisodes == null) return;
+
+    final videoDetail = introController.videoDetail.value;
+    final currentCid = ctr.cid;
+    int sectionIndex = 0;
+    List<ugc.BaseEpisodeItem>? episodes;
+    UgcSeason? season;
+
+    if (videoDetail.ugcSeason?.sections case final sections?) {
+      season = videoDetail.ugcSeason;
+      for (var i = 0; i < sections.length; i++) {
+        final sectionEpisodes = sections[i].episodes;
+        if (sectionEpisodes?.any((item) => item.cid == currentCid) == true) {
+          sectionIndex = i;
+          episodes = sectionEpisodes;
+          break;
+        }
+      }
+    } else if (videoDetail.pages?.isNotEmpty == true) {
+      episodes = videoDetail.pages;
+    } else if (introController is PgcIntroController) {
+      episodes = introController.pgcItem.episodes;
+    }
+
+    showEpisodes(sectionIndex, season, season == null ? episodes : null);
+    _panelRow.value = -1;
+  }
+
+  void _showSubtitlePicker() async {
+    final videoController = widget.videoDetailController;
+    if (videoController == null) return;
+    final subtitles = videoController.subtitles;
+    final options = <_TVDialogOption<int>>[
+      _TVDialogOption(
+        label: '关闭字幕',
+        value: 0,
+        isSelected: videoController.vttSubtitlesIndex.value <= 0,
+      ),
+      for (var i = 0; i < subtitles.length; i++)
+        _TVDialogOption(
+          label: subtitles[i].lanDoc ?? subtitles[i].lan ?? '字幕 ${i + 1}',
+          value: i + 1,
+          isSelected: videoController.vttSubtitlesIndex.value == i + 1,
+        ),
+    ];
+    final result = await _showSidePanel<int>(
+      title: '字幕',
+      options: options,
+    );
+    if (result != null) {
+      await videoController.setSubtitle(result);
+    }
   }
 
   void _showSpeedPicker() async {
