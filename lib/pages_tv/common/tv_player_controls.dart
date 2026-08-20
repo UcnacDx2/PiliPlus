@@ -12,6 +12,7 @@ class TVPlayerControls extends StatefulWidget {
   const TVPlayerControls({
     super.key,
     required this.controller,
+    required this.child,
     this.title,
     this.isLive = false,
     this.onNextEpisode,
@@ -19,6 +20,7 @@ class TVPlayerControls extends StatefulWidget {
     this.onQualityTap,
   });
 
+  final Widget child;
   final PlPlayerController controller;
   final String? title;
   final bool isLive;
@@ -156,6 +158,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls> {
       onKeyEvent: _handleKeyEvent,
       child: Stack(
         children: [
+          widget.child,
           // Top info bar
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
