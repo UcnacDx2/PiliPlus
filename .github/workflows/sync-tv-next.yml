@@ -1,0 +1,80 @@
+name: Sync TV patch stack
+
+on:
+  schedule:
+    - cron: "47 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: sync-tv-next
+  cancel-in-progress: false
+
+jobs:
+  sync-and-build:
+    if: github.repository == 'UcnacDx2/PiliPlus'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout TV patch branch
+        uses: actions/checkout@v7
+        with:
+          ref: tv-next
+          fetch-depth: 0
+
+      - name: Configure upstream
+        run: |
+          git remote add canonical https://github.com/bggRGjQaUbCoE/PiliPlus.git || true
+          git fetch canonical main
+
+      - name: Rebase TV patch stack on upstream
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rebase canonical/main
+
+      - name: Install Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            android/*.gradle*
+            android/**/gradle-wrapper.properties
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: pubspec.yaml
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze TV patch surface
+        run: >-
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          lib/main_tv.dart
+          lib/pages_tv
+          lib/http/video.dart
+          lib/models/home/rcmd/result.dart
+          lib/models/model_rec_video_item.dart
+          lib/models/model_video.dart
+          lib/utils/storage_key.dart
+          lib/utils/storage_pref.dart
+
+      - name: Apply Android framework patches
+        shell: pwsh
+        run: lib/scripts/patch.ps1 android
+
+      - name: Build Android TV ABIs
+        run: >-
+          flutter build apk --flavor tv -t lib/main_tv.dart --release
+          --split-per-abi
+          --target-platform android-arm,android-arm64,android-x64
+
+      - name: Push rebased TV patch branch
+        run: git push --force-with-lease origin HEAD:tv-next
