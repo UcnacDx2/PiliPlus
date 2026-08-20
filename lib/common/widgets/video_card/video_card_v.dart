@@ -23,6 +23,8 @@ import 'package:material_ui/material_ui.dart';
 
 // 视频卡片 - 垂直布局
 class VideoCardV extends StatefulWidget {
+  static final shortFormat = DateFormat('M-d');
+  static final longFormat = DateFormat('yy-M-d');
   final BaseRcmdVideoItemModel videoItem;
   final VoidCallback? onRemove;
 
@@ -267,9 +269,6 @@ class _VideoCardVState extends State<VideoCardV> {
   }
 
 
-
-  static final shortFormat = DateFormat('M-d');
-  static final longFormat = DateFormat('yy-M-d');
 
   Widget videoStat(ThemeData theme) {
     return Row(
