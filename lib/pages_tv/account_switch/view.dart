@@ -44,6 +44,7 @@ class _TVAccountSwitchPageState extends State<TVAccountSwitchPage> {
       await Accounts.set(AccountType.main, account);
       await Accounts.set(AccountType.heartbeat, account);
       await Accounts.set(AccountType.recommend, account);
+      await Accounts.set(AccountType.video, account);
       if (mounted) {
         SmartDialog.showToast('账号切换成功');
         Get.offAllNamed('/');

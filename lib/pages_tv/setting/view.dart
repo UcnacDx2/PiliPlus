@@ -74,7 +74,7 @@ class _TVSettingPageState extends State<TVSettingPage> {
                     color: theme.colorScheme.primary,
                   ),
                   title: const Text('切换账号'),
-                  subtitle: Text('已保存  个账号'),
+                  subtitle: Text('已保存 ${Accounts.account.length} 个账号'),
                 ),
               ),
 
