@@ -286,12 +286,12 @@ dependency_overrides:
   media_kit_libs_android_video:
     git:
       url: https://github.com/My-Responsitories/media-kit.git
-      path: libs/android/media_kit_libs_android_video
+      path: libs/android/media_kit_libs_video
       ref: version_1.2.5
   media_kit_libs_windows_video:
     git:
       url: https://github.com/My-Responsitories/media-kit.git
-      path: libs/windows/media_kit_libs_windows_video
+      path: libs/windows/media_kit_libs_video
       ref: version_1.2.5
   media_kit_libs_ios_video:
     git:
