@@ -82,7 +82,6 @@ abstract class CommonPublishPageState<T extends CommonPublishPage>
           widget.autofocus &&
           (panelType.value == PanelType.keyboard ||
               panelType.value == PanelType.none)) {
-        controller.restoreChatPanel();
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (focusNode.hasFocus) {
             focusNode.unfocus();
@@ -93,7 +92,6 @@ abstract class CommonPublishPageState<T extends CommonPublishPage>
         });
       }
     } else if (state == AppLifecycleState.paused) {
-      controller.keepChatPanel();
       if (focusNode.hasFocus) {
         focusNode.unfocus();
       }

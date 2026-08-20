@@ -429,7 +429,6 @@ class _SendDanmakuPanelState extends CommonTextPubPageState<SendDanmakuPanel> {
   }
 
   Future<void> _showColorPicker() async {
-    controller.keepChatPanel();
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -446,7 +445,6 @@ class _SendDanmakuPanelState extends CommonTextPubPageState<SendDanmakuPanel> {
         ),
       ),
     );
-    controller.restoreChatPanel();
   }
 
   @override
