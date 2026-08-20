@@ -22,6 +22,10 @@ class DynamicsController extends GetxController
   @override
   final ScrollController scrollController = ScrollController();
   late final TabController tabController;
+  final List<DynamicsTabType> displayedTabs = [
+    ...DynamicsTabType.values.where((type) => type != DynamicsTabType.all),
+    DynamicsTabType.all,
+  ];
 
   late final RxInt mid = (-1).obs;
   late int currentMid = -1;
@@ -44,7 +48,7 @@ class DynamicsController extends GetxController
   DynamicsTabController? get controller {
     try {
       return Get.find<DynamicsTabController>(
-        tag: DynamicsTabType.values[tabController.index].name,
+        tag: displayedTabs[tabController.index].name,
       );
     } catch (_) {
       return null;
@@ -55,11 +59,19 @@ class DynamicsController extends GetxController
   void onInit() {
     super.onInit();
     tabController = TabController(
-      length: DynamicsTabType.values.length,
+      length: displayedTabs.length,
       vsync: this,
-      initialIndex: Pref.defaultDynamicTypeIndex,
+      initialIndex: _initialTabIndex(),
     );
     queryFollowUp();
+  }
+
+  int _initialTabIndex() {
+    final configured = Pref.defaultDynamicTypeIndex;
+    final type = DynamicsTabType.values.elementAtOrNull(configured) ??
+        DynamicsTabType.all;
+    final index = displayedTabs.indexOf(type);
+    return index < 0 ? 0 : index;
   }
 
   void onLoadMoreUp() {
@@ -176,8 +188,12 @@ class DynamicsController extends GetxController
   }
 
   void onSelectUp(int mid) {
+    final targetType = mid == -1 ? DynamicsTabType.all : DynamicsTabType.up;
+    final targetIndex = displayedTabs.indexOf(targetType);
+    if (targetIndex < 0) return;
+
     if (this.mid.value == mid) {
-      tabController.index = (mid == -1 ? 0 : 4);
+      tabController.index = targetIndex;
       if (mid == -1) {
         queryFollowUp();
       }
@@ -186,7 +202,7 @@ class DynamicsController extends GetxController
     }
 
     this.mid.value = mid;
-    tabController.index = (mid == -1 ? 0 : 4);
+    tabController.index = targetIndex;
   }
 
   @override
