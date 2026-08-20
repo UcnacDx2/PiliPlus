@@ -63,7 +63,6 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
-import 'package:floating/floating.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
@@ -284,9 +283,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         }
         // 播放完展示控制栏
         if (Platform.isAndroid) {
-          if (await Floating().pipStatus == PiPStatus.disabled) {
-            plPlayerController!.onLockControl(false);
-          }
+          plPlayerController!.onLockControl(false);
         }
       }
     }

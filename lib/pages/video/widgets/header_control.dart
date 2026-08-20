@@ -58,7 +58,6 @@ import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:floating/floating.dart';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart' hide showBottomSheet;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -1947,9 +1946,8 @@ class HeaderControlState extends State<HeaderControl>
                         plPlayerController.toggleDesktopPip();
                         return;
                       }
-                      if (await Floating().isPipAvailable) {
-                        if (context.mounted &&
-                            !videoPlayerServiceHandler!.enableBackgroundPlay) {
+                      if (context.mounted &&
+                          !videoPlayerServiceHandler!.enableBackgroundPlay) {
                           final theme = Theme.of(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -2021,10 +2019,9 @@ class HeaderControlState extends State<HeaderControl>
                             ),
                           );
                           await Future.delayed(const Duration(seconds: 3));
-                        }
-                        if (!context.mounted) return;
-                        plPlayerController.enterPip();
                       }
+                      if (!context.mounted) return;
+                      SmartDialog.showToast('当前版本暂不支持 Android 画中画');
                     },
                     icon: const Icon(
                       Icons.picture_in_picture_outlined,

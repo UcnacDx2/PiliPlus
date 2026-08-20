@@ -19,7 +19,6 @@ import 'package:PiliPlus/pages/fav_panel/view.dart';
 import 'package:PiliPlus/pages/share/view.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
-import 'package:PiliPlus/utils/extension/extension.dart';
 import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
@@ -30,7 +29,6 @@ import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/url_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
-import 'package:floating/floating.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -187,23 +185,7 @@ abstract final class PageUtils {
     );
   }
 
-  static void enterPip({int? width, int? height, bool isAuto = false}) {
-    if (width != null && height != null) {
-      Rational aspectRatio = Rational(width, height);
-      aspectRatio = aspectRatio.fitsInAndroidRequirements
-          ? aspectRatio
-          : height > width
-          ? const Rational.vertical()
-          : const Rational.landscape();
-      Floating().enable(
-        isAuto
-            ? AutoEnable(aspectRatio: aspectRatio)
-            : EnableManual(aspectRatio: aspectRatio),
-      );
-    } else {
-      Floating().enable(isAuto ? const AutoEnable() : const EnableManual());
-    }
-  }
+  static void enterPip({int? width, int? height, bool isAuto = false}) {}
 
   static Future<void> pushDynDetail(
     DynamicItemModel item, {
