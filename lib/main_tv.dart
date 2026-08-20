@@ -3,16 +3,12 @@ import 'dart:io';
 import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/pages_tv/tv_app.dart';
-import 'package:PiliPlus/plugin/pl_player/view/view.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/json_file_handler.dart';
 import 'package:PiliPlus/utils/path_utils.dart';
-import 'package:PiliPlus/utils/device_utils.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -49,8 +45,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
 
-  PlatformUtils.isTV = true;
-
   await _initAppPath();
   try {
     await GStorage.init();
@@ -71,15 +65,12 @@ void main() async {
   await Future.wait([
     _initDownPath(),
     _initTmpPath(),
-    DeviceInfoPlugin().androidInfo.then((info) {
-      DeviceUtils.sdkInt = info.version.sdkInt;
-    }),
+    CacheManager.ensureInitialized(),
   ]);
 
   Get.lazyPut(AccountService.new);
 
   HttpOverrides.global = _TVHttpOverrides();
-  CacheManager.autoClearCache();
 
   await setupServiceLocator();
 
@@ -115,10 +106,7 @@ void main() async {
       final key = args['key'] as String;
       final action = args['action'] as String;
       final isRepeat = args['isRepeat'] as bool;
-      final cb = TVKeyHandler.instance?.callback;
-      if (cb != null) {
-        cb(key, action, isRepeat);
-      } else if (action == 'down') {
+      if (action == 'down' && !isRepeat) {
         final direction = key == 'arrowUp'
             ? TraversalDirection.up
             : TraversalDirection.down;
@@ -129,32 +117,17 @@ void main() async {
 
   if (Pref.enableLog) {
     final customParameters = {
-      'BuildConfig':
-          '\nBuild Time: ${DateFormatUtils.format(BuildConfig.buildTime, format: DateFormatUtils.longFormatDs)}\n'
-          'Commit Hash: ${BuildConfig.commitHash}',
+      'Build Time': DateFormatUtils.format(
+        BuildConfig.buildTime,
+        format: DateFormatUtils.longFormatDs,
+      ),
+      'Commit Hash': BuildConfig.commitHash,
     };
     final fileHandler = await JsonFileHandler.init();
-    final Catcher2Options debugConfig = Catcher2Options(
-      SilentReportMode(),
-      [
-        ?fileHandler,
-        ConsoleHandler(
-          enableDeviceParameters: false,
-          enableApplicationParameters: false,
-          enableCustomParameters: true,
-        ),
-      ],
-      customParameters: customParameters,
-    );
-    final Catcher2Options releaseConfig = Catcher2Options(
-      SilentReportMode(),
-      [?fileHandler, ConsoleHandler(enableCustomParameters: true)],
-      customParameters: customParameters,
-    );
     Catcher2(
-      debugConfig: debugConfig,
-      releaseConfig: releaseConfig,
-      rootWidget: const TVApp(),
+      [?fileHandler, const ConsoleHandler()],
+      const TVApp(),
+      customParameters: customParameters,
     );
   } else {
     runApp(const TVApp());
