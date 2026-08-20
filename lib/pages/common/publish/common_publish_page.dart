@@ -28,9 +28,7 @@ abstract class CommonPublishPageState<T extends CommonPublishPage>
     extends State<T>
     with WidgetsBindingObserver {
   late final FocusNode focusNode;
-  late final controller = ChatBottomPanelContainerController<PanelType>(
-    uiScale: Pref.uiScale,
-  );
+  late final controller = ChatBottomPanelContainerController<PanelType>();
   TextEditingController get editController;
 
   final Rx<PanelType> panelType = PanelType.none.obs;

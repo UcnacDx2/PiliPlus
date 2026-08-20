@@ -1747,50 +1747,52 @@ class PlPlayerController with BlockConfigMixin {
     videoShot = await VideoHttp.videoshot(bvid: bvid, cid: cid!);
   }
 
-  void takeScreenshot() {
+  Future<void> takeScreenshot() async {
     SmartDialog.showToast('截图中');
-    videoPlayerController?.screenshot().then((value) {
-      if (value != null) {
-        SmartDialog.showToast('点击弹窗保存截图');
-        showDialog(
-          context: Get.context!,
-          builder: (context) => GestureDetector(
-            onTap: () {
-              Get.back();
+    final value = await videoPlayerController?.screenshot();
+    if (value != null) {
+      SmartDialog.showToast('点击弹窗保存截图');
+      showDialog(
+        context: Get.context!,
+        builder: (context) => GestureDetector(
+          onTap: () async {
+            final bytes = await value.toByteData(format: ui.ImageByteFormat.png);
+            if (bytes != null) {
               ImageUtils.saveByteImg(
-                bytes: value,
+                bytes: bytes.buffer.asUint8List(),
                 fileName: 'screenshot_${ImageUtils.time}',
               );
-            },
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: min(DeviceUtils.size.width / 3, 350),
+            }
+            Get.back();
+          },
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: min(DeviceUtils.size.width / 3, 350),
+                ),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      width: 5,
+                      color: ThemeUtils.theme.colorScheme.surface,
+                    ),
                   ),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        width: 5,
-                        color: ThemeUtils.theme.colorScheme.surface,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(5),
-                      child: Image.memory(value),
-                    ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(5),
+                    child: RawImage(image: value),
                   ),
                 ),
               ),
             ),
           ),
-        );
-      } else {
-        SmartDialog.showToast('截图失败');
-      }
-    });
+        ),
+      ).whenComplete(value.dispose);
+    } else {
+      SmartDialog.showToast('截图失败');
+    }
   }
 
   void onPopInvokedWithResult(bool didPop, Object? result) {
