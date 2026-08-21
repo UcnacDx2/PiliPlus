@@ -7,7 +7,7 @@ import 'package:PiliPlus/pages_tv/common/tv_focus_wrapper.dart';
 import 'package:PiliPlus/pages_tv/common/tv_page.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:get/get.dart';
 
 class TVRankPage extends StatefulWidget {

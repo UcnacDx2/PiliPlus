@@ -4,7 +4,7 @@ import 'package:PiliPlus/models_new/live/live_feed_index/card_data_list_item.dar
 import 'package:PiliPlus/pages_tv/common/tv_card.dart';
 import 'package:PiliPlus/pages_tv/common/tv_page.dart';
 import 'package:PiliPlus/pages_tv/common/tv_row.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:get/get.dart';
 
 class TVLivePage extends StatefulWidget {
