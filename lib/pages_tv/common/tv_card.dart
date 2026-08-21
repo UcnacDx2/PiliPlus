@@ -1,10 +1,8 @@
-import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
-import 'package:PiliPlus/http/video.dart';
+import 'package:PiliPlus/common/widgets/image/first_frame_or_cover.dart';
 import 'package:PiliPlus/pages_tv/common/tv_focus_wrapper.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter/material.dart';
 
-class TVCard extends StatefulWidget {
+class TVCard extends StatelessWidget {
   const TVCard({
     super.key,
     required this.title,
@@ -12,6 +10,7 @@ class TVCard extends StatefulWidget {
     this.coverUrl,
     this.firstFrameUrl,
     this.bvid,
+    this.cid,
     this.badge,
     this.onSelect,
     this.onLongPress,
@@ -26,6 +25,7 @@ class TVCard extends StatefulWidget {
   final String? coverUrl;
   final String? firstFrameUrl;
   final String? bvid;
+  final int? cid;
   final String? badge;
   final VoidCallback? onSelect;
   final VoidCallback? onLongPress;
@@ -35,61 +35,30 @@ class TVCard extends StatefulWidget {
   final bool autoFocus;
 
   @override
-  State<TVCard> createState() => _TVCardState();
-}
-
-class _TVCardState extends State<TVCard> {
-  String? _fetchedFirstFrame;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadFirstFrame();
-  }
-
-  @override
-  void didUpdateWidget(covariant TVCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.bvid != widget.bvid ||
-        oldWidget.firstFrameUrl != widget.firstFrameUrl) {
-      _fetchedFirstFrame = null;
-      _loadFirstFrame();
-    }
-  }
-
-  Future<void> _loadFirstFrame() async {
-    if (!Pref.useFirstFrameAsCover ||
-        widget.firstFrameUrl != null ||
-        widget.bvid == null) {
-      return;
-    }
-    final requestedBvid = widget.bvid;
-    final firstFrame = await VideoHttp.getVideoFirstFrame(requestedBvid);
-    if (mounted && firstFrame != null && widget.bvid == requestedBvid) {
-      setState(() => _fetchedFirstFrame = firstFrame);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bool isInfiniteWidth = widget.width == double.infinity;
+    final bool isInfiniteWidth = width == double.infinity;
     final coverHeight = isInfiniteWidth
         ? null
-        : (widget.isVertical
-            ? widget.width * 1.4
-            : widget.width * 9 / 16);
+        : (isVertical
+            ? width * 1.4
+            : width * 9 / 16);
     final cardHeight = isInfiniteWidth
         ? null
-        : (widget.height ?? coverHeight! + 60);
-    final coverUrl = Pref.useFirstFrameAsCover
-        ? (widget.firstFrameUrl ?? _fetchedFirstFrame ?? widget.coverUrl)
-        : widget.coverUrl;
+        : (height ?? coverHeight! + 60);
 
     Widget buildCover(double w, double h) => Stack(
           children: [
-            NetworkImgLayer(src: coverUrl, width: w, height: h),
-            if (widget.badge != null)
+            FirstFrameOrCover(
+              coverUrl: coverUrl,
+              firstFrameUrl: firstFrameUrl,
+              bvid: bvid,
+              cid: cid,
+              width: w,
+              height: h,
+              borderRadius: BorderRadius.zero,
+            ),
+            if (badge != null)
               Positioned(
                 right: 6,
                 top: 6,
@@ -101,7 +70,7 @@ class _TVCardState extends State<TVCard> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    widget.badge!,
+                    badge!,
                     style: TextStyle(
                       color: theme.colorScheme.onPrimary,
                       fontSize: 11,
@@ -113,9 +82,9 @@ class _TVCardState extends State<TVCard> {
         );
 
     return TVFocusWrapper(
-      onSelect: widget.onSelect,
-      onLongPress: widget.onLongPress,
-      autoFocus: widget.autoFocus,
+      onSelect: onSelect,
+      onLongPress: onLongPress,
+      autoFocus: autoFocus,
       child: isInfiniteWidth
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,17 +101,17 @@ class _TVCardState extends State<TVCard> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: Text(
-                    widget.title,
+                    title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
-                if (widget.subtitle != null)
+                if (subtitle != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
                     child: Text(
-                      widget.subtitle!,
+                      subtitle!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -153,27 +122,27 @@ class _TVCardState extends State<TVCard> {
               ],
             )
           : SizedBox(
-              width: widget.width,
+              width: width,
               height: cardHeight,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  buildCover(widget.width, coverHeight!),
+                  buildCover(width, coverHeight!),
                   const SizedBox(height: 6),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
                     child: Text(
-                      widget.title,
+                      title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),
-                  if (widget.subtitle != null)
+                  if (subtitle != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: Text(
-                        widget.subtitle!,
+                        subtitle!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
