@@ -1131,8 +1131,7 @@ abstract final class VideoHttp {
       };
       AppSign.appSign(params);
       final res = await Request().get(
-        Api.appVideoshot,
-        baseUrl: 'https://app.bilibili.com',
+        'https://app.bilibili.com${Api.appVideoshot}',
         queryParameters: params,
         options: Options(headers: {'user-agent': BrowserUa.pc}),
       );
