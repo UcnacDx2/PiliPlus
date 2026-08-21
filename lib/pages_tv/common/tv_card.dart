@@ -1,6 +1,6 @@
 import 'package:PiliPlus/common/widgets/image/first_frame_or_cover.dart';
 import 'package:PiliPlus/pages_tv/common/tv_focus_wrapper.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class TVCard extends StatelessWidget {
   const TVCard({
