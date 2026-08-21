@@ -237,13 +237,15 @@ jobs:
               if: ${{ github.event_name == 'pull_request' }}
               run: flutter build apk --flavor tv -t lib/main_tv.dart --release --target-platform android-x64 --split-per-abi --pub
 
-            - name: Rename
+            - name: Collect and rename TV APKs
               run: |
-                  find build/app/outputs -name "*.apk" -type f
-                  find build/app/outputs -name "app-tv-*-release.apk" -type f | while read file; do
-                    abi=$(basename "$file" | sed -E 's/app-tv-(.*)-release\.apk/\1/')
-                    mv "$file" "PiliPlus_android_tv_${{ env.version }}_${abi}.apk"
+                  set -euo pipefail
+                  for abi in arm64-v8a armeabi-v7a x86_64; do
+                    file="build/app/outputs/flutter-apk/app-${abi}-tv-release.apk"
+                    test -f "$file"
+                    cp "$file" "PiliPlus_android_tv_${{ env.version }}_${abi}.apk"
                   done
+                  ls -lh PiliPlus_android_tv_*.apk
               shell: bash
 
             - name: Release
