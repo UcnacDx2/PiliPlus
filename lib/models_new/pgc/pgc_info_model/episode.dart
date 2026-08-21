@@ -13,6 +13,15 @@ class EpisodeItem extends BaseEpisodeItem {
   String? shareUrl;
   String? showTitle;
   int? play;
+  int? status;
+
+  /// Whether the episode is not freely playable by a regular account.
+  ///
+  /// The season API uses status 13 for restricted episodes. Prefer that
+  /// semantic field over the presentation-only badge, while retaining the
+  /// known paywall badges for compatibility with incomplete responses.
+  bool get isNonFree =>
+      status == 13 || const {'会员', '付费'}.contains(badge?.trim());
 
   EpisodeItem({
     super.aid,
@@ -33,6 +42,7 @@ class EpisodeItem extends BaseEpisodeItem {
     this.showTitle,
     super.title,
     this.play,
+    this.status,
   });
 
   factory EpisodeItem.fromJson(Map<String, dynamic> json) => EpisodeItem(
@@ -56,5 +66,6 @@ class EpisodeItem extends BaseEpisodeItem {
     showTitle: json['show_title'] as String?,
     title: json['title'] as String?,
     play: json['play'] as int?,
+    status: json['status'] as int?,
   );
 }

@@ -675,7 +675,7 @@ abstract final class PageUtils {
     required EpisodeItem episode,
     required String keyword,
   }) async {
-    if (episode.badge != '会员' || Accounts.history.mid == Accounts.video.mid) {
+    if (!episode.isNonFree || Accounts.history.mid == Accounts.video.mid) {
       return null;
     }
     final res = await UserHttp.searchHistory(
