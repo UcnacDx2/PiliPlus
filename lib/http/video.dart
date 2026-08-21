@@ -287,7 +287,7 @@ abstract final class VideoHttp {
         account: Accounts.history,
         videoType: videoType,
       );
-      if (historyProgress case Success(:final response: final progress)) {
+      if (historyProgress case Success(response: final progress)) {
         response
           ..lastPlayTime = progress.time
           ..lastPlayCid = progress.id;
