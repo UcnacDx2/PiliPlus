@@ -18,6 +18,7 @@ import 'package:PiliPlus/pages/common/publish/publish_route.dart';
 import 'package:PiliPlus/pages/contact/view.dart';
 import 'package:PiliPlus/pages/fav_panel/view.dart';
 import 'package:PiliPlus/pages/share/view.dart';
+import 'package:PiliPlus/services/playback_resume_service.dart';
 import 'package:PiliPlus/utils/android/android_helper.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
@@ -533,6 +534,70 @@ abstract final class PageUtils {
     } else {
       PageUtils.toDupNamed('/liveRoom', arguments: roomId);
     }
+  }
+
+  /// Resolves a UGC playback target and its cross-account resume position.
+  ///
+  /// [toVideoPage] remains the low-level navigation primitive for callers that
+  /// already own a fully resolved playback session.
+  static Future<void> openVideo({
+    int? aid,
+    String? bvid,
+    int? cid,
+    String? cover,
+    String? title,
+    int? progress,
+    bool off = false,
+    bool isVertical = false,
+    Dimension? dimension,
+  }) async {
+    bvid ??= aid == null ? null : IdUtils.av2bv(aid);
+    aid ??= bvid == null ? null : IdUtils.bv2av(bvid);
+    if (bvid == null || aid == null) return;
+
+    if (cid == null) {
+      final page = await SearchHttp.ab2cWithDimension(aid: aid, bvid: bvid);
+      cid = page?.cid;
+      dimension ??= page?.dimension;
+    }
+    if (cid == null) return;
+
+    final resumeProgress = await PlaybackResumeService.resolve(
+      bvid: bvid,
+      cid: cid,
+      explicitProgress: progress,
+    );
+    toVideoPage(
+      aid: aid,
+      bvid: bvid,
+      cid: cid,
+      cover: cover,
+      title: title,
+      progress: resumeProgress,
+      off: off,
+      isVertical: isVertical,
+      dimension: dimension,
+    );
+  }
+
+  /// Applies account-aware resume resolution before opening a PGC episode.
+  static Future<void> openPgc({
+    dynamic seasonId,
+    dynamic epId,
+    int? progress,
+    bool off = false,
+  }) async {
+    final parsedEpId = epId is int ? epId : int.tryParse('$epId');
+    final resumeProgress = await PlaybackResumeService.resolve(
+      epId: parsedEpId,
+      explicitProgress: progress,
+    );
+    await viewPgc(
+      seasonId: seasonId,
+      epId: epId,
+      progress: resumeProgress,
+      off: off,
+    );
   }
 
   static Future<void>? toVideoPage({

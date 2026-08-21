@@ -4,8 +4,6 @@ import 'package:PiliPlus/common/widgets/image/image_save.dart';
 import 'package:PiliPlus/common/widgets/image/first_frame_or_cover.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
-import 'package:PiliPlus/http/search.dart';
-import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/home/rcmd/result.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
@@ -36,37 +34,24 @@ class VideoCardV extends StatelessWidget {
   Future<void> onPushDetail() async {
     switch (videoItem.goto) {
       case 'bangumi':
-        PageUtils.viewPgc(epId: videoItem.param!);
+        PageUtils.openPgc(epId: videoItem.param!);
         break;
       case 'av':
-        var bvid = videoItem.bvid ?? IdUtils.av2bv(videoItem.aid!);
-        var cid = videoItem.cid;
-        bool isVertical = false;
-        Dimension? dimension;
+        final bvid = videoItem.bvid ?? IdUtils.av2bv(videoItem.aid!);
+        var isVertical = false;
         if (videoItem is RcmdVideoItemAppModel) {
           if (videoItem.uri case final uri?) {
             isVertical = uri.isVerticalFromUri;
           }
         }
-        if (cid == null) {
-          if (await SearchHttp.ab2cWithDimension(aid: videoItem.aid, bvid: bvid)
-              case final res?) {
-            cid = res.cid;
-            dimension = res.dimension;
-          }
-        }
-        if (cid != null) {
-          PageUtils.toVideoPage(
-            aid: videoItem.aid,
-            bvid: bvid,
-            cid: cid,
-            cover: videoItem.cover,
-            title: videoItem.title,
-            isVertical: isVertical,
-            dimension: dimension,
-            progress: await VideoHttp.getCrossAccountResumeProgress(bvid),
-          );
-        }
+        await PageUtils.openVideo(
+          aid: videoItem.aid,
+          bvid: bvid,
+          cid: videoItem.cid,
+          cover: videoItem.cover,
+          title: videoItem.title,
+          isVertical: isVertical,
+        );
         break;
       // 动态
       case 'picture':
