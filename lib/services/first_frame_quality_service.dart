@@ -14,6 +14,7 @@ enum FirstFrameQuality {
   mostlyBlack,
   tinyVisibleSubject,
   lowInformationDark,
+  lowInformationFlat,
   decodeFailed,
 }
 
@@ -122,6 +123,13 @@ final class FirstFrameQualityAnalyzer {
         value.standardDeviation <= 0.065 &&
         value.edgeRatio <= 0.035;
     if (lowInformationDark) return FirstFrameQuality.lowInformationDark;
+
+    // Reject near-solid title cards/backgrounds at any brightness. Requiring both
+    // tiny global variance and almost no local edges avoids rejecting ordinary
+    // bright or softly exposed video frames.
+    final lowInformationFlat =
+        value.standardDeviation <= 0.012 && value.edgeRatio <= 0.008;
+    if (lowInformationFlat) return FirstFrameQuality.lowInformationFlat;
     return FirstFrameQuality.usable;
   }
 }

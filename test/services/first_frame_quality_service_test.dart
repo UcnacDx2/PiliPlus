@@ -104,4 +104,25 @@ void main() {
       FirstFrameQuality.usable,
     );
   });
+  test('rejects a uniform bright frame without visual information', () {
+    final metrics = FirstFrameQualityAnalyzer.metrics(
+      pixels(List.filled(576, (255, 255, 255))),
+    );
+    expect(metrics.standardDeviation, lessThan(0.012));
+    expect(metrics.edgeRatio, lessThan(0.008));
+    expect(
+      FirstFrameQualityAnalyzer.classify(metrics),
+      FirstFrameQuality.lowInformationFlat,
+    );
+  });
+
+  test('rejects a uniform colored background without a subject', () {
+    final metrics = FirstFrameQualityAnalyzer.metrics(
+      pixels(List.filled(576, (204, 178, 151))),
+    );
+    expect(
+      FirstFrameQualityAnalyzer.classify(metrics),
+      FirstFrameQuality.lowInformationFlat,
+    );
+  });
 }
