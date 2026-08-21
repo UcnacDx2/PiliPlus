@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:PiliPlus/pages/setting/pages/logs.dart';
+import 'package:PiliPlus/pages/setting/view.dart';
 import 'package:PiliPlus/pages_tv/common/tv_focus_wrapper.dart';
 import 'package:PiliPlus/pages_tv/common/tv_page.dart';
 import 'package:PiliPlus/services/account_service.dart';
@@ -122,6 +123,25 @@ class _TVSettingPageState extends State<TVSettingPage> {
                     color: theme.colorScheme.primary),
                 title: const Text('默认画质'),
                 subtitle: Text(_getQualityLabel(Pref.defaultVideoQa)),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+            _SectionTitle('高级设置', theme),
+            TVFocusWrapper(
+              scaleFactor: 1.02,
+              borderRadius: 12,
+              onSelect: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingPage()),
+              ),
+              child: ListTile(
+                leading: Icon(
+                  Icons.tune,
+                  color: theme.colorScheme.primary,
+                ),
+                title: const Text('进入原版设置'),
+                subtitle: const Text('使用完整的 PiliPlus 设置页面进行高级调整'),
+                trailing: const Icon(Icons.chevron_right),
               ),
             ),
 
