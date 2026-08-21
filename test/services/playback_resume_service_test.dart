@@ -69,7 +69,7 @@ void main() {
       cid: null,
       epId: 323056,
       loadHistory: (keyword) async {
-        expect(keyword, 'ep323056');
+        expect(keyword, '323056');
         return data(epId: 323056, progress: 88);
       },
     );

@@ -27,7 +27,7 @@ class SearchPgcItem extends StatelessWidget {
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
-        onTap: () => PageUtils.viewPgc(seasonId: item.seasonId),
+        onTap: () => PageUtils.openPgc(seasonId: item.seasonId),
         onLongPress: onLongPress,
         onSecondaryTap: PlatformUtils.isMobile ? null : onLongPress,
         child: Padding(

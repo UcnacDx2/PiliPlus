@@ -16,7 +16,7 @@ Future<int?> resolvePlaybackResumeProgress({
   if (explicitProgress != null || sameAccount) return explicitProgress;
   if (epId == null && (bvid == null || bvid.isEmpty)) return null;
 
-  final keyword = epId != null ? 'ep$epId' : bvid!;
+  final keyword = epId != null ? '$epId' : bvid!;
   final response = await loadHistory(keyword);
   final normalizedBvid = bvid?.toUpperCase();
   for (final item in response?.list ?? const []) {
