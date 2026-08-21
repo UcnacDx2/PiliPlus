@@ -125,4 +125,31 @@ void main() {
       FirstFrameQuality.lowInformationFlat,
     );
   });
+  test('rejects a mostly black subtitle frame', () {
+    final colors = List<(int, int, int)>.filled(576, (0, 0, 0));
+    for (var y = 15; y < 17; y++) {
+      for (var x = 8; x < 24; x++) {
+        colors[y * 32 + x] = (180, 180, 180);
+      }
+    }
+    final metrics = FirstFrameQualityAnalyzer.metrics(pixels(colors));
+    expect(
+      FirstFrameQualityAnalyzer.classify(metrics),
+      FirstFrameQuality.tinyVisibleSubject,
+    );
+  });
+
+  test('rejects a mostly black title-card logo', () {
+    final colors = List<(int, int, int)>.filled(576, (0, 0, 0));
+    for (var y = 7; y < 11; y++) {
+      for (var x = 12; x < 20; x++) {
+        colors[y * 32 + x] = (120, 120, 120);
+      }
+    }
+    final metrics = FirstFrameQualityAnalyzer.metrics(pixels(colors));
+    expect(
+      FirstFrameQualityAnalyzer.classify(metrics),
+      FirstFrameQuality.tinyVisibleSubject,
+    );
+  });
 }

@@ -112,9 +112,10 @@ final class FirstFrameQualityAnalyzer {
     if (mostlyBlack) return FirstFrameQuality.mostlyBlack;
 
     final tinyVisibleSubject =
-        value.darkRatio >= 0.96 &&
-        value.visibleRatio <= 0.015 &&
-        value.meanLuma <= 0.04;
+        value.meanLuma <= 0.04 &&
+        value.darkRatio >= 0.89 &&
+        value.visibleRatio <= 0.06 &&
+        value.standardDeviation <= 0.10;
     if (tinyVisibleSubject) return FirstFrameQuality.tinyVisibleSubject;
 
     final lowInformationDark =
