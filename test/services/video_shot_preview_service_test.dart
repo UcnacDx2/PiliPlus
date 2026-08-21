@@ -41,4 +41,31 @@ void main() {
     expect(locations.map((item) => item.frameIndex).toSet().length,
         locations.length);
   });
+
+  test('parses pvdata as big-endian uint16 timestamps', () {
+    expect(
+      parseVideoShotIndexBytes(const [0, 0, 0, 0, 0, 10, 0, 20, 0, 240]),
+      const [0, 0, 10, 20, 240],
+    );
+  });
+
+  test('rejects malformed or decreasing pvdata', () {
+    expect(parseVideoShotIndexBytes(const [0]), isEmpty);
+    expect(parseVideoShotIndexBytes(const [0, 10, 0, 5]), isEmpty);
+  });
+
+  test('pvdata count determines the valid cells on the last sprite', () {
+    final index = parseVideoShotIndexBytes(
+      List<int>.generate(
+        234,
+        (byteIndex) => byteIndex.isEven ? 0 : byteIndex ~/ 2,
+      ),
+    );
+    const capacityPerImage = 100;
+    const imageCount = 2;
+    final lastPageValid =
+        index.length - (imageCount - 1) * capacityPerImage;
+    expect(index.length, 117);
+    expect(lastPageValid, 17);
+  });
 }

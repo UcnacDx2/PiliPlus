@@ -1103,6 +1103,23 @@ abstract final class VideoHttp {
     }
   }
 
+  static Future<List<int>> _videoShotIndexFromPvData(String url) async {
+    try {
+      final response = await Request.dio.get<List<int>>(
+        url.http2https,
+        options: Options(
+          responseType: ResponseType.bytes,
+          receiveTimeout: const Duration(seconds: 8),
+          headers: {'user-agent': BrowserUa.pc},
+        ),
+      );
+      final bytes = response.data;
+      if (bytes == null) return const [];
+      return parseVideoShotIndexBytes(bytes);
+    } catch (_) {
+      return const [];
+    }
+  }
   static Future<LoadingState<VideoShotData>> videoshot({
     required String bvid,
     required int cid,
@@ -1124,11 +1141,11 @@ abstract final class VideoHttp {
     );
     if (res.data['code'] == 0) {
       final data = VideoShotData.fromJson(res.data['data']);
-      if (data.index.isNotEmpty) {
-        return Success(data);
-      } else {
-        return const Error(null);
+      if (data.index.isEmpty && data.pvdata?.isNotEmpty == true) {
+        data.index = await _videoShotIndexFromPvData(data.pvdata!);
       }
+      if (data.index.isNotEmpty) return Success(data);
+      return const Error(null);
     }
     return Error(res.data['message']);
   }
