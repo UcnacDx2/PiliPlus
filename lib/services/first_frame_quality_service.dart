@@ -9,7 +9,13 @@ import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:dio/dio.dart';
 
 /// Result of inspecting a low-resolution first frame.
-enum FirstFrameQuality { usable, mostlyBlack, tinyVisibleSubject, decodeFailed }
+enum FirstFrameQuality {
+  usable,
+  mostlyBlack,
+  tinyVisibleSubject,
+  lowInformationDark,
+  decodeFailed,
+}
 
 final class FirstFrameQualityMetrics {
   const FirstFrameQualityMetrics({
@@ -17,12 +23,16 @@ final class FirstFrameQualityMetrics {
     required this.darkRatio,
     required this.visibleRatio,
     required this.standardDeviation,
+    required this.shadowRatio,
+    required this.edgeRatio,
   });
 
   final double meanLuma;
   final double darkRatio;
   final double visibleRatio;
   final double standardDeviation;
+  final double shadowRatio;
+  final double edgeRatio;
 }
 
 final class FirstFrameQualityAnalyzer {
@@ -39,6 +49,8 @@ final class FirstFrameQualityAnalyzer {
         darkRatio: 1,
         visibleRatio: 0,
         standardDeviation: 0,
+        shadowRatio: 1,
+        edgeRatio: 0,
       );
     }
 
@@ -47,17 +59,38 @@ final class FirstFrameQualityAnalyzer {
     var visiblePixels = 0;
     var sum = 0.0;
     var squareSum = 0.0;
+    var shadowPixels = 0;
+    final lumas = Float64List(pixelCount);
 
     for (var i = 0; i < rgba.length; i += 4) {
       // Integer approximation of BT.709 luma; alpha is intentionally ignored.
       final luma =
           (rgba[i] * 54 + rgba[i + 1] * 183 + rgba[i + 2] * 19) / 256;
+      lumas[i ~/ 4] = luma;
       sum += luma;
       squareSum += luma * luma;
       if (luma <= darkThreshold) darkPixels++;
+      if (luma <= 40) shadowPixels++;
       if (luma >= visibleThreshold) visiblePixels++;
     }
 
+    var edges = 0;
+    var edgeComparisons = 0;
+    const analysisWidth = 32;
+    for (var index = 0; index < pixelCount; index++) {
+      final x = index % analysisWidth;
+      final y = index ~/ analysisWidth;
+      if (x > 0) {
+        if ((lumas[index] - lumas[index - 1]).abs() >= 16) edges++;
+        edgeComparisons++;
+      }
+      if (y > 0) {
+        if ((lumas[index] - lumas[index - analysisWidth]).abs() >= 16) {
+          edges++;
+        }
+        edgeComparisons++;
+      }
+    }
     final mean = sum / pixelCount;
     final variance = (squareSum / pixelCount) - mean * mean;
     return FirstFrameQualityMetrics(
@@ -65,6 +98,8 @@ final class FirstFrameQualityAnalyzer {
       darkRatio: darkPixels / pixelCount,
       visibleRatio: visiblePixels / pixelCount,
       standardDeviation: math.sqrt(math.max(0, variance)) / 255,
+      shadowRatio: shadowPixels / pixelCount,
+      edgeRatio: edgeComparisons == 0 ? 0 : edges / edgeComparisons,
     );
   }
 
@@ -81,10 +116,15 @@ final class FirstFrameQualityAnalyzer {
         value.meanLuma <= 0.04;
     if (tinyVisibleSubject) return FirstFrameQuality.tinyVisibleSubject;
 
+    final lowInformationDark =
+        value.meanLuma <= 0.16 &&
+        value.shadowRatio >= 0.985 &&
+        value.standardDeviation <= 0.065 &&
+        value.edgeRatio <= 0.035;
+    if (lowInformationDark) return FirstFrameQuality.lowInformationDark;
     return FirstFrameQuality.usable;
   }
 }
-
 
 final class _AsyncGate {
   _AsyncGate(this.limit);

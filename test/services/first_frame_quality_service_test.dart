@@ -63,4 +63,45 @@ void main() {
       FirstFrameQuality.usable,
     );
   });
+
+  test('rejects a uniform dark-gray frame without visual information', () {
+    final metrics = FirstFrameQualityAnalyzer.metrics(
+      pixels(List.filled(576, (35, 35, 35))),
+    );
+    expect(metrics.shadowRatio, 1);
+    expect(metrics.edgeRatio, 0);
+    expect(
+      FirstFrameQualityAnalyzer.classify(metrics),
+      FirstFrameQuality.lowInformationDark,
+    );
+  });
+
+  test('rejects a very dark low-information logo frame', () {
+    final colors = List<(int, int, int)>.filled(576, (2, 5, 8));
+    for (var y = 6; y < 12; y++) {
+      for (var x = 12; x < 20; x++) {
+        colors[y * 32 + x] = (28, 38, 42);
+      }
+    }
+    final metrics = FirstFrameQualityAnalyzer.metrics(pixels(colors));
+    expect(
+      FirstFrameQualityAnalyzer.classify(metrics),
+      FirstFrameQuality.lowInformationDark,
+    );
+  });
+
+  test('keeps a high-information black-and-white frame', () {
+    final colors = List.generate(
+      576,
+      (index) => ((index ~/ 32) + index).isEven
+          ? (5, 5, 5)
+          : (235, 235, 235),
+    );
+    final metrics = FirstFrameQualityAnalyzer.metrics(pixels(colors));
+    expect(metrics.edgeRatio, greaterThan(0.5));
+    expect(
+      FirstFrameQualityAnalyzer.classify(metrics),
+      FirstFrameQuality.usable,
+    );
+  });
 }
