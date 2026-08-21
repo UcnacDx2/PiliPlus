@@ -6,6 +6,7 @@ import 'package:PiliPlus/common/widgets/progress_bar/video_progress_indicator.da
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
 import 'package:PiliPlus/http/search.dart';
+import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/horizontal_video_model.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
@@ -83,6 +84,9 @@ class VideoCardH extends StatelessWidget {
                       cover: videoItem.cover,
                       title: videoItem.title,
                       dimension: dimension,
+                      progress: await VideoHttp.getCrossAccountResumeProgress(
+                        videoItem.bvid,
+                      ),
                     );
                   }
                 },

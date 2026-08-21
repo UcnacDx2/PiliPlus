@@ -57,8 +57,13 @@ abstract final class VideoHttp {
   static RegExp zoneRegExp = RegExp(Pref.banWordForZone, caseSensitive: false);
   static bool enableFilter = zoneRegExp.pattern.isNotEmpty;
   static const _firstFrameCacheMaxEntries = 320;
+  static const _resumeProgressCacheMaxEntries = 320;
+  static const _resumeProgressCacheTtl = Duration(minutes: 5);
   static final LinkedHashMap<String, Future<VideoFirstFrameInfo?>>
       _firstFrameCache = LinkedHashMap();
+  static final LinkedHashMap<String,
+          ({DateTime expiresAt, Future<int?> value})>
+      _resumeProgressCache = LinkedHashMap();
 
   static Future<String?> getVideoFirstFrame(String? bvid) async =>
       (await getVideoFirstFrameInfo(bvid))?.url;
@@ -101,6 +106,57 @@ abstract final class VideoHttp {
     return request;
   }
 
+  /// Returns the history account's resume position for [bvid].
+  ///
+  /// The player can read progress directly from the play-url response only when
+  /// history and video parsing use the same account. With split accounts, use
+  /// the history API so entry points such as search and recommendations resume
+  /// from the account that owns playback history.
+  static Future<int?> getCrossAccountResumeProgress(String? bvid) {
+    if (bvid == null ||
+        bvid.isEmpty ||
+        Accounts.history.mid == Accounts.video.mid) {
+      return Future<int?>.value();
+    }
+
+    final key = '${Accounts.history.mid}:${bvid.toUpperCase()}';
+    final now = DateTime.now();
+    final cached = _resumeProgressCache.remove(key);
+    if (cached != null && cached.expiresAt.isAfter(now)) {
+      _resumeProgressCache[key] = cached;
+      return cached.value;
+    }
+
+    final request = () async {
+      try {
+        final res = await UserHttp.searchHistory(
+          pn: 1,
+          keyword: bvid,
+          account: Accounts.history,
+        );
+        if (res case Success(:final response)) {
+          final normalizedBvid = bvid.toUpperCase();
+          for (final item in response.list ?? const []) {
+            if (item.history.bvid?.toUpperCase() == normalizedBvid) {
+              return item.playbackProgress;
+            }
+          }
+        }
+      } catch (_) {
+        _resumeProgressCache.remove(key);
+      }
+      return null;
+    }();
+
+    _resumeProgressCache[key] = (
+      expiresAt: now.add(_resumeProgressCacheTtl),
+      value: request,
+    );
+    while (_resumeProgressCache.length > _resumeProgressCacheMaxEntries) {
+      _resumeProgressCache.remove(_resumeProgressCache.keys.first);
+    }
+    return request;
+  }
   // 首页推荐视频
   static Future<LoadingState<List<RcmdVideoItemModel>>> rcmdVideoList({
     required int ps,
