@@ -1000,6 +1000,7 @@ abstract final class Api {
   static const String replySubjectModify = '/x/v2/reply/subject/modify';
 
   static const String videoshot = '/x/player/videoshot';
+  static const String appVideoshot = '/x/v2/view/video/shot';
 
   static const String liveMedalWall =
       '${HttpString.liveBaseUrl}/xlive/web-ucenter/user/MedalWall';

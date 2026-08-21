@@ -68,4 +68,21 @@ void main() {
     expect(index.length, 117);
     expect(lastPageValid, 17);
   });
+
+  test('accepts APP videoshot metadata without explicit frame size', () {
+    final data = VideoShotData.fromJson({
+      'pvdata': 'https://example.com/index.bin',
+      'img_x_len': 10,
+      'img_y_len': 10,
+      'img_x_size': 0,
+      'img_y_size': 0,
+      'image': ['https://example.com/sprite.webp'],
+    });
+    data.index = const [0, 0, 3, 6, 9];
+
+    final locations = VideoShotPreviewService.candidateLocations(data);
+
+    expect(locations, isNotEmpty);
+    expect(locations.first.spriteUrl, 'https://example.com/sprite.webp');
+  });
 }

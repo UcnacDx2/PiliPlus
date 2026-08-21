@@ -46,6 +46,6 @@ class VideoShotData {
     image: (json["image"] as List)
         .map((e) => (e as String).http2https)
         .toList(),
-    index: (json["index"] as List).fromCast(),
+    index: (json["index"] as List? ?? const []).fromCast(),
   );
 }

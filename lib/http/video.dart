@@ -1120,10 +1120,40 @@ abstract final class VideoHttp {
       return const [];
     }
   }
+  static Future<VideoShotData?> _appVideoshot({
+    required String bvid,
+    required int cid,
+  }) async {
+    try {
+      final params = <String, dynamic>{
+        'aid': IdUtils.bv2av(bvid),
+        'cid': cid,
+      };
+      AppSign.appSign(params);
+      final res = await Request().get(
+        Api.appVideoshot,
+        baseUrl: 'https://app.bilibili.com',
+        queryParameters: params,
+        options: Options(headers: {'user-agent': BrowserUa.pc}),
+      );
+      if (res.data['code'] != 0) return null;
+      final data = VideoShotData.fromJson(res.data['data']);
+      if (data.index.isEmpty && data.pvdata?.isNotEmpty == true) {
+        data.index = await _videoShotIndexFromPvData(data.pvdata!);
+      }
+      if (data.image.isEmpty || data.index.isEmpty) return null;
+      return data;
+    } catch (_) {
+      return null;
+    }
+  }
   static Future<LoadingState<VideoShotData>> videoshot({
     required String bvid,
     required int cid,
   }) async {
+    final appData = await _appVideoshot(bvid: bvid, cid: cid);
+    if (appData != null) return Success(appData);
+
     final res = await Request().get(
       Api.videoshot,
       queryParameters: {

@@ -135,9 +135,7 @@ abstract final class VideoShotPreviewService {
       data.image.isNotEmpty &&
       data.index.isNotEmpty &&
       data.imgXLen > 0 &&
-      data.imgYLen > 0 &&
-      data.imgXSize > 0 &&
-      data.imgYSize > 0;
+      data.imgYLen > 0;
 
   static Future<VideoShotPreview?> _resolveFromMetadata(
     VideoShotData data,
@@ -202,15 +200,21 @@ abstract final class VideoShotPreviewService {
     try {
       codec = await ui.instantiateImageCodec(bytes);
       sprite = (await codec.getNextFrame()).image;
-      final scaleX = sprite.width / (data.imgXLen * data.imgXSize);
-      final scaleY = sprite.height / (data.imgYLen * data.imgYSize);
+      final sourceWidth = data.imgXSize > 0
+          ? data.imgXSize
+          : sprite.width / data.imgXLen;
+      final sourceHeight = data.imgYSize > 0
+          ? data.imgYSize
+          : sprite.height / data.imgYLen;
+      final scaleX = sprite.width / (data.imgXLen * sourceWidth);
+      final scaleY = sprite.height / (data.imgYLen * sourceHeight);
 
       for (final candidate in candidates) {
         final source = ui.Rect.fromLTWH(
-          candidate.column * data.imgXSize * scaleX,
-          candidate.row * data.imgYSize * scaleY,
-          data.imgXSize * scaleX,
-          data.imgYSize * scaleY,
+          candidate.column * sourceWidth * scaleX,
+          candidate.row * sourceHeight * scaleY,
+          sourceWidth * scaleX,
+          sourceHeight * scaleY,
         );
         final cropped = await _crop(sprite, source);
         try {
