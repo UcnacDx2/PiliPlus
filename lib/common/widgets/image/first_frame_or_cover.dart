@@ -2,8 +2,10 @@ import 'dart:typed_data';
 
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
+import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/services/first_frame_quality_service.dart';
 import 'package:PiliPlus/services/video_shot_preview_service.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Displays the normal cover immediately, then prefers a usable first frame.
@@ -61,7 +63,17 @@ class _FirstFrameOrCoverState extends State<FirstFrameOrCover> {
 
   Future<void> _inspect() async {
     final generation = ++_generation;
-    final firstFrame = widget.firstFrameUrl;
+    if (!Pref.useFirstFrameAsCover) return;
+
+    var firstFrame = widget.firstFrameUrl;
+    var resolvedCid = widget.cid;
+    if ((firstFrame == null || firstFrame.isEmpty) &&
+        widget.bvid?.isNotEmpty == true) {
+      final info = await VideoHttp.getVideoFirstFrameInfo(widget.bvid);
+      firstFrame = info?.url;
+      resolvedCid ??= info?.cid;
+      if (!mounted || generation != _generation) return;
+    }
     if (firstFrame == null || firstFrame.isEmpty) return;
 
     final usable = await FirstFrameQualityService.isUsable(firstFrame);
@@ -72,7 +84,7 @@ class _FirstFrameOrCoverState extends State<FirstFrameOrCover> {
     }
 
     final bvid = widget.bvid;
-    final cid = widget.cid;
+    final cid = resolvedCid;
     if (bvid == null || bvid.isEmpty || cid == null) return;
     final videoShot = await VideoShotPreviewService.resolve(bvid: bvid, cid: cid);
     if (!mounted || generation != _generation || videoShot == null) return;

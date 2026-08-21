@@ -65,6 +65,8 @@ jobs:
           lib/models/home/rcmd/result.dart
           lib/models/model_rec_video_item.dart
           lib/models/model_video.dart
+          lib/models/dynamics/result.dart
+          lib/pages/dynamics/widgets/video_panel.dart
           lib/pages/history
           lib/pages/setting
           lib/utils/storage_key.dart

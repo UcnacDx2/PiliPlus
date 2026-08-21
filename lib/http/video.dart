@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:PiliPlus/common/constants.dart';
@@ -44,15 +45,35 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:protobuf/protobuf.dart';
 
+final class VideoFirstFrameInfo {
+  const VideoFirstFrameInfo({required this.url, required this.cid});
+
+  final String url;
+  final int? cid;
+}
+
 /// view层根据 status 判断渲染逻辑
 abstract final class VideoHttp {
   static RegExp zoneRegExp = RegExp(Pref.banWordForZone, caseSensitive: false);
   static bool enableFilter = zoneRegExp.pattern.isNotEmpty;
-  static final Map<String, Future<String?>> _firstFrameCache = {};
+  static const _firstFrameCacheMaxEntries = 320;
+  static final LinkedHashMap<String, Future<VideoFirstFrameInfo?>>
+      _firstFrameCache = LinkedHashMap();
 
-  static Future<String?> getVideoFirstFrame(String? bvid) {
-    if (bvid == null || bvid.isEmpty) return Future<String?>.value();
-    return _firstFrameCache.putIfAbsent(bvid, () async {
+  static Future<String?> getVideoFirstFrame(String? bvid) async =>
+      (await getVideoFirstFrameInfo(bvid))?.url;
+
+  static Future<VideoFirstFrameInfo?> getVideoFirstFrameInfo(String? bvid) {
+    if (bvid == null || bvid.isEmpty) {
+      return Future<VideoFirstFrameInfo?>.value();
+    }
+    final cached = _firstFrameCache.remove(bvid);
+    if (cached != null) {
+      _firstFrameCache[bvid] = cached;
+      return cached;
+    }
+
+    final request = () async {
       try {
         final res = await Request().get(
           Api.ab2c,
@@ -61,14 +82,23 @@ abstract final class VideoHttp {
         if (res.data['code'] == 0) {
           final list = res.data['data'] as List?;
           if (list != null && list.isNotEmpty) {
-            return list.first['first_frame'] as String?;
+            final page = list.first as Map<String, dynamic>;
+            final url = page['first_frame'] as String?;
+            if (url != null && url.isNotEmpty) {
+              return VideoFirstFrameInfo(url: url, cid: page['cid'] as int?);
+            }
           }
         }
       } catch (_) {
         _firstFrameCache.remove(bvid);
       }
       return null;
-    });
+    }();
+    _firstFrameCache[bvid] = request;
+    while (_firstFrameCache.length > _firstFrameCacheMaxEntries) {
+      _firstFrameCache.remove(_firstFrameCache.keys.first);
+    }
+    return request;
   }
 
   // 首页推荐视频
