@@ -15,13 +15,9 @@ class EpisodeItem extends BaseEpisodeItem {
   int? play;
   int? status;
 
-  /// Whether the episode is not freely playable by a regular account.
-  ///
-  /// The season API uses status 13 for restricted episodes. Prefer that
-  /// semantic field over the presentation-only badge, while retaining the
-  /// known paywall badges for compatibility with incomplete responses.
-  bool get isNonFree =>
-      status == 13 || const {'会员', '付费'}.contains(badge?.trim());
+  /// Only status 2 is the ordinary episode state. Other states use the
+  /// history API when playback and history accounts differ.
+  bool get needsHistoryFallback => status != 2;
 
   EpisodeItem({
     super.aid,

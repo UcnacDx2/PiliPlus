@@ -675,7 +675,8 @@ abstract final class PageUtils {
     required EpisodeItem episode,
     required String keyword,
   }) async {
-    if (!episode.isNonFree || Accounts.history.mid == Accounts.video.mid) {
+    if (!episode.needsHistoryFallback ||
+        Accounts.history.mid == Accounts.video.mid) {
       return null;
     }
     final res = await UserHttp.searchHistory(
