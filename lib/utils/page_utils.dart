@@ -18,7 +18,6 @@ import 'package:PiliPlus/pages/common/publish/publish_route.dart';
 import 'package:PiliPlus/pages/contact/view.dart';
 import 'package:PiliPlus/pages/fav_panel/view.dart';
 import 'package:PiliPlus/pages/share/view.dart';
-import 'package:PiliPlus/services/playback_resume_service.dart';
 import 'package:PiliPlus/utils/android/android_helper.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
@@ -536,7 +535,7 @@ abstract final class PageUtils {
     }
   }
 
-  /// Resolves a UGC playback target and its cross-account resume position.
+  /// Resolves a UGC playback target before opening the player.
   ///
   /// [toVideoPage] remains the low-level navigation primitive for callers that
   /// already own a fully resolved playback session.
@@ -562,41 +561,16 @@ abstract final class PageUtils {
     }
     if (cid == null) return;
 
-    final resumeProgress = await PlaybackResumeService.resolve(
-      bvid: bvid,
-      cid: cid,
-      explicitProgress: progress,
-    );
     toVideoPage(
       aid: aid,
       bvid: bvid,
       cid: cid,
       cover: cover,
       title: title,
-      progress: resumeProgress,
+      progress: progress,
       off: off,
       isVertical: isVertical,
       dimension: dimension,
-    );
-  }
-
-  /// Applies account-aware resume resolution before opening a PGC episode.
-  static Future<void> openPgc({
-    dynamic seasonId,
-    dynamic epId,
-    int? progress,
-    bool off = false,
-  }) async {
-    final parsedEpId = epId is int ? epId : int.tryParse('$epId');
-    final resumeProgress = await PlaybackResumeService.resolve(
-      epId: parsedEpId,
-      explicitProgress: progress,
-    );
-    await viewPgc(
-      seasonId: seasonId,
-      epId: epId,
-      progress: resumeProgress,
-      off: off,
     );
   }
 

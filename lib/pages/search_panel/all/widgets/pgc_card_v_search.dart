@@ -28,7 +28,7 @@ class PgcCardVSearch extends StatelessWidget {
         borderRadius: Style.mdRadius,
         onLongPress: onLongPress,
         onSecondaryTap: PlatformUtils.isMobile ? null : onLongPress,
-        onTap: () => PageUtils.openPgc(seasonId: item.seasonId),
+        onTap: () => PageUtils.viewPgc(seasonId: item.seasonId),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

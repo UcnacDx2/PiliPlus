@@ -34,7 +34,7 @@ class VideoCardV extends StatelessWidget {
   Future<void> onPushDetail() async {
     switch (videoItem.goto) {
       case 'bangumi':
-        PageUtils.openPgc(epId: videoItem.param!);
+        PageUtils.viewPgc(epId: videoItem.param!);
         break;
       case 'av':
         final bvid = videoItem.bvid ?? IdUtils.av2bv(videoItem.aid!);

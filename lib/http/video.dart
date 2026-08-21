@@ -30,6 +30,7 @@ import 'package:PiliPlus/models_new/video/video_play_info/data.dart';
 import 'package:PiliPlus/models_new/video/video_relation/data.dart';
 import 'package:PiliPlus/models_new/video/video_shot/data.dart';
 import 'package:PiliPlus/utils/accounts.dart';
+import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/utils/app_sign.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
@@ -262,16 +263,74 @@ abstract final class VideoHttp {
     String? language,
     bool voiceBalance = false,
   }) async {
+    final params = await _videoUrlParams(
+      avid: avid,
+      bvid: bvid,
+      cid: cid,
+      qn: qn,
+      epid: epid,
+      seasonId: seasonId,
+      tryLook: tryLook,
+      language: language,
+      voiceBalance: voiceBalance,
+    );
+    final resourceResult = await _requestVideoUrl(
+      params: params,
+      account: Accounts.video,
+      videoType: videoType,
+    );
+
+    if (resourceResult case Success(:final response)
+        when Accounts.video.mid != Accounts.history.mid) {
+      final historyResult = await _requestVideoUrl(
+        params: params,
+        account: Accounts.history,
+        videoType: videoType,
+      );
+      if (historyResult case Success(response: final historyResponse)) {
+        response
+          ..lastPlayTime = historyResponse.lastPlayTime
+          ..lastPlayCid = historyResponse.lastPlayCid;
+      }
+    }
+
+    if (resourceResult is Error && epid != null && videoType == .ugc) {
+      return videoUrl(
+        avid: avid,
+        bvid: bvid,
+        cid: cid,
+        qn: qn,
+        epid: epid,
+        seasonId: seasonId,
+        tryLook: tryLook,
+        videoType: .pgc,
+        language: language,
+        voiceBalance: voiceBalance,
+      );
+    }
+    return resourceResult;
+  }
+
+  static Future<Map<String, dynamic>> _videoUrlParams({
+    int? avid,
+    String? bvid,
+    required int cid,
+    int? qn,
+    dynamic epid,
+    dynamic seasonId,
+    required bool tryLook,
+    String? language,
+    bool voiceBalance = false,
+  }) async {
     final dmImgStr = Utils.base64EncodeRandomString(16, 64);
     final dmCoverImgStr = Utils.base64EncodeRandomString(32, 128);
-    final params = await WbiSign.makSign({
+    return WbiSign.makSign({
       'avid': ?avid,
       'bvid': ?bvid,
       'ep_id': ?epid,
       'season_id': ?seasonId,
       'cid': cid,
       'qn': qn ?? 80,
-      // 获取所有格式的视频
       'fnval': 4048,
       'fourk': 1,
       'fnver': 0,
@@ -279,7 +338,6 @@ abstract final class VideoHttp {
       'gaia_source': 'pre-load',
       'isGaiaAvoided': true,
       'web_location': 1315873,
-      // 免登录查看1080p
       if (tryLook) 'try_look': 1,
       'dm_img_list': '[]',
       'dm_img_str': dmImgStr,
@@ -287,42 +345,40 @@ abstract final class VideoHttp {
       'dm_img_inter': '{"ds":[],"wh":[0,0,0],"of":[0,0,0]}',
       'cur_language': ?language,
     });
+  }
 
+  static Future<LoadingState<PlayUrlModel>> _requestVideoUrl({
+    required Map<String, dynamic> params,
+    required Account account,
+    required VideoType videoType,
+  }) async {
     try {
-      final res = await Request().get(videoType.api, queryParameters: params);
-
-      if (res.data['code'] == 0) {
-        late PlayUrlModel data;
-        switch (videoType) {
-          case .ugc:
-            data = PlayUrlModel.fromJson(res.data['data']);
-
-          case .pgc:
-            final result = res.data['result'];
-            data = PlayUrlModel.fromJson(result['video_info'])
-              ..lastPlayTime =
-                  result['play_view_business_info']?['user_status']?['watch_progress']?['current_watch_progress'];
-
-          case .pugv:
-            final result = res.data['data'];
-            data = PlayUrlModel.fromJson(result)
-              ..lastPlayTime =
-                  result['play_view_business_info']?['user_status']?['watch_progress']?['current_watch_progress'];
-        }
-        return Success(data);
-      } else if (epid != null && videoType == .ugc) {
-        return await videoUrl(
-          avid: avid,
-          bvid: bvid,
-          cid: cid,
-          qn: qn,
-          epid: epid,
-          seasonId: seasonId,
-          tryLook: tryLook,
-          videoType: .pgc,
-        );
+      final res = await Request().get(
+        videoType.api,
+        queryParameters: params,
+        options: Options(extra: {'account': account}),
+      );
+      if (res.data['code'] != 0) {
+        final code = res.data['code'] as int?;
+        return Error(_parseVideoErr(code, res.data['message']), code: code);
       }
-      return Error(_parseVideoErr(res.data['code'], res.data['message']));
+
+      final PlayUrlModel data;
+      switch (videoType) {
+        case .ugc:
+          data = PlayUrlModel.fromJson(res.data['data']);
+        case .pgc:
+          final result = res.data['result'];
+          data = PlayUrlModel.fromJson(result['video_info'])
+            ..lastPlayTime = result['play_view_business_info']?['user_status']
+                ?['watch_progress']?['current_watch_progress'];
+        case .pugv:
+          final result = res.data['data'];
+          data = PlayUrlModel.fromJson(result)
+            ..lastPlayTime = result['play_view_business_info']?['user_status']
+                ?['watch_progress']?['current_watch_progress'];
+      }
+      return Success(data);
     } catch (e, s) {
       return Error('$e\n\n$s');
     }
