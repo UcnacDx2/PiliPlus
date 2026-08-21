@@ -7,6 +7,7 @@ import 'package:PiliPlus/grpc/im.dart';
 import 'package:PiliPlus/http/dynamics.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/search.dart';
+import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/image_preview_type.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
@@ -18,6 +19,7 @@ import 'package:PiliPlus/pages/common/publish/publish_route.dart';
 import 'package:PiliPlus/pages/contact/view.dart';
 import 'package:PiliPlus/pages/fav_panel/view.dart';
 import 'package:PiliPlus/pages/share/view.dart';
+import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/android/android_helper.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
@@ -669,6 +671,29 @@ abstract final class PageUtils {
     return episode ?? episodes.first;
   }
 
+  static Future<int?> _restrictedPgcHistoryProgress({
+    required EpisodeItem episode,
+    required String keyword,
+  }) async {
+    if (episode.badge != '会员' || Accounts.history.mid == Accounts.video.mid) {
+      return null;
+    }
+    final res = await UserHttp.searchHistory(
+      pn: 1,
+      keyword: keyword,
+      account: Accounts.history,
+    );
+    if (res case Success(:final response)) {
+      for (final item in response.list ?? const []) {
+        if (item.history.business == 'pgc' &&
+            item.history.epid == episode.epId) {
+          return item.playbackProgress;
+        }
+      }
+    }
+    return null;
+  }
+
   static Future<void> viewPgc({
     dynamic seasonId,
     dynamic epId,
@@ -685,7 +710,12 @@ abstract final class PageUtils {
 
         EpisodeItem? episode;
 
-        void viewSection(EpisodeItem episode) {
+        Future<void> viewSection(EpisodeItem episode) async {
+          final resolvedProgress = progress ??
+              await _restrictedPgcHistoryProgress(
+                episode: episode,
+                keyword: response.title ?? response.seasonTitle ?? '',
+              );
           toVideoPage(
             videoType: VideoType.ugc,
             bvid: episode.bvid!,
@@ -694,7 +724,7 @@ abstract final class PageUtils {
             epId: episode.epId,
             cover: episode.cover,
             title: episode.title,
-            progress: progress,
+            progress: resolvedProgress,
             extraArguments: {
               'pgcApi': true,
               'pgcItem': response,
@@ -721,7 +751,7 @@ abstract final class PageUtils {
                   for (final episode in episodes) {
                     if (episode.epId.toString() == epId) {
                       // view as ugc
-                      viewSection(episode);
+                      await viewSection(episode);
                       return;
                     }
                   }
@@ -736,6 +766,11 @@ abstract final class PageUtils {
             episodes,
             epId: response.userStatus?.progress?.lastEpId,
           );
+          final resolvedProgress = progress ??
+              await _restrictedPgcHistoryProgress(
+                episode: episode,
+                keyword: response.title ?? response.seasonTitle ?? '',
+              );
           toVideoPage(
             videoType: VideoType.pgc,
             bvid: episode.bvid!,
@@ -744,7 +779,7 @@ abstract final class PageUtils {
             epId: episode.epId,
             pgcType: response.type,
             cover: episode.cover,
-            progress: progress,
+            progress: resolvedProgress,
             extraArguments: {
               'pgcItem': response,
             },
@@ -754,7 +789,7 @@ abstract final class PageUtils {
         } else {
           episode ??= response.section?.firstOrNull?.episodes?.firstOrNull;
           if (episode != null) {
-            viewSection(episode);
+            await viewSection(episode);
             return;
           }
         }
