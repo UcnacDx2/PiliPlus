@@ -54,6 +54,13 @@ class HistoryItem extends StatelessWidget {
         onTap: enableMultiSelect
             ? () => ctr.onSelect(item)
             : () async {
+                final historyMid = ctr is HistoryController
+                    ? (ctr as HistoryController).account.mid
+                    : Accounts.history.mid;
+                final resumeProgress = historyMid == Accounts.video.mid
+                    ? null
+                    : item.playbackProgress;
+
                 if (business?.contains('article') == true) {
                   PageUtils.toDupNamed(
                     '/articlePage',
@@ -71,13 +78,17 @@ class HistoryItem extends StatelessWidget {
                     SmartDialog.showToast('直播未开播');
                   }
                 } else if (business == 'pgc') {
-                  PageUtils.viewPgc(epId: item.history.epid);
+                  PageUtils.viewPgc(
+                    epId: item.history.epid,
+                    progress: resumeProgress,
+                  );
                 } else if (business == 'cheese') {
                   if (item.uri?.isNotEmpty == true) {
                     PageUtils.viewPgcFromUri(
                       item.uri!,
                       isPgc: false,
                       aid: item.history.oid,
+                      progress: resumeProgress,
                     );
                   }
                 } else {
@@ -95,10 +106,6 @@ class HistoryItem extends StatelessWidget {
                     }
                   }
                   if (cid != null) {
-                    final historyMid = ctr is HistoryController
-                        ? (ctr as HistoryController).account.mid
-                        : Accounts.history.mid;
-                    final videoMid = Accounts.video.mid;
                     PageUtils.toVideoPage(
                       aid: aid,
                       bvid: bvid,
@@ -106,13 +113,7 @@ class HistoryItem extends StatelessWidget {
                       cover: item.cover,
                       title: item.title,
                       dimension: dimension,
-                      progress: historyMid == videoMid
-                          ? null
-                          : item.progress == null
-                              ? null
-                              : item.progress == -1
-                                  ? 0
-                                  : item.progress! * 1000,
+                      progress: resumeProgress,
                     );
                   }
                 }
