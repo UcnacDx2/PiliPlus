@@ -1,10 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/services/first_frame_quality_service.dart';
+import 'package:PiliPlus/services/video_shot_preview_service.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Displays the normal cover first, and only switches to a first frame after
-/// a bounded low-resolution quality check accepts it.
+/// Displays the normal cover immediately, then prefers a usable first frame.
+/// If the first frame is black or has no meaningful subject, a middle video
+/// shot is resolved lazily from Bilibili's sprite sheet.
 class FirstFrameOrCover extends StatefulWidget {
   const FirstFrameOrCover({
     super.key,
@@ -12,12 +16,16 @@ class FirstFrameOrCover extends StatefulWidget {
     required this.firstFrameUrl,
     required this.width,
     required this.height,
+    this.bvid,
+    this.cid,
     this.borderRadius = Style.mdRadius,
     this.fit = .cover,
   });
 
   final String? coverUrl;
   final String? firstFrameUrl;
+  final String? bvid;
+  final int? cid;
   final double width;
   final double height;
   final BorderRadius borderRadius;
@@ -29,6 +37,7 @@ class FirstFrameOrCover extends StatefulWidget {
 
 class _FirstFrameOrCoverState extends State<FirstFrameOrCover> {
   String? _acceptedFirstFrame;
+  Uint8List? _acceptedVideoShot;
   int _generation = 0;
 
   @override
@@ -41,8 +50,11 @@ class _FirstFrameOrCoverState extends State<FirstFrameOrCover> {
   void didUpdateWidget(covariant FirstFrameOrCover oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.firstFrameUrl != widget.firstFrameUrl ||
-        oldWidget.coverUrl != widget.coverUrl) {
+        oldWidget.coverUrl != widget.coverUrl ||
+        oldWidget.bvid != widget.bvid ||
+        oldWidget.cid != widget.cid) {
       _acceptedFirstFrame = null;
+      _acceptedVideoShot = null;
       _inspect();
     }
   }
@@ -54,7 +66,17 @@ class _FirstFrameOrCoverState extends State<FirstFrameOrCover> {
 
     final usable = await FirstFrameQualityService.isUsable(firstFrame);
     if (!mounted || generation != _generation) return;
-    if (usable) setState(() => _acceptedFirstFrame = firstFrame);
+    if (usable) {
+      setState(() => _acceptedFirstFrame = firstFrame);
+      return;
+    }
+
+    final bvid = widget.bvid;
+    final cid = widget.cid;
+    if (bvid == null || bvid.isEmpty || cid == null) return;
+    final videoShot = await VideoShotPreviewService.resolve(bvid: bvid, cid: cid);
+    if (!mounted || generation != _generation || videoShot == null) return;
+    setState(() => _acceptedVideoShot = videoShot.bytes);
   }
 
   @override
@@ -64,11 +86,26 @@ class _FirstFrameOrCoverState extends State<FirstFrameOrCover> {
   }
 
   @override
-  Widget build(BuildContext context) => NetworkImgLayer(
-    src: _acceptedFirstFrame ?? widget.coverUrl,
-    width: widget.width,
-    height: widget.height,
-    borderRadius: widget.borderRadius,
-    fit: widget.fit,
-  );
+  Widget build(BuildContext context) {
+    if (_acceptedVideoShot case final bytes?) {
+      return ClipRRect(
+        borderRadius: widget.borderRadius,
+        child: Image.memory(
+          bytes,
+          width: widget.width,
+          height: widget.height,
+          fit: widget.fit,
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.medium,
+        ),
+      );
+    }
+    return NetworkImgLayer(
+      src: _acceptedFirstFrame ?? widget.coverUrl,
+      width: widget.width,
+      height: widget.height,
+      borderRadius: widget.borderRadius,
+      fit: widget.fit,
+    );
+  }
 }

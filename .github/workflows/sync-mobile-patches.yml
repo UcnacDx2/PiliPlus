@@ -60,6 +60,7 @@ jobs:
           lib/common/widgets/video_card
           lib/common/widgets/image/first_frame_or_cover.dart
           lib/services/first_frame_quality_service.dart
+          lib/services/video_shot_preview_service.dart
           lib/http/video.dart
           lib/models/home/rcmd/result.dart
           lib/models/model_rec_video_item.dart
@@ -69,8 +70,11 @@ jobs:
           lib/utils/storage_key.dart
           lib/utils/storage_pref.dart
 
-      - name: Test first-frame quality detection
-        run: flutter test test/services/first_frame_quality_service_test.dart
+      - name: Test smart video cover detection
+        run: >-
+          flutter test
+          test/services/first_frame_quality_service_test.dart
+          test/services/video_shot_preview_service_test.dart
 
       - name: Apply Android framework patches
         shell: pwsh

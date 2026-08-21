@@ -110,6 +110,8 @@ class VideoCardV extends StatelessWidget {
                         clipBehavior: Clip.none,
                         children: [
                           FirstFrameOrCover(
+                            bvid: videoItem.bvid,
+                            cid: videoItem.cid,
                             firstFrameUrl: videoItem.firstFrame,
                             coverUrl: videoItem.cover,
                             width: maxWidth,
