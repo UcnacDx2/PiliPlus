@@ -282,15 +282,15 @@ abstract final class VideoHttp {
 
     if (resourceResult case Success(:final response)
         when Accounts.video.mid != Accounts.history.mid) {
-      final historyResult = await _requestVideoUrl(
+      final historyProgress = await _requestPlaybackProgress(
         params: params,
         account: Accounts.history,
         videoType: videoType,
       );
-      if (historyResult case Success(response: final historyResponse)) {
+      if (historyProgress case Success(:final response: final progress)) {
         response
-          ..lastPlayTime = historyResponse.lastPlayTime
-          ..lastPlayCid = historyResponse.lastPlayCid;
+          ..lastPlayTime = progress.time
+          ..lastPlayCid = progress.id;
       }
     }
 
@@ -379,6 +379,46 @@ abstract final class VideoHttp {
                 ?['watch_progress']?['current_watch_progress'];
       }
       return Success(data);
+    } catch (e, s) {
+      return Error('$e\n\n$s');
+    }
+  }
+
+  static Future<LoadingState<({int time, int? id})>> _requestPlaybackProgress({
+    required Map<String, dynamic> params,
+    required Account account,
+    required VideoType videoType,
+  }) async {
+    try {
+      final res = await Request().get(
+        videoType.api,
+        queryParameters: params,
+        options: Options(extra: {'account': account}),
+      );
+      if (res.data['code'] != 0) {
+        final code = res.data['code'] as int?;
+        return Error(_parseVideoErr(code, res.data['message']), code: code);
+      }
+
+      final dynamic progress;
+      final int? id;
+      switch (videoType) {
+        case .ugc:
+          final data = res.data['data'];
+          progress = data?['last_play_time'];
+          id = data?['last_play_cid'] as int?;
+        case .pgc:
+          final watchProgress = res.data['result']?['play_view_business_info']
+              ?['user_status']?['watch_progress'];
+          progress = watchProgress?['current_watch_progress'];
+          id = watchProgress?['last_ep_id'] as int?;
+        case .pugv:
+          final watchProgress = res.data['data']?['play_view_business_info']
+              ?['user_status']?['watch_progress'];
+          progress = watchProgress?['current_watch_progress'];
+          id = watchProgress?['last_ep_id'] as int?;
+      }
+      return Success((time: (progress as num?)?.toInt() ?? 0, id: id));
     } catch (e, s) {
       return Error('$e\n\n$s');
     }
