@@ -3,6 +3,9 @@ name: Sync TV patch stack
 on:
   schedule:
     - cron: "47 3 * * *"
+  workflow_run:
+    workflows: ["Sync mobile patches"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -15,7 +18,9 @@ concurrency:
 
 jobs:
   sync-and-build:
-    if: github.repository == 'UcnacDx2/PiliPlus'
+    if: >-
+      github.repository == 'UcnacDx2/PiliPlus' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout TV patch branch
@@ -24,16 +29,14 @@ jobs:
           ref: tv-next
           fetch-depth: 0
 
-      - name: Configure upstream
-        run: |
-          git remote add canonical https://github.com/bggRGjQaUbCoE/PiliPlus.git || true
-          git fetch canonical main
+      - name: Fetch latest mobile patch base
+        run: git fetch origin mobile-patches
 
-      - name: Rebase TV patch stack on upstream
+      - name: Rebase TV patch stack on mobile patches
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git rebase canonical/main
+          git rebase origin/mobile-patches
 
       - name: Install Java
         uses: actions/setup-java@v5
@@ -54,17 +57,27 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Analyze TV patch surface
+      - name: Analyze TV and shared patch surfaces
         run: >-
           flutter analyze --no-fatal-infos --no-fatal-warnings
           lib/main_tv.dart
           lib/pages_tv
+          lib/common/widgets/image/first_frame_or_cover.dart
+          lib/services/first_frame_quality_service.dart
+          lib/services/video_shot_preview_service.dart
           lib/http/video.dart
           lib/models/home/rcmd/result.dart
           lib/models/model_rec_video_item.dart
           lib/models/model_video.dart
+          lib/pages/history
           lib/utils/storage_key.dart
           lib/utils/storage_pref.dart
+
+      - name: Test shared smart video covers
+        run: >-
+          flutter test
+          test/services/first_frame_quality_service_test.dart
+          test/services/video_shot_preview_service_test.dart
 
       - name: Apply Android framework patches
         shell: pwsh

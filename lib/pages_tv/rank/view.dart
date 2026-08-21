@@ -124,6 +124,9 @@ class _TVRankPageState extends State<TVRankPage> {
                                   bvid: item is HotVideoItemModel
                                       ? item.bvid
                                       : null,
+                                  cid: item is HotVideoItemModel
+                                      ? item.cid
+                                      : null,
                                   badge: '#${i + 1}',
                                   width: double.infinity,
                                   onSelect: () {

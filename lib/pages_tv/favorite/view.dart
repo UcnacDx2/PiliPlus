@@ -166,6 +166,7 @@ class _TVFavoritePageState extends State<TVFavoritePage> {
                                   subtitle: item.upper?.name ?? '',
                                   coverUrl: item.cover,
                                   bvid: item.bvid ?? IdUtils.av2bv(item.id),
+                                  cid: item.ugc?.firstCid,
                                   width: double.infinity,
                                   onSelect: () {
                                     final cid = item.ugc?.firstCid;
