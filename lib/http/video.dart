@@ -1274,4 +1274,37 @@ abstract final class VideoHttp {
     }
     return Error(res.data['message']);
   }
+
+  /// Returns the higher-resolution web videoshot metadata without falling
+  /// back to the low-resolution APP sprites.
+  static Future<LoadingState<VideoShotData>> webVideoshot({
+    required String bvid,
+    required int cid,
+  }) async {
+    try {
+      final res = await Request().get(
+        Api.videoshot,
+        queryParameters: {
+          'bvid': bvid,
+          'cid': cid,
+          'index': 1,
+        },
+        options: Options(
+          headers: {
+            'user-agent': BrowserUa.pc,
+            'referer': 'https://www.bilibili.com/video/$bvid',
+          },
+        ),
+      );
+      if (res.data['code'] != 0) return Error(res.data['message']);
+      final data = VideoShotData.fromJson(res.data['data']);
+      if (data.index.isEmpty && data.pvdata?.isNotEmpty == true) {
+        data.index = await _videoShotIndexFromPvData(data.pvdata!);
+      }
+      if (data.image.isEmpty || data.index.isEmpty) return const Error(null);
+      return Success(data);
+    } catch (_) {
+      return const Error(null);
+    }
+  }
 }

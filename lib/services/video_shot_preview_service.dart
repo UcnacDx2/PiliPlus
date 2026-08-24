@@ -79,6 +79,7 @@ abstract final class VideoShotPreviewService {
   static const _targetHeight = 180;
   static const _analysisWidth = 32;
   static const _analysisHeight = 18;
+  static const _watermarkTileWidth = 320;
   static const _maxEntries = 96;
   static const _successTtl = Duration(hours: 12);
   static const _failureTtl = Duration(minutes: 10);
@@ -145,7 +146,7 @@ abstract final class VideoShotPreviewService {
     if (bvid.isEmpty || cid <= 0 || count <= 0) return const [];
     try {
       return await _metadataGate.run(() async {
-        final state = await VideoHttp.videoshot(bvid: bvid, cid: cid);
+        final state = await VideoHttp.webVideoshot(bvid: bvid, cid: cid);
         final data = state.dataOrNull;
         if (data == null || !_isValid(data)) return const [];
         return _spriteGate.run(() => _resolveFramesFromMetadata(data, count));
@@ -265,7 +266,7 @@ abstract final class VideoShotPreviewService {
     for (final entry in bySprite.entries) {
       try {
         final response = await Request.dio.get<List<int>>(
-          entry.key,
+          _watermarkSpriteUrl(entry.key, data),
           options: Options(
             responseType: ResponseType.bytes,
             receiveTimeout: const Duration(seconds: 12),
@@ -289,6 +290,18 @@ abstract final class VideoShotPreviewService {
       for (final location in locations)
         if (decodedByIndex[location.frameIndex] case final frame?) frame,
     ];
+  }
+
+  static String _watermarkSpriteUrl(String url, VideoShotData data) {
+    final sourceWidth = data.imgXSize > 0 ? data.imgXSize : 480;
+    final sourceHeight = data.imgYSize > 0 ? data.imgYSize : 270;
+    final spriteWidth = data.imgXLen * _watermarkTileWidth;
+    final tileHeight = max(
+      1,
+      (sourceHeight * _watermarkTileWidth / sourceWidth).round(),
+    );
+    final spriteHeight = data.imgYLen * tileHeight;
+    return '$url@${spriteWidth}w_${spriteHeight}h_85q.webp';
   }
 
   static Future<List<VideoShotPreview>> _decodeSpriteFrames(

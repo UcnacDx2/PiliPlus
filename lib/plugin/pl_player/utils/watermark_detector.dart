@@ -222,7 +222,10 @@ abstract final class WatermarkDetector {
           _Corner.topLeft || _Corner.bottomLeft => component.left,
           _Corner.topRight || _Corner.bottomRight => roi.width - component.right,
         };
-        if (outerGap > 0.085 * width) continue;
+        // A real corner watermark is inset from the encoded frame. Components
+        // touching the outer border are usually letterbox/content boundaries
+        // or persistent sprite-page edges, especially on sharper web shots.
+        if (outerGap <= 0 || outerGap > 0.085 * width) continue;
 
         final x1 = roi.left + component.left;
         final y1 = roi.top + component.top;

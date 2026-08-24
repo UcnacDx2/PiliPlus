@@ -114,6 +114,28 @@ void main() {
     expect(regions.single.top, lessThan(0.15));
   });
 
+  test(
+    'advanced mode rejects a component touching the encoded frame edge',
+    () async {
+      const width = 480;
+      const height = 270;
+      final frames = <WatermarkFrame>[];
+      for (var frameIndex = 0; frameIndex < 8; frameIndex++) {
+        final pixels = Uint8List(width * height)
+          ..fillRange(0, width * height, 30 + frameIndex * 20);
+        _drawLogo(pixels, width, 435, 220, width, 245);
+        frames.add(WatermarkFrame(width: width, height: height, luma: pixels));
+      }
+
+      final regions = await WatermarkDetector.detect(
+        WatermarkMode.advanced,
+        frames,
+      );
+
+      expect(regions, isEmpty);
+    },
+  );
+
   test('disabled mode does not analyze frames', () async {
     final regions = await WatermarkDetector.detect(
       WatermarkMode.disabled,
