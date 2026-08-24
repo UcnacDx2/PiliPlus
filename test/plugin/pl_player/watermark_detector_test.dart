@@ -50,6 +50,27 @@ void main() {
     expect(regions.single.top, lessThan(0.1));
   });
 
+  test('advanced mode accepts a tall watermark inside a bottom corner', () async {
+    const width = 480;
+    const height = 270;
+    final frames = <WatermarkFrame>[];
+    for (var frameIndex = 0; frameIndex < 8; frameIndex++) {
+      final pixels = Uint8List(width * height)
+        ..fillRange(0, width * height, 30 + frameIndex * 20);
+      _drawLogo(pixels, width, 382, 204, 470, 254);
+      frames.add(WatermarkFrame(width: width, height: height, luma: pixels));
+    }
+
+    final regions = await WatermarkDetector.detect(
+      WatermarkMode.advanced,
+      frames,
+    );
+
+    expect(regions, hasLength(1));
+    expect(regions.single.right, greaterThan(0.9));
+    expect(regions.single.bottom, greaterThan(0.9));
+  });
+
   test('disabled mode does not analyze frames', () async {
     final regions = await WatermarkDetector.detect(
       WatermarkMode.disabled,
