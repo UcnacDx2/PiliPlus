@@ -93,6 +93,27 @@ void main() {
     expect(regions.single.right, greaterThan(0.9));
   });
 
+  test('advanced mode accepts a small logo eight percent from the edge', () async {
+    const width = 480;
+    const height = 270;
+    final frames = <WatermarkFrame>[];
+    for (var frameIndex = 0; frameIndex < 8; frameIndex++) {
+      final pixels = Uint8List(width * height)
+        ..fillRange(0, width * height, 30 + frameIndex * 20);
+      _drawLogo(pixels, width, 419, 8, 442, 29);
+      frames.add(WatermarkFrame(width: width, height: height, luma: pixels));
+    }
+
+    final regions = await WatermarkDetector.detect(
+      WatermarkMode.advanced,
+      frames,
+    );
+
+    expect(regions, hasLength(1));
+    expect(regions.single.left, greaterThan(0.8));
+    expect(regions.single.top, lessThan(0.15));
+  });
+
   test('disabled mode does not analyze frames', () async {
     final regions = await WatermarkDetector.detect(
       WatermarkMode.disabled,

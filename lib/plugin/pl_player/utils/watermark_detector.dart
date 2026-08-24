@@ -222,7 +222,7 @@ abstract final class WatermarkDetector {
           _Corner.topLeft || _Corner.bottomLeft => component.left,
           _Corner.topRight || _Corner.bottomRight => roi.width - component.right,
         };
-        if (outerGap > 0.05 * width) continue;
+        if (outerGap > 0.085 * width) continue;
 
         final x1 = roi.left + component.left;
         final y1 = roi.top + component.top;
