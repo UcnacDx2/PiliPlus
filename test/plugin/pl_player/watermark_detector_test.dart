@@ -6,10 +6,24 @@ import 'package:PiliPlus/plugin/pl_player/utils/watermark_detector.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('watermark mode upgrade preserves advanced persisted index', () {
+    expect(WatermarkMode.advanced.index, 2);
+    expect(
+      WatermarkMode.selectableValues,
+      [
+        WatermarkMode.disabled,
+        WatermarkMode.bilibili,
+        WatermarkMode.bilibiliAuto,
+        WatermarkMode.advanced,
+      ],
+    );
+  });
+
   test('single first frame anchors a clear bilibili mark', () async {
     const width = 480;
     const height = 270;
     final pixels = Uint8List(width * height)..fillRange(0, width * height, 96);
+    _drawLogo(pixels, width, 383, 8, 428, 26);
     _drawBilibiliTemplate(pixels, width, 435, 8);
 
     final region = await WatermarkDetector.detectBilibiliAnchor(
@@ -17,9 +31,10 @@ void main() {
     );
 
     expect(region, isNotNull);
-    expect(region!.left, greaterThan(0.5));
+    expect(region!.left, closeTo(379 / width, 0.03));
     expect(region.top, lessThan(0.1));
     expect(region.right, greaterThan(0.95));
+    expect(region.right - region.left, lessThan(0.28));
   });
 
   test('single first frame rejects ambiguous texture in every corner', () async {
