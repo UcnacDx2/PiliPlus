@@ -12,6 +12,7 @@ import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/account_type.dart';
 import 'package:PiliPlus/models/common/audio_normalization.dart';
 import 'package:PiliPlus/models/common/super_resolution_type.dart';
+import 'package:PiliPlus/models/common/watermark_mode.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models/user/danmaku_rule.dart';
 import 'package:PiliPlus/models/video/play/url.dart';
@@ -30,6 +31,8 @@ import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/watermark_detector.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/watermark_filter.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/android/android_helper.dart';
@@ -148,6 +151,10 @@ class PlPlayerController with BlockConfigMixin {
   late DataSource dataSource;
 
   Timer? _timer;
+  Timer? _watermarkTimer;
+  int _watermarkGeneration = 0;
+  bool _watermarkCapturing = false;
+  final List<WatermarkFrame> _watermarkFrames = [];
   StreamSubscription? _subForSeek;
 
   Box setting = GStorage.setting;
@@ -636,6 +643,8 @@ class PlPlayerController with BlockConfigMixin {
         await pause(notify: false);
       }
 
+      await _resetWatermarkProcessing();
+
       if (_playerCount == 0) {
         return;
       }
@@ -660,6 +669,7 @@ class PlPlayerController with BlockConfigMixin {
       }
 
       await _initializePlayer();
+      _startWatermarkProcessing();
       onInit?.call();
     } catch (err, stackTrace) {
       dataStatus.value = DataStatus.error;
@@ -901,6 +911,107 @@ class PlPlayerController with BlockConfigMixin {
     if (_autoPlay) {
       playIfExists();
       // await play(duration: duration);
+    }
+  }
+
+  Future<void> _resetWatermarkProcessing() async {
+    _watermarkGeneration++;
+    _watermarkTimer?.cancel();
+    _watermarkTimer = null;
+    _watermarkFrames.clear();
+    _watermarkCapturing = false;
+    if (_videoPlayerController case final player?) {
+      await WatermarkFilter.clear(player);
+    }
+  }
+
+  void _startWatermarkProcessing() {
+    final mode = Pref.watermarkMode;
+    if (mode == WatermarkMode.disabled || isLive || onlyPlayAudio.value) return;
+    final generation = ++_watermarkGeneration;
+    _scheduleWatermarkCapture(generation, mode, const Duration(seconds: 3));
+  }
+
+  void _scheduleWatermarkCapture(
+    int generation,
+    WatermarkMode mode,
+    Duration delay,
+  ) {
+    _watermarkTimer?.cancel();
+    _watermarkTimer = Timer(
+      delay,
+      () => _captureWatermarkFrame(generation, mode),
+    );
+  }
+
+  Future<void> _captureWatermarkFrame(
+    int generation,
+    WatermarkMode mode,
+  ) async {
+    if (generation != _watermarkGeneration) return;
+    final player = _videoPlayerController;
+    if (player == null ||
+        _watermarkCapturing ||
+        !player.state.playing ||
+        isBuffering.value ||
+        isSeeking.value) {
+      _scheduleWatermarkCapture(
+        generation,
+        mode,
+        const Duration(seconds: 3),
+      );
+      return;
+    }
+
+    _watermarkCapturing = true;
+    ui.Image? image;
+    try {
+      image = await player.screenshot();
+      if (image == null || generation != _watermarkGeneration) return;
+      final sourceWidth = image.width;
+      final sourceHeight = image.height;
+      final frame = await WatermarkFrame.fromImage(image);
+      if (frame == null || generation != _watermarkGeneration) return;
+      if (_watermarkFrames case [final first, ...]
+          when first.width != frame.width || first.height != frame.height) {
+        _watermarkFrames.clear();
+      }
+      _watermarkFrames.add(frame);
+
+      final targetCount = mode == WatermarkMode.advanced ? 8 : 6;
+      if (_watermarkFrames.length >= targetCount) {
+        _watermarkTimer = null;
+        final frames = List<WatermarkFrame>.of(_watermarkFrames);
+        final regions = await WatermarkDetector.detect(mode, frames);
+        if (generation == _watermarkGeneration &&
+            identical(player, _videoPlayerController) &&
+            regions.isNotEmpty) {
+          await WatermarkFilter.apply(
+            player,
+            regions,
+            sourceWidth,
+            sourceHeight,
+          );
+        }
+        _watermarkFrames.clear();
+        return;
+      }
+    } catch (error, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('watermark detection failed: $error');
+        debugPrint(stackTrace.toString());
+      }
+    } finally {
+      image?.dispose();
+      _watermarkCapturing = false;
+    }
+
+    if (generation == _watermarkGeneration) {
+      _scheduleWatermarkCapture(
+        generation,
+        mode,
+        const Duration(seconds: 7),
+      );
     }
   }
 
@@ -1574,6 +1685,10 @@ class PlPlayerController with BlockConfigMixin {
       AndroidHelper$ToDart.onUserLeaveHint = null;
     }
     _timer?.cancel();
+    _watermarkGeneration++;
+    _watermarkTimer?.cancel();
+    _watermarkTimer = null;
+    _watermarkFrames.clear();
     // _position.close();
     // _playerEventSubs?.cancel();
     // _sliderPosition.close();

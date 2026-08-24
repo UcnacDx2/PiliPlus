@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/models/common/super_chat_type.dart';
 import 'package:PiliPlus/models/common/video/subtitle_pref_type.dart';
+import 'package:PiliPlus/models/common/watermark_mode.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
 import 'package:PiliPlus/pages/setting/pages/fullscreen_sc_size.dart';
@@ -57,6 +58,15 @@ List<SettingsModel> get playSettings => [
     leading: Icon(Icons.motion_photos_auto_outlined),
     setKey: SettingBoxKey.autoPlayEnable,
     defaultVal: false,
+  ),
+  PopupModel(
+    title: '水印处理',
+    leading: const Icon(Icons.branding_watermark_outlined),
+    value: () => Pref.watermarkMode,
+    items: WatermarkMode.values,
+    onSelected: (value, setState) => GStorage.setting
+        .put(SettingBoxKey.watermarkMode, value.index)
+        .whenComplete(setState),
   ),
   const SwitchModel(
     title: '全屏显示锁定按钮',

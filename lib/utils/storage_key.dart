@@ -96,6 +96,7 @@ abstract final class SettingBoxKey {
       showHotRcmd = 'showHotRcmd',
       audioNormalization = 'audioNormalization',
       fallbackNormalization = 'fallbackNormalization',
+      watermarkMode = 'watermarkMode',
       superResolutionType = 'superResolutionType',
       preInitPlayer = 'preInitPlayer',
       mainTabBarView = 'mainTabBarView',
