@@ -1,4 +1,4 @@
-import 'dart:async' show StreamSubscription, Timer;
+import 'dart:async' show StreamSubscription, Timer, unawaited;
 import 'dart:convert' show ascii, utf8;
 import 'dart:io' show Platform;
 import 'dart:math' show max, min;
@@ -13,6 +13,7 @@ import 'package:PiliPlus/models/common/account_type.dart';
 import 'package:PiliPlus/models/common/audio_normalization.dart';
 import 'package:PiliPlus/models/common/super_resolution_type.dart';
 import 'package:PiliPlus/models/common/watermark_mode.dart';
+import 'package:PiliPlus/models/common/watermark_position.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models/user/danmaku_rule.dart';
 import 'package:PiliPlus/models/video/play/url.dart';
@@ -29,6 +30,7 @@ import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/heart_beat_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
+import 'package:PiliPlus/plugin/pl_player/models/watermark_region.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/watermark_detector.dart';
@@ -155,6 +157,8 @@ class PlPlayerController with BlockConfigMixin {
   int _watermarkGeneration = 0;
   bool _watermarkCapturing = false;
   final List<WatermarkFrame> _watermarkFrames = [];
+  late final Rx<WatermarkPosition> watermarkPosition =
+      Pref.watermarkPosition.obs;
   StreamSubscription? _subForSeek;
 
   Box setting = GStorage.setting;
@@ -929,7 +933,64 @@ class PlPlayerController with BlockConfigMixin {
     final mode = Pref.watermarkMode;
     if (mode == WatermarkMode.disabled || isLive || onlyPlayAudio.value) return;
     final generation = ++_watermarkGeneration;
+    if (mode == WatermarkMode.bilibili) {
+      unawaited(_applyFixedWatermark(generation));
+      return;
+    }
     _scheduleWatermarkCapture(generation, mode, const Duration(seconds: 2));
+  }
+
+  Future<bool> _applyFixedWatermark(int generation) async {
+    if (generation != _watermarkGeneration) return false;
+    final player = _videoPlayerController;
+    if (player == null) return false;
+
+    final videoWidth = player.state.width == 0
+        ? (width ?? 0)
+        : player.state.width;
+    final videoHeight = player.state.height == 0
+        ? (height ?? 0)
+        : player.state.height;
+    if (videoWidth <= 0 || videoHeight <= 0) {
+      _watermarkTimer?.cancel();
+      _watermarkTimer = Timer(
+        const Duration(milliseconds: 500),
+        () => _applyFixedWatermark(generation),
+      );
+      return false;
+    }
+
+    try {
+      await WatermarkFilter.apply(
+        player,
+        [WatermarkRegion.fixed(watermarkPosition.value)],
+        videoWidth,
+        videoHeight,
+      );
+      return generation == _watermarkGeneration &&
+          identical(player, _videoPlayerController);
+    } catch (error, stackTrace) {
+      Utils.reportError('fixed watermark filter failed: $error', stackTrace);
+      if (kDebugMode) {
+        debugPrint('fixed watermark filter failed: $error');
+        debugPrint(stackTrace.toString());
+      }
+      return false;
+    }
+  }
+
+  Future<void> setWatermarkPosition(WatermarkPosition position) async {
+    watermarkPosition.value = position;
+    await setting.put(SettingBoxKey.watermarkPosition, position.index);
+    if (Pref.watermarkMode != WatermarkMode.bilibili ||
+        isLive ||
+        onlyPlayAudio.value) {
+      return;
+    }
+
+    _watermarkTimer?.cancel();
+    final generation = ++_watermarkGeneration;
+    await _applyFixedWatermark(generation);
   }
 
   void _scheduleWatermarkCapture(

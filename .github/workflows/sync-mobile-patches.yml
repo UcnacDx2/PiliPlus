@@ -69,7 +69,9 @@ jobs:
           lib/pages/dynamics/widgets/video_panel.dart
           lib/pages/history
           lib/pages/setting
+          lib/pages/video/widgets/header_control.dart
           lib/models/common/watermark_mode.dart
+          lib/models/common/watermark_position.dart
           lib/plugin/pl_player/controller.dart
           lib/plugin/pl_player/models/watermark_region.dart
           lib/plugin/pl_player/utils/watermark_detector.dart

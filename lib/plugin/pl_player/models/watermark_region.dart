@@ -1,5 +1,7 @@
 import 'dart:math' show max, min;
 
+import 'package:PiliPlus/models/common/watermark_position.dart';
+
 class WatermarkRegion {
   const WatermarkRegion({
     required this.left,
@@ -14,6 +16,34 @@ class WatermarkRegion {
   final double right;
   final double bottom;
   final double confidence;
+
+  /// A deliberately generous fixed area for a creator nickname (up to about
+  /// 16 CJK characters) followed by the bilibili mark.
+  factory WatermarkRegion.fixed(WatermarkPosition position) {
+    const marginX = 0.012;
+    const marginY = 0.012;
+    const regionWidth = 0.44;
+    const regionHeight = 0.11;
+
+    final left = switch (position) {
+      WatermarkPosition.topLeft || WatermarkPosition.bottomLeft => marginX,
+      WatermarkPosition.topRight ||
+      WatermarkPosition.bottomRight => 1 - marginX - regionWidth,
+    };
+    final top = switch (position) {
+      WatermarkPosition.topLeft || WatermarkPosition.topRight => marginY,
+      WatermarkPosition.bottomLeft ||
+      WatermarkPosition.bottomRight => 1 - marginY - regionHeight,
+    };
+
+    return WatermarkRegion(
+      left: left,
+      top: top,
+      right: left + regionWidth,
+      bottom: top + regionHeight,
+      confidence: 1,
+    );
+  }
 
   WatermarkPixelRegion toPixelRegion(int width, int height) {
     var x = max(1, (left * width).floor());

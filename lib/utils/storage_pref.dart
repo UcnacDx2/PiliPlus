@@ -18,6 +18,7 @@ import 'package:PiliPlus/models/common/sponsor_block/skip_type.dart';
 import 'package:PiliPlus/models/common/super_chat_type.dart';
 import 'package:PiliPlus/models/common/super_resolution_type.dart';
 import 'package:PiliPlus/models/common/watermark_mode.dart';
+import 'package:PiliPlus/models/common/watermark_position.dart';
 import 'package:PiliPlus/models/common/theme/theme_type.dart';
 import 'package:PiliPlus/models/common/video/audio_quality.dart';
 import 'package:PiliPlus/models/common/video/cdn_type.dart';
@@ -487,12 +488,27 @@ abstract final class Pref {
       _setting.get(SettingBoxKey.fallbackNormalization, defaultValue: '0');
 
   static WatermarkMode get watermarkMode {
-    final int index = _setting.get(
+    final value = _setting.get(
       SettingBoxKey.watermarkMode,
       defaultValue: WatermarkMode.disabled.index,
     );
-    return WatermarkMode.values.elementAtOrNull(index) ??
-        WatermarkMode.disabled;
+    final index = value is int ? value : int.tryParse('$value');
+    return index == null
+        ? WatermarkMode.disabled
+        : WatermarkMode.values.elementAtOrNull(index) ??
+            WatermarkMode.disabled;
+  }
+
+  static WatermarkPosition get watermarkPosition {
+    final value = _setting.get(
+      SettingBoxKey.watermarkPosition,
+      defaultValue: WatermarkPosition.topLeft.index,
+    );
+    final index = value is int ? value : int.tryParse('$value');
+    return index == null
+        ? WatermarkPosition.topLeft
+        : WatermarkPosition.values.elementAtOrNull(index) ??
+            WatermarkPosition.topLeft;
   }
 
   static SuperResolutionType get superResolutionType {

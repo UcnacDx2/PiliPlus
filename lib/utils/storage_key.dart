@@ -97,6 +97,7 @@ abstract final class SettingBoxKey {
       audioNormalization = 'audioNormalization',
       fallbackNormalization = 'fallbackNormalization',
       watermarkMode = 'watermarkMode',
+      watermarkPosition = 'watermarkPosition',
       superResolutionType = 'superResolutionType',
       preInitPlayer = 'preInitPlayer',
       mainTabBarView = 'mainTabBarView',

@@ -1,3 +1,4 @@
+import 'package:PiliPlus/models/common/watermark_position.dart';
 import 'package:PiliPlus/plugin/pl_player/models/watermark_region.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/watermark_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,5 +35,23 @@ void main() {
     expect(rect.y, greaterThanOrEqualTo(0));
     expect(rect.x + rect.width, lessThan(1920));
     expect(rect.y + rect.height, lessThan(1080));
+  });
+
+  test('maps fixed watermark regions to all four corners', () {
+    const expected = <WatermarkPosition, ({double left, double top})>{
+      WatermarkPosition.topLeft: (left: 0.012, top: 0.012),
+      WatermarkPosition.topRight: (left: 0.548, top: 0.012),
+      WatermarkPosition.bottomLeft: (left: 0.012, top: 0.878),
+      WatermarkPosition.bottomRight: (left: 0.548, top: 0.878),
+    };
+
+    for (final entry in expected.entries) {
+      final region = WatermarkRegion.fixed(entry.key);
+
+      expect(region.left, closeTo(entry.value.left, 0.0001));
+      expect(region.top, closeTo(entry.value.top, 0.0001));
+      expect(region.right - region.left, closeTo(0.44, 0.0001));
+      expect(region.bottom - region.top, closeTo(0.11, 0.0001));
+    }
   });
 }
