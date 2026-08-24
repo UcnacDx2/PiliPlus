@@ -179,21 +179,9 @@ abstract final class WatermarkDetector {
 
     for (final corner in _Corner.values) {
       final roi = _cornerRoi(width, height, corner, 0.30, 0.25);
-      final odd = <WatermarkFrame>[];
-      final even = <WatermarkFrame>[];
-      for (var i = 0; i < frames.length; i++) {
-        (i.isEven ? even : odd).add(frames[i]);
-      }
-      var oddMask = _stableMask(odd, roi);
-      var evenMask = _stableMask(even, roi);
-      oddMask = _dilate(oddMask, roi.width, roi.height, 2, 2);
-      evenMask = _dilate(evenMask, roi.width, roi.height, 2, 2);
-      oddMask = _dilate(oddMask, roi.width, roi.height, 1, 1);
-      evenMask = _dilate(evenMask, roi.width, roi.height, 1, 1);
-      final combined = Uint8List(roi.width * roi.height);
-      for (var i = 0; i < combined.length; i++) {
-        combined[i] = oddMask[i] != 0 && evenMask[i] != 0 ? 1 : 0;
-      }
+      var combined = _stableMask(frames, roi);
+      combined = _dilate(combined, roi.width, roi.height, 2, 2);
+      combined = _dilate(combined, roi.width, roi.height, 1, 1);
       final closed = _erode(
         _dilate(combined, roi.width, roi.height, 4, 2),
         roi.width,
@@ -203,7 +191,7 @@ abstract final class WatermarkDetector {
       );
 
       for (final component in _components(closed, roi.width, roi.height)) {
-        if (component.area < 0.0035 * width * height ||
+        if (component.area < 0.0015 * width * height ||
             component.width < 14 ||
             component.height < 6) {
           continue;
@@ -223,18 +211,18 @@ abstract final class WatermarkDetector {
           _Corner.topLeft || _Corner.bottomLeft => component.left,
           _Corner.topRight || _Corner.bottomRight => roi.width - component.right,
         };
-        if (outerGap > 0.035 * width) continue;
+        if (outerGap > 0.05 * width) continue;
 
         final x1 = roi.left + component.left;
         final y1 = roi.top + component.top;
         final x2 = roi.left + component.right;
         final y2 = roi.top + component.bottom;
         if ((corner == _Corner.topLeft || corner == _Corner.topRight) &&
-            y2 > 0.16 * height) {
+            y2 > 0.18 * height) {
           continue;
         }
         if ((corner == _Corner.bottomLeft || corner == _Corner.bottomRight) &&
-            y1 < 0.84 * height) {
+            y1 < 0.82 * height) {
           continue;
         }
         result.add(
@@ -280,13 +268,11 @@ abstract final class WatermarkDetector {
       for (var x = 0; x < roi.width; x++) {
         final sourceIndex = (roi.top + y) * width + roi.left + x;
         var count = 0;
-        var sum = 0;
         for (final gradient in gradients) {
           final value = gradient[sourceIndex];
-          sum += value;
-          if (value > 10) count++;
+          if (value > 8) count++;
         }
-        if (count >= requiredCount && sum / gradients.length > 7) {
+        if (count >= requiredCount) {
           result[y * roi.width + x] = 1;
         }
       }
