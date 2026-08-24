@@ -42,6 +42,45 @@ void main() {
         locations.length);
   });
 
+  test('maps evenly spaced frames across sprite pages', () {
+    final data = VideoShotData(
+      imgXLen: 4,
+      imgYLen: 2,
+      imgXSize: 160,
+      imgYSize: 90,
+      image: const ['page-0', 'page-1', 'page-2'],
+      index: List.generate(20, (index) => index * 10),
+    );
+
+    final locations = VideoShotPreviewService.evenlySpacedLocations(data, 8);
+
+    expect(locations, hasLength(8));
+    expect(
+      locations.map((item) => item.frameIndex),
+      orderedEquals([...locations.map((item) => item.frameIndex)]..sort()),
+    );
+    expect(locations.map((item) => item.frameIndex).toSet(), hasLength(8));
+    final secondPage = locations.firstWhere((item) => item.frameIndex >= 8);
+    expect(secondPage.spriteUrl, 'page-1');
+    expect(secondPage.column, secondPage.frameIndex % 8 % 4);
+    expect(secondPage.row, secondPage.frameIndex % 8 ~/ 4);
+  });
+
+  test('rejects invalid evenly spaced frame requests', () {
+    final data = VideoShotData(
+      imgXLen: 4,
+      imgYLen: 2,
+      imgXSize: 160,
+      imgYSize: 90,
+      image: const ['page-0'],
+      index: const [0, 10, 20],
+    );
+
+    expect(VideoShotPreviewService.evenlySpacedLocations(data, 0), isEmpty);
+    data.index = const [];
+    expect(VideoShotPreviewService.evenlySpacedLocations(data, 8), isEmpty);
+  });
+
   test('parses pvdata as big-endian uint16 timestamps', () {
     expect(
       parseVideoShotIndexBytes(const [0, 0, 0, 0, 0, 10, 0, 20, 0, 240]),
