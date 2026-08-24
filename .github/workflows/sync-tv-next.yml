@@ -70,6 +70,12 @@ jobs:
           lib/models/model_rec_video_item.dart
           lib/models/model_video.dart
           lib/pages/history
+          lib/models/common/watermark_mode.dart
+          lib/pages/setting
+          lib/plugin/pl_player/controller.dart
+          lib/plugin/pl_player/models/watermark_region.dart
+          lib/plugin/pl_player/utils/watermark_detector.dart
+          lib/plugin/pl_player/utils/watermark_filter.dart
           lib/utils/storage_key.dart
           lib/utils/storage_pref.dart
 
@@ -78,6 +84,8 @@ jobs:
           flutter test
           test/services/first_frame_quality_service_test.dart
           test/services/video_shot_preview_service_test.dart
+          test/plugin/pl_player/watermark_detector_test.dart
+          test/plugin/pl_player/watermark_filter_test.dart
 
       - name: Apply Android framework patches
         shell: pwsh
