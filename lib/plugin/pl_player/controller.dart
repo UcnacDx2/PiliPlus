@@ -1027,9 +1027,17 @@ class PlPlayerController with BlockConfigMixin {
         return;
       }
       if (regions.isEmpty) {
+        final diagnostics = await WatermarkDetector.diagnoseAdvanced(frames);
+        if (generation != _watermarkGeneration ||
+            !identical(player, _videoPlayerController)) {
+          return;
+        }
+        final shots = previews
+            .map((item) => '${item.frameIndex}@${item.timestamp}')
+            .join(',');
         Utils.reportError(
           'watermark: no stable candidate (advanced videoshot, '
-          '${frames.length} frames)',
+          '${frames.length} frames); shots=[$shots]; $diagnostics',
         );
         return;
       }
