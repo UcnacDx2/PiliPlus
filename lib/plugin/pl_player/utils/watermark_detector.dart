@@ -196,7 +196,12 @@ abstract final class WatermarkDetector {
         2,
       );
 
-      for (final component in _components(closed, roi.width, roi.height)) {
+      final components = _components(closed, roi.width, roi.height);
+      final candidates = _componentCandidates(components, width, height)
+        ..sort((a, b) => b.area.compareTo(a.area));
+      WatermarkRegion? bestRegion;
+      var bestArea = -1;
+      for (final component in candidates) {
         if (component.area < 0.002 * width * height ||
             component.width < 14 ||
             component.height < 6) {
@@ -208,7 +213,7 @@ abstract final class WatermarkDetector {
           _Corner.topRight || _Corner.bottomRight => component.left <= 2,
         };
         if (touchesInnerEdge ||
-            component.width > 0.24 * width ||
+            component.width > 0.29 * width ||
             component.height > 0.22 * height ||
             component.width * component.height > 0.55 * roi.width * roi.height) {
           continue;
@@ -231,16 +236,17 @@ abstract final class WatermarkDetector {
             y1 < 0.75 * height) {
           continue;
         }
-        result.add(
-          WatermarkRegion(
-            left: max(0, x1 - 4) / width,
-            top: max(0, y1 - 3) / height,
-            right: min(width, x2 + 4) / width,
-            bottom: min(height, y2 + 3) / height,
-            confidence: min(1, component.area / (0.006 * width * height)),
-          ),
+        if (component.area <= bestArea) continue;
+        bestArea = component.area;
+        bestRegion = WatermarkRegion(
+          left: max(0, x1 - 4) / width,
+          top: max(0, y1 - 3) / height,
+          right: min(width, x2 + 4) / width,
+          bottom: min(height, y2 + 3) / height,
+          confidence: min(1, component.area / (0.006 * width * height)),
         );
       }
+      if (bestRegion != null) result.add(bestRegion);
     }
     return result;
   }
@@ -282,6 +288,10 @@ abstract final class WatermarkDetector {
       final closedPixels = closed.where((value) => value != 0).length;
       final components = _components(closed, roi.width, roi.height)
         ..sort((a, b) => b.area.compareTo(a.area));
+      final groups = _componentCandidates(components, width, height)
+          .where((item) => !components.contains(item))
+          .toList()
+        ..sort((a, b) => b.area.compareTo(a.area));
       final largest = components
           .take(3)
           .map(
@@ -291,7 +301,9 @@ abstract final class WatermarkDetector {
           .join('|');
       details.add(
         '${corner.name}{stable=$stablePixels,closed=$closedPixels,'
-        'count=${components.length},largest=[$largest]}',
+        'count=${components.length},largest=[$largest],groups='
+        '[${groups.take(3).map((item) => '${item.left},${item.top},'
+            '${item.width}x${item.height},${item.area}').join('|')}]}',
       );
     }
     return details.join(';');
@@ -334,6 +346,56 @@ abstract final class WatermarkDetector {
           result[y * roi.width + x] = 1;
         }
       }
+    }
+    return result;
+  }
+
+  static List<_Component> _componentCandidates(
+    List<_Component> components,
+    int frameWidth,
+    int frameHeight,
+  ) {
+    final eligible = components
+        .where((item) => item.area >= 24 && item.width >= 3 && item.height >= 3)
+        .toList();
+    final result = <_Component>[...components];
+    final used = <_Component>{};
+    for (final seed in eligible) {
+      if (!used.add(seed)) continue;
+      var group = seed;
+      var count = 1;
+      var changed = true;
+      while (changed) {
+        changed = false;
+        for (final candidate in eligible) {
+          if (used.contains(candidate)) continue;
+          final horizontalGap = max(
+            0,
+            max(group.left, candidate.left) -
+                min(group.right, candidate.right),
+          );
+          final verticalGap = max(
+            0,
+            max(group.top, candidate.top) -
+                min(group.bottom, candidate.bottom),
+          );
+          if (horizontalGap > 0.06 * frameWidth ||
+              verticalGap > 0.025 * frameHeight) {
+            continue;
+          }
+          used.add(candidate);
+          count++;
+          changed = true;
+          group = _Component(
+            min(group.left, candidate.left),
+            min(group.top, candidate.top),
+            max(group.right, candidate.right),
+            max(group.bottom, candidate.bottom),
+            group.area + candidate.area,
+          );
+        }
+      }
+      if (count > 1) result.add(group);
     }
     return result;
   }
