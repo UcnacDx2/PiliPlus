@@ -46,6 +46,13 @@ final class _PreviewCacheEntry {
   final DateTime expiresAt;
 }
 
+final class _MetadataCacheEntry {
+  const _MetadataCacheEntry(this.data, this.expiresAt);
+
+  final VideoShotData? data;
+  final DateTime expiresAt;
+}
+
 final class _AsyncGate {
   _AsyncGate(this.limit);
 
@@ -72,8 +79,9 @@ final class _AsyncGate {
 /// Resolves a representative videoshot frame after a first-frame rejection.
 ///
 /// The service deliberately processes only one sprite at a time. Full sprite
-/// sheets can be large after decoding, so neither source bytes, [ui.Image]s nor
-/// codecs are retained. Only small PNG results are kept in a bounded LRU cache.
+/// sheets can be large after decoding, so [ui.Image]s and codecs are not
+/// retained. Compressed sprite bytes and small PNG results use bounded caches
+/// so cover replacement and watermark analysis can share network work.
 abstract final class VideoShotPreviewService {
   static const _targetWidth = 320;
   static const _targetHeight = 180;
@@ -81,12 +89,20 @@ abstract final class VideoShotPreviewService {
   static const _analysisHeight = 18;
   static const _watermarkTileWidth = 320;
   static const _maxEntries = 96;
+  static const _maxMetadataEntries = 48;
+  static const _maxSpriteEntries = 12;
   static const _successTtl = Duration(hours: 12);
   static const _failureTtl = Duration(minutes: 10);
+  static const _metadataTtl = Duration(minutes: 30);
 
   static final LinkedHashMap<String, _PreviewCacheEntry> _cache =
       LinkedHashMap();
   static final Map<String, Future<VideoShotPreview?>> _inFlight = {};
+  static final LinkedHashMap<String, _MetadataCacheEntry> _metadataCache =
+      LinkedHashMap();
+  static final Map<String, Future<VideoShotData?>> _metadataInFlight = {};
+  static final LinkedHashMap<String, Uint8List> _spriteCache = LinkedHashMap();
+  static final Map<String, Future<Uint8List?>> _spriteInFlight = {};
   static final _metadataGate = _AsyncGate(3);
   static final _spriteGate = _AsyncGate(1);
 
@@ -111,8 +127,7 @@ abstract final class VideoShotPreviewService {
       VideoShotPreview? preview;
       try {
         preview = await _metadataGate.run(() async {
-          final state = await VideoHttp.videoshot(bvid: bvid, cid: cid);
-          final data = state.dataOrNull;
+          final data = await _resolveMetadata(bvid, cid);
           if (data == null || !_isValid(data)) return null;
           return _spriteGate.run(() => _resolveFromMetadata(data));
         });
@@ -146,8 +161,7 @@ abstract final class VideoShotPreviewService {
     if (bvid.isEmpty || cid <= 0 || count <= 0) return const [];
     try {
       return await _metadataGate.run(() async {
-        final state = await VideoHttp.webVideoshot(bvid: bvid, cid: cid);
-        final data = state.dataOrNull;
+        final data = await _resolveMetadata(bvid, cid);
         if (data == null || !_isValid(data)) return const [];
         return _spriteGate.run(() => _resolveFramesFromMetadata(data, count));
       });
@@ -162,6 +176,40 @@ abstract final class VideoShotPreviewService {
       data.imgXLen > 0 &&
       data.imgYLen > 0;
 
+  static Future<VideoShotData?> _resolveMetadata(String bvid, int cid) {
+    final key = '$bvid:$cid';
+    final now = DateTime.now();
+    final cached = _metadataCache.remove(key);
+    if (cached != null && cached.expiresAt.isAfter(now)) {
+      _metadataCache[key] = cached;
+      return Future.value(cached.data);
+    }
+
+    return _metadataInFlight.putIfAbsent(key, () async {
+      VideoShotData? data;
+      try {
+        data = (await VideoHttp.webVideoshot(bvid: bvid, cid: cid)).dataOrNull;
+        if (data == null || !_isValid(data)) {
+          data = (await VideoHttp.videoshot(bvid: bvid, cid: cid)).dataOrNull;
+        }
+        if (data != null && !_isValid(data)) data = null;
+      } catch (_) {
+        data = null;
+      } finally {
+        _metadataInFlight.remove(key);
+      }
+
+      _metadataCache[key] = _MetadataCacheEntry(
+        data,
+        DateTime.now().add(data == null ? _failureTtl : _metadataTtl),
+      );
+      while (_metadataCache.length > _maxMetadataEntries) {
+        _metadataCache.remove(_metadataCache.keys.first);
+      }
+      return data;
+    });
+  }
+
   static Future<VideoShotPreview?> _resolveFromMetadata(
     VideoShotData data,
   ) async {
@@ -172,18 +220,11 @@ abstract final class VideoShotPreviewService {
     }
 
     for (final entry in bySprite.entries) {
-      final response = await Request.dio.get<List<int>>(
-        entry.key,
-        options: Options(
-          responseType: ResponseType.bytes,
-          receiveTimeout: const Duration(seconds: 12),
-        ),
-      );
-      final bytes = response.data;
-      if (bytes == null || bytes.isEmpty) continue;
+      final bytes = await _loadSprite(entry.key, data);
+      if (bytes == null) continue;
 
       final result = await _decodeSprite(
-        Uint8List.fromList(bytes),
+        bytes,
         data,
         entry.value,
       );
@@ -265,17 +306,10 @@ abstract final class VideoShotPreviewService {
     final decodedByIndex = <int, VideoShotPreview>{};
     for (final entry in bySprite.entries) {
       try {
-        final response = await Request.dio.get<List<int>>(
-          _watermarkSpriteUrl(entry.key, data),
-          options: Options(
-            responseType: ResponseType.bytes,
-            receiveTimeout: const Duration(seconds: 12),
-          ),
-        );
-        final bytes = response.data;
-        if (bytes == null || bytes.isEmpty) continue;
+        final bytes = await _loadSprite(entry.key, data);
+        if (bytes == null) continue;
         final decoded = await _decodeSpriteFrames(
-          Uint8List.fromList(bytes),
+          bytes,
           data,
           entry.value,
         );
@@ -292,7 +326,8 @@ abstract final class VideoShotPreviewService {
     ];
   }
 
-  static String _watermarkSpriteUrl(String url, VideoShotData data) {
+  static String _analysisSpriteUrl(String url, VideoShotData data) {
+    if (url.contains('@')) return url;
     final sourceWidth = data.imgXSize > 0 ? data.imgXSize : 480;
     final sourceHeight = data.imgYSize > 0 ? data.imgYSize : 270;
     final spriteWidth = data.imgXLen * _watermarkTileWidth;
@@ -302,6 +337,42 @@ abstract final class VideoShotPreviewService {
     );
     final spriteHeight = data.imgYLen * tileHeight;
     return '$url@${spriteWidth}w_${spriteHeight}h_85q.webp';
+  }
+
+  static Future<Uint8List?> _loadSprite(
+    String sourceUrl,
+    VideoShotData data,
+  ) {
+    final url = _analysisSpriteUrl(sourceUrl, data);
+    final cached = _spriteCache.remove(url);
+    if (cached != null) {
+      _spriteCache[url] = cached;
+      return Future.value(cached);
+    }
+
+    return _spriteInFlight.putIfAbsent(url, () async {
+      try {
+        final response = await Request.dio.get<List<int>>(
+          url,
+          options: Options(
+            responseType: ResponseType.bytes,
+            receiveTimeout: const Duration(seconds: 12),
+          ),
+        );
+        final source = response.data;
+        if (source == null || source.isEmpty) return null;
+        final bytes = Uint8List.fromList(source);
+        _spriteCache[url] = bytes;
+        while (_spriteCache.length > _maxSpriteEntries) {
+          _spriteCache.remove(_spriteCache.keys.first);
+        }
+        return bytes;
+      } catch (_) {
+        return null;
+      } finally {
+        _spriteInFlight.remove(url);
+      }
+    });
   }
 
   static Future<List<VideoShotPreview>> _decodeSpriteFrames(
