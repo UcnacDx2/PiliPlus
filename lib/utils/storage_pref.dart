@@ -487,7 +487,10 @@ abstract final class Pref {
       _setting.get(SettingBoxKey.fallbackNormalization, defaultValue: '0');
 
   static WatermarkMode get watermarkMode {
-    final index = _setting.get(SettingBoxKey.watermarkMode);
+    final int index = _setting.get(
+      SettingBoxKey.watermarkMode,
+      defaultValue: WatermarkMode.disabled.index,
+    );
     return WatermarkMode.values.elementAtOrNull(index) ??
         WatermarkMode.disabled;
   }
