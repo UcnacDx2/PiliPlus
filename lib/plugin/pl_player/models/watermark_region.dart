@@ -51,7 +51,7 @@ class WatermarkRegion {
     var rightPx = min(width - 1, (right * width).ceil());
     var bottomPx = min(height - 1, (bottom * height).ceil());
 
-    // delogo behaves more consistently with even dimensions.
+    // Keep legacy pixel mappings aligned for any non-shader caller.
     x -= x.isOdd ? 1 : 0;
     y -= y.isOdd ? 1 : 0;
     rightPx += (rightPx - x).isOdd ? 1 : 0;

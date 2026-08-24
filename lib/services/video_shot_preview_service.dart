@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:math' show max;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -131,6 +132,29 @@ abstract final class VideoShotPreviewService {
     });
   }
 
+  /// Returns evenly distributed frames from Bilibili's videoshot sprites.
+  ///
+  /// Unlike [resolve], this path is intended for temporal analysis. It keeps
+  /// all selected frames, does not reject dark frames and does not retain the
+  /// decoded results in the cover-preview cache.
+  static Future<List<VideoShotPreview>> resolveFrames({
+    required String bvid,
+    required int cid,
+    int count = 8,
+  }) async {
+    if (bvid.isEmpty || cid <= 0 || count <= 0) return const [];
+    try {
+      return await _metadataGate.run(() async {
+        final state = await VideoHttp.videoshot(bvid: bvid, cid: cid);
+        final data = state.dataOrNull;
+        if (data == null || !_isValid(data)) return const [];
+        return _spriteGate.run(() => _resolveFramesFromMetadata(data, count));
+      });
+    } catch (_) {
+      return const [];
+    }
+  }
+
   static bool _isValid(VideoShotData data) =>
       data.image.isNotEmpty &&
       data.index.isNotEmpty &&
@@ -190,6 +214,140 @@ abstract final class VideoShotPreviewService {
     return candidates;
   }
 
+  /// Pure coordinate mapping used by watermark analysis and unit tests.
+  static List<VideoShotFrameLocation> evenlySpacedLocations(
+    VideoShotData data,
+    int count,
+  ) {
+    if (count <= 0 ||
+        data.index.isEmpty ||
+        data.image.isEmpty ||
+        data.totalPerImage <= 0) {
+      return const [];
+    }
+    final available = data.index.length
+        .clamp(0, data.image.length * data.totalPerImage)
+        .toInt();
+    if (available == 0) return const [];
+
+    final candidates = <VideoShotFrameLocation>[];
+    final seen = <int>{};
+    for (var sample = 0; sample < count; sample++) {
+      final ratio = (sample + 1) / (count + 1);
+      final frameIndex = ((available - 1) * ratio).round();
+      if (!seen.add(frameIndex)) continue;
+      final pageIndex = frameIndex ~/ data.totalPerImage;
+      final indexInPage = frameIndex % data.totalPerImage;
+      candidates.add(
+        VideoShotFrameLocation(
+          spriteUrl: data.image[pageIndex],
+          frameIndex: frameIndex,
+          timestamp: data.index[frameIndex],
+          column: indexInPage % data.imgXLen,
+          row: indexInPage ~/ data.imgXLen,
+        ),
+      );
+    }
+    return candidates;
+  }
+
+  static Future<List<VideoShotPreview>> _resolveFramesFromMetadata(
+    VideoShotData data,
+    int count,
+  ) async {
+    final locations = evenlySpacedLocations(data, count);
+    final bySprite = <String, List<VideoShotFrameLocation>>{};
+    for (final location in locations) {
+      bySprite.putIfAbsent(location.spriteUrl, () => []).add(location);
+    }
+
+    final decodedByIndex = <int, VideoShotPreview>{};
+    for (final entry in bySprite.entries) {
+      try {
+        final response = await Request.dio.get<List<int>>(
+          entry.key,
+          options: Options(
+            responseType: ResponseType.bytes,
+            receiveTimeout: const Duration(seconds: 12),
+          ),
+        );
+        final bytes = response.data;
+        if (bytes == null || bytes.isEmpty) continue;
+        final decoded = await _decodeSpriteFrames(
+          Uint8List.fromList(bytes),
+          data,
+          entry.value,
+        );
+        for (final frame in decoded) {
+          decodedByIndex[frame.frameIndex] = frame;
+        }
+      } catch (_) {
+        // Other sprite pages may still provide enough frames for detection.
+      }
+    }
+    return [
+      for (final location in locations)
+        if (decodedByIndex[location.frameIndex] case final frame?) frame,
+    ];
+  }
+
+  static Future<List<VideoShotPreview>> _decodeSpriteFrames(
+    Uint8List bytes,
+    VideoShotData data,
+    List<VideoShotFrameLocation> candidates,
+  ) async {
+    ui.Codec? codec;
+    ui.Image? sprite;
+    try {
+      codec = await ui.instantiateImageCodec(bytes);
+      sprite = (await codec.getNextFrame()).image;
+      final sourceWidth = data.imgXSize > 0
+          ? data.imgXSize
+          : sprite.width / data.imgXLen;
+      final sourceHeight = data.imgYSize > 0
+          ? data.imgYSize
+          : sprite.height / data.imgYLen;
+      final scaleX = sprite.width / (data.imgXLen * sourceWidth);
+      final scaleY = sprite.height / (data.imgYLen * sourceHeight);
+      final results = <VideoShotPreview>[];
+
+      for (final candidate in candidates) {
+        final source = ui.Rect.fromLTWH(
+          candidate.column * sourceWidth * scaleX,
+          candidate.row * sourceHeight * scaleY,
+          sourceWidth * scaleX,
+          sourceHeight * scaleY,
+        );
+        final cropped = await _crop(
+          sprite,
+          source,
+          targetWidth: 480,
+          targetHeight: max(1, (sourceHeight * 480 / sourceWidth).round()),
+        );
+        try {
+          final png = await cropped.toByteData(format: ui.ImageByteFormat.png);
+          if (png == null) continue;
+          results.add(
+            VideoShotPreview(
+              bytes: png.buffer.asUint8List(
+                png.offsetInBytes,
+                png.lengthInBytes,
+              ),
+              timestamp: candidate.timestamp,
+              frameIndex: candidate.frameIndex,
+            ),
+          );
+        } finally {
+          cropped.dispose();
+        }
+      }
+      return results;
+    } finally {
+      sprite?.dispose();
+      codec?.dispose();
+    }
+  }
+
   static Future<VideoShotPreview?> _decodeSprite(
     Uint8List bytes,
     VideoShotData data,
@@ -240,7 +398,12 @@ abstract final class VideoShotPreviewService {
     }
   }
 
-  static Future<ui.Image> _crop(ui.Image source, ui.Rect sourceRect) {
+  static Future<ui.Image> _crop(
+    ui.Image source,
+    ui.Rect sourceRect, {
+    int targetWidth = _targetWidth,
+    int targetHeight = _targetHeight,
+  }) {
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
     canvas.drawImageRect(
@@ -249,14 +412,14 @@ abstract final class VideoShotPreviewService {
       ui.Rect.fromLTWH(
         0,
         0,
-        _targetWidth.toDouble(),
-        _targetHeight.toDouble(),
+        targetWidth.toDouble(),
+        targetHeight.toDouble(),
       ),
       ui.Paint()..filterQuality = ui.FilterQuality.medium,
     );
     final picture = recorder.endRecording();
     try {
-      return picture.toImage(_targetWidth, _targetHeight);
+      return picture.toImage(targetWidth, targetHeight);
     } finally {
       picture.dispose();
     }
