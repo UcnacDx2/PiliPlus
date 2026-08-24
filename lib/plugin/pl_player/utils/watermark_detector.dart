@@ -66,6 +66,12 @@ abstract final class WatermarkDetector {
     );
   }
 
+  /// Produces compact failure telemetry without retaining or writing frames.
+  /// This is intentionally run only after advanced detection returns empty.
+  static Future<String> diagnoseAdvanced(List<WatermarkFrame> frames) {
+    return Isolate.run(() => _diagnoseAdvanced(frames));
+  }
+
   // Edge template of the standard bilibili word mark at the 480 px analysis
   // width. Matching edges rather than colors keeps it useful on light, dark,
   // and semi-transparent backgrounds.
@@ -237,6 +243,58 @@ abstract final class WatermarkDetector {
       }
     }
     return result;
+  }
+
+  static String _diagnoseAdvanced(List<WatermarkFrame> frames) {
+    if (frames.isEmpty) return 'frames=0';
+    if (!_sameSize(frames)) return 'frame-size=mismatch';
+    final width = frames.first.width;
+    final height = frames.first.height;
+    var deltaTotal = 0;
+    var deltaSamples = 0;
+    for (var frameIndex = 1; frameIndex < frames.length; frameIndex++) {
+      final previous = frames[frameIndex - 1].luma;
+      final current = frames[frameIndex].luma;
+      for (var pixel = 0; pixel < current.length; pixel += 8) {
+        deltaTotal += (current[pixel] - previous[pixel]).abs();
+        deltaSamples++;
+      }
+    }
+    final meanDelta = deltaSamples == 0 ? 0 : deltaTotal / deltaSamples;
+    final details = <String>[
+      'size=${width}x$height',
+      'meanDelta=${meanDelta.toStringAsFixed(1)}',
+    ];
+
+    for (final corner in _Corner.values) {
+      final roi = _cornerRoi(width, height, corner, 0.30, 0.25);
+      var mask = _stableMask(frames, roi);
+      final stablePixels = mask.where((value) => value != 0).length;
+      mask = _dilate(mask, roi.width, roi.height, 2, 2);
+      mask = _dilate(mask, roi.width, roi.height, 1, 1);
+      final closed = _erode(
+        _dilate(mask, roi.width, roi.height, 4, 2),
+        roi.width,
+        roi.height,
+        4,
+        2,
+      );
+      final closedPixels = closed.where((value) => value != 0).length;
+      final components = _components(closed, roi.width, roi.height)
+        ..sort((a, b) => b.area.compareTo(a.area));
+      final largest = components
+          .take(3)
+          .map(
+            (item) =>
+                '${item.left},${item.top},${item.width}x${item.height},${item.area}',
+          )
+          .join('|');
+      details.add(
+        '${corner.name}{stable=$stablePixels,closed=$closedPixels,'
+        'count=${components.length},largest=[$largest]}',
+      );
+    }
+    return details.join(';');
   }
 
   static bool _sameSize(List<WatermarkFrame> frames) => frames.every(

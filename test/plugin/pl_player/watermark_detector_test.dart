@@ -58,6 +58,26 @@ void main() {
 
     expect(regions, isEmpty);
   });
+
+  test('advanced diagnostics reports frame diversity and corner masks', () async {
+    const width = 48;
+    const height = 27;
+    final frames = List.generate(
+      8,
+      (index) => WatermarkFrame(
+        width: width,
+        height: height,
+        luma: Uint8List(width * height)..fillRange(0, width * height, index * 8),
+      ),
+    );
+
+    final diagnostics = await WatermarkDetector.diagnoseAdvanced(frames);
+
+    expect(diagnostics, contains('size=48x27'));
+    expect(diagnostics, contains('meanDelta='));
+    expect(diagnostics, contains('topLeft{stable='));
+    expect(diagnostics, contains('bottomRight{stable='));
+  });
 }
 
 void _drawLogo(
