@@ -19,6 +19,8 @@ void main() {
     expect(shader, contains('//!BIND HOOKED'));
     expect(shader, contains('vec4(0.870000, 0.005000, 0.990000, 0.080000)'));
     expect(shader, contains('HOOKED_tex'));
+    expect(shader, contains('if (rect.y <= pad.y) vertical = bottom;'));
+    expect(shader, contains('if (rect.z >= 1.0 - pad.x) horizontal = left;'));
     expect(shader, contains('mix(top, bottom, position.y)'));
     expect(shader, isNot(contains('#version 330')));
     expect(shader, isNot(contains('delogo')));

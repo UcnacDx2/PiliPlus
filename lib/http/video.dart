@@ -64,6 +64,23 @@ abstract final class VideoHttp {
   static Future<String?> getVideoFirstFrame(String? bvid) async =>
       (await getVideoFirstFrameInfo(bvid))?.url;
 
+  /// Seeds the shared lookup cache when an enclosing API already supplied a
+  /// first-frame URL, avoiding a later `/x/player/pagelist` request.
+  static void rememberVideoFirstFrame({
+    required String? bvid,
+    required String? url,
+    int? cid,
+  }) {
+    if (bvid == null || bvid.isEmpty || url == null || url.isEmpty) return;
+    _firstFrameCache.remove(bvid);
+    _firstFrameCache[bvid] = Future.value(
+      VideoFirstFrameInfo(url: url, cid: cid),
+    );
+    while (_firstFrameCache.length > _firstFrameCacheMaxEntries) {
+      _firstFrameCache.remove(_firstFrameCache.keys.first);
+    }
+  }
+
   static Future<VideoFirstFrameInfo?> getVideoFirstFrameInfo(String? bvid) {
     if (bvid == null || bvid.isEmpty) {
       return Future<VideoFirstFrameInfo?>.value();

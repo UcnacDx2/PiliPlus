@@ -35,6 +35,7 @@ import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/watermark_detector.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/watermark_filter.dart';
+import 'package:PiliPlus/services/first_frame_watermark_service.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/services/video_shot_preview_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -989,12 +990,56 @@ class PlPlayerController with BlockConfigMixin {
     final player = _videoPlayerController;
     if (bvid == null || videoCid == null || player == null) return;
 
+    // These are independent signals: the first frame locates Bilibili's
+    // creator overlay, while temporal videoshots locate source watermarks such
+    // as broadcaster logos. Start both immediately and merge their regions.
+    final firstFrameFuture = FirstFrameWatermarkService.detect(bvid);
+    final videoShotFuture = _detectVideoShotWatermarks(
+      generation,
+      bvid,
+      videoCid,
+      player,
+    );
+
+    final firstFrameRegion = await firstFrameFuture;
+    if (!_isCurrentWatermarkTask(generation, player)) return;
+
+    // Apply the cheap first-frame result as soon as it is ready. The temporal
+    // result will replace it with the merged set below.
+    if (firstFrameRegion != null) {
+      await _applyDetectedWatermarks(
+        generation,
+        player,
+        [firstFrameRegion],
+      );
+    }
+
+    final videoShotRegions = await videoShotFuture;
+    if (!_isCurrentWatermarkTask(generation, player)) return;
+    final regions = WatermarkDetector.mergeRegions([
+      if (firstFrameRegion != null) firstFrameRegion,
+      ...videoShotRegions,
+    ]);
+    if (regions.isEmpty) return;
+    if (firstFrameRegion != null && videoShotRegions.isEmpty) return;
+
+    if (await _applyDetectedWatermarks(generation, player, regions)) {
+      SmartDialog.showToast('已处理 ${regions.length} 处固定水印');
+    }
+  }
+
+  Future<List<WatermarkRegion>> _detectVideoShotWatermarks(
+    int generation,
+    String bvid,
+    int videoCid,
+    Player player,
+  ) async {
     try {
       final previews = await VideoShotPreviewService.resolveFrames(
         bvid: bvid,
         cid: videoCid,
       );
-      if (generation != _watermarkGeneration) return;
+      if (!_isCurrentWatermarkTask(generation, player)) return const [];
 
       final frames = <WatermarkFrame>[];
       for (final preview in previews) {
@@ -1015,23 +1060,17 @@ class PlPlayerController with BlockConfigMixin {
         Utils.reportError(
           'watermark: videoshot returned only ${frames.length} usable frames',
         );
-        return;
+        return const [];
       }
 
       final regions = await WatermarkDetector.detect(
         WatermarkMode.advanced,
         frames,
       );
-      if (generation != _watermarkGeneration ||
-          !identical(player, _videoPlayerController)) {
-        return;
-      }
+      if (!_isCurrentWatermarkTask(generation, player)) return const [];
       if (regions.isEmpty) {
         final diagnostics = await WatermarkDetector.diagnoseAdvanced(frames);
-        if (generation != _watermarkGeneration ||
-            !identical(player, _videoPlayerController)) {
-          return;
-        }
+        if (!_isCurrentWatermarkTask(generation, player)) return const [];
         final shots = previews
             .map((item) => '${item.frameIndex}@${item.timestamp}')
             .join(',');
@@ -1039,7 +1078,7 @@ class PlPlayerController with BlockConfigMixin {
           'watermark: no stable candidate (advanced videoshot, '
           '${frames.length} frames); shots=[$shots]; $diagnostics',
         );
-        return;
+        return const [];
       }
 
       final videoParams = player.state.videoParams;
@@ -1050,13 +1089,13 @@ class PlPlayerController with BlockConfigMixin {
           'watermark: unsupported video geometry '
           '(rotate=$rotation, par=$pixelAspectRatio)',
         );
-        return;
+        return const [];
       }
       final videoWidth = videoParams.w ??
           (player.state.width == 0 ? (width ?? 0) : player.state.width);
       final videoHeight = videoParams.h ??
           (player.state.height == 0 ? (height ?? 0) : player.state.height);
-      if (videoWidth <= 0 || videoHeight <= 0) return;
+      if (videoWidth <= 0 || videoHeight <= 0) return const [];
       final previewAspect = frames.first.width / frames.first.height;
       final videoAspect = videoWidth / videoHeight;
       if (((previewAspect - videoAspect).abs() / videoAspect) > 0.03) {
@@ -1064,19 +1103,9 @@ class PlPlayerController with BlockConfigMixin {
           'watermark: videoshot aspect ratio mismatch '
           '($previewAspect vs $videoAspect)',
         );
-        return;
+        return const [];
       }
-
-      await WatermarkFilter.apply(
-        player,
-        regions,
-      );
-      if (generation != _watermarkGeneration ||
-          !identical(player, _videoPlayerController)) {
-        return;
-      }
-      _activeWatermarkRegions = regions;
-      SmartDialog.showToast('已处理 ${regions.length} 处固定水印');
+      return regions;
     } catch (error, stackTrace) {
       Utils.reportError(
         'videoshot watermark detection failed: $error',
@@ -1086,6 +1115,34 @@ class PlPlayerController with BlockConfigMixin {
         debugPrint('videoshot watermark detection failed: $error');
         debugPrint(stackTrace.toString());
       }
+      return const [];
+    }
+  }
+
+  bool _isCurrentWatermarkTask(int generation, Player player) =>
+      generation == _watermarkGeneration &&
+      identical(player, _videoPlayerController);
+
+  Future<bool> _applyDetectedWatermarks(
+    int generation,
+    Player player,
+    List<WatermarkRegion> regions,
+  ) async {
+    if (!_isCurrentWatermarkTask(generation, player) || regions.isEmpty) {
+      return false;
+    }
+    try {
+      await WatermarkFilter.apply(player, regions);
+      if (!_isCurrentWatermarkTask(generation, player)) return false;
+      _activeWatermarkRegions = regions;
+      return true;
+    } catch (error, stackTrace) {
+      Utils.reportError('advanced watermark filter failed: $error', stackTrace);
+      if (kDebugMode) {
+        debugPrint('advanced watermark filter failed: $error');
+        debugPrint(stackTrace.toString());
+      }
+      return false;
     }
   }
 
