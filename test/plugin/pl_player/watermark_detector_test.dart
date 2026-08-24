@@ -71,6 +71,28 @@ void main() {
     expect(regions.single.bottom, greaterThan(0.9));
   });
 
+  test('advanced mode groups nearby watermark parts on the same line', () async {
+    const width = 480;
+    const height = 270;
+    final frames = <WatermarkFrame>[];
+    for (var frameIndex = 0; frameIndex < 8; frameIndex++) {
+      final pixels = Uint8List(width * height)
+        ..fillRange(0, width * height, 30 + frameIndex * 20);
+      _drawLogo(pixels, width, 340, 8, 413, 24);
+      _drawLogo(pixels, width, 436, 8, 461, 13);
+      frames.add(WatermarkFrame(width: width, height: height, luma: pixels));
+    }
+
+    final regions = await WatermarkDetector.detect(
+      WatermarkMode.advanced,
+      frames,
+    );
+
+    expect(regions, hasLength(1));
+    expect(regions.single.left, lessThan(0.75));
+    expect(regions.single.right, greaterThan(0.9));
+  });
+
   test('disabled mode does not analyze frames', () async {
     final regions = await WatermarkDetector.detect(
       WatermarkMode.disabled,
