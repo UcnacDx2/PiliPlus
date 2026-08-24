@@ -54,7 +54,7 @@ abstract final class FirstFrameWatermarkService {
           targetWidth: 480,
         );
         image = (await codec.getNextFrame()).image;
-        final frame = await WatermarkFrame.fromImage(image);
+        final frame = await WatermarkFrame.fromImage(image, upscale: true);
         if (frame == null) return null;
         return WatermarkDetector.detectBilibiliAnchor(frame);
       } finally {

@@ -63,7 +63,7 @@ List<SettingsModel> get playSettings => [
     title: '水印处理',
     leading: const Icon(Icons.branding_watermark_outlined),
     value: () => Pref.watermarkMode,
-    items: WatermarkMode.values,
+    items: WatermarkMode.selectableValues,
     onSelected: (value, setState) => GStorage.setting
         .put(SettingBoxKey.watermarkMode, value.index)
         .whenComplete(setState),

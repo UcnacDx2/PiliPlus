@@ -941,7 +941,23 @@ class PlPlayerController with BlockConfigMixin {
       unawaited(_applyFixedWatermark(generation));
       return;
     }
+    if (mode == WatermarkMode.bilibiliAuto) {
+      unawaited(_detectBilibiliWatermark(generation));
+      return;
+    }
     unawaited(_detectAdvancedWatermark(generation));
+  }
+
+  Future<void> _detectBilibiliWatermark(int generation) async {
+    final bvid = _bvid;
+    final player = _videoPlayerController;
+    if (bvid == null || player == null) return;
+
+    final region = await FirstFrameWatermarkService.detect(bvid);
+    if (region == null || !_isCurrentWatermarkTask(generation, player)) return;
+    if (await _applyDetectedWatermarks(generation, player, [region])) {
+      SmartDialog.showToast('已处理 bilibili 水印');
+    }
   }
 
   Future<bool> _applyFixedWatermark(int generation) async {
@@ -990,41 +1006,55 @@ class PlPlayerController with BlockConfigMixin {
     final player = _videoPlayerController;
     if (bvid == null || videoCid == null || player == null) return;
 
-    // These are independent signals: the first frame locates Bilibili's
-    // creator overlay, while temporal videoshots locate source watermarks such
-    // as broadcaster logos. Start both immediately and merge their regions.
-    final firstFrameFuture = FirstFrameWatermarkService.detect(bvid);
-    final videoShotFuture = _detectVideoShotWatermarks(
-      generation,
-      bvid,
-      videoCid,
-      player,
-    );
+    // These independent branches publish as soon as each one completes. A
+    // slow first-frame request must never delay an already-finished temporal
+    // videoshot result (and vice versa).
+    WatermarkRegion? firstFrameRegion;
+    var videoShotRegions = const <WatermarkRegion>[];
+    var applyQueue = Future<void>.value();
 
-    final firstFrameRegion = await firstFrameFuture;
-    if (!_isCurrentWatermarkTask(generation, player)) return;
-
-    // Apply the cheap first-frame result as soon as it is ready. The temporal
-    // result will replace it with the merged set below.
-    if (firstFrameRegion != null) {
-      await _applyDetectedWatermarks(
-        generation,
-        player,
-        [firstFrameRegion],
-      );
+    Future<void> publish() {
+      final regions = WatermarkDetector.mergeRegions([
+        if (firstFrameRegion != null) firstFrameRegion!,
+        ...videoShotRegions,
+      ]);
+      if (regions.isEmpty) return Future.value();
+      applyQueue = applyQueue.then((_) async {
+        if (!_isCurrentWatermarkTask(generation, player)) return;
+        await _applyDetectedWatermarks(generation, player, regions);
+      });
+      return applyQueue;
     }
 
-    final videoShotRegions = await videoShotFuture;
-    if (!_isCurrentWatermarkTask(generation, player)) return;
-    final regions = WatermarkDetector.mergeRegions([
-      if (firstFrameRegion != null) firstFrameRegion,
-      ...videoShotRegions,
-    ]);
-    if (regions.isEmpty) return;
-    if (firstFrameRegion != null && videoShotRegions.isEmpty) return;
+    final firstFrameTask = () async {
+      firstFrameRegion = await FirstFrameWatermarkService.detect(bvid);
+      if (!_isCurrentWatermarkTask(generation, player) ||
+          firstFrameRegion == null) {
+        return;
+      }
+      await publish();
+    }();
+    final videoShotTask = () async {
+      videoShotRegions = await _detectVideoShotWatermarks(
+        generation,
+        bvid,
+        videoCid,
+        player,
+      );
+      if (!_isCurrentWatermarkTask(generation, player) ||
+          videoShotRegions.isEmpty) {
+        return;
+      }
+      await publish();
+    }();
 
-    if (await _applyDetectedWatermarks(generation, player, regions)) {
-      SmartDialog.showToast('已处理 ${regions.length} 处固定水印');
+    await Future.wait([firstFrameTask, videoShotTask]);
+    await applyQueue;
+    if (_isCurrentWatermarkTask(generation, player) &&
+        _activeWatermarkRegions.isNotEmpty) {
+      SmartDialog.showToast(
+        '已处理 ${_activeWatermarkRegions.length} 处固定水印',
+      );
     }
   }
 

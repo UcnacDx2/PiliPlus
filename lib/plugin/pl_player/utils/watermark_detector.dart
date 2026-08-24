@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:PiliPlus/models/common/watermark_mode.dart';
-import 'package:PiliPlus/models/common/watermark_position.dart';
 import 'package:PiliPlus/plugin/pl_player/models/watermark_region.dart';
 
 class WatermarkFrame {
@@ -21,8 +20,9 @@ class WatermarkFrame {
   static Future<WatermarkFrame?> fromImage(
     ui.Image source, {
     int targetWidth = 480,
+    bool upscale = false,
   }) async {
-    final width = targetWidth;
+    final width = upscale ? targetWidth : min(targetWidth, source.width);
     final height = max(1, (source.height * width / source.width).round());
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
@@ -97,6 +97,7 @@ abstract final class WatermarkDetector {
     return Isolate.run(
       () => switch (mode) {
         WatermarkMode.bilibili => _detectBilibili(frames),
+        WatermarkMode.bilibiliAuto => _detectBilibili(frames),
         WatermarkMode.advanced => _detectAdvanced(frames),
         WatermarkMode.disabled => const <WatermarkRegion>[],
       },
@@ -188,13 +189,69 @@ abstract final class WatermarkDetector {
       return null;
     }
 
-    final fixed = WatermarkRegion.fixed(best.corner.position);
+    return _creatorRegionFromAnchor(
+      frame,
+      edge,
+      best,
+      templateWidth,
+      templateHeight,
+    );
+  }
+
+  static WatermarkRegion _creatorRegionFromAnchor(
+    WatermarkFrame frame,
+    Uint8List edge,
+    _AnchorMatch anchor,
+    int templateWidth,
+    int templateHeight,
+  ) {
+    final width = frame.width;
+    final height = frame.height;
+    final top = max(1, anchor.y - 4);
+    final bottom = min(height - 1, anchor.y + templateHeight + 4);
+    final right = min(width, anchor.x + templateWidth + 4);
+    final scanLimit = max(0, right - (width * 0.44).round());
+    final minimumActiveEdges = max(3, ((bottom - top + 1) * 0.18).round());
+    final maxBlankRun = max(7, (width * 0.015).round());
+    var left = anchor.x;
+    var blankRun = 0;
+    var stoppedAtBlank = false;
+
+    // The standard creator layout places the nickname immediately before the
+    // bilibili word mark. Follow text-like edge columns to the left and stop at
+    // the first meaningful blank gap instead of assuming a 16-character name.
+    for (var x = anchor.x - 1; x >= scanLimit; x--) {
+      var edgeCount = 0;
+      for (var y = top; y <= bottom; y++) {
+        if (edge[y * width + x] != 0) edgeCount++;
+      }
+      if (edgeCount >= minimumActiveEdges) {
+        left = x;
+        blankRun = 0;
+      } else {
+        blankRun++;
+        if (blankRun >= maxBlankRun) {
+          stoppedAtBlank = true;
+          break;
+        }
+      }
+    }
+
+    // A continuously textured background can contain edges across the entire
+    // scan range. In that ambiguous case keep only the trusted anchor instead
+    // of falling back to a wide maximum-name rectangle.
+    if (!stoppedAtBlank && left <= scanLimit + 1) {
+      left = anchor.x;
+    }
+
+    final paddingX = max(4, (width * 0.008).round());
+    final paddingY = max(3, (height * 0.01).round());
     return WatermarkRegion(
-      left: fixed.left,
-      top: fixed.top,
-      right: fixed.right,
-      bottom: fixed.bottom,
-      confidence: best.score,
+      left: max(0, left - paddingX) / width,
+      top: max(0, top - paddingY) / height,
+      right: min(width, right + paddingX) / width,
+      bottom: min(height, bottom + paddingY) / height,
+      confidence: anchor.score,
     );
   }
 
@@ -655,15 +712,6 @@ class _AnchorMatch {
   final int y;
   final double score;
   final double noise;
-}
-
-extension on _Corner {
-  WatermarkPosition get position => switch (this) {
-    _Corner.topLeft => WatermarkPosition.topLeft,
-    _Corner.topRight => WatermarkPosition.topRight,
-    _Corner.bottomLeft => WatermarkPosition.bottomLeft,
-    _Corner.bottomRight => WatermarkPosition.bottomRight,
-  };
 }
 
 class _IntRect {
