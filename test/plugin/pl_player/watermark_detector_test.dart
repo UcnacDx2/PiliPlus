@@ -27,6 +27,29 @@ void main() {
     expect(regions.any((region) => region.right > 0.9), isTrue);
   });
 
+  test('advanced mode accepts a logo visible in five of eight frames', () async {
+    const width = 480;
+    const height = 270;
+    final frames = <WatermarkFrame>[];
+    for (var frameIndex = 0; frameIndex < 8; frameIndex++) {
+      final pixels = Uint8List(width * height)
+        ..fillRange(0, width * height, 35 + frameIndex * 18);
+      if (const {0, 1, 2, 3, 5}.contains(frameIndex)) {
+        _drawLogo(pixels, width, 8, 8, 82, 30);
+      }
+      frames.add(WatermarkFrame(width: width, height: height, luma: pixels));
+    }
+
+    final regions = await WatermarkDetector.detect(
+      WatermarkMode.advanced,
+      frames,
+    );
+
+    expect(regions, hasLength(1));
+    expect(regions.single.left, lessThan(0.1));
+    expect(regions.single.top, lessThan(0.1));
+  });
+
   test('disabled mode does not analyze frames', () async {
     final regions = await WatermarkDetector.detect(
       WatermarkMode.disabled,
