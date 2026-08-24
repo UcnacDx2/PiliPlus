@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:PiliPlus/models/common/watermark_mode.dart';
+import 'package:PiliPlus/models/common/watermark_position.dart';
 import 'package:PiliPlus/plugin/pl_player/models/watermark_region.dart';
 
 class WatermarkFrame {
@@ -21,7 +22,7 @@ class WatermarkFrame {
     ui.Image source, {
     int targetWidth = 480,
   }) async {
-    final width = min(targetWidth, source.width);
+    final width = targetWidth;
     final height = max(1, (source.height * width / source.width).round());
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
@@ -50,6 +51,42 @@ class WatermarkFrame {
 }
 
 abstract final class WatermarkDetector {
+  /// Detects the standard creator `bilibili` word mark from one first-frame
+  /// thumbnail. This deliberately returns a generous fixed creator region;
+  /// the advanced temporal detector remains responsible for source watermarks.
+  static Future<WatermarkRegion?> detectBilibiliAnchor(
+    WatermarkFrame frame,
+  ) => Isolate.run(() => _detectSingleBilibiliAnchor(frame));
+
+  /// Combines independently detected regions without stacking filters over
+  /// substantially the same pixels.
+  static List<WatermarkRegion> mergeRegions(
+    Iterable<WatermarkRegion> regions,
+  ) {
+    final result = <WatermarkRegion>[];
+    for (final region in regions) {
+      final area = _regionArea(region);
+      if (area <= 0) continue;
+      final overlapIndex = result.indexWhere((item) {
+        final intersection = _intersectionArea(item, region);
+        return intersection / min(_regionArea(item), area) >= 0.5;
+      });
+      if (overlapIndex == -1) {
+        result.add(region);
+        continue;
+      }
+      final current = result[overlapIndex];
+      result[overlapIndex] = WatermarkRegion(
+        left: min(current.left, region.left),
+        top: min(current.top, region.top),
+        right: max(current.right, region.right),
+        bottom: max(current.bottom, region.bottom),
+        confidence: max(current.confidence, region.confidence),
+      );
+    }
+    return result;
+  }
+
   static Future<List<WatermarkRegion>> detect(
     WatermarkMode mode,
     List<WatermarkFrame> frames,
@@ -96,6 +133,71 @@ abstract final class WatermarkDetector {
     '...###...............##..............',
   ];
 
+  static WatermarkRegion? _detectSingleBilibiliAnchor(WatermarkFrame frame) {
+    final width = frame.width;
+    final height = frame.height;
+    if (width < 160 || height < 90) return null;
+
+    final template = Uint8List.fromList([
+      for (final row in _bilibiliTemplate)
+        for (final char in row.codeUnits) char == 35 ? 1 : 0,
+    ]);
+    final templateWidth = _bilibiliTemplate.first.length;
+    final templateHeight = _bilibiliTemplate.length;
+    final templateCount = template.where((value) => value != 0).length;
+    final backgroundCount = template.length - templateCount;
+    final edge = _edgeMap(frame, threshold: 8);
+    final candidates = <_AnchorMatch>[];
+
+    for (final corner in _Corner.values) {
+      final roi = _cornerRoi(width, height, corner, 0.25, 0.18);
+      var best = _AnchorMatch(corner, 0, 0, 0, 1);
+      for (var y = roi.top; y <= roi.bottom - templateHeight; y++) {
+        for (var x = roi.left; x <= roi.right - templateWidth; x++) {
+          var intersection = 0;
+          var backgroundEdges = 0;
+          for (var ty = 0; ty < templateHeight; ty++) {
+            final frameOffset = (y + ty) * width + x;
+            final templateOffset = ty * templateWidth;
+            for (var tx = 0; tx < templateWidth; tx++) {
+              if (edge[frameOffset + tx] == 0) continue;
+              if (template[templateOffset + tx] != 0) {
+                intersection++;
+              } else {
+                backgroundEdges++;
+              }
+            }
+          }
+          final score = intersection / templateCount;
+          final noise = backgroundEdges / backgroundCount;
+          if (score > best.score ||
+              (score == best.score && noise < best.noise)) {
+            best = _AnchorMatch(corner, x, y, score, noise);
+          }
+        }
+      }
+      candidates.add(best);
+    }
+
+    candidates.sort((a, b) => b.score.compareTo(a.score));
+    final best = candidates.first;
+    final runnerUp = candidates.length > 1 ? candidates[1].score : 0.0;
+    if (best.score < 0.88 ||
+        best.noise > 0.65 ||
+        best.score - runnerUp < 0.20) {
+      return null;
+    }
+
+    final fixed = WatermarkRegion.fixed(best.corner.position);
+    return WatermarkRegion(
+      left: fixed.left,
+      top: fixed.top,
+      right: fixed.right,
+      bottom: fixed.bottom,
+      confidence: best.score,
+    );
+  }
+
   static List<WatermarkRegion> _detectBilibili(List<WatermarkFrame> frames) {
     if (!_sameSize(frames) || frames.length < 3) return const [];
     final width = frames.first.width;
@@ -139,7 +241,7 @@ abstract final class WatermarkDetector {
         }
         if (bestScore >= 0.78) {
           matches.add(
-            _AnchorMatch(corner, bestX, bestY, bestScore),
+            _AnchorMatch(corner, bestX, bestY, bestScore, 0),
           );
         }
       }
@@ -241,11 +343,13 @@ abstract final class WatermarkDetector {
         }
         if (component.area <= bestArea) continue;
         bestArea = component.area;
+        final paddingX = max(4, (width * 0.015).round());
+        final paddingY = max(3, (height * 0.015).round());
         bestRegion = WatermarkRegion(
-          left: max(0, x1 - 4) / width,
-          top: max(0, y1 - 3) / height,
-          right: min(width, x2 + 4) / width,
-          bottom: min(height, y2 + 3) / height,
+          left: max(0, x1 - paddingX) / width,
+          top: max(0, y1 - paddingY) / height,
+          right: min(width, x2 + paddingX) / width,
+          bottom: min(height, y2 + paddingY) / height,
           confidence: min(1, component.area / (0.006 * width * height)),
         );
       }
@@ -316,6 +420,23 @@ abstract final class WatermarkDetector {
     (frame) =>
         frame.width == frames.first.width && frame.height == frames.first.height,
   );
+
+  static double _regionArea(WatermarkRegion region) =>
+      max(0.0, region.right - region.left) *
+      max(0.0, region.bottom - region.top);
+
+  static double _intersectionArea(
+    WatermarkRegion first,
+    WatermarkRegion second,
+  ) =>
+      max(
+        0.0,
+        min(first.right, second.right) - max(first.left, second.left),
+      ) *
+      max(
+        0.0,
+        min(first.bottom, second.bottom) - max(first.top, second.top),
+      );
 
   static Uint8List _edgeMap(WatermarkFrame frame, {required int threshold}) {
     final width = frame.width;
@@ -528,11 +649,21 @@ abstract final class WatermarkDetector {
 enum _Corner { topLeft, topRight, bottomLeft, bottomRight }
 
 class _AnchorMatch {
-  const _AnchorMatch(this.corner, this.x, this.y, this.score);
+  const _AnchorMatch(this.corner, this.x, this.y, this.score, this.noise);
   final _Corner corner;
   final int x;
   final int y;
   final double score;
+  final double noise;
+}
+
+extension on _Corner {
+  WatermarkPosition get position => switch (this) {
+    _Corner.topLeft => WatermarkPosition.topLeft,
+    _Corner.topRight => WatermarkPosition.topRight,
+    _Corner.bottomLeft => WatermarkPosition.bottomLeft,
+    _Corner.bottomRight => WatermarkPosition.bottomRight,
+  };
 }
 
 class _IntRect {

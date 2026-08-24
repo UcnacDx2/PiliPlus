@@ -63,6 +63,11 @@ class _FirstFrameOrCoverState extends State<FirstFrameOrCover> {
 
   Future<void> _inspect() async {
     final generation = ++_generation;
+    VideoHttp.rememberVideoFirstFrame(
+      bvid: widget.bvid,
+      url: widget.firstFrameUrl,
+      cid: widget.cid,
+    );
     if (!Pref.useFirstFrameAsCover) return;
 
     var firstFrame = widget.firstFrameUrl;

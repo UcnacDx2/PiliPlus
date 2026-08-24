@@ -1,10 +1,72 @@
 import 'dart:typed_data';
 
 import 'package:PiliPlus/models/common/watermark_mode.dart';
+import 'package:PiliPlus/plugin/pl_player/models/watermark_region.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/watermark_detector.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('single first frame anchors a clear bilibili mark', () async {
+    const width = 480;
+    const height = 270;
+    final pixels = Uint8List(width * height)..fillRange(0, width * height, 96);
+    _drawBilibiliTemplate(pixels, width, 435, 8);
+
+    final region = await WatermarkDetector.detectBilibiliAnchor(
+      WatermarkFrame(width: width, height: height, luma: pixels),
+    );
+
+    expect(region, isNotNull);
+    expect(region!.left, greaterThan(0.5));
+    expect(region.top, lessThan(0.1));
+    expect(region.right, greaterThan(0.95));
+  });
+
+  test('single first frame rejects ambiguous texture in every corner', () async {
+    const width = 480;
+    const height = 270;
+    final pixels = Uint8List(width * height);
+    for (var index = 0; index < pixels.length; index++) {
+      pixels[index] = (index * 37 + (index ~/ width) * 17) & 255;
+    }
+
+    final region = await WatermarkDetector.detectBilibiliAnchor(
+      WatermarkFrame(width: width, height: height, luma: pixels),
+    );
+
+    expect(region, isNull);
+  });
+
+  test('independent detectors merge substantially overlapping regions', () {
+    final regions = WatermarkDetector.mergeRegions(const [
+      WatermarkRegion(
+        left: 0.01,
+        top: 0.01,
+        right: 0.45,
+        bottom: 0.12,
+        confidence: 0.9,
+      ),
+      WatermarkRegion(
+        left: 0.03,
+        top: 0.02,
+        right: 0.2,
+        bottom: 0.1,
+        confidence: 0.8,
+      ),
+      WatermarkRegion(
+        left: 0.75,
+        top: 0.02,
+        right: 0.95,
+        bottom: 0.1,
+        confidence: 0.7,
+      ),
+    ]);
+
+    expect(regions, hasLength(2));
+    expect(regions.any((region) => region.left == 0.01), isTrue);
+    expect(regions.any((region) => region.left == 0.75), isTrue);
+  });
+
   test('advanced mode keeps two independent persistent corner overlays', () async {
     const width = 480;
     const height = 270;
@@ -164,6 +226,42 @@ void main() {
     expect(diagnostics, contains('topLeft{stable='));
     expect(diagnostics, contains('bottomRight{stable='));
   });
+}
+
+const _bilibiliTemplate = [
+  '.###...............###...............',
+  '#####........##...#####........##....',
+  '#####.......####.######.......####...',
+  '#####.......####..#####......#####...',
+  '#####.....######.######.....######.#.',
+  '#####....###########.##....#########.',
+  '.####....##############....##########',
+  '.####....##############....###.######',
+  '.####.....####.#.#.####....##########',
+  '.#######..###############..######.###',
+  '.##.#########.###################.###',
+  '.######################.########.####',
+  '.###############################.####',
+  '.################.#############.#####',
+  '.###.################################',
+  '..##########################.########',
+  '..#######...#....#..#######...#...##.',
+  '...###...............##..............',
+];
+
+void _drawBilibiliTemplate(
+  Uint8List pixels,
+  int stride,
+  int left,
+  int top,
+) {
+  for (var y = 0; y < _bilibiliTemplate.length; y++) {
+    for (var x = 0; x < _bilibiliTemplate[y].length; x++) {
+      if (_bilibiliTemplate[y].codeUnitAt(x) == 35) {
+        pixels[(top + y) * stride + left + x] = (x * 37 + y * 17) & 255;
+      }
+    }
+  }
 }
 
 void _drawLogo(

@@ -52,6 +52,10 @@ vec4 piliplus_fill(vec2 uv, vec4 rect) {
 
   vec4 horizontal = mix(left, right, position.x);
   vec4 vertical = mix(top, bottom, position.y);
+  if (rect.x <= pad.x) horizontal = right;
+  if (rect.z >= 1.0 - pad.x) horizontal = left;
+  if (rect.y <= pad.y) vertical = bottom;
+  if (rect.w >= 1.0 - pad.y) vertical = top;
   float edgeX = min(position.x, 1.0 - position.x);
   float edgeY = min(position.y, 1.0 - position.y);
   float verticalWeight = edgeX / max(edgeX + edgeY, 0.000001);
