@@ -197,7 +197,7 @@ abstract final class WatermarkDetector {
       );
 
       for (final component in _components(closed, roi.width, roi.height)) {
-        if (component.area < 0.0015 * width * height ||
+        if (component.area < 0.002 * width * height ||
             component.width < 14 ||
             component.height < 6) {
           continue;
@@ -209,8 +209,8 @@ abstract final class WatermarkDetector {
         };
         if (touchesInnerEdge ||
             component.width > 0.24 * width ||
-            component.height > 0.14 * height ||
-            component.width * component.height > 0.32 * roi.width * roi.height) {
+            component.height > 0.22 * height ||
+            component.width * component.height > 0.55 * roi.width * roi.height) {
           continue;
         }
         final outerGap = switch (corner) {
@@ -224,11 +224,11 @@ abstract final class WatermarkDetector {
         final x2 = roi.left + component.right;
         final y2 = roi.top + component.bottom;
         if ((corner == _Corner.topLeft || corner == _Corner.topRight) &&
-            y2 > 0.18 * height) {
+            y2 > 0.25 * height) {
           continue;
         }
         if ((corner == _Corner.bottomLeft || corner == _Corner.bottomRight) &&
-            y1 < 0.82 * height) {
+            y1 < 0.75 * height) {
           continue;
         }
         result.add(
