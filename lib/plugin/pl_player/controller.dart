@@ -929,7 +929,7 @@ class PlPlayerController with BlockConfigMixin {
     final mode = Pref.watermarkMode;
     if (mode == WatermarkMode.disabled || isLive || onlyPlayAudio.value) return;
     final generation = ++_watermarkGeneration;
-    _scheduleWatermarkCapture(generation, mode, const Duration(seconds: 3));
+    _scheduleWatermarkCapture(generation, mode, const Duration(seconds: 2));
   }
 
   void _scheduleWatermarkCapture(
@@ -967,11 +967,17 @@ class PlPlayerController with BlockConfigMixin {
     ui.Image? image;
     try {
       image = await player.screenshot();
-      if (image == null || generation != _watermarkGeneration) return;
+      if (generation != _watermarkGeneration) return;
+      if (image == null) {
+        throw StateError('watermark screenshot returned null');
+      }
       final sourceWidth = image.width;
       final sourceHeight = image.height;
       final frame = await WatermarkFrame.fromImage(image);
-      if (frame == null || generation != _watermarkGeneration) return;
+      if (generation != _watermarkGeneration) return;
+      if (frame == null) {
+        throw StateError('watermark screenshot conversion returned null');
+      }
       if (_watermarkFrames case [final first, ...]
           when first.width != frame.width || first.height != frame.height) {
         _watermarkFrames.clear();
@@ -992,11 +998,18 @@ class PlPlayerController with BlockConfigMixin {
             sourceWidth,
             sourceHeight,
           );
+          SmartDialog.showToast('已处理 ${regions.length} 处固定水印');
+        } else if (generation == _watermarkGeneration && regions.isEmpty) {
+          Utils.reportError(
+            'watermark: no stable candidate (${mode.name}, '
+            '${frames.length} frames)',
+          );
         }
         _watermarkFrames.clear();
         return;
       }
     } catch (error, stackTrace) {
+      Utils.reportError('watermark detection failed: $error', stackTrace);
       if (kDebugMode) {
         debugPrint('watermark detection failed: $error');
         debugPrint(stackTrace.toString());
@@ -1010,7 +1023,7 @@ class PlPlayerController with BlockConfigMixin {
       _scheduleWatermarkCapture(
         generation,
         mode,
-        const Duration(seconds: 7),
+        const Duration(seconds: 3),
       );
     }
   }
