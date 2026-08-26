@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:PiliPlus/common/constants.dart';
@@ -29,6 +30,7 @@ import 'package:PiliPlus/models_new/video/video_play_info/data.dart';
 import 'package:PiliPlus/models_new/video/video_relation/data.dart';
 import 'package:PiliPlus/models_new/video/video_shot/data.dart';
 import 'package:PiliPlus/utils/accounts.dart';
+import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/utils/app_sign.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
@@ -44,10 +46,78 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:protobuf/protobuf.dart';
 
+final class VideoFirstFrameInfo {
+  const VideoFirstFrameInfo({required this.url, required this.cid});
+
+  final String url;
+  final int? cid;
+}
+
 /// view层根据 status 判断渲染逻辑
 abstract final class VideoHttp {
   static RegExp zoneRegExp = RegExp(Pref.banWordForZone, caseSensitive: false);
   static bool enableFilter = zoneRegExp.pattern.isNotEmpty;
+  static const _firstFrameCacheMaxEntries = 320;
+  static final LinkedHashMap<String, Future<VideoFirstFrameInfo?>>
+      _firstFrameCache = LinkedHashMap();
+
+  static Future<String?> getVideoFirstFrame(String? bvid) async =>
+      (await getVideoFirstFrameInfo(bvid))?.url;
+
+  /// Seeds the shared lookup cache when an enclosing API already supplied a
+  /// first-frame URL, avoiding a later `/x/player/pagelist` request.
+  static void rememberVideoFirstFrame({
+    required String? bvid,
+    required String? url,
+    int? cid,
+  }) {
+    if (bvid == null || bvid.isEmpty || url == null || url.isEmpty) return;
+    _firstFrameCache.remove(bvid);
+    _firstFrameCache[bvid] = Future.value(
+      VideoFirstFrameInfo(url: url, cid: cid),
+    );
+    while (_firstFrameCache.length > _firstFrameCacheMaxEntries) {
+      _firstFrameCache.remove(_firstFrameCache.keys.first);
+    }
+  }
+
+  static Future<VideoFirstFrameInfo?> getVideoFirstFrameInfo(String? bvid) {
+    if (bvid == null || bvid.isEmpty) {
+      return Future<VideoFirstFrameInfo?>.value();
+    }
+    final cached = _firstFrameCache.remove(bvid);
+    if (cached != null) {
+      _firstFrameCache[bvid] = cached;
+      return cached;
+    }
+
+    final request = () async {
+      try {
+        final res = await Request().get(
+          Api.ab2c,
+          queryParameters: {'bvid': bvid},
+        );
+        if (res.data['code'] == 0) {
+          final list = res.data['data'] as List?;
+          if (list != null && list.isNotEmpty) {
+            final page = list.first as Map<String, dynamic>;
+            final url = page['first_frame'] as String?;
+            if (url != null && url.isNotEmpty) {
+              return VideoFirstFrameInfo(url: url, cid: page['cid'] as int?);
+            }
+          }
+        }
+      } catch (_) {
+        _firstFrameCache.remove(bvid);
+      }
+      return null;
+    }();
+    _firstFrameCache[bvid] = request;
+    while (_firstFrameCache.length > _firstFrameCacheMaxEntries) {
+      _firstFrameCache.remove(_firstFrameCache.keys.first);
+    }
+    return request;
+  }
 
   // 首页推荐视频
   static Future<LoadingState<List<RcmdVideoItemModel>>> rcmdVideoList({
@@ -210,16 +280,74 @@ abstract final class VideoHttp {
     String? language,
     bool voiceBalance = false,
   }) async {
+    final params = await _videoUrlParams(
+      avid: avid,
+      bvid: bvid,
+      cid: cid,
+      qn: qn,
+      epid: epid,
+      seasonId: seasonId,
+      tryLook: tryLook,
+      language: language,
+      voiceBalance: voiceBalance,
+    );
+    final resourceResult = await _requestVideoUrl(
+      params: params,
+      account: Accounts.video,
+      videoType: videoType,
+    );
+
+    if (resourceResult case Success(:final response)
+        when Accounts.video.mid != Accounts.history.mid) {
+      final historyProgress = await _requestPlaybackProgress(
+        params: params,
+        account: Accounts.history,
+        videoType: videoType,
+      );
+      if (historyProgress case Success(response: final progress)) {
+        response
+          ..lastPlayTime = progress.time
+          ..lastPlayCid = progress.id;
+      }
+    }
+
+    if (resourceResult is Error && epid != null && videoType == .ugc) {
+      return videoUrl(
+        avid: avid,
+        bvid: bvid,
+        cid: cid,
+        qn: qn,
+        epid: epid,
+        seasonId: seasonId,
+        tryLook: tryLook,
+        videoType: .pgc,
+        language: language,
+        voiceBalance: voiceBalance,
+      );
+    }
+    return resourceResult;
+  }
+
+  static Future<Map<String, dynamic>> _videoUrlParams({
+    int? avid,
+    String? bvid,
+    required int cid,
+    int? qn,
+    dynamic epid,
+    dynamic seasonId,
+    required bool tryLook,
+    String? language,
+    bool voiceBalance = false,
+  }) async {
     final dmImgStr = Utils.base64EncodeRandomString(16, 64);
     final dmCoverImgStr = Utils.base64EncodeRandomString(32, 128);
-    final params = await WbiSign.makSign({
+    return WbiSign.makSign({
       'avid': ?avid,
       'bvid': ?bvid,
       'ep_id': ?epid,
       'season_id': ?seasonId,
       'cid': cid,
       'qn': qn ?? 80,
-      // 获取所有格式的视频
       'fnval': 4048,
       'fourk': 1,
       'fnver': 0,
@@ -227,7 +355,6 @@ abstract final class VideoHttp {
       'gaia_source': 'pre-load',
       'isGaiaAvoided': true,
       'web_location': 1315873,
-      // 免登录查看1080p
       if (tryLook) 'try_look': 1,
       'dm_img_list': '[]',
       'dm_img_str': dmImgStr,
@@ -235,42 +362,80 @@ abstract final class VideoHttp {
       'dm_img_inter': '{"ds":[],"wh":[0,0,0],"of":[0,0,0]}',
       'cur_language': ?language,
     });
+  }
 
+  static Future<LoadingState<PlayUrlModel>> _requestVideoUrl({
+    required Map<String, dynamic> params,
+    required Account account,
+    required VideoType videoType,
+  }) async {
     try {
-      final res = await Request().get(videoType.api, queryParameters: params);
-
-      if (res.data['code'] == 0) {
-        late PlayUrlModel data;
-        switch (videoType) {
-          case .ugc:
-            data = PlayUrlModel.fromJson(res.data['data']);
-
-          case .pgc:
-            final result = res.data['result'];
-            data = PlayUrlModel.fromJson(result['video_info'])
-              ..lastPlayTime =
-                  result['play_view_business_info']?['user_status']?['watch_progress']?['current_watch_progress'];
-
-          case .pugv:
-            final result = res.data['data'];
-            data = PlayUrlModel.fromJson(result)
-              ..lastPlayTime =
-                  result['play_view_business_info']?['user_status']?['watch_progress']?['current_watch_progress'];
-        }
-        return Success(data);
-      } else if (epid != null && videoType == .ugc) {
-        return await videoUrl(
-          avid: avid,
-          bvid: bvid,
-          cid: cid,
-          qn: qn,
-          epid: epid,
-          seasonId: seasonId,
-          tryLook: tryLook,
-          videoType: .pgc,
-        );
+      final res = await Request().get(
+        videoType.api,
+        queryParameters: params,
+        options: Options(extra: {'account': account}),
+      );
+      if (res.data['code'] != 0) {
+        final code = res.data['code'] as int?;
+        return Error(_parseVideoErr(code, res.data['message']), code: code);
       }
-      return Error(_parseVideoErr(res.data['code'], res.data['message']));
+
+      final PlayUrlModel data;
+      switch (videoType) {
+        case .ugc:
+          data = PlayUrlModel.fromJson(res.data['data']);
+        case .pgc:
+          final result = res.data['result'];
+          data = PlayUrlModel.fromJson(result['video_info'])
+            ..lastPlayTime = result['play_view_business_info']?['user_status']
+                ?['watch_progress']?['current_watch_progress'];
+        case .pugv:
+          final result = res.data['data'];
+          data = PlayUrlModel.fromJson(result)
+            ..lastPlayTime = result['play_view_business_info']?['user_status']
+                ?['watch_progress']?['current_watch_progress'];
+      }
+      return Success(data);
+    } catch (e, s) {
+      return Error('$e\n\n$s');
+    }
+  }
+
+  static Future<LoadingState<({int time, int? id})>> _requestPlaybackProgress({
+    required Map<String, dynamic> params,
+    required Account account,
+    required VideoType videoType,
+  }) async {
+    try {
+      final res = await Request().get(
+        videoType.api,
+        queryParameters: params,
+        options: Options(extra: {'account': account}),
+      );
+      if (res.data['code'] != 0) {
+        final code = res.data['code'] as int?;
+        return Error(_parseVideoErr(code, res.data['message']), code: code);
+      }
+
+      final dynamic progress;
+      final int? id;
+      switch (videoType) {
+        case .ugc:
+          final data = res.data['data'];
+          progress = data?['last_play_time'];
+          id = data?['last_play_cid'] as int?;
+        case .pgc:
+          final watchProgress = res.data['result']?['play_view_business_info']
+              ?['user_status']?['watch_progress'];
+          progress = watchProgress?['current_watch_progress'];
+          id = watchProgress?['last_ep_id'] as int?;
+        case .pugv:
+          final watchProgress = res.data['data']?['play_view_business_info']
+              ?['user_status']?['watch_progress'];
+          progress = watchProgress?['current_watch_progress'];
+          id = watchProgress?['last_ep_id'] as int?;
+      }
+      return Success((time: (progress as num?)?.toInt() ?? 0, id: id));
     } catch (e, s) {
       return Error('$e\n\n$s');
     }
@@ -1051,10 +1216,56 @@ abstract final class VideoHttp {
     }
   }
 
+  static Future<List<int>> _videoShotIndexFromPvData(String url) async {
+    try {
+      final response = await Request.dio.get<List<int>>(
+        url.http2https,
+        options: Options(
+          responseType: ResponseType.bytes,
+          receiveTimeout: const Duration(seconds: 8),
+          headers: {'user-agent': BrowserUa.pc},
+        ),
+      );
+      final bytes = response.data;
+      if (bytes == null) return const [];
+      return parseVideoShotIndexBytes(bytes);
+    } catch (_) {
+      return const [];
+    }
+  }
+  static Future<VideoShotData?> _appVideoshot({
+    required String bvid,
+    required int cid,
+  }) async {
+    try {
+      final params = <String, dynamic>{
+        'aid': IdUtils.bv2av(bvid),
+        'cid': cid,
+      };
+      AppSign.appSign(params);
+      final res = await Request().get(
+        'https://app.bilibili.com${Api.appVideoshot}',
+        queryParameters: params,
+        options: Options(headers: {'user-agent': BrowserUa.pc}),
+      );
+      if (res.data['code'] != 0) return null;
+      final data = VideoShotData.fromJson(res.data['data']);
+      if (data.index.isEmpty && data.pvdata?.isNotEmpty == true) {
+        data.index = await _videoShotIndexFromPvData(data.pvdata!);
+      }
+      if (data.image.isEmpty || data.index.isEmpty) return null;
+      return data;
+    } catch (_) {
+      return null;
+    }
+  }
   static Future<LoadingState<VideoShotData>> videoshot({
     required String bvid,
     required int cid,
   }) async {
+    final appData = await _appVideoshot(bvid: bvid, cid: cid);
+    if (appData != null) return Success(appData);
+
     final res = await Request().get(
       Api.videoshot,
       queryParameters: {
@@ -1072,12 +1283,45 @@ abstract final class VideoHttp {
     );
     if (res.data['code'] == 0) {
       final data = VideoShotData.fromJson(res.data['data']);
-      if (data.index.isNotEmpty) {
-        return Success(data);
-      } else {
-        return const Error(null);
+      if (data.index.isEmpty && data.pvdata?.isNotEmpty == true) {
+        data.index = await _videoShotIndexFromPvData(data.pvdata!);
       }
+      if (data.index.isNotEmpty) return Success(data);
+      return const Error(null);
     }
     return Error(res.data['message']);
+  }
+
+  /// Returns the higher-resolution web videoshot metadata without falling
+  /// back to the low-resolution APP sprites.
+  static Future<LoadingState<VideoShotData>> webVideoshot({
+    required String bvid,
+    required int cid,
+  }) async {
+    try {
+      final res = await Request().get(
+        Api.videoshot,
+        queryParameters: {
+          'bvid': bvid,
+          'cid': cid,
+          'index': 1,
+        },
+        options: Options(
+          headers: {
+            'user-agent': BrowserUa.pc,
+            'referer': 'https://www.bilibili.com/video/$bvid',
+          },
+        ),
+      );
+      if (res.data['code'] != 0) return Error(res.data['message']);
+      final data = VideoShotData.fromJson(res.data['data']);
+      if (data.index.isEmpty && data.pvdata?.isNotEmpty == true) {
+        data.index = await _videoShotIndexFromPvData(data.pvdata!);
+      }
+      if (data.image.isEmpty || data.index.isEmpty) return const Error(null);
+      return Success(data);
+    } catch (_) {
+      return const Error(null);
+    }
   }
 }
