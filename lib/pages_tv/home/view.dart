@@ -155,25 +155,26 @@ class _TVHomePageState extends State<TVHomePage> {
       final state = _controller.rcmdState.value;
       return switch (state) {
         Loading() => const _LoadingRow(title: '推荐'),
-        Success(:final response) => response != null && response.isNotEmpty
-            ? TVRow(
-                title: '推荐',
-                itemCount: response.length,
-                itemBuilder: (ctx, i) {
-                  final item = response[i];
-                  return TVCard(
-                    title: item.title ?? '',
-                    subtitle: item.owner?.name ?? '',
-                    coverUrl: item.cover,
-                    firstFrameUrl: item.firstFrame,
-                    bvid: item.bvid,
-                    cid: item.cid,
-                    autoFocus: i == 0,
-                    onSelect: () => _navigateToVideo(item),
-                  );
-                },
-              )
-            : const _EmptyRow(title: '推荐'),
+        Success(:final response) =>
+          response != null && response.isNotEmpty
+              ? TVRow(
+                  title: '推荐',
+                  itemCount: response.length,
+                  itemBuilder: (ctx, i) {
+                    final item = response[i];
+                    return TVCard(
+                      title: item.title ?? '',
+                      subtitle: item.owner?.name ?? '',
+                      coverUrl: item.cover,
+                      firstFrameUrl: item.firstFrame,
+                      bvid: item.bvid,
+                      cid: item.cid,
+                      autoFocus: i == 0,
+                      onSelect: () => _navigateToVideo(item),
+                    );
+                  },
+                )
+              : const _EmptyRow(title: '推荐'),
         Error(:final errMsg) => _ErrorRow(title: '推荐', message: errMsg),
       };
     });
@@ -184,42 +185,41 @@ class _TVHomePageState extends State<TVHomePage> {
       final state = _controller.hotState.value;
       return switch (state) {
         Loading() => const _LoadingRow(title: '热门'),
-        Success(:final response) => response != null && response.isNotEmpty
-            ? TVRow(
-                title: '热门',
-                itemCount: response.length,
-                itemBuilder: (ctx, i) {
-                  final item = response[i];
-                  return TVCard(
-                    title: item.title ?? '',
-                    subtitle: item.owner?.name ?? '',
-                    coverUrl: item.cover,
-                    firstFrameUrl: item.firstFrame,
-                    bvid: item.bvid,
-                    cid: item.cid,
-                    onSelect: () => _navigateToVideo(item),
-                  );
-                },
-              )
-            : const _EmptyRow(title: '热门'),
+        Success(:final response) =>
+          response != null && response.isNotEmpty
+              ? TVRow(
+                  title: '热门',
+                  itemCount: response.length,
+                  itemBuilder: (ctx, i) {
+                    final item = response[i];
+                    return TVCard(
+                      title: item.title ?? '',
+                      subtitle: item.owner?.name ?? '',
+                      coverUrl: item.cover,
+                      firstFrameUrl: item.firstFrame,
+                      bvid: item.bvid,
+                      cid: item.cid,
+                      onSelect: () => _navigateToVideo(item),
+                    );
+                  },
+                )
+              : const _EmptyRow(title: '热门'),
         Error(:final errMsg) => _ErrorRow(title: '热门', message: errMsg),
       };
     });
   }
 
-  void _navigateToVideo(dynamic item) {
+  Future<void> _navigateToVideo(dynamic item) async {
     final int? aid = item.aid;
     final String? bvid = item.bvid;
     final int? cid = item.cid;
-    if (cid != null) {
-      PageUtils.toVideoPage(
-        aid: aid ?? (bvid != null ? IdUtils.bv2av(bvid) : null),
-        bvid: bvid ?? (aid != null ? IdUtils.av2bv(aid) : null),
-        cid: cid,
-        cover: item.cover,
-        title: item.title,
-      );
-    }
+    await PageUtils.openVideo(
+      aid: aid ?? (bvid != null ? IdUtils.bv2av(bvid) : null),
+      bvid: bvid ?? (aid != null ? IdUtils.av2bv(aid) : null),
+      cid: cid,
+      cover: item.cover,
+      title: item.title,
+    );
   }
 }
 

@@ -61,27 +61,27 @@ class _TVRankPageState extends State<TVRankPage> {
                 itemCount: RankType.values.length,
                 itemBuilder: (ctx, i) {
                   final rt = RankType.values[i];
-                  return Obx(() => TVFocusWrapper(
-                        autoFocus: i == 0,
-                        scaleFactor: 1.02,
-                        borderRadius: 8,
-                        onSelect: () => _loadRank(i),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _selectedIndex.value == i
-                                ? Theme.of(context)
-                                    .colorScheme
-                                    .primaryContainer
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(rt.label),
+                  return Obx(
+                    () => TVFocusWrapper(
+                      autoFocus: i == 0,
+                      scaleFactor: 1.02,
+                      borderRadius: 8,
+                      onSelect: () => _loadRank(i),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
                         ),
-                      ));
+                        decoration: BoxDecoration(
+                          color: _selectedIndex.value == i
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(rt.label),
+                      ),
+                    ),
+                  );
                 },
               ),
             ),
@@ -92,18 +92,19 @@ class _TVRankPageState extends State<TVRankPage> {
                 child: Obx(() {
                   final state = _state.value;
                   return switch (state) {
-                    Loading() =>
-                      const Center(child: CircularProgressIndicator()),
+                    Loading() => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
                     Success(:final response) =>
                       response != null && response.isNotEmpty
                           ? GridView.builder(
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 4,
-                                childAspectRatio: 16 / 13,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                              ),
+                                    crossAxisCount: 4,
+                                    childAspectRatio: 16 / 13,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                  ),
                               itemCount: response.length,
                               itemBuilder: (ctx, i) {
                                 final item = response[i];
@@ -111,7 +112,8 @@ class _TVRankPageState extends State<TVRankPage> {
                                 final String? cover = item is HotVideoItemModel
                                     ? item.cover
                                     : item.cover;
-                                final String subtitle = item is HotVideoItemModel
+                                final String subtitle =
+                                    item is HotVideoItemModel
                                     ? (item.owner?.name ?? '')
                                     : '';
                                 return TVCard(
@@ -131,25 +133,24 @@ class _TVRankPageState extends State<TVRankPage> {
                                   width: double.infinity,
                                   onSelect: () {
                                     if (item is HotVideoItemModel) {
-                                      final cid = item.cid;
-                                      if (cid != null && cid > 0) {
-                                        PageUtils.toVideoPage(
-                                          aid: item.aid,
-                                          bvid: item.bvid ??
-                                              IdUtils.av2bv(item.aid!),
-                                          cid: cid,
-                                          cover: item.cover,
-                                          title: item.title,
-                                        );
-                                      }
+                                      PageUtils.openVideo(
+                                        aid: item.aid,
+                                        bvid:
+                                            item.bvid ??
+                                            IdUtils.av2bv(item.aid!),
+                                        cid: item.cid,
+                                        cover: item.cover,
+                                        title: item.title,
+                                      );
                                     }
                                   },
                                 );
                               },
                             )
                           : const Center(child: Text('暂无数据')),
-                    Error(:final errMsg) =>
-                      Center(child: Text(errMsg ?? '加载失败')),
+                    Error(:final errMsg) => Center(
+                      child: Text(errMsg ?? '加载失败'),
+                    ),
                   };
                 }),
               ),

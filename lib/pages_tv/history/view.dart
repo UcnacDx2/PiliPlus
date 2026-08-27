@@ -51,8 +51,7 @@ class _TVHistoryPageState extends State<TVHistoryPage> {
               final kid = '${item.history.business}_${item.kid}';
               final res = await UserHttp.delHistory(kid);
               if (res.isSuccess) {
-                final list =
-                    List.from(_state.value.dataOrNull ?? []);
+                final list = List.from(_state.value.dataOrNull ?? []);
                 list.removeAt(index);
                 _state.value = Success(list);
               }
@@ -80,11 +79,11 @@ class _TVHistoryPageState extends State<TVHistoryPage> {
                     ? GridView.builder(
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 5,
-                          childAspectRatio: 16 / 13,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
+                              crossAxisCount: 5,
+                              childAspectRatio: 16 / 13,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                            ),
                         itemCount: response.length,
                         itemBuilder: (ctx, i) {
                           final item = response[i];
@@ -93,7 +92,8 @@ class _TVHistoryPageState extends State<TVHistoryPage> {
                             title: item.title ?? '',
                             subtitle: item.authorName ?? '',
                             coverUrl: item.cover,
-                            bvid: history.bvid ??
+                            bvid:
+                                history.bvid ??
                                 (history.oid != null
                                     ? IdUtils.av2bv(history.oid!)
                                     : null),
@@ -103,18 +103,16 @@ class _TVHistoryPageState extends State<TVHistoryPage> {
                               final oid = history.oid;
                               final cid = history.cid;
                               final bvid = history.bvid;
-                              if (cid != null && cid > 0) {
-                                PageUtils.toVideoPage(
-                                  aid: oid,
-                                  bvid: bvid ?? (oid != null
-                                      ? IdUtils.av2bv(oid)
-                                      : null),
-                                  cid: cid,
-                                  cover: item.cover,
-                                  title: item.title,
-                                  progress: (item.progress ?? 0) * 1000,
-                                );
-                              }
+                              PageUtils.openVideo(
+                                aid: oid,
+                                bvid:
+                                    bvid ??
+                                    (oid != null ? IdUtils.av2bv(oid) : null),
+                                cid: cid != null && cid > 0 ? cid : null,
+                                cover: item.cover,
+                                title: item.title,
+                                progress: (item.progress ?? 0) * 1000,
+                              );
                             },
                             onLongPress: () => _showDeleteDialog(item, i),
                           );

@@ -48,11 +48,9 @@ class _TVLaterPageState extends State<TVLaterPage> {
           TextButton(
             onPressed: () async {
               Navigator.of(ctx).pop();
-              final res =
-                  await UserHttp.toViewDel(aids: item.aid.toString());
+              final res = await UserHttp.toViewDel(aids: item.aid.toString());
               if (res.isSuccess) {
-                final list =
-                    List.from(_state.value.dataOrNull ?? []);
+                final list = List.from(_state.value.dataOrNull ?? []);
                 list.removeAt(index);
                 _state.value = Success(list);
               }
@@ -80,11 +78,11 @@ class _TVLaterPageState extends State<TVLaterPage> {
                     ? GridView.builder(
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 5,
-                          childAspectRatio: 16 / 13,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
+                              crossAxisCount: 5,
+                              childAspectRatio: 16 / 13,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                            ),
                         itemCount: response.length,
                         itemBuilder: (ctx, i) {
                           final item = response[i];
@@ -92,7 +90,8 @@ class _TVLaterPageState extends State<TVLaterPage> {
                             title: item.title ?? '',
                             subtitle: item.owner?.name ?? '',
                             coverUrl: item.pic,
-                            bvid: item.bvid ??
+                            bvid:
+                                item.bvid ??
                                 (item.aid != null
                                     ? IdUtils.av2bv(item.aid!)
                                     : null),
@@ -100,17 +99,14 @@ class _TVLaterPageState extends State<TVLaterPage> {
                             width: double.infinity,
                             onSelect: () {
                               final cid = item.cid;
-                              if (cid != null && cid > 0) {
-                                PageUtils.toVideoPage(
-                                  aid: item.aid,
-                                  bvid: item.bvid ??
-                                      IdUtils.av2bv(item.aid),
-                                  cid: cid,
-                                  cover: item.pic,
-                                  title: item.title,
-                                  progress: (item.progress ?? 0) * 1000,
-                                );
-                              }
+                              PageUtils.openVideo(
+                                aid: item.aid,
+                                bvid: item.bvid ?? IdUtils.av2bv(item.aid),
+                                cid: cid != null && cid > 0 ? cid : null,
+                                cover: item.pic,
+                                title: item.title,
+                                progress: (item.progress ?? 0) * 1000,
+                              );
                             },
                             onLongPress: () => _showRemoveDialog(item, i),
                           );

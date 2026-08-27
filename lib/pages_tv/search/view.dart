@@ -169,28 +169,27 @@ class _TVSearchPageState extends State<TVSearchPage> {
                         final state = _resultState.value;
                         return switch (state) {
                           Loading() => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
+                            child: CircularProgressIndicator(),
+                          ),
                           Success(:final response) =>
                             response != null && response.isNotEmpty
                                 ? GridView.builder(
                                     gridDelegate:
                                         const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 4,
-                                      childAspectRatio: 16 / 13,
-                                      crossAxisSpacing: 12,
-                                      mainAxisSpacing: 12,
-                                    ),
+                                          crossAxisCount: 4,
+                                          childAspectRatio: 16 / 13,
+                                          crossAxisSpacing: 12,
+                                          mainAxisSpacing: 12,
+                                        ),
                                     itemCount: response.length,
                                     itemBuilder: (ctx, i) {
                                       final item = response[i];
                                       return TVCard(
-                                        title: _stripHtml(
-                                            item.title ?? ''),
+                                        title: _stripHtml(item.title ?? ''),
                                         subtitle: item.author ?? '',
-                                        coverUrl: _fixCover(
-                                            item.cover),
-                                        bvid: item.bvid ??
+                                        coverUrl: _fixCover(item.cover),
+                                        bvid:
+                                            item.bvid ??
                                             (item.aid != null
                                                 ? IdUtils.av2bv(item.aid!)
                                                 : null),
@@ -200,15 +199,14 @@ class _TVSearchPageState extends State<TVSearchPage> {
                                           final bvid = item.bvid;
                                           final aid = item.aid;
                                           if (bvid != null || aid != null) {
-                                            PageUtils.toVideoPage(
+                                            PageUtils.openVideo(
                                               aid: aid ?? IdUtils.bv2av(bvid!),
-                                              bvid: bvid ??
-                                                  IdUtils.av2bv(aid!),
-                                              cid: item.cid ?? 0,
+                                              bvid: bvid ?? IdUtils.av2bv(aid!),
+                                              cid: item.cid,
                                               title: _stripHtml(
-                                                  item.title ?? ''),
-                                              cover: _fixCover(
-                                                  item.cover),
+                                                item.title ?? '',
+                                              ),
+                                              cover: _fixCover(item.cover),
                                             );
                                           }
                                         },
@@ -217,13 +215,12 @@ class _TVSearchPageState extends State<TVSearchPage> {
                                   )
                                 : Center(
                                     child: Text(
-                                      _lastQuery.isEmpty
-                                          ? '输入关键词搜索'
-                                          : '未找到结果',
+                                      _lastQuery.isEmpty ? '输入关键词搜索' : '未找到结果',
                                     ),
                                   ),
-                          Error(:final errMsg) =>
-                            Center(child: Text(errMsg ?? '搜索失败')),
+                          Error(:final errMsg) => Center(
+                            child: Text(errMsg ?? '搜索失败'),
+                          ),
                         };
                       }),
                     ),

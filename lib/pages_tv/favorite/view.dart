@@ -39,8 +39,9 @@ class _TVFavoritePageState extends State<TVFavoritePage> {
       final data = res.data;
       _foldersState.value = Success(data.list);
     } else {
-      _foldersState.value =
-          Error(res is Error ? (res as Error).errMsg : '加载失败');
+      _foldersState.value = Error(
+        res is Error ? (res as Error).errMsg : '加载失败',
+      );
     }
   }
 
@@ -57,8 +58,9 @@ class _TVFavoritePageState extends State<TVFavoritePage> {
       final data = res.data;
       _contentState.value = Success(data.medias);
     } else {
-      _contentState.value =
-          Error(res is Error ? (res as Error).errMsg : '加载失败');
+      _contentState.value = Error(
+        res is Error ? (res as Error).errMsg : '加载失败',
+      );
     }
   }
 
@@ -82,8 +84,7 @@ class _TVFavoritePageState extends State<TVFavoritePage> {
                 delIds: _selectedFolderId.toString(),
               );
               if (res.isSuccess) {
-                final list =
-                    List.from(_contentState.value.dataOrNull ?? []);
+                final list = List.from(_contentState.value.dataOrNull ?? []);
                 list.removeAt(index);
                 _contentState.value = Success(list);
               }
@@ -107,8 +108,7 @@ class _TVFavoritePageState extends State<TVFavoritePage> {
               child: Obx(() {
                 final state = _foldersState.value;
                 return switch (state) {
-                  Loading() =>
-                    const Center(child: CircularProgressIndicator()),
+                  Loading() => const Center(child: CircularProgressIndicator()),
                   Success(:final response) =>
                     response != null && response.isNotEmpty
                         ? ListView.builder(
@@ -126,16 +126,16 @@ class _TVFavoritePageState extends State<TVFavoritePage> {
                                 },
                                 child: ListTile(
                                   title: Text(folder.title ?? ''),
-                                  subtitle:
-                                      Text('${folder.mediaCount ?? 0} 个内容'),
+                                  subtitle: Text(
+                                    '${folder.mediaCount ?? 0} 个内容',
+                                  ),
                                   selected: _selectedFolderId == fid,
                                 ),
                               );
                             },
                           )
                         : const Center(child: Text('暂无收藏夹')),
-                  Error(:final errMsg) =>
-                    Center(child: Text(errMsg ?? '加载失败')),
+                  Error(:final errMsg) => Center(child: Text(errMsg ?? '加载失败')),
                 };
               }),
             ),
@@ -146,18 +146,19 @@ class _TVFavoritePageState extends State<TVFavoritePage> {
                 child: Obx(() {
                   final state = _contentState.value;
                   return switch (state) {
-                    Loading() =>
-                      const Center(child: CircularProgressIndicator()),
+                    Loading() => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
                     Success(:final response) =>
                       response != null && response.isNotEmpty
                           ? GridView.builder(
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 4,
-                                childAspectRatio: 16 / 13,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                              ),
+                                    crossAxisCount: 4,
+                                    childAspectRatio: 16 / 13,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                  ),
                               itemCount: response.length,
                               itemBuilder: (ctx, i) {
                                 final item = response[i];
@@ -170,31 +171,26 @@ class _TVFavoritePageState extends State<TVFavoritePage> {
                                   width: double.infinity,
                                   onSelect: () {
                                     final cid = item.ugc?.firstCid;
-                                    if (cid != null && cid > 0) {
-                                      PageUtils.toVideoPage(
-                                        aid: item.id,
-                                        bvid: item.bvid ??
-                                            IdUtils.av2bv(item.id),
-                                        cid: cid,
-                                        cover: item.cover,
-                                        title: item.title,
-                                      );
-                                    }
+                                    PageUtils.openVideo(
+                                      aid: item.id,
+                                      bvid: item.bvid ?? IdUtils.av2bv(item.id),
+                                      cid: cid != null && cid > 0 ? cid : null,
+                                      cover: item.cover,
+                                      title: item.title,
+                                    );
                                   },
-                                  onLongPress: () =>
-                                      _showUnfavDialog(item, i),
+                                  onLongPress: () => _showUnfavDialog(item, i),
                                 );
                               },
                             )
                           : Center(
                               child: Text(
-                                _selectedFolderId == null
-                                    ? '请选择收藏夹'
-                                    : '暂无内容',
+                                _selectedFolderId == null ? '请选择收藏夹' : '暂无内容',
                               ),
                             ),
-                    Error(:final errMsg) =>
-                      Center(child: Text(errMsg ?? '加载失败')),
+                    Error(:final errMsg) => Center(
+                      child: Text(errMsg ?? '加载失败'),
+                    ),
                   };
                 }),
               ),

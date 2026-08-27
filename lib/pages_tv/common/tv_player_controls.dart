@@ -82,7 +82,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls> {
 
     if (event is KeyDownEvent) {
       switch (event.logicalKey) {
-        case LogicalKeyboardKey.select:
+        case LogicalKeyboardKey.select || LogicalKeyboardKey.enter:
           _togglePlayPause();
           return KeyEventResult.handled;
         case LogicalKeyboardKey.arrowLeft:
@@ -112,7 +112,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls> {
 
     if (event is KeyRepeatEvent) {
       switch (event.logicalKey) {
-        case LogicalKeyboardKey.select:
+        case LogicalKeyboardKey.select || LogicalKeyboardKey.enter:
           if (_savedSpeed == null) _startLongPressSpeed();
           return KeyEventResult.handled;
         case LogicalKeyboardKey.arrowLeft:
@@ -127,7 +127,8 @@ class _TVPlayerControlsState extends State<TVPlayerControls> {
     }
 
     if (event is KeyUpEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.select) {
+      if (event.logicalKey == LogicalKeyboardKey.select ||
+          event.logicalKey == LogicalKeyboardKey.enter) {
         _stopLongPressSpeed();
         return KeyEventResult.handled;
       }
@@ -190,13 +191,15 @@ class _TVPlayerControlsState extends State<TVPlayerControls> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Obx(() => Icon(
-                        _ctr.enableShowDanmaku.value
-                            ? Icons.subtitles
-                            : Icons.subtitles_off,
-                        color: Colors.white70,
-                        size: 20,
-                      )),
+                  Obx(
+                    () => Icon(
+                      _ctr.enableShowDanmaku.value
+                          ? Icons.subtitles
+                          : Icons.subtitles_off,
+                      color: Colors.white70,
+                      size: 20,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -276,8 +279,7 @@ class _TVPlayerControlsState extends State<TVPlayerControls> {
                 LinearProgressIndicator(
                   value: pos / max,
                   backgroundColor: Colors.transparent,
-                  valueColor:
-                      AlwaysStoppedAnimation(theme.colorScheme.primary),
+                  valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
                   minHeight: 4,
                 ),
               ],
@@ -297,13 +299,15 @@ class _TVPlayerControlsState extends State<TVPlayerControls> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Obx(() => _ControlButton(
-              icon: Icons.play_arrow,
-              activeIcon: Icons.pause,
-              isActive: _ctr.playerStatus.isPlaying,
-              label: '播放',
-              onSelect: _togglePlayPause,
-            )),
+        Obx(
+          () => _ControlButton(
+            icon: Icons.play_arrow,
+            activeIcon: Icons.pause,
+            isActive: _ctr.playerStatus.isPlaying,
+            label: '播放',
+            onSelect: _togglePlayPause,
+          ),
+        ),
         const SizedBox(width: 24),
         _ControlButton(
           icon: Icons.high_quality_outlined,
@@ -311,15 +315,17 @@ class _TVPlayerControlsState extends State<TVPlayerControls> {
           onSelect: widget.onQualityTap,
         ),
         const SizedBox(width: 24),
-        Obx(() => _ControlButton(
-              icon: _ctr.enableShowDanmaku.value
-                  ? Icons.subtitles
-                  : Icons.subtitles_off_outlined,
-              label: '弹幕',
-              onSelect: () {
-                _ctr.enableShowDanmaku.value = !_ctr.enableShowDanmaku.value;
-              },
-            )),
+        Obx(
+          () => _ControlButton(
+            icon: _ctr.enableShowDanmaku.value
+                ? Icons.subtitles
+                : Icons.subtitles_off_outlined,
+            label: '弹幕',
+            onSelect: () {
+              _ctr.enableShowDanmaku.value = !_ctr.enableShowDanmaku.value;
+            },
+          ),
+        ),
         const SizedBox(width: 24),
         _ControlButton(
           icon: Icons.tune,
@@ -327,11 +333,13 @@ class _TVPlayerControlsState extends State<TVPlayerControls> {
           onSelect: () => _showDanmakuSettings(context),
         ),
         const SizedBox(width: 24),
-        Obx(() => _ControlButton(
-              icon: Icons.speed,
-              label: '${_ctr.playbackSpeed}x',
-              onSelect: () => _showSpeedSelector(context),
-            )),
+        Obx(
+          () => _ControlButton(
+            icon: Icons.speed,
+            label: '${_ctr.playbackSpeed}x',
+            onSelect: () => _showSpeedSelector(context),
+          ),
+        ),
         if (widget.onNextEpisode != null) ...[
           const SizedBox(width: 24),
           _ControlButton(
