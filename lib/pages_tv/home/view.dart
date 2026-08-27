@@ -160,6 +160,7 @@ class _TVHomePageState extends State<TVHomePage> {
               ? TVRow(
                   title: '推荐',
                   itemCount: response.length,
+                  onApproachingEnd: () => _controller.loadRcmd(loadMore: true),
                   itemBuilder: (ctx, i) {
                     final item = response[i];
                     return TVCard(
@@ -190,6 +191,7 @@ class _TVHomePageState extends State<TVHomePage> {
               ? TVRow(
                   title: '热门',
                   itemCount: response.length,
+                  onApproachingEnd: () => _controller.loadHot(loadMore: true),
                   itemBuilder: (ctx, i) {
                     final item = response[i];
                     return TVCard(

@@ -1,551 +1,934 @@
 import 'dart:async';
 
-import 'package:PiliPlus/pages_tv/common/tv_focus_wrapper.dart';
+import 'package:PiliPlus/models/common/video/video_quality.dart';
+import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
+import 'package:PiliPlus/models_new/video/video_detail/ugc_season.dart';
+import 'package:PiliPlus/pages/common/common_intro_controller.dart';
+import 'package:PiliPlus/pages/video/controller.dart';
+import 'package:PiliPlus/pages/video/introduction/pgc/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
-import 'package:PiliPlus/plugin/pl_player/utils/danmaku_options.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
+import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
+import 'package:material_ui/material_ui.dart';
+
+class TVKeyHandler {
+  static TVKeyHandler? instance;
+  void Function(String key, String action, bool isRepeat)? callback;
+  void handleNativeKey(String key, String action, bool isRepeat) {
+    callback?.call(key, action, isRepeat);
+  }
+}
 
 class TVPlayerControls extends StatefulWidget {
   const TVPlayerControls({
     super.key,
-    required this.controller,
+    required this.plPlayerController,
+    this.videoDetailController,
+    this.introController,
+    this.showEpisodes,
     required this.child,
-    this.title,
-    this.isLive = false,
-    this.onNextEpisode,
-    this.onShowEpisodeList,
-    this.onQualityTap,
   });
 
+  final PlPlayerController plPlayerController;
+  final VideoDetailController? videoDetailController;
+  final CommonIntroController? introController;
+  final void Function([
+    int?,
+    UgcSeason?,
+    List<ugc.BaseEpisodeItem>?,
+    String?,
+    int?,
+    int?,
+  ])?
+  showEpisodes;
   final Widget child;
-  final PlPlayerController controller;
-  final String? title;
-  final bool isLive;
-  final VoidCallback? onNextEpisode;
-  final VoidCallback? onShowEpisodeList;
-  final VoidCallback? onQualityTap;
 
   @override
-  State<TVPlayerControls> createState() => _TVPlayerControlsState();
+  State<TVPlayerControls> createState() => _TVPlayerKeyHandlerState();
 }
 
-class _TVPlayerControlsState extends State<TVPlayerControls> {
-  bool _showTopBar = false;
-  bool _showBottomBar = false;
-  Timer? _hideTimer;
-  double? _savedSpeed;
+class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
+  PlPlayerController get ctr => widget.plPlayerController;
+  final _isSubMenuOpen = ValueNotifier<bool>(false);
+  bool _isLongPressing = false;
+  // True after we consumed a BACK KeyDown that closed a panel — used to also consume the matching KeyUp
+  // so Android's default onKeyUp(BACK) → onBackPressed doesn't fire and exit the video page.
+  bool _backConsumed = false;
+  double _originalSpeed = 1.0;
+  final _showSpeedIndicator = ValueNotifier<double?>(null);
 
-  PlPlayerController get _ctr => widget.controller;
+  // TV 控制面板状态: -1=隐藏, 0=进度条, 1=按钮行
+  final _panelRow = ValueNotifier<int>(-1);
+  final _btnIndex = ValueNotifier<int>(0);
+
+  List<_TVBtnItem> get _buttons {
+    final items = <_TVBtnItem>[
+      if (widget.introController != null) ...[
+        _TVBtnItem(Icons.skip_previous, '上一集', _playPrevious),
+        _TVBtnItem(Icons.skip_next, '下一集', _playNext),
+        if (widget.showEpisodes != null)
+          _TVBtnItem(Icons.video_library_outlined, '选集', _showEpisodePicker),
+      ],
+      _TVBtnItem(Icons.speed, '${ctr.playbackSpeed}x', _showSpeedPicker),
+      if (widget.videoDetailController != null)
+        _TVBtnItem(
+          Icons.high_quality_outlined,
+          widget.videoDetailController!.currentVideoQa.value?.shortDesc ?? '画质',
+          _showQualityPicker,
+        ),
+      _TVBtnItem(
+        ctr.enableShowDanmaku.value ? Icons.subtitles : Icons.subtitles_off,
+        '弹幕设置',
+        _showDanmakuSettings,
+      ),
+      if (widget.videoDetailController != null)
+        _TVBtnItem(
+          Icons.closed_caption_outlined,
+          '字幕',
+          _showSubtitlePicker,
+        ),
+      _TVBtnItem(Icons.aspect_ratio, '画面比例', _showFitPicker),
+    ];
+    return items;
+  }
+
+  Timer? _hideTimer;
 
   void _resetHideTimer() {
     _hideTimer?.cancel();
-    _hideTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted) {
-        setState(() {
-          _showTopBar = false;
-          _showBottomBar = false;
-        });
-      }
+    _hideTimer = Timer(const Duration(seconds: 8), () {
+      _panelRow.value = -1;
     });
   }
 
-  void _togglePlayPause() {
-    if (_ctr.playerStatus.isPlaying) {
-      _ctr.pause();
-    } else {
-      _ctr.play();
+  void _showPanel() {
+    _panelRow.value = 0; // 默认在进度条
+    _btnIndex.value = 0; // 默认选中倍速（索引0）
+    _resetHideTimer();
+  }
+
+  void _onKey(String direction) {
+    if (_panelRow.value == -1) {
+      _showPanel();
+      return;
+    }
+    _resetHideTimer();
+    final row = _panelRow.value;
+    if (direction == 'up') {
+      if (row == 1) _panelRow.value = 0;
+    } else if (direction == 'down') {
+      if (row == 0) _panelRow.value = 1;
+    } else if (direction == 'left') {
+      if (row == 0 && !ctr.isLive) {
+        ctr.seekTo(Duration(seconds: ctr.position.value - 10));
+      } else if (row == 1) {
+        final max = _buttons.length - 1;
+        _btnIndex.value = (_btnIndex.value - 1).clamp(0, max);
+      }
+    } else if (direction == 'right') {
+      if (row == 0 && !ctr.isLive) {
+        ctr.seekTo(Duration(seconds: ctr.position.value + 10));
+      } else if (row == 1) {
+        final max = _buttons.length - 1;
+        _btnIndex.value = (_btnIndex.value + 1).clamp(0, max);
+      }
+    } else if (direction == 'ok') {
+      if (row == 0) {
+        ctr.playerStatus.isPlaying ? ctr.pause() : ctr.play();
+      } else if (row == 1) {
+        _buttons[_btnIndex.value].onTap();
+      }
+    } else if (direction == 'back') {
+      _panelRow.value = -1;
     }
   }
 
-  void _seekRelative(int seconds) {
-    final target = Duration(seconds: _ctr.position.value + seconds);
-    _ctr.seekTo(target);
-  }
+  bool _handleKeyEvent(KeyEvent event) {
+    final key = event.logicalKey;
+    final isSelect =
+        key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter;
+    final isBack =
+        key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape;
 
-  void _startLongPressSpeed() {
-    _savedSpeed = _ctr.playbackSpeed;
-    _ctr.setPlaybackSpeed(_savedSpeed! + 1.0);
-  }
-
-  void _stopLongPressSpeed() {
-    if (_savedSpeed != null) {
-      _ctr.setPlaybackSpeed(_savedSpeed!);
-      _savedSpeed = null;
+    // === BACK key (handle BEFORE the KeyUp early-return, otherwise Android's
+    // default onKeyUp(BACK) → onBackPressed will fire and exit the video page) ===
+    if (isBack) {
+      if (_isSubMenuOpen.value) {
+        // Sub-menu visible: let subKeyHandler handle it (it consumes all BACK events)
+        return false;
+      }
+      if (event is KeyDownEvent) {
+        if (_panelRow.value != -1) {
+          // Main panel visible: close it and remember to consume the matching KeyUp
+          _panelRow.value = -1;
+          _backConsumed = true;
+          return true;
+        }
+        // Nothing visible: let PopScope/system handle (exit video page)
+        _backConsumed = false;
+        return false;
+      }
+      if (event is KeyUpEvent || event is KeyRepeatEvent) {
+        // If we consumed the KeyDown, consume the rest of this BACK press too
+        if (_backConsumed) {
+          if (event is KeyUpEvent) _backConsumed = false;
+          return true;
+        }
+        return false;
+      }
+      return false;
     }
-  }
 
-  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    if (_showBottomBar) return KeyEventResult.ignored;
+    // Sub-menu open: let the sub-menu's own HardwareKeyboard handler take priority
+    if (_isSubMenuOpen.value) {
+      return false;
+    }
 
-    if (event is KeyDownEvent) {
-      switch (event.logicalKey) {
-        case LogicalKeyboardKey.select || LogicalKeyboardKey.enter:
-          _togglePlayPause();
-          return KeyEventResult.handled;
-        case LogicalKeyboardKey.arrowLeft:
-          if (!widget.isLive) _seekRelative(-10);
-          return KeyEventResult.handled;
-        case LogicalKeyboardKey.arrowRight:
-          if (!widget.isLive) _seekRelative(10);
-          return KeyEventResult.handled;
-        case LogicalKeyboardKey.arrowUp:
-          setState(() {
-            _showTopBar = true;
-            _showBottomBar = false;
-          });
+    // Long-press OK = speed boost (works regardless of panel state)
+    if (isSelect && event is KeyRepeatEvent) {
+      if (!_isLongPressing) {
+        _isLongPressing = true;
+        _originalSpeed = ctr.playbackSpeed;
+        ctr.setPlaybackSpeed(_originalSpeed + 1.0);
+        _showSpeedIndicator.value = _originalSpeed + 1.0;
+      }
+      return true;
+    }
+    if (isSelect && event is KeyUpEvent && _isLongPressing) {
+      ctr.setPlaybackSpeed(_originalSpeed);
+      _isLongPressing = false;
+      _showSpeedIndicator.value = null;
+      return true;
+    }
+
+    // OK KeyUp: play/pause (only when not long-pressing)
+    if (isSelect && event is KeyUpEvent) {
+      if (!_isLongPressing) {
+        if (_panelRow.value == -1) {
+          if (ctr.playerStatus.isPlaying) {
+            ctr.pause();
+            _showPanel();
+          } else {
+            ctr.play();
+            _panelRow.value = -1;
+          }
+        } else {
+          _onKey('ok');
+        }
+      }
+      return true;
+    }
+
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return false;
+    }
+
+    final isUpDown =
+        key == LogicalKeyboardKey.arrowUp ||
+        key == LogicalKeyboardKey.arrowDown ||
+        key == LogicalKeyboardKey.audioVolumeUp ||
+        key == LogicalKeyboardKey.audioVolumeDown;
+
+    // === Panel hidden ===
+    if (_panelRow.value == -1) {
+      if (isSelect) {
+        return true; // consume KeyDown, KeyUp handles it above
+      } else if (key == LogicalKeyboardKey.arrowLeft ||
+          key == LogicalKeyboardKey.arrowRight) {
+        if (!ctr.isLive) {
+          final s = key == LogicalKeyboardKey.arrowLeft ? -10 : 10;
+          ctr.seekTo(Duration(seconds: ctr.position.value + s));
+        }
+        return true;
+      } else if (isUpDown) {
+        _showPanel();
+        return true;
+      } else if (key == LogicalKeyboardKey.contextMenu) {
+        _showPanel();
+        return true;
+      }
+      return false;
+    }
+
+    // === Panel shown ===
+    final row = _panelRow.value;
+    if (isSelect) {
+      return true; // consume KeyDown, KeyUp handles it above
+    } else if (key == LogicalKeyboardKey.arrowLeft ||
+        key == LogicalKeyboardKey.arrowRight) {
+      if (row == 0 && !ctr.isLive) {
+        final s = key == LogicalKeyboardKey.arrowLeft ? -10 : 10;
+        ctr.seekTo(Duration(seconds: ctr.position.value + s));
+        _resetHideTimer();
+      } else if (row == 1) {
+        final max = _buttons.length - 1;
+        if (key == LogicalKeyboardKey.arrowLeft) {
+          _btnIndex.value = (_btnIndex.value - 1).clamp(0, max);
+        } else {
+          _btnIndex.value = (_btnIndex.value + 1).clamp(0, max);
+        }
+        _resetHideTimer();
+      }
+      return true;
+    } else if (isUpDown) {
+      if (key == LogicalKeyboardKey.arrowUp ||
+          key == LogicalKeyboardKey.audioVolumeUp) {
+        if (row == 1) {
+          _panelRow.value = 0;
           _resetHideTimer();
-          return KeyEventResult.handled;
-        case LogicalKeyboardKey.arrowDown:
-          setState(() {
-            _showBottomBar = true;
-            _showTopBar = false;
-          });
+        }
+      } else {
+        if (row == 0) {
+          _panelRow.value = 1;
           _resetHideTimer();
-          return KeyEventResult.handled;
-        default:
-          break;
+        }
       }
+      return true;
+    } else if (key == LogicalKeyboardKey.contextMenu) {
+      _panelRow.value = -1;
+      return true;
     }
-
-    if (event is KeyRepeatEvent) {
-      switch (event.logicalKey) {
-        case LogicalKeyboardKey.select || LogicalKeyboardKey.enter:
-          if (_savedSpeed == null) _startLongPressSpeed();
-          return KeyEventResult.handled;
-        case LogicalKeyboardKey.arrowLeft:
-          if (!widget.isLive) _seekRelative(-3);
-          return KeyEventResult.handled;
-        case LogicalKeyboardKey.arrowRight:
-          if (!widget.isLive) _seekRelative(3);
-          return KeyEventResult.handled;
-        default:
-          break;
-      }
-    }
-
-    if (event is KeyUpEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.select ||
-          event.logicalKey == LogicalKeyboardKey.enter) {
-        _stopLongPressSpeed();
-        return KeyEventResult.handled;
-      }
-    }
-
-    return KeyEventResult.ignored;
+    return true;
   }
 
-  String _formatDuration(Duration d) {
-    final h = d.inHours;
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return h > 0 ? '$h:$m:$s' : '$m:$s';
+  void _handleNativeKey(String key, String action, bool isRepeat) {
+    if (action != 'down') return;
+    if (_isSubMenuOpen.value) {
+      _subMenuNativeKeyCallback?.call(key);
+      return;
+    }
+    if (key == 'arrowUp' || key == 'arrowDown') {
+      final isUp = key == 'arrowUp';
+      if (_panelRow.value == -1) {
+        _showPanel();
+      } else if (_panelRow.value == 0 && !isUp) {
+        _panelRow.value = 1;
+        _resetHideTimer();
+      } else if (_panelRow.value == 1 && isUp) {
+        _panelRow.value = 0;
+        _resetHideTimer();
+      }
+    }
+  }
+
+  // 子菜单的上下键回调
+  void Function(String)? _subMenuNativeKeyCallback;
+
+  @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+    TVKeyHandler.instance = TVKeyHandler()..callback = _handleNativeKey;
   }
 
   @override
   void dispose() {
     _hideTimer?.cancel();
-    _stopLongPressSpeed();
+    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    TVKeyHandler.instance?.callback = null;
+    _showSpeedIndicator.dispose();
+    _panelRow.dispose();
+    _btnIndex.dispose();
+    _isSubMenuOpen.dispose();
     super.dispose();
   }
 
+  /// 通用右侧边栏选择器
+  Future<T?> _showSidePanel<T>({
+    required String title,
+    required List<_TVDialogOption<T>> options,
+  }) async {
+    _isSubMenuOpen.value = true;
+    _hideTimer?.cancel();
+    int selectedIndex = options.indexWhere((o) => o.isSelected);
+    if (selectedIndex < 0) selectedIndex = 0;
+
+    final completer = Completer<T?>();
+    late StateSetter setSheetState;
+    bool handled = false;
+
+    _subMenuNativeKeyCallback = (key) {
+      if (key == 'arrowUp') {
+        setSheetState(() {
+          selectedIndex = (selectedIndex - 1).clamp(0, options.length - 1);
+        });
+      } else if (key == 'arrowDown') {
+        setSheetState(() {
+          selectedIndex = (selectedIndex + 1).clamp(0, options.length - 1);
+        });
+      }
+    };
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black38,
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (ctx, _, _) {
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop && !handled) {
+              handled = true;
+              Navigator.of(ctx).pop();
+              completer.complete(null);
+            }
+          },
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Material(
+              color: const Color(0xF0181818),
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(16),
+              ),
+              child: SizedBox(
+                width: 280,
+                child: StatefulBuilder(
+                  builder: (ctx, setState) {
+                    setSheetState = setState;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const Divider(color: Colors.white24, height: 1),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: options.length,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemBuilder: (ctx, i) {
+                              final opt = options[i];
+                              final isSel = i == selectedIndex;
+                              return GestureDetector(
+                                onTap: () {
+                                  if (!handled) {
+                                    handled = true;
+                                    Navigator.of(ctx).pop();
+                                    completer.complete(opt.value);
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 14,
+                                  ),
+                                  color: isSel ? Colors.white12 : null,
+                                  child: Row(
+                                    children: [
+                                      if (isSel)
+                                        const Padding(
+                                          padding: EdgeInsets.only(right: 8),
+                                          child: Icon(
+                                            Icons.chevron_right,
+                                            color: Colors.lightBlueAccent,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      Expanded(
+                                        child: Text(
+                                          opt.label,
+                                          style: TextStyle(
+                                            color: isSel
+                                                ? Colors.lightBlueAccent
+                                                : (opt.isSelected
+                                                      ? Colors.lightBlueAccent
+                                                      : Colors.white),
+                                            fontSize: 16,
+                                            fontWeight: isSel || opt.isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                          ),
+                                        ),
+                                      ),
+                                      if (opt.isSelected)
+                                        const Icon(
+                                          Icons.check,
+                                          color: Colors.lightBlueAccent,
+                                          size: 18,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    ).then((_) {
+      if (!handled && !completer.isCompleted) completer.complete(null);
+    });
+
+    // OK 和返回键处理
+    bool subKeyHandler(KeyEvent event) {
+      if (!_isSubMenuOpen.value) return false;
+      final k = event.logicalKey;
+
+      // BACK：消费所有事件类型（KeyDown 关闭子菜单，KeyUp 也要消费防止 onBackPressed
+      // 误关主菜单。设 _backConsumed=true，使 _isSubMenuOpen 变 false 后 _handleKeyEvent
+      // 也能消费匹配的 KeyUp）
+      if (k == LogicalKeyboardKey.goBack || k == LogicalKeyboardKey.escape) {
+        if (event is KeyDownEvent && !handled) {
+          handled = true;
+          _backConsumed = true;
+          Navigator.of(context).pop();
+          completer.complete(null);
+        }
+        return true;
+      }
+
+      // 其他键只在 KeyDown/KeyRepeat 时处理
+      if (event is! KeyDownEvent && event is! KeyRepeatEvent) return false;
+
+      if (k == LogicalKeyboardKey.select || k == LogicalKeyboardKey.enter) {
+        if (!handled) {
+          handled = true;
+          Navigator.of(context).pop();
+          completer.complete(options[selectedIndex].value);
+        }
+        return true;
+      } else if (k == LogicalKeyboardKey.arrowUp) {
+        setSheetState(() {
+          selectedIndex = (selectedIndex - 1).clamp(0, options.length - 1);
+        });
+        return true;
+      } else if (k == LogicalKeyboardKey.arrowDown) {
+        setSheetState(() {
+          selectedIndex = (selectedIndex + 1).clamp(0, options.length - 1);
+        });
+        return true;
+      }
+      return false;
+    }
+
+    HardwareKeyboard.instance.addHandler(subKeyHandler);
+    final result = await completer.future;
+    HardwareKeyboard.instance.removeHandler(subKeyHandler);
+    _subMenuNativeKeyCallback = null;
+    _isSubMenuOpen.value = false;
+    _resetHideTimer();
+    return result;
+  }
+
+  void _playPrevious() {
+    if (widget.introController?.prevPlay() != true) {
+      SmartDialog.showToast('已经是第一集了');
+    }
+  }
+
+  void _playNext() {
+    if (widget.introController?.nextPlay() != true) {
+      SmartDialog.showToast('已经是最后一集了');
+    }
+  }
+
+  void _showEpisodePicker() {
+    final introController = widget.introController;
+    final showEpisodes = widget.showEpisodes;
+    if (introController == null || showEpisodes == null) return;
+
+    final videoDetail = introController.videoDetail.value;
+    final currentCid = ctr.cid;
+    int sectionIndex = 0;
+    List<ugc.BaseEpisodeItem>? episodes;
+    UgcSeason? season;
+
+    if (videoDetail.ugcSeason?.sections case final sections?) {
+      season = videoDetail.ugcSeason;
+      for (var i = 0; i < sections.length; i++) {
+        final sectionEpisodes = sections[i].episodes;
+        if (sectionEpisodes?.any((item) => item.cid == currentCid) == true) {
+          sectionIndex = i;
+          episodes = sectionEpisodes;
+          break;
+        }
+      }
+    } else if (videoDetail.pages?.isNotEmpty == true) {
+      episodes = videoDetail.pages;
+    } else if (introController is PgcIntroController) {
+      episodes = introController.pgcItem.episodes;
+    }
+
+    showEpisodes(sectionIndex, season, season == null ? episodes : null);
+    _panelRow.value = -1;
+  }
+
+  Future<void> _showSubtitlePicker() async {
+    final videoController = widget.videoDetailController;
+    if (videoController == null) return;
+    final subtitles = videoController.subtitles;
+    final options = <_TVDialogOption<int>>[
+      _TVDialogOption(
+        label: '关闭字幕',
+        value: 0,
+        isSelected: videoController.vttSubtitlesIndex.value <= 0,
+      ),
+      for (var i = 0; i < subtitles.length; i++)
+        _TVDialogOption(
+          label: subtitles[i].lanDoc ?? subtitles[i].lan,
+          value: i + 1,
+          isSelected: videoController.vttSubtitlesIndex.value == i + 1,
+        ),
+    ];
+    final result = await _showSidePanel<int>(
+      title: '字幕',
+      options: options,
+    );
+    if (result != null) {
+      await videoController.setSubtitle(result);
+    }
+  }
+
+  Future<void> _showSpeedPicker() async {
+    final speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0];
+    final result = await _showSidePanel<double>(
+      title: '播放速度',
+      options: speeds
+          .map(
+            (s) => _TVDialogOption(
+              label: '${s}x',
+              value: s,
+              isSelected: ctr.playbackSpeed == s,
+            ),
+          )
+          .toList(),
+    );
+    if (result != null) ctr.setPlaybackSpeed(result);
+  }
+
+  Future<void> _showQualityPicker() async {
+    final vdc = widget.videoDetailController;
+    if (vdc == null) return;
+    var aq = vdc.data.acceptQuality;
+    var ad = vdc.data.acceptDesc;
+    // fnval=1 时 acceptQuality 可能为空，用固定列表
+    if (aq == null || aq.isEmpty) {
+      aq = [80, 64, 32, 16];
+      ad = ['1080P 高清', '720P 高清', '480P 清晰', '360P 流畅'];
+    }
+    ad ??= [];
+    final qualities = aq;
+    final descs = ad;
+    final result = await _showSidePanel<int>(
+      title: '画质',
+      options: List.generate(
+        qualities.length,
+        (i) => _TVDialogOption(
+          label: i < descs.length ? '${descs[i]}' : '未知',
+          value: qualities[i],
+          isSelected: vdc.currentVideoQa.value?.code == qualities[i],
+        ),
+      ),
+    );
+    if (result != null) {
+      vdc.currentVideoQa.value = VideoQuality.fromCode(result);
+      vdc.updatePlayer();
+      _panelRow.value = -1;
+    }
+  }
+
+  Future<void> _showFitPicker() async {
+    final fits = [
+      VideoFitType.contain,
+      VideoFitType.cover,
+      VideoFitType.fill,
+      VideoFitType.fitWidth,
+      VideoFitType.fitHeight,
+    ];
+    final result = await _showSidePanel<VideoFitType>(
+      title: '画面比例',
+      options: fits
+          .map(
+            (f) => _TVDialogOption(
+              label: f.desc,
+              value: f,
+              isSelected: ctr.videoFit.value == f,
+            ),
+          )
+          .toList(),
+    );
+    if (result != null) ctr.videoFit.value = result;
+  }
+
+  Future<void> _showDanmakuSettings() async {
+    final on = ctr.enableShowDanmaku.value;
+    final result = await _showSidePanel<String>(
+      title: '弹幕设置',
+      options: [
+        _TVDialogOption(
+          label: on ? '关闭弹幕' : '开启弹幕',
+          value: 'toggle',
+          isSelected: false,
+        ),
+        _TVDialogOption(
+          label: '透明度 30%',
+          value: 'op_30',
+          isSelected: ctr.danmakuOpacity.value == 0.3,
+        ),
+        _TVDialogOption(
+          label: '透明度 50%',
+          value: 'op_50',
+          isSelected: ctr.danmakuOpacity.value == 0.5,
+        ),
+        _TVDialogOption(
+          label: '透明度 70%',
+          value: 'op_70',
+          isSelected: ctr.danmakuOpacity.value == 0.7,
+        ),
+        _TVDialogOption(
+          label: '透明度 100%',
+          value: 'op_100',
+          isSelected: ctr.danmakuOpacity.value == 1.0,
+        ),
+      ],
+    );
+    if (result == null) return;
+    switch (result) {
+      case 'toggle':
+        ctr.enableShowDanmaku.value = !ctr.enableShowDanmaku.value;
+      case 'op_30':
+        ctr.danmakuOpacity.value = 0.3;
+      case 'op_50':
+        ctr.danmakuOpacity.value = 0.5;
+      case 'op_70':
+        ctr.danmakuOpacity.value = 0.7;
+      case 'op_100':
+        ctr.danmakuOpacity.value = 1.0;
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Focus(
-      autofocus: true,
-      onKeyEvent: _handleKeyEvent,
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: Listenable.merge([_panelRow, _isSubMenuOpen]),
+    builder: (context, _) => PopScope(
+      canPop: _panelRow.value == -1 && !_isSubMenuOpen.value,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _panelRow.value != -1) {
+          _panelRow.value = -1;
+        }
+        // When sub-menu is open, the dialog's own PopScope handles closing it.
+        // We just need canPop=false (above) to prevent popping the video page.
+      },
       child: Stack(
         children: [
           widget.child,
-          // Top info bar
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            top: _showTopBar ? 0 : -80,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 16,
-              ),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.black54, Colors.transparent],
+          // Speed indicator
+          ValueListenableBuilder<double?>(
+            valueListenable: _showSpeedIndicator,
+            builder: (context, speed, _) {
+              if (speed == null) return const SizedBox.shrink();
+              return Positioned(
+                right: 24,
+                top: 24,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${speed}x',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ),
+              );
+            },
+          ),
+          // TV control panel
+          ListenableBuilder(
+            listenable: Listenable.merge([
+              _panelRow,
+              _btnIndex,
+              _isSubMenuOpen,
+            ]),
+            builder: (context, _) {
+              if (_panelRow.value == -1) return const SizedBox.shrink();
+              return Obx(_buildPanel);
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildPanel() {
+    final row = _panelRow.value;
+    final selBtn = _btnIndex.value;
+    final btns = _buttons;
+    final duration = ctr.duration.value;
+    final pos = ctr.position.value;
+
+    return ColoredBox(
+      color: Colors.black54,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // 顶部信息
+            Padding(
+              padding: const EdgeInsets.all(24),
               child: Row(
                 children: [
-                  Expanded(
+                  Text(
+                    '${DurationUtils.formatDuration(pos)}'
+                    ' / ${DurationUtils.formatDuration(duration)}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${ctr.playbackSpeed}x',
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            // 进度条（高亮显示当前行）
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: row == 0 ? Colors.lightBlueAccent : Colors.transparent,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(8),
+                color: row == 0
+                    ? Colors.lightBlueAccent.withValues(alpha: 0.1)
+                    : null,
+              ),
+              child: Column(
+                children: [
+                  LinearProgressIndicator(
+                    value: duration > 0 ? pos / duration : 0,
+                    backgroundColor: Colors.white24,
+                    minHeight: 4,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      widget.title ?? '',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
+                      row == 0 ? '← 后退  OK 暂停/播放  前进 →  ↓ 菜单' : '↓ 选择菜单',
+                      style: TextStyle(
+                        color: row == 0 ? Colors.white70 : Colors.white38,
+                        fontSize: 12,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Obx(
-                    () => Icon(
-                      _ctr.enableShowDanmaku.value
-                          ? Icons.subtitles
-                          : Icons.subtitles_off,
-                      color: Colors.white70,
-                      size: 20,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-
-          // Bottom control bar
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            bottom: _showBottomBar ? 0 : -120,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 12,
-              ),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Colors.black54, Colors.transparent],
+            const SizedBox(height: 16),
+            // 按钮行
+            if (row == 1)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Text(
+                  '↑ 返回进度条',
+                  style: TextStyle(color: Colors.white38, fontSize: 11),
                 ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (!widget.isLive) _buildProgressBar(theme),
-                  const SizedBox(height: 8),
-                  _buildControlButtons(theme),
-                ],
-              ),
-            ),
-          ),
-
-          // Center play state indicator
-          Obx(() {
-            final status = _ctr.playerStatus.value;
-            if (status == PlayerStatus.paused) {
-              return const Center(
-                child: Icon(
-                  Icons.play_arrow_rounded,
-                  size: 72,
-                  color: Colors.white70,
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressBar(ThemeData theme) {
-    return Obx(() {
-      final pos = _ctr.position.value.toDouble();
-      final dur = _ctr.duration.value.toDouble();
-      final buf = _ctr.buffered.value.toDouble();
-      final max = dur > 0 ? dur : 1.0;
-      return Row(
-        children: [
-          Text(
-            _formatDuration(Duration(seconds: pos.toInt())),
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Stack(
-              alignment: Alignment.centerLeft,
-              children: [
-                LinearProgressIndicator(
-                  value: buf / max,
-                  backgroundColor: Colors.white24,
-                  valueColor: const AlwaysStoppedAnimation(Colors.white38),
-                  minHeight: 4,
-                ),
-                LinearProgressIndicator(
-                  value: pos / max,
-                  backgroundColor: Colors.transparent,
-                  valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
-                  minHeight: 4,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            _formatDuration(Duration(seconds: dur.toInt())),
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-          ),
-        ],
-      );
-    });
-  }
-
-  Widget _buildControlButtons(ThemeData theme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Obx(
-          () => _ControlButton(
-            icon: Icons.play_arrow,
-            activeIcon: Icons.pause,
-            isActive: _ctr.playerStatus.isPlaying,
-            label: '播放',
-            onSelect: _togglePlayPause,
-          ),
-        ),
-        const SizedBox(width: 24),
-        _ControlButton(
-          icon: Icons.high_quality_outlined,
-          label: '画质',
-          onSelect: widget.onQualityTap,
-        ),
-        const SizedBox(width: 24),
-        Obx(
-          () => _ControlButton(
-            icon: _ctr.enableShowDanmaku.value
-                ? Icons.subtitles
-                : Icons.subtitles_off_outlined,
-            label: '弹幕',
-            onSelect: () {
-              _ctr.enableShowDanmaku.value = !_ctr.enableShowDanmaku.value;
-            },
-          ),
-        ),
-        const SizedBox(width: 24),
-        _ControlButton(
-          icon: Icons.tune,
-          label: '弹幕设置',
-          onSelect: () => _showDanmakuSettings(context),
-        ),
-        const SizedBox(width: 24),
-        Obx(
-          () => _ControlButton(
-            icon: Icons.speed,
-            label: '${_ctr.playbackSpeed}x',
-            onSelect: () => _showSpeedSelector(context),
-          ),
-        ),
-        if (widget.onNextEpisode != null) ...[
-          const SizedBox(width: 24),
-          _ControlButton(
-            icon: Icons.skip_next,
-            label: '下一集',
-            onSelect: widget.onNextEpisode,
-          ),
-        ],
-        if (widget.onShowEpisodeList != null) ...[
-          const SizedBox(width: 24),
-          _ControlButton(
-            icon: Icons.list,
-            label: '选集',
-            onSelect: widget.onShowEpisodeList,
-          ),
-        ],
-      ],
-    );
-  }
-
-  void _showDanmakuSettings(BuildContext context) {
-    final fontScales = [0.8, 1.0, 1.2, 1.5];
-    final fontScaleLabels = ['小', '中', '大', '特大'];
-    final opacities = [0.3, 0.5, 0.7, 1.0];
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) {
-          return AlertDialog(
-            title: const Text('弹幕设置'),
-            content: SizedBox(
-              width: 360,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('字体大小'),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: List.generate(fontScales.length, (i) {
-                      final selected =
-                          DanmakuOptions.danmakuFontScale == fontScales[i];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: TVFocusWrapper(
-                          autoFocus: i == 0 && selected,
-                          scaleFactor: 1.05,
-                          borderRadius: 8,
-                          onSelect: () {
-                            DanmakuOptions.danmakuFontScale = fontScales[i];
-                            DanmakuOptions.danmakuFontScaleFS = fontScales[i];
-                            DanmakuOptions.save(_ctr.danmakuOpacity.value);
-                            setDialogState(() {});
-                          },
-                          child: Chip(
-                            label: Text(fontScaleLabels[i]),
-                            backgroundColor: selected
-                                ? Theme.of(ctx).colorScheme.primaryContainer
-                                : null,
-                          ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(btns.length, (i) {
+                final btn = btns[i];
+                final selected = row == 1 && selBtn == i;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: selected
+                          ? Colors.lightBlueAccent
+                          : (row == 1 ? Colors.white38 : Colors.transparent),
+                      width: selected ? 2 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    color: selected
+                        ? Colors.lightBlueAccent.withValues(alpha: 0.2)
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        btn.icon,
+                        color: selected ? Colors.lightBlueAccent : Colors.white,
+                        size: 28,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        btn.label,
+                        style: TextStyle(
+                          color: selected
+                              ? Colors.lightBlueAccent
+                              : Colors.white70,
+                          fontSize: 12,
+                          fontWeight: selected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
-                      );
-                    }),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('不透明度'),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: List.generate(opacities.length, (i) {
-                      final selected =
-                          _ctr.danmakuOpacity.value == opacities[i];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: TVFocusWrapper(
-                          scaleFactor: 1.05,
-                          borderRadius: 8,
-                          onSelect: () {
-                            _ctr.danmakuOpacity.value = opacities[i];
-                            DanmakuOptions.save(opacities[i]);
-                            setDialogState(() {});
-                          },
-                          child: Chip(
-                            label: Text('${(opacities[i] * 100).toInt()}%'),
-                            backgroundColor: selected
-                                ? Theme.of(ctx).colorScheme.primaryContainer
-                                : null,
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                  const SizedBox(height: 16),
-                  TVFocusWrapper(
-                    scaleFactor: 1.02,
-                    borderRadius: 8,
-                    onSelect: () {
-                      if (DanmakuOptions.danmakuWeight > 0) {
-                        DanmakuOptions.danmakuWeight = 0;
-                      } else {
-                        DanmakuOptions.danmakuWeight = 4;
-                      }
-                      DanmakuOptions.save(_ctr.danmakuOpacity.value);
-                      setDialogState(() {});
-                    },
-                    child: ListTile(
-                      leading: Icon(
-                        DanmakuOptions.danmakuWeight > 0
-                            ? Icons.check_box
-                            : Icons.check_box_outline_blank,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      title: const Text('智能云屏蔽'),
-                      subtitle: Text(
-                        DanmakuOptions.danmakuWeight > 0
-                            ? '已开启 ${DanmakuOptions.danmakuWeight} 级'
-                            : '关闭',
-                      ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              }),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('确定'),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  void _showSpeedSelector(BuildContext context) {
-    final speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0];
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('播放速度'),
-        content: SizedBox(
-          width: 300,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: speeds.length,
-            itemBuilder: (ctx, i) {
-              return TVFocusWrapper(
-                autoFocus: speeds[i] == _ctr.playbackSpeed,
-                onSelect: () {
-                  _ctr.setPlaybackSpeed(speeds[i]);
-                  Navigator.of(ctx).pop();
-                },
-                borderRadius: 8,
-                scaleFactor: 1.05,
-                child: ListTile(
-                  title: Text('${speeds[i]}x'),
-                  selected: speeds[i] == _ctr.playbackSpeed,
-                ),
-              );
-            },
-          ),
+            const SizedBox(height: 32),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ControlButton extends StatelessWidget {
-  const _ControlButton({
-    required this.icon,
-    required this.label,
-    this.onSelect,
-    this.activeIcon,
-    this.isActive = false,
-  });
-
+class _TVBtnItem {
   final IconData icon;
-  final IconData? activeIcon;
-  final bool isActive;
   final String label;
-  final VoidCallback? onSelect;
+  final VoidCallback onTap;
+  const _TVBtnItem(this.icon, this.label, this.onTap);
+}
 
-  @override
-  Widget build(BuildContext context) {
-    return TVFocusWrapper(
-      onSelect: onSelect,
-      scaleFactor: 1.2,
-      borderRadius: 8,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isActive ? (activeIcon ?? icon) : icon,
-              color: Colors.white,
-              size: 28,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white70, fontSize: 11),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class _TVDialogOption<T> {
+  final String label;
+  final T value;
+  final bool isSelected;
+  const _TVDialogOption({
+    required this.label,
+    required this.value,
+    this.isSelected = false,
+  });
 }

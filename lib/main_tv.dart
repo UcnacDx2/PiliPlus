@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/http/init.dart';
+import 'package:PiliPlus/pages_tv/common/tv_player_controls.dart';
 import 'package:PiliPlus/pages_tv/tv_app.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/service_locator.dart';
@@ -109,7 +110,10 @@ void main() async {
       final key = args['key'] as String;
       final action = args['action'] as String;
       final isRepeat = args['isRepeat'] as bool;
-      if (action == 'down' && !isRepeat) {
+      final playerHandler = TVKeyHandler.instance?.callback;
+      if (playerHandler != null) {
+        playerHandler(key, action, isRepeat);
+      } else if (action == 'down' && !isRepeat) {
         final direction = key == 'arrowUp'
             ? TraversalDirection.up
             : TraversalDirection.down;

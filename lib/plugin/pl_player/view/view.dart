@@ -2004,8 +2004,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     }
     if (PlatformUtils.isTV) {
       return TVPlayerControls(
-        controller: plPlayerController,
-        isLive: plPlayerController.isLive,
+        plPlayerController: plPlayerController,
+        videoDetailController: widget.videoDetailController,
+        introController: widget.introController,
+        showEpisodes: widget.showEpisodes,
         child: child,
       );
     }
