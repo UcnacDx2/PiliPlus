@@ -1,5 +1,21 @@
+import 'dart:typed_data';
+
 import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
+
+List<int> parseVideoShotIndexBytes(List<int> bytes) {
+  if (bytes.isEmpty || bytes.length.isOdd) return const [];
+  final data = ByteData.sublistView(Uint8List.fromList(bytes));
+  final index = List<int>.generate(
+    bytes.length ~/ 2,
+    (offset) => data.getUint16(offset * 2, Endian.big),
+    growable: false,
+  );
+  for (var i = 1; i < index.length; i++) {
+    if (index[i] < index[i - 1]) return const [];
+  }
+  return index;
+}
 
 class VideoShotData {
   String? pvdata;
@@ -30,6 +46,6 @@ class VideoShotData {
     image: (json["image"] as List)
         .map((e) => (e as String).http2https)
         .toList(),
-    index: (json["index"] as List).fromCast(),
+    index: (json["index"] as List? ?? const []).fromCast(),
   );
 }

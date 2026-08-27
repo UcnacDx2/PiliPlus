@@ -1,11 +1,10 @@
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
-import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
+import 'package:PiliPlus/common/widgets/image/first_frame_or_cover.dart';
 import 'package:PiliPlus/common/widgets/progress_bar/video_progress_indicator.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
-import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/models/horizontal_video_model.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
@@ -64,27 +63,14 @@ class VideoCardH extends StatelessWidget {
                     return;
                   }
 
-                  int? cid = videoItem.cid;
-                  Dimension? dimension = videoItem.dimension;
-                  if (cid == null) {
-                    if (await SearchHttp.ab2cWithDimension(
-                          aid: videoItem.aid,
-                          bvid: videoItem.bvid,
-                        )
-                        case final res?) {
-                      cid = res.cid;
-                      dimension = res.dimension;
-                    }
-                  }
-                  if (cid != null) {
-                    PageUtils.toVideoPage(
-                      bvid: videoItem.bvid,
-                      cid: cid,
-                      cover: videoItem.cover,
-                      title: videoItem.title,
-                      dimension: dimension,
-                    );
-                  }
+                  await PageUtils.openVideo(
+                    aid: videoItem.aid,
+                    bvid: videoItem.bvid,
+                    cid: videoItem.cid,
+                    cover: videoItem.cover,
+                    title: videoItem.title,
+                    dimension: videoItem.dimension,
+                  );
                 },
             child: Padding(
               padding: const .symmetric(
@@ -106,8 +92,11 @@ class VideoCardH extends StatelessWidget {
                         return Stack(
                           clipBehavior: .none,
                           children: [
-                            NetworkImgLayer(
-                              src: videoItem.cover,
+                            FirstFrameOrCover(
+                              bvid: videoItem.bvid,
+                              cid: videoItem.cid,
+                              firstFrameUrl: videoItem.firstFrame,
+                              coverUrl: videoItem.cover,
                               width: maxWidth,
                               height: maxHeight,
                             ),

@@ -13,6 +13,11 @@ class EpisodeItem extends BaseEpisodeItem {
   String? shareUrl;
   String? showTitle;
   int? play;
+  int? status;
+
+  /// Only status 2 is the ordinary episode state. Other states use the
+  /// history API when playback and history accounts differ.
+  bool get needsHistoryFallback => status != 2;
 
   EpisodeItem({
     super.aid,
@@ -33,6 +38,7 @@ class EpisodeItem extends BaseEpisodeItem {
     this.showTitle,
     super.title,
     this.play,
+    this.status,
   });
 
   factory EpisodeItem.fromJson(Map<String, dynamic> json) => EpisodeItem(
@@ -56,5 +62,6 @@ class EpisodeItem extends BaseEpisodeItem {
     showTitle: json['show_title'] as String?,
     title: json['title'] as String?,
     play: json['play'] as int?,
+    status: json['status'] as int?,
   );
 }

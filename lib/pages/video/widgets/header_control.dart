@@ -16,6 +16,8 @@ import 'package:PiliPlus/http/live.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/super_resolution_type.dart';
+import 'package:PiliPlus/models/common/watermark_mode.dart';
+import 'package:PiliPlus/models/common/watermark_position.dart';
 import 'package:PiliPlus/models/common/video/audio_quality.dart';
 import 'package:PiliPlus/models/common/video/cdn_type.dart';
 import 'package:PiliPlus/models/common/video/video_decode_type.dart';
@@ -478,6 +480,28 @@ class HeaderControlState extends State<HeaderControl>
                   descFontSize: 12,
                   descPosType: .subtitle,
                 ),
+                if (Pref.watermarkMode == WatermarkMode.bilibili)
+                  PopupListTile<WatermarkPosition>(
+                    dense: true,
+                    leading: const Icon(
+                      Icons.branding_watermark_outlined,
+                      size: 20,
+                    ),
+                    title: const Text('水印位置'),
+                    value: () {
+                      final value = plPlayerController.watermarkPosition.value;
+                      return (value, value.label);
+                    },
+                    itemBuilder: (_) => enumItemBuilder(
+                      WatermarkPosition.values,
+                    ),
+                    onSelected: (value, setState) {
+                      plPlayerController.setWatermarkPosition(value);
+                      setState();
+                    },
+                    descFontSize: 12,
+                    descPosType: .subtitle,
+                  ),
                 if (PlatformUtils.isMobile)
                   if (plPlayerController.videoPlayerController
                       case final player?)

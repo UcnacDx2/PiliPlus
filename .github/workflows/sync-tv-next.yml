@@ -1,0 +1,110 @@
+name: Sync TV patch stack
+
+on:
+  schedule:
+    - cron: "47 3 * * *"
+  workflow_run:
+    workflows: ["Sync mobile patches"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: sync-tv-next
+  cancel-in-progress: false
+
+jobs:
+  sync-and-build:
+    if: >-
+      github.repository == 'UcnacDx2/PiliPlus' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout TV patch branch
+        uses: actions/checkout@v7
+        with:
+          ref: tv-next
+          fetch-depth: 0
+
+      - name: Fetch latest mobile patch base
+        run: git fetch origin mobile-patches
+
+      - name: Rebase TV patch stack on mobile patches
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rebase origin/mobile-patches
+
+      - name: Install Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            android/*.gradle*
+            android/**/gradle-wrapper.properties
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: pubspec.yaml
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze TV and shared patch surfaces
+        run: >-
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          lib/main_tv.dart
+          lib/pages_tv
+          lib/common/widgets/image/first_frame_or_cover.dart
+          lib/services/first_frame_quality_service.dart
+          lib/services/video_shot_preview_service.dart
+          lib/http/video.dart
+          lib/models/home/rcmd/result.dart
+          lib/models/model_rec_video_item.dart
+          lib/models/model_video.dart
+          lib/pages/history
+          lib/models/common/watermark_mode.dart
+          lib/pages/setting
+          lib/plugin/pl_player/controller.dart
+          lib/plugin/pl_player/models/watermark_region.dart
+          lib/plugin/pl_player/utils/watermark_detector.dart
+          lib/plugin/pl_player/utils/watermark_filter.dart
+          lib/utils/storage_key.dart
+          lib/utils/storage_pref.dart
+
+      - name: Test shared smart video covers
+        run: >-
+          flutter test
+          test/services/first_frame_quality_service_test.dart
+          test/services/video_shot_preview_service_test.dart
+          test/plugin/pl_player/watermark_detector_test.dart
+          test/plugin/pl_player/watermark_filter_test.dart
+
+      - name: Apply Android framework patches
+        shell: pwsh
+        run: lib/scripts/patch.ps1 android
+
+      - name: Build Android TV arm64
+        run: >-
+          flutter build apk --flavor tv -t lib/main_tv.dart --release
+          --target-platform android-arm64 --split-per-abi
+
+      - name: Build Android TV arm
+        run: >-
+          flutter build apk --flavor tv -t lib/main_tv.dart --release
+          --target-platform android-arm --split-per-abi
+
+      - name: Build Android TV x64
+        run: >-
+          flutter build apk --flavor tv -t lib/main_tv.dart --release
+          --target-platform android-x64 --split-per-abi
+
+      - name: Push rebased TV patch branch
+        run: git push --force-with-lease origin HEAD:tv-next

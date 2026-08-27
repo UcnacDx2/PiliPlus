@@ -9,15 +9,17 @@ import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models_new/history/list.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
 import 'package:PiliPlus/pages/common/multi_select/base.dart';
+import 'package:PiliPlus/pages/history/controller.dart';
+import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:material_ui/material_ui.dart';
 
 class HistoryItem extends StatelessWidget {
   final HistoryItemModel item;
@@ -52,6 +54,13 @@ class HistoryItem extends StatelessWidget {
         onTap: enableMultiSelect
             ? () => ctr.onSelect(item)
             : () async {
+                final historyMid = ctr is HistoryController
+                    ? (ctr as HistoryController).account.mid
+                    : Accounts.history.mid;
+                final resumeProgress = historyMid == Accounts.video.mid
+                    ? null
+                    : item.playbackProgress;
+
                 if (business?.contains('article') == true) {
                   PageUtils.toDupNamed(
                     '/articlePage',
@@ -71,7 +80,7 @@ class HistoryItem extends StatelessWidget {
                 } else if (business == 'pgc') {
                   PageUtils.viewPgc(
                     epId: item.history.epid,
-                    progress: item.playbackProgress,
+                    progress: resumeProgress,
                   );
                 } else if (business == 'cheese') {
                   if (item.uri?.isNotEmpty == true) {
@@ -79,7 +88,7 @@ class HistoryItem extends StatelessWidget {
                       item.uri!,
                       isPgc: false,
                       aid: item.history.oid,
-                      progress: item.playbackProgress,
+                      progress: resumeProgress,
                     );
                   }
                 } else {
@@ -97,7 +106,6 @@ class HistoryItem extends StatelessWidget {
                     }
                   }
                   if (cid != null) {
-                    // TODO: dimension
                     PageUtils.toVideoPage(
                       aid: aid,
                       bvid: bvid,
@@ -105,7 +113,7 @@ class HistoryItem extends StatelessWidget {
                       cover: item.cover,
                       title: item.title,
                       dimension: dimension,
-                      progress: item.playbackProgress,
+                      progress: resumeProgress,
                     );
                   }
                 }
@@ -181,10 +189,7 @@ class HistoryItem extends StatelessWidget {
                                 ),
                               ),
                             Positioned.fill(
-                              child: selectMask(
-                                theme.colorScheme,
-                                item.checked,
-                              ),
+                              child: selectMask(theme.colorScheme, item.checked),
                             ),
                           ],
                         );

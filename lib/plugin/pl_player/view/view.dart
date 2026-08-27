@@ -35,6 +35,7 @@ import 'package:PiliPlus/pages/video/introduction/pgc/controller.dart';
 import 'package:PiliPlus/pages/video/post_panel/popup_menu_text.dart';
 import 'package:PiliPlus/pages/video/post_panel/view.dart';
 import 'package:PiliPlus/pages/video/widgets/header_control.dart';
+import 'package:PiliPlus/pages_tv/common/tv_player_controls.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/bottom_control_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/data_status.dart';
@@ -1999,6 +2000,15 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               widget.videoDetailController?.showSteinEdgeInfo.value ?? false,
           child: child,
         ),
+      );
+    }
+    if (PlatformUtils.isTV) {
+      return TVPlayerControls(
+        plPlayerController: plPlayerController,
+        videoDetailController: widget.videoDetailController,
+        introController: widget.introController,
+        showEpisodes: widget.showEpisodes,
+        child: child,
       );
     }
     return child;

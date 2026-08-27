@@ -31,6 +31,13 @@ List<SettingsModel> get videoSettings => [
     defaultVal: true,
   ),
   const SwitchModel(
+    title: '使用视频第一帧作为封面',
+    subtitle: '开启后会尝试获取视频第一帧，会增加网络请求',
+    leading: Icon(Icons.photo_library_outlined),
+    setKey: SettingBoxKey.useFirstFrameAsCover,
+    defaultVal: true,
+  ),
+  const SwitchModel(
     title: '免登录1080P',
     subtitle: '免登录查看1080P视频',
     leading: Icon(Icons.hd_outlined),

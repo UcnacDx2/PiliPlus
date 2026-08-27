@@ -196,6 +196,11 @@ class _SettingPageState extends State<SettingPage> {
           leading: const Icon(Icons.switch_account_outlined),
           title: Text('切换账号', style: titleStyle),
         ),
+        ListTile(
+          onTap: () => Get.toNamed('/loginPage'),
+          leading: const Icon(Icons.add_circle_outline_outlined),
+          title: Text('添加账户', style: titleStyle),
+        ),
         Obx(
           () => _noAccount.value
               ? const SizedBox.shrink()

@@ -902,7 +902,7 @@ abstract final class PiliScheme {
         SmartDialog.dismiss();
       }
       if (cid != null) {
-        PageUtils.toVideoPage(
+        await PageUtils.openVideo(
           aid: aid,
           bvid: bvid,
           cid: cid,

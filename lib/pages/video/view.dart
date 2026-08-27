@@ -70,6 +70,7 @@ import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, clampDouble;
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -1460,19 +1461,32 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         Obx(() {
           if (!videoDetailController.autoPlay) {
             return Positioned.fill(
-              child: GestureDetector(
-                onTap: handlePlay,
-                behavior: .opaque,
-                child: Obx(
-                  () => NetworkImgLayer(
-                    type: .emote,
-                    quality: 60,
-                    src: videoDetailController.cover.value,
-                    width: width,
-                    height: height,
-                    cacheWidth: true,
-                    getPlaceHolder: () => Center(
-                      child: Image.asset(Assets.loading),
+              child: Focus(
+                autofocus: PlatformUtils.isTV,
+                onKeyEvent: (node, event) {
+                  if (PlatformUtils.isTV &&
+                      event is KeyDownEvent &&
+                      (event.logicalKey == LogicalKeyboardKey.select ||
+                          event.logicalKey == LogicalKeyboardKey.enter)) {
+                    handlePlay();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: GestureDetector(
+                  onTap: handlePlay,
+                  behavior: .opaque,
+                  child: Obx(
+                    () => NetworkImgLayer(
+                      type: .emote,
+                      quality: 60,
+                      src: videoDetailController.cover.value,
+                      width: width,
+                      height: height,
+                      cacheWidth: true,
+                      getPlaceHolder: () => Center(
+                        child: Image.asset(Assets.loading),
+                      ),
                     ),
                   ),
                 ),
