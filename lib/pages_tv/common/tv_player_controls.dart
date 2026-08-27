@@ -58,6 +58,9 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
   // True after we consumed a BACK KeyDown that closed a panel — used to also consume the matching KeyUp
   // so Android's default onKeyUp(BACK) → onBackPressed doesn't fire and exit the video page.
   bool _backConsumed = false;
+  // A submenu closes on OK KeyDown. Consume the matching KeyUp so it cannot
+  // activate the newly exposed main-panel button underneath.
+  bool _selectConsumed = false;
   double _originalSpeed = 1.0;
   final _showSpeedIndicator = ValueNotifier<double?>(null);
 
@@ -181,6 +184,11 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
         return false;
       }
       return false;
+    }
+
+    if (isSelect && _selectConsumed) {
+      if (event is KeyUpEvent) _selectConsumed = false;
+      return true;
     }
 
     // Sub-menu open: let the sub-menu's own HardwareKeyboard handler take priority
@@ -504,6 +512,7 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
       if (k == LogicalKeyboardKey.select || k == LogicalKeyboardKey.enter) {
         if (!handled) {
           handled = true;
+          _selectConsumed = true;
           Navigator.of(context).pop();
           completer.complete(options[selectedIndex].value);
         }

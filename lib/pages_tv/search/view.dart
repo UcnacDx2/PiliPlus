@@ -186,7 +186,7 @@ class _TVSearchPageState extends State<TVSearchPage> {
                                     gridDelegate:
                                         const SliverGridDelegateWithFixedCrossAxisCount(
                                           crossAxisCount: 4,
-                                          mainAxisExtent: 245,
+                                          childAspectRatio: 16 / 13,
                                           crossAxisSpacing: 12,
                                           mainAxisSpacing: 12,
                                         ),

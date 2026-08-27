@@ -89,6 +89,7 @@ class _TVRowState extends State<TVRow> {
           child: ListView.separated(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: widget.itemCount,
             separatorBuilder: (_, _) => const SizedBox(width: 16),
