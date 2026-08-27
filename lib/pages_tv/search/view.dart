@@ -119,7 +119,7 @@ class _TVSearchPageState extends State<TVSearchPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 440,
+              width: 360,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -186,7 +186,13 @@ class _TVSearchPageState extends State<TVSearchPage> {
                                     gridDelegate:
                                         const SliverGridDelegateWithFixedCrossAxisCount(
                                           crossAxisCount: 4,
-                                          childAspectRatio: 16 / 13,
+                                          // Search shares the screen with the
+                                          // keyboard. At common TV density the
+                                          // four-column cards are much narrower
+                                          // than home-row cards, so they need a
+                                          // square cell to retain a 16:9 cover
+                                          // plus two readable text rows.
+                                          childAspectRatio: 1,
                                           crossAxisSpacing: 12,
                                           mainAxisSpacing: 12,
                                         ),

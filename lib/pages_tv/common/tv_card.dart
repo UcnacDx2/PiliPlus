@@ -81,22 +81,49 @@ class TVCard extends StatelessWidget {
           ],
         );
 
-    return TVFocusWrapper(
-      onSelect: onSelect,
-      onLongPress: onLongPress,
-      autoFocus: autoFocus,
-      child: isInfiniteWidth
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) => buildCover(
-                      constraints.maxWidth,
-                      constraints.maxHeight,
+    final content = isInfiniteWidth
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) => buildCover(
+                    constraints.maxWidth,
+                    constraints.maxHeight,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+              if (subtitle != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
+                  child: Text(
+                    subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
+            ],
+          )
+        : SizedBox(
+            width: width,
+            height: cardHeight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                buildCover(width, coverHeight!),
                 const SizedBox(height: 6),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -109,7 +136,7 @@ class TVCard extends StatelessWidget {
                 ),
                 if (subtitle != null)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
                     child: Text(
                       subtitle!,
                       maxLines: 1,
@@ -120,39 +147,20 @@ class TVCard extends StatelessWidget {
                     ),
                   ),
               ],
-            )
-          : SizedBox(
-              width: width,
-              height: cardHeight,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  buildCover(width, coverHeight!),
-                  const SizedBox(height: 6),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ),
-                  if (subtitle != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Text(
-                        subtitle!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
             ),
+          );
+
+    return TVFocusWrapper(
+      onSelect: onSelect,
+      onLongPress: onLongPress,
+      autoFocus: autoFocus,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: content,
+      ),
     );
   }
 }
