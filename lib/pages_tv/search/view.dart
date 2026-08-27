@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/models/common/search/search_type.dart';
+import 'package:PiliPlus/models/search/result.dart';
 import 'package:PiliPlus/pages_tv/common/tv_card.dart';
 import 'package:PiliPlus/pages_tv/common/tv_focus_wrapper.dart';
 import 'package:PiliPlus/pages_tv/common/tv_keyboard.dart';
@@ -22,7 +23,8 @@ class TVSearchPage extends StatefulWidget {
 
 class _TVSearchPageState extends State<TVSearchPage> {
   final _suggestState = Rx<LoadingState<List?>>(const Success(null));
-  final _resultState = Rx<LoadingState<List?>>(const Success(null));
+  final _resultState =
+      Rx<LoadingState<List<SearchVideoItemModel>?>>(const Success(null));
   final _trendingState = Rx<LoadingState<List?>>(LoadingState.loading());
   final _historyList = List<String>.from(
     GStorage.historyWord.get('cacheList') ?? const <String>[],
@@ -93,7 +95,7 @@ class _TVSearchPageState extends State<TVSearchPage> {
     _lastQuery = keyword;
     _addHistory(keyword);
     _resultState.value = LoadingState.loading();
-    final res = await SearchHttp.searchByType(
+    final res = await SearchHttp.searchByType<SearchVideoData>(
       searchType: SearchType.video,
       keyword: keyword,
       page: 1,
@@ -117,23 +119,30 @@ class _TVSearchPageState extends State<TVSearchPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 360,
+              width: 440,
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TVKeyboard(
-                        onTextChanged: _onTextChanged,
-                        onConfirm: _doSearch,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TVKeyboard(
+                      onTextChanged: _onTextChanged,
+                      onConfirm: _doSearch,
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildTrendingSection(),
+                            const SizedBox(height: 16),
+                            _buildHistorySection(),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      _buildTrendingSection(),
-                      const SizedBox(height: 16),
-                      _buildHistorySection(),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -177,7 +186,7 @@ class _TVSearchPageState extends State<TVSearchPage> {
                                     gridDelegate:
                                         const SliverGridDelegateWithFixedCrossAxisCount(
                                           crossAxisCount: 4,
-                                          childAspectRatio: 16 / 13,
+                                          mainAxisExtent: 245,
                                           crossAxisSpacing: 12,
                                           mainAxisSpacing: 12,
                                         ),
@@ -186,7 +195,7 @@ class _TVSearchPageState extends State<TVSearchPage> {
                                       final item = response[i];
                                       return TVCard(
                                         title: _stripHtml(item.title ?? ''),
-                                        subtitle: item.author ?? '',
+                                        subtitle: item.owner.name ?? '',
                                         coverUrl: _fixCover(item.cover),
                                         bvid:
                                             item.bvid ??
