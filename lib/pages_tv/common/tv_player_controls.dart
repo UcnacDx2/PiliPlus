@@ -57,7 +57,7 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
   final _isSubMenuOpen = ValueNotifier<bool>(false);
   bool _isLongPressing = false;
   bool _selectPressed = false;
-  int? _pressedButtonIndex;
+  _TVBtnItem? _pressedButton;
   // True after we consumed a BACK KeyDown that closed a panel — used to also consume the matching KeyUp
   // so Android's default onKeyUp(BACK) → onBackPressed doesn't fire and exit the video page.
   bool _backConsumed = false;
@@ -199,7 +199,13 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
     // remotes emit an additional select/enter KeyUp for one physical press.
     if (isSelect && event is KeyDownEvent) {
       _selectPressed = true;
-      _pressedButtonIndex = _panelRow.value == 1 ? _btnIndex.value : null;
+      if (_panelRow.value == 1) {
+        final buttons = _buttons;
+        final index = _btnIndex.value;
+        _pressedButton = index < buttons.length ? buttons[index] : null;
+      } else {
+        _pressedButton = null;
+      }
       return true;
     }
 
@@ -217,7 +223,7 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
       ctr.setPlaybackSpeed(_originalSpeed);
       _isLongPressing = false;
       _selectPressed = false;
-      _pressedButtonIndex = null;
+      _pressedButton = null;
       _showSpeedIndicator.value = null;
       return true;
     }
@@ -225,9 +231,9 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
     // OK KeyUp: play/pause (only when not long-pressing)
     if (isSelect && event is KeyUpEvent) {
       if (_selectPressed && !_isLongPressing) {
-        final pressedButtonIndex = _pressedButtonIndex;
+        final pressedButton = _pressedButton;
         _selectPressed = false;
-        _pressedButtonIndex = null;
+        _pressedButton = null;
         if (_panelRow.value == -1) {
           if (ctr.playerStatus.isPlaying) {
             ctr.pause();
@@ -236,11 +242,8 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
             ctr.play();
             _panelRow.value = -1;
           }
-        } else if (_panelRow.value == 1 && pressedButtonIndex != null) {
-          final buttons = _buttons;
-          if (pressedButtonIndex < buttons.length) {
-            buttons[pressedButtonIndex].onTap();
-          }
+        } else if (_panelRow.value == 1 && pressedButton != null) {
+          pressedButton.onTap();
         } else {
           _onKey('ok');
         }
