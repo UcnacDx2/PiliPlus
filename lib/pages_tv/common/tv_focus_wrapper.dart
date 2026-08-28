@@ -102,6 +102,12 @@ class _TVFocusWrapperState extends State<TVFocusWrapper>
             duration: widget.animationDuration,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(widget.borderRadius),
+              border: Border.all(
+                color: _isFocused
+                    ? colorScheme.primary
+                    : Colors.transparent,
+                width: widget.borderWidth,
+              ),
               boxShadow: _isFocused
                   ? [
                       BoxShadow(
@@ -112,17 +118,14 @@ class _TVFocusWrapperState extends State<TVFocusWrapper>
                     ]
                   : null,
             ),
-            foregroundDecoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(widget.borderRadius),
-              border: Border.all(
-                color: _isFocused
-                    ? colorScheme.primary
-                    : Colors.transparent,
-                width: widget.borderWidth,
-              ),
-            ),
+            padding: EdgeInsets.all(widget.borderWidth),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(widget.borderRadius),
+              borderRadius: BorderRadius.circular(
+                (widget.borderRadius - widget.borderWidth).clamp(
+                  0.0,
+                  widget.borderRadius,
+                ).toDouble(),
+              ),
               child: widget.child,
             ),
           ),

@@ -55,12 +55,11 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
   PlPlayerController get ctr => widget.plPlayerController;
   final _isSubMenuOpen = ValueNotifier<bool>(false);
   bool _isLongPressing = false;
+  bool _selectPressed = false;
+  int? _pressedButtonIndex;
   // True after we consumed a BACK KeyDown that closed a panel — used to also consume the matching KeyUp
   // so Android's default onKeyUp(BACK) → onBackPressed doesn't fire and exit the video page.
   bool _backConsumed = false;
-  // A submenu closes on OK KeyDown. Consume the matching KeyUp so it cannot
-  // activate the newly exposed main-panel button underneath.
-  bool _selectConsumed = false;
   double _originalSpeed = 1.0;
   final _showSpeedIndicator = ValueNotifier<double?>(null);
 
@@ -186,14 +185,17 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
       return false;
     }
 
-    if (isSelect && _selectConsumed) {
-      if (event is KeyUpEvent) _selectConsumed = false;
-      return true;
-    }
-
     // Sub-menu open: let the sub-menu's own HardwareKeyboard handler take priority
     if (_isSubMenuOpen.value) {
       return false;
+    }
+
+    // Only a KeyUp paired with a KeyDown may activate a control. Some TV
+    // remotes emit an additional select/enter KeyUp for one physical press.
+    if (isSelect && event is KeyDownEvent) {
+      _selectPressed = true;
+      _pressedButtonIndex = _panelRow.value == 1 ? _btnIndex.value : null;
+      return true;
     }
 
     // Long-press OK = speed boost (works regardless of panel state)
@@ -209,13 +211,18 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
     if (isSelect && event is KeyUpEvent && _isLongPressing) {
       ctr.setPlaybackSpeed(_originalSpeed);
       _isLongPressing = false;
+      _selectPressed = false;
+      _pressedButtonIndex = null;
       _showSpeedIndicator.value = null;
       return true;
     }
 
     // OK KeyUp: play/pause (only when not long-pressing)
     if (isSelect && event is KeyUpEvent) {
-      if (!_isLongPressing) {
+      if (_selectPressed && !_isLongPressing) {
+        final pressedButtonIndex = _pressedButtonIndex;
+        _selectPressed = false;
+        _pressedButtonIndex = null;
         if (_panelRow.value == -1) {
           if (ctr.playerStatus.isPlaying) {
             ctr.pause();
@@ -223,6 +230,11 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
           } else {
             ctr.play();
             _panelRow.value = -1;
+          }
+        } else if (_panelRow.value == 1 && pressedButtonIndex != null) {
+          final buttons = _buttons;
+          if (pressedButtonIndex < buttons.length) {
+            buttons[pressedButtonIndex].onTap();
           }
         } else {
           _onKey('ok');
@@ -350,6 +362,7 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
     required String title,
     required List<_TVDialogOption<T>> options,
   }) async {
+    if (_isSubMenuOpen.value) return null;
     _isSubMenuOpen.value = true;
     _hideTimer?.cancel();
     int selectedIndex = options.indexWhere((o) => o.isSelected);
@@ -358,6 +371,7 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
     final completer = Completer<T?>();
     late StateSetter setSheetState;
     bool handled = false;
+    bool selectPressed = false;
 
     _subMenuNativeKeyCallback = (key) {
       if (key == 'arrowUp') {
@@ -506,18 +520,27 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
         return true;
       }
 
-      // 其他键只在 KeyDown/KeyRepeat 时处理
-      if (event is! KeyDownEvent && event is! KeyRepeatEvent) return false;
-
       if (k == LogicalKeyboardKey.select || k == LogicalKeyboardKey.enter) {
-        if (!handled) {
+        // Confirm on KeyUp. Closing/rebuilding the player controls on KeyDown
+        // lets the matching KeyUp hit the newly exposed button underneath.
+        if (event is KeyDownEvent) {
+          selectPressed = true;
+          return true;
+        }
+        if (event is KeyRepeatEvent) return true;
+        if (event is KeyUpEvent && selectPressed && !handled) {
+          selectPressed = false;
           handled = true;
-          _selectConsumed = true;
           Navigator.of(context).pop();
           completer.complete(options[selectedIndex].value);
         }
         return true;
-      } else if (k == LogicalKeyboardKey.arrowUp) {
+      }
+
+      // Direction keys only act on KeyDown/KeyRepeat.
+      if (event is! KeyDownEvent && event is! KeyRepeatEvent) return false;
+
+      if (k == LogicalKeyboardKey.arrowUp) {
         setSheetState(() {
           selectedIndex = (selectedIndex - 1).clamp(0, options.length - 1);
         });
