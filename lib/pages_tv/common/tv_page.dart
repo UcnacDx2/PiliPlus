@@ -20,12 +20,15 @@ class _TVPageState extends State<TVPage> {
 
   @override
   Widget build(BuildContext context) {
-    Widget child = SafeArea(
-      minimum: EdgeInsets.symmetric(
-        horizontal: MediaQuery.sizeOf(context).width * 0.03,
-        vertical: MediaQuery.sizeOf(context).height * 0.03,
+    Widget child = ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: SafeArea(
+        minimum: EdgeInsets.symmetric(
+          horizontal: MediaQuery.sizeOf(context).width * 0.03,
+          vertical: MediaQuery.sizeOf(context).height * 0.03,
+        ),
+        child: widget.child,
       ),
-      child: widget.child,
     );
 
     if (widget.isRoot) {

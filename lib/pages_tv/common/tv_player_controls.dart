@@ -52,6 +52,7 @@ class TVPlayerControls extends StatefulWidget {
 }
 
 class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
+  static _TVPlayerKeyHandlerState? _sidePanelOwner;
   PlPlayerController get ctr => widget.plPlayerController;
   final _isSubMenuOpen = ValueNotifier<bool>(false);
   bool _isLongPressing = false;
@@ -155,6 +156,10 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
         key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter;
     final isBack =
         key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape;
+
+    if (!_isSubMenuOpen.value && ModalRoute.of(context)?.isCurrent != true) {
+      return false;
+    }
 
     // === BACK key (handle BEFORE the KeyUp early-return, otherwise Android's
     // default onKeyUp(BACK) → onBackPressed will fire and exit the video page) ===
@@ -321,6 +326,7 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
       _subMenuNativeKeyCallback?.call(key);
       return;
     }
+    if (ModalRoute.of(context)?.isCurrent != true) return;
     if (key == 'arrowUp' || key == 'arrowDown') {
       final isUp = key == 'arrowUp';
       if (_panelRow.value == -1) {
@@ -350,6 +356,7 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
     _hideTimer?.cancel();
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     TVKeyHandler.instance?.callback = null;
+    if (identical(_sidePanelOwner, this)) _sidePanelOwner = null;
     _showSpeedIndicator.dispose();
     _panelRow.dispose();
     _btnIndex.dispose();
@@ -362,7 +369,8 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
     required String title,
     required List<_TVDialogOption<T>> options,
   }) async {
-    if (_isSubMenuOpen.value) return null;
+    if (_isSubMenuOpen.value || _sidePanelOwner != null) return null;
+    _sidePanelOwner = this;
     _isSubMenuOpen.value = true;
     _hideTimer?.cancel();
     int selectedIndex = options.indexWhere((o) => o.isSelected);
@@ -559,6 +567,7 @@ class _TVPlayerKeyHandlerState extends State<TVPlayerControls> {
     HardwareKeyboard.instance.removeHandler(subKeyHandler);
     _subMenuNativeKeyCallback = null;
     _isSubMenuOpen.value = false;
+    if (identical(_sidePanelOwner, this)) _sidePanelOwner = null;
     _resetHideTimer();
     return result;
   }

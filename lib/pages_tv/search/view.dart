@@ -119,7 +119,7 @@ class _TVSearchPageState extends State<TVSearchPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 360,
+              width: 440,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -184,8 +184,12 @@ class _TVSearchPageState extends State<TVSearchPage> {
                             response != null && response.isNotEmpty
                                 ? GridView.builder(
                                     gridDelegate:
-                                        const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 4,
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount:
+                                              MediaQuery.sizeOf(context).width <
+                                                  1200
+                                              ? 3
+                                              : 4,
                                           childAspectRatio: 16 / 13,
                                           crossAxisSpacing: 12,
                                           mainAxisSpacing: 12,
