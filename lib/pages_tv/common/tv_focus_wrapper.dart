@@ -118,13 +118,9 @@ class _TVFocusWrapperState extends State<TVFocusWrapper>
                     ]
                   : null,
             ),
-            padding: EdgeInsets.all(widget.borderWidth),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(
-                (widget.borderRadius - widget.borderWidth).clamp(
-                  0.0,
-                  widget.borderRadius,
-                ).toDouble(),
+                widget.borderRadius - widget.borderWidth,
               ),
               child: widget.child,
             ),

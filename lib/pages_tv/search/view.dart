@@ -186,13 +186,7 @@ class _TVSearchPageState extends State<TVSearchPage> {
                                     gridDelegate:
                                         const SliverGridDelegateWithFixedCrossAxisCount(
                                           crossAxisCount: 4,
-                                          // Search shares the screen with the
-                                          // keyboard. At common TV density the
-                                          // four-column cards are much narrower
-                                          // than home-row cards, so they need a
-                                          // square cell to retain a 16:9 cover
-                                          // plus two readable text rows.
-                                          childAspectRatio: 1,
+                                          childAspectRatio: 16 / 13,
                                           crossAxisSpacing: 12,
                                           mainAxisSpacing: 12,
                                         ),
