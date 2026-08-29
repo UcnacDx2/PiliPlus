@@ -118,9 +118,16 @@ class _TVFocusWrapperState extends State<TVFocusWrapper>
                     ]
                   : null,
             ),
+            // Keep the child inside the border. Without this inset, opaque
+            // covers paint over the top/left edges and make the shared focus
+            // ring look clipped in every nested TV list and grid.
+            padding: EdgeInsets.all(widget.borderWidth),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(
-                widget.borderRadius - widget.borderWidth,
+                (widget.borderRadius - widget.borderWidth).clamp(
+                  0.0,
+                  widget.borderRadius,
+                ).toDouble(),
               ),
               child: widget.child,
             ),
