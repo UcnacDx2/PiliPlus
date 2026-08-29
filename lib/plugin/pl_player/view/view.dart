@@ -1583,51 +1583,54 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           ),
         ),
 
-        // 头部、底部控制条
-        Positioned.fill(
-          top: -1,
-          bottom: -1,
-          child: ClipRect(
-            child: RepaintBoundary(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  AppBarAni(
-                    isTop: true,
-                    controller: _animationController,
-                    isFullScreen: isFullScreen,
-                    removeSafeArea: plPlayerController.removeSafeArea,
-                    child: plPlayerController.isDesktopPip
-                        ? GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onPanStart: (_) => windowManager.startDragging(),
-                            child: widget.headerControl,
-                          )
-                        : widget.headerControl,
-                  ),
-                  AppBarAni(
-                    isTop: false,
-                    controller: _animationController,
-                    isFullScreen: isFullScreen,
-                    removeSafeArea: plPlayerController.removeSafeArea,
-                    child:
-                        widget.bottomControl ??
-                        BottomControl(
-                          maxWidth: maxWidth,
-                          isFullScreen: isFullScreen,
-                          controller: plPlayerController,
-                          videoDetailController: videoDetailController,
-                          buildBottomControl: () => buildBottomControl(
-                            videoDetailController,
-                            maxWidth > maxHeight,
+        // TV has its own remote-first overlay in TVPlayerControls. Keeping the
+        // regular header/bottom controls mounted underneath creates two owners
+        // for the same OK/DPAD events and lets legacy popup menus bleed through.
+        if (!PlatformUtils.isTV)
+          Positioned.fill(
+            top: -1,
+            bottom: -1,
+            child: ClipRect(
+              child: RepaintBoundary(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppBarAni(
+                      isTop: true,
+                      controller: _animationController,
+                      isFullScreen: isFullScreen,
+                      removeSafeArea: plPlayerController.removeSafeArea,
+                      child: plPlayerController.isDesktopPip
+                          ? GestureDetector(
+                              behavior: HitTestBehavior.translucent,
+                              onPanStart: (_) => windowManager.startDragging(),
+                              child: widget.headerControl,
+                            )
+                          : widget.headerControl,
+                    ),
+                    AppBarAni(
+                      isTop: false,
+                      controller: _animationController,
+                      isFullScreen: isFullScreen,
+                      removeSafeArea: plPlayerController.removeSafeArea,
+                      child:
+                          widget.bottomControl ??
+                          BottomControl(
+                            maxWidth: maxWidth,
+                            isFullScreen: isFullScreen,
+                            controller: plPlayerController,
+                            videoDetailController: videoDetailController,
+                            buildBottomControl: () => buildBottomControl(
+                              videoDetailController,
+                              maxWidth > maxHeight,
+                            ),
                           ),
-                        ),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
 
         // Positioned(
         //   right: 25,
