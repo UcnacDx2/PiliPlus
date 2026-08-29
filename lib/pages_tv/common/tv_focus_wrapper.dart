@@ -102,12 +102,6 @@ class _TVFocusWrapperState extends State<TVFocusWrapper>
             duration: widget.animationDuration,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(widget.borderRadius),
-              border: Border.all(
-                color: _isFocused
-                    ? colorScheme.primary
-                    : Colors.transparent,
-                width: widget.borderWidth,
-              ),
               boxShadow: _isFocused
                   ? [
                       BoxShadow(
@@ -118,17 +112,21 @@ class _TVFocusWrapperState extends State<TVFocusWrapper>
                     ]
                   : null,
             ),
-            // Keep the child inside the border. Without this inset, opaque
-            // covers paint over the top/left edges and make the shared focus
-            // ring look clipped in every nested TV list and grid.
-            padding: EdgeInsets.all(widget.borderWidth),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(
-                (widget.borderRadius - widget.borderWidth).clamp(
-                  0.0,
-                  widget.borderRadius,
-                ).toDouble(),
+            // Paint the focus ring above opaque covers without changing the
+            // child's layout size. A decoration border contributes padding to
+            // Container; adding an explicit inset here used to make compact
+            // controls (notably the seven-column TV keyboard) wrap early.
+            foregroundDecoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              border: Border.all(
+                color: _isFocused
+                    ? colorScheme.primary
+                    : Colors.transparent,
+                width: widget.borderWidth,
               ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
               child: widget.child,
             ),
           ),
