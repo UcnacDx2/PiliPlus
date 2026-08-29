@@ -25,8 +25,12 @@ void main() {
     final a = tester.getCenter(find.text('A'));
     final g = tester.getCenter(find.text('G'));
     final h = tester.getCenter(find.text('H'));
+    final nine = tester.getCenter(find.text('9'));
+    final search = tester.getCenter(find.text('搜索'));
 
     expect(g.dy, a.dy);
     expect(h.dy, greaterThan(a.dy));
+    expect(search.dy, nine.dy);
+    expect(tester.getBottomRight(find.text('搜索')).dy, lessThan(500));
   });
 }

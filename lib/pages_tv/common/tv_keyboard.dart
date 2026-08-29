@@ -18,13 +18,12 @@ class TVKeyboard extends StatefulWidget {
 class _TVKeyboardState extends State<TVKeyboard> {
   String _text = '';
 
-  static const _keys = [
-    'A', 'B', 'C', 'D', 'E', 'F', 'G',
-    'H', 'I', 'J', 'K', 'L', 'M', 'N',
-    'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-    'V', 'W', 'X', 'Y', 'Z', '0', '1',
-    '2', '3', '4', '5', '6', '7', '8',
-    '9',
+  static const _keyRows = [
+    ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+    ['H', 'I', 'J', 'K', 'L', 'M', 'N'],
+    ['O', 'P', 'Q', 'R', 'S', 'T', 'U'],
+    ['V', 'W', 'X', 'Y', 'Z', '0', '1'],
+    ['2', '3', '4', '5', '6', '7', '8'],
   ];
 
   void _onKeyTap(String key) {
@@ -73,24 +72,43 @@ class _TVKeyboardState extends State<TVKeyboard> {
             ),
           ),
         ),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            ..._keys.map(
-              (key) => _KeyButton(
-                label: key,
-                onTap: () => _onKeyTap(key),
+            for (final row in _keyRows) ...[
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var index = 0; index < row.length; index++) ...[
+                    if (index > 0) const SizedBox(width: 6),
+                    _KeyButton(
+                      label: row[index],
+                      onTap: () => _onKeyTap(row[index]),
+                    ),
+                  ],
+                ],
               ),
-            ),
-            _KeyButton(label: '空格', onTap: _onSpace, width: 72),
-            _KeyButton(label: '删除', onTap: _onBackspace, width: 72),
-            _KeyButton(label: '清空', onTap: _onClear, width: 72),
-            _KeyButton(
-              label: '搜索',
-              onTap: () => widget.onConfirm?.call(_text),
-              width: 72,
-              isPrimary: true,
+              const SizedBox(height: 6),
+            ],
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _KeyButton(label: '9', onTap: () => _onKeyTap('9')),
+                const SizedBox(width: 6),
+                _KeyButton(label: '空格', onTap: _onSpace, width: 72),
+                const SizedBox(width: 6),
+                _KeyButton(label: '删除', onTap: _onBackspace, width: 72),
+                const SizedBox(width: 6),
+                _KeyButton(label: '清空', onTap: _onClear, width: 72),
+                const SizedBox(width: 6),
+                _KeyButton(
+                  label: '搜索',
+                  onTap: () => widget.onConfirm?.call(_text),
+                  width: 72,
+                  isPrimary: true,
+                ),
+              ],
             ),
           ],
         ),
