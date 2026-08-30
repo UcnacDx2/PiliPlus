@@ -72,7 +72,6 @@ class TvFocusableItem extends StatelessWidget {
         child: ClipOval(
           child: CachedNetworkImage(
             imageUrl: avatarUrl!,
-            cacheManager: BiliCacheManager.instance,
             width: 36,
             height: 36,
             fit: BoxFit.cover,

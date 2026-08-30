@@ -67,8 +67,7 @@ class _StaggeredImageState extends State<StaggeredImage> {
         height: widget.height,
         fit: widget.fit,
         memCacheWidth: widget.cacheWidth,
-        memCacheHeight: widget.cacheHeight,
-        cacheManager: BiliCacheManager.instance, // 使用有限制的缓存管理器
+        memCacheHeight: widget.cacheHeight, // 使用有限制的缓存管理器
         fadeInDuration: const Duration(milliseconds: 100),
         fadeOutDuration: Duration.zero,
         placeholder: (context, url) => Container(color: Colors.grey[900]),

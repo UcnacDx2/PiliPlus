@@ -47,11 +47,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
         videoType: VideoType.ugc,
       );
       final playInfo = state.dataOrNull;
-      if (playInfo == null || playInfo.playUrls.isEmpty) {
+      final urls = <String>[
+        ...?playInfo?.durl?.expand((item) => item.playUrls),
+        ...?playInfo?.dash?.video?.expand((item) => item.playUrls),
+      ];
+      if (playInfo == null || urls.isEmpty) {
         throw StateError('无法获取播放地址');
       }
       final controller = VideoPlayerController.networkUrl(
-        Uri.parse(VideoUtils.getCdnUrl(playInfo.playUrls)),
+        Uri.parse(VideoUtils.getCdnUrl(urls)),
       );
       await controller.initialize();
       if (!mounted) {

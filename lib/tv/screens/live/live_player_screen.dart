@@ -134,7 +134,6 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
     if (_danmakuController != null) {
       _danmakuController!.updateOption(
         DanmakuOption(
-          opacity: _danmakuOpacity,
           fontSize: _danmakuFontSize,
           area: _danmakuArea,
           duration: _danmakuSpeed / 1.0, // Live is always 1x speed
@@ -818,9 +817,9 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
                   _danmakuEnabled)
                 Positioned.fill(
                   child: DanmakuScreen(
+                    size: MediaQuery.of(context).size,
                     createdController: (e) => _danmakuController = e,
                     option: DanmakuOption(
-                      opacity: _danmakuOpacity,
                       fontSize: _danmakuFontSize,
                       area: _danmakuArea,
                       duration: _danmakuSpeed / 1.0,

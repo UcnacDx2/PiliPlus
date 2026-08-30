@@ -106,7 +106,7 @@ class VideoPlayerController {
           )),
     ]);
     if (_httpHeaders case final headers? when headers.isNotEmpty) {
-      await _player.setMediaHeader(
+      _player.setMediaHeader(
         userAgent: headers['User-Agent'],
         referer: headers['Referer'],
       );

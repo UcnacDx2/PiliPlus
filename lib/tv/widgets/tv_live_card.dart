@@ -189,7 +189,6 @@ class TvLiveCard extends StatelessWidget {
       fit: BoxFit.cover,
       memCacheWidth: 360,
       memCacheHeight: 200,
-      cacheManager: BiliCacheManager.instance,
       fadeInDuration: Duration.zero,
       fadeOutDuration: Duration.zero,
       placeholder: (context, url) => Container(color: const Color(0xFF2d2d2d)),

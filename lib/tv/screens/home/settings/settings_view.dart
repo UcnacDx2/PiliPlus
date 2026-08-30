@@ -117,6 +117,44 @@ class SettingsViewState extends State<SettingsView> {
 
   Future<void> _showAccountRoles() async {}
 
+  Widget _buildDefaultAvatar() => Container(
+    width: 50,
+    height: 50,
+    color: Colors.grey[700],
+    child: const Icon(Icons.person, size: 30, color: Colors.white54),
+  );
+
+  Widget _buildActionButton({required String label, required Color color, required VoidCallback onTap, FocusNode? focusNode}) => Focus(
+    focusNode: focusNode,
+    onKeyEvent: (node, event) {
+      if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.select)) { onTap(); return KeyEventResult.handled; }
+      return KeyEventResult.ignored;
+    },
+    child: Builder(builder: (context) {
+      final focused = Focus.of(context).hasFocus;
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(color: focused ? color : color.withValues(alpha: .3), borderRadius: BorderRadius.circular(6)),
+        child: Text(label, style: TextStyle(color: focused ? Colors.white : color, fontWeight: FontWeight.bold)),
+      );
+    }),
+  );
+
+  Widget _buildCategoryTab({required String label, required bool isSelected, required FocusNode focusNode, required VoidCallback onTap, VoidCallback? onMoveLeft}) => Focus(
+    focusNode: focusNode,
+    onFocusChange: (focused) { if (focused) onTap(); },
+    onKeyEvent: (node, event) {
+      if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowLeft && onMoveLeft != null) { onMoveLeft(); return KeyEventResult.handled; }
+      return KeyEventResult.ignored;
+    },
+    child: Container(
+      margin: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(color: isSelected ? const Color(0xFFfb7299).withValues(alpha: .22) : Colors.transparent, borderRadius: BorderRadius.circular(8)),
+      child: Text(label, style: TextStyle(color: isSelected ? const Color(0xFFfb7299) : Colors.grey, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+    ),
+  );
+
   Widget build(BuildContext context) {
     void moveToCurrentTab() {
       if (_categoryFocusNodes.isNotEmpty) {
