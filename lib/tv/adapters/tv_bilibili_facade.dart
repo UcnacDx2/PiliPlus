@@ -19,7 +19,15 @@ class DynamicFeed {
 }
 
 abstract final class TvBilibiliFacade {
-  static Future<List<String>> getSearchSuggestions(String keyword) async => const [];
+  static Future<List<String>> getSearchSuggestions(String keyword) async {
+    if (keyword.trim().isEmpty) return const [];
+    final state = await SearchHttp.searchSuggest(term: keyword.trim());
+    return state.dataOrNull?.tag
+            ?.map((item) => item.term ?? item.textRich)
+            .where((item) => item.isNotEmpty)
+            .toList() ??
+        const [];
+  }
   static Future<List<TvVideoItem>> searchVideos(String keyword, {int page = 1, String order = 'totalrank'}) async {
     final state = await SearchHttp.searchByType<SearchVideoData>(
       searchType: SearchType.video, keyword: keyword, page: page, order: order,
