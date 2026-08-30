@@ -7,6 +7,9 @@ import 'package:PiliPlus/http/login.dart';
 import 'package:PiliPlus/utils/login_utils.dart';
 import 'package:PiliPlus/models/common/search/search_type.dart';
 import 'package:PiliPlus/models/search/result.dart';
+import 'package:PiliPlus/http/dynamics.dart';
+import 'package:PiliPlus/models/dynamics/result.dart';
+import 'package:PiliPlus/utils/duration_utils.dart';
 
 enum AccountRole { main, video, history }
 
@@ -50,7 +53,26 @@ abstract final class TvBilibiliFacade {
     )).toList() ?? const <TvVideoItem>[];
     return {'list': list};
   }
-  static Future<DynamicFeed> getDynamicFeed({String offset = ''}) async => const DynamicFeed();
+  static Future<DynamicFeed> getDynamicFeed({String offset = ''}) async {
+    final state = await DynamicsHttp.followDynamic(offset: offset);
+    final data = state.dataOrNull;
+    if (data == null) return const DynamicFeed(succeeded: false);
+    final videos = <TvVideoItem>[];
+    for (final item in data.items ?? const <DynamicItemModel>[]) {
+      final major = item.modules.moduleDynamic?.major;
+      final archive = major?.archive ?? major?.ugcSeason ?? major?.pgc;
+      final bvid = archive?.bvid;
+      if (archive == null || bvid == null || bvid.isEmpty) continue;
+      final author = item.modules.moduleAuthor;
+      videos.add(TvVideoItem(
+        bvid: bvid, title: archive.title ?? '', pic: archive.cover ?? '',
+        firstFrame: archive.firstFrame, ownerName: author?.name ?? '',
+        ownerMid: author?.mid ?? 0,
+        duration: DurationUtils.parseDuration(archive.durationText ?? ''),
+      ));
+    }
+    return DynamicFeed(videos: videos, offset: data.offset ?? '', hasMore: data.hasMore ?? false);
+  }
   static Future<List<TvVideoItem>> getRelatedVideos(String bvid) async => const [];
   static Future<List<TvVideoItem>> getSpaceVideos({required int mid, int page = 1, String order = 'pubdate'}) async => const [];
   static Future<Map<String, String>?> generateTvQrCode() async {
