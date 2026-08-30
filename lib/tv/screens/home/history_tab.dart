@@ -39,8 +39,10 @@ class HistoryTabState extends State<HistoryTab> {
     super.initState();
     _scrollController.addListener(_onScroll);
     if (widget.isVisible) {
-      _loadHistory(reset: true);
       _hasLoaded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadHistory(reset: true);
+      });
     }
   }
 
@@ -48,8 +50,10 @@ class HistoryTabState extends State<HistoryTab> {
   void didUpdateWidget(HistoryTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isVisible && !oldWidget.isVisible && !_hasLoaded) {
-      _loadHistory(reset: true);
       _hasLoaded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadHistory(reset: true);
+      });
     }
   }
 

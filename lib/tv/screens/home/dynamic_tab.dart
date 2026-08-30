@@ -39,8 +39,10 @@ class DynamicTabState extends State<DynamicTab> {
     super.initState();
     // 只有第一次可见时才加载
     if (widget.isVisible) {
-      _loadDynamic(refresh: true);
       _hasLoaded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadDynamic(refresh: true);
+      });
     }
     _scrollController.addListener(_onScroll);
   }
@@ -50,8 +52,10 @@ class DynamicTabState extends State<DynamicTab> {
     super.didUpdateWidget(oldWidget);
     // 之前不可见，现在可见了，且没加载过 -> 加载
     if (widget.isVisible && !oldWidget.isVisible && !_hasLoaded) {
-      _loadDynamic(refresh: true);
       _hasLoaded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadDynamic(refresh: true);
+      });
     }
   }
 

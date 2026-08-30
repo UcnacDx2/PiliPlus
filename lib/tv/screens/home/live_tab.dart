@@ -44,7 +44,9 @@ class LiveTabState extends State<LiveTab> {
     super.initState();
     _initCategories();
     _categoryFocusNodes = List.generate(_categories.length, (_) => FocusNode());
-    _loadDataForCategory(0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadDataForCategory(0);
+    });
   }
 
   void _initCategories() {
