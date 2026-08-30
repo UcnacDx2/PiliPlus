@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/models/common/watermark_mode.dart';
 
 enum VideoCodec {
   auto('自动'),
@@ -24,6 +25,7 @@ abstract final class TvSettingsFacade {
   static bool seekPreviewMode = false;
   static int minimumRecommendDuration = 0;
   static VideoCodec preferredCodec = VideoCodec.auto;
+  static WatermarkMode get watermarkMode => Pref.watermarkMode;
   static List<String> categoryOrder = ['recommend', 'popular'];
   static List<String> enabledCategories = ['recommend', 'popular'];
   static List<String> liveCategoryOrder = ['recommend', 'following'];
@@ -31,7 +33,9 @@ abstract final class TvSettingsFacade {
   static const liveCategoryIds = <String, int>{};
   static bool isCategoryEnabled(String name) => enabledCategories.contains(name);
   static bool isLiveCategoryEnabled(String name) => liveCategoryOrder.contains(name);
-  static Future<void> setAutoPlay(bool value) async => GStorage.setting.put(SettingBoxKey.autoPlayEnable, value);
+  static Future<void> setAutoPlay(bool value) async {
+    await GStorage.setting.put(SettingBoxKey.autoPlayEnable, value);
+  }
   static Future<void> setHideControlsOnStart(bool value) async => hideControlsOnStart = value;
   static Future<void> setShowMiniProgress(bool value) async => showMiniProgress = value;
   static Future<void> setSeekPreviewMode(bool value) async => seekPreviewMode = value;

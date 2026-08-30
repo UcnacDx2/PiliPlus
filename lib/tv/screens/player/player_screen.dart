@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
+import 'package:PiliPlus/services/first_frame_watermark_service.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/watermark_filter.dart';
+import 'package:PiliPlus/models/common/watermark_mode.dart';
 import 'package:PiliPlus/tv/adapters/tv_video_item.dart';
 import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/controls_overlay.dart';
@@ -72,6 +75,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
       if (resume > 0) {
         await controller.seekTo(Duration(seconds: resume));
       }
+      if (TvSettingsFacade.watermarkMode != WatermarkMode.disabled) {
+        final region = await FirstFrameWatermarkService.detect(widget.video.bvid);
+        if (region != null) {
+          await WatermarkFilter.apply(controller.player, [region]);
+        }
+      }
       _heartbeat = Timer.periodic(const Duration(seconds: 15), (_) {
         final position = controller.value.position.inSeconds;
         VideoHttp.heartBeat(
@@ -95,6 +104,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void dispose() {
     _heartbeat?.cancel();
+    final player = _controller?.player;
+    if (player != null) {
+      WatermarkFilter.clear(player);
+    }
     _controller?.dispose();
     super.dispose();
   }
