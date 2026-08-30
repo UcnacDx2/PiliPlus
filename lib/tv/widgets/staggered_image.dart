@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
-import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart'; // BiliCacheManager
+import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 
 /// 交错加载图片组件
 /// 用于在低端硬件上避免同时解码多张图片导致的卡顿

@@ -14,7 +14,11 @@ class DanmakuLayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned.fill(
-      child: DanmakuScreen(createdController: onCreated, option: option),
+      child: DanmakuScreen(
+        createdController: onCreated,
+        option: option,
+        size: MediaQuery.sizeOf(context),
+      ),
     );
   }
 }
