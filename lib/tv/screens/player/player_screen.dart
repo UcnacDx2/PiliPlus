@@ -30,6 +30,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _showControls = true;
   bool _danmaku = true;
   int _focusedIndex = 0;
+  bool _progressFocused = false;
   Timer? _heartbeat;
 
   @override
@@ -115,20 +116,45 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void _handleKey(KeyEvent event) {
     if (event is! KeyDownEvent) return;
     final key = event.logicalKey;
-    if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
-      if (_controller == null) return;
-      if (_controller!.value.isPlaying) {
-        _controller!.pause();
-      } else {
-        _controller!.play();
-      }
-      setState(() => _showControls = true);
-    } else if (key == LogicalKeyboardKey.arrowLeft) {
+    if (key == LogicalKeyboardKey.arrowLeft) {
       _controller?.seekTo(_controller!.value.position - const Duration(seconds: 10));
       setState(() { _showControls = true; _focusedIndex = 0; });
     } else if (key == LogicalKeyboardKey.arrowRight) {
       _controller?.seekTo(_controller!.value.position + const Duration(seconds: 10));
       setState(() { _showControls = true; _focusedIndex = 0; });
+    } else if (key == LogicalKeyboardKey.arrowUp) {
+      setState(() {
+        _showControls = true;
+        _progressFocused = false;
+        _focusedIndex = (_focusedIndex - 1 + 5) % 5;
+      });
+    } else if (key == LogicalKeyboardKey.arrowDown) {
+      setState(() {
+        _showControls = true;
+        _progressFocused = false;
+        _focusedIndex = (_focusedIndex + 1) % 5;
+      });
+    } else if (key == LogicalKeyboardKey.space) {
+      if (_controller != null) {
+        _controller!.value.isPlaying ? _controller!.pause() : _controller!.play();
+        setState(() => _showControls = true);
+      }
+    } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
+      if (_controller == null) return;
+      switch (_focusedIndex) {
+        case 0:
+          setState(() => _showControls = true);
+          break;
+        case 3:
+          setState(() => _showControls = true);
+          break;
+        case 4:
+          setState(() { _danmaku = !_danmaku; _showControls = true; });
+          break;
+        default:
+          _controller!.value.isPlaying ? _controller!.pause() : _controller!.play();
+          setState(() => _showControls = true);
+      }
     } else if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.goBack) {
       Navigator.of(context).maybePop();
     }
@@ -152,6 +178,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 controller: controller,
                 showControls: true,
                 focusedIndex: _focusedIndex,
+                isProgressBarFocused: _progressFocused,
                 onPlayPause: () => controller.value.isPlaying ? controller.pause() : controller.play(),
                 onSettings: () {},
                 onEpisodes: () {},
