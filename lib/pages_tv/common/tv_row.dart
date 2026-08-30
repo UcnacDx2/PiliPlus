@@ -28,14 +28,15 @@ class TVRow extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(8, 8, 16, 10),
           child: Row(
             children: [
               Text(
                 title,
                 style: titleStyle ??
                     theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFFF5F5F5),
                     ),
               ),
               if (onMorePressed != null) ...[
@@ -52,9 +53,9 @@ class TVRow extends StatelessWidget {
           height: height,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             itemCount: itemCount,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            separatorBuilder: (_, __) => const SizedBox(width: 20),
             itemBuilder: itemBuilder,
           ),
         ),

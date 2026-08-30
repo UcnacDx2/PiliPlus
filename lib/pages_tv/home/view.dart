@@ -6,6 +6,8 @@ import 'package:PiliPlus/pages_tv/common/tv_row.dart';
 import 'package:PiliPlus/pages_tv/home/controller.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/duration_utils.dart';
+import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:get/get.dart';
 
@@ -18,6 +20,25 @@ class TVHomePage extends StatefulWidget {
 
 class _TVHomePageState extends State<TVHomePage> {
   final _controller = Get.put(TVHomeController());
+
+  String? _viewText(dynamic item) {
+    final view = item.stat?.view;
+    return view is num && view > 0 ? NumUtils.numFormat(view) : null;
+  }
+
+  String? _durationText(dynamic item) {
+    final duration = item.duration;
+    return duration is num && duration > 0
+        ? DurationUtils.formatDuration(duration)
+        : null;
+  }
+
+  String? _publishText(dynamic item) {
+    final stamp = item.pubdate;
+    if (stamp is! num || stamp <= 0) return null;
+    final date = DateTime.fromMillisecondsSinceEpoch(stamp.toInt() * 1000);
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,25 +54,20 @@ class _TVHomePageState extends State<TVHomePage> {
   }
 
   Widget _buildSidebar(BuildContext context) {
-    final theme = Theme.of(context);
     return Obx(() {
       final expanded = _controller.sidebarExpanded.value;
       return AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: expanded ? 180 : 60,
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainer,
-          borderRadius: const BorderRadius.only(
-            topRight: Radius.circular(12),
-            bottomRight: Radius.circular(12),
-          ),
+          color: const Color(0xFF1E1E1E),
         ),
         child: Focus(
           onFocusChange: (hasFocus) {
             _controller.sidebarExpanded.value = hasFocus;
           },
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.fromLTRB(8, 32, 8, 8),
             itemCount: TVHomeCategory.values.length,
             itemBuilder: (context, index) {
               final cat = TVHomeCategory.values[index];
@@ -63,11 +79,11 @@ class _TVHomePageState extends State<TVHomePage> {
                   borderWidth: 2,
                   onSelect: () => _onCategoryTap(index),
                   child: Container(
-                    height: 48,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    height: 54,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
                       color: selected
-                          ? theme.colorScheme.primaryContainer
+                          ? const Color(0xFFFB7299).withValues(alpha: 0.18)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -77,8 +93,8 @@ class _TVHomePageState extends State<TVHomePage> {
                           cat.icon,
                           size: 24,
                           color: selected
-                              ? theme.colorScheme.onPrimaryContainer
-                              : theme.colorScheme.onSurfaceVariant,
+                              ? const Color(0xFFFB7299)
+                              : Colors.white60,
                         ),
                         if (expanded) ...[
                           const SizedBox(width: 12),
@@ -87,9 +103,10 @@ class _TVHomePageState extends State<TVHomePage> {
                               cat.label,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: selected
-                                    ? theme.colorScheme.onPrimaryContainer
-                                    : theme.colorScheme.onSurfaceVariant,
+                                color: selected ? Colors.white : Colors.white70,
+                                fontWeight: selected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
                               ),
                             ),
                           ),
@@ -136,11 +153,11 @@ class _TVHomePageState extends State<TVHomePage> {
 
   Widget _buildContent(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(left: 12),
+      padding: const EdgeInsets.only(left: 24, right: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           _buildRcmdRow(),
           const SizedBox(height: 16),
           _buildHotRow(),
@@ -168,6 +185,10 @@ class _TVHomePageState extends State<TVHomePage> {
                     firstFrameUrl: item.firstFrame,
                     bvid: item.bvid,
                     cid: item.cid,
+                    viewText: _viewText(item),
+                    durationText: _durationText(item),
+                    ownerText: item.owner?.name,
+                    publishText: _publishText(item),
                     autoFocus: i == 0,
                     onSelect: () => _navigateToVideo(item),
                   );
@@ -197,6 +218,10 @@ class _TVHomePageState extends State<TVHomePage> {
                     firstFrameUrl: item.firstFrame,
                     bvid: item.bvid,
                     cid: item.cid,
+                    viewText: _viewText(item),
+                    durationText: _durationText(item),
+                    ownerText: item.owner?.name,
+                    publishText: _publishText(item),
                     onSelect: () => _navigateToVideo(item),
                   );
                 },

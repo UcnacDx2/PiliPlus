@@ -112,14 +112,16 @@ class _TVSearchPageState extends State<TVSearchPage> {
   Widget build(BuildContext context) {
     return TVPage(
       child: Scaffold(
+        backgroundColor: const Color(0xFF121212),
         appBar: AppBar(title: const Text('搜索')),
         body: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
               width: 360,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+              child: Container(
+                color: const Color(0xFF252525),
+                padding: const EdgeInsets.fromLTRB(20, 25, 20, 20),
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +142,7 @@ class _TVSearchPageState extends State<TVSearchPage> {
             const VerticalDivider(width: 1),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

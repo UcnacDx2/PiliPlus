@@ -61,12 +61,16 @@ class _TVKeyboardState extends State<TVKeyboard> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
+            color: Colors.white10,
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white12),
           ),
           child: Text(
             _text.isEmpty ? '请输入搜索关键词' : _text,
             style: theme.textTheme.titleMedium?.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
               color: _text.isEmpty
                   ? theme.colorScheme.onSurfaceVariant
                   : theme.colorScheme.onSurface,
@@ -125,8 +129,8 @@ class _KeyButton extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: isPrimary
-              ? theme.colorScheme.primary
-              : theme.colorScheme.surfaceContainer,
+              ? const Color(0xFFFB7299)
+              : const Color(0xFF333333),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -134,7 +138,7 @@ class _KeyButton extends StatelessWidget {
           style: TextStyle(
             color: isPrimary
                 ? theme.colorScheme.onPrimary
-                : theme.colorScheme.onSurface,
+                : Colors.white,
             fontSize: 16,
           ),
         ),
