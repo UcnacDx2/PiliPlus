@@ -9,6 +9,9 @@ import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/models/common/account_type.dart';
+import 'package:PiliPlus/utils/accounts.dart';
+import 'package:PiliPlus/utils/accounts/account.dart';
 
 /// BiliTV-compatible LAN management service for the TV app.
 ///
@@ -108,23 +111,8 @@ class TvWebServer {
           'port': port,
           'address': address,
         });
-      } else if (request.uri.path == '/api/accounts' &&
-          request.method == 'GET') {
-        if (!_authorized(request)) {
-          _json(response, {'error': 'Pairing required'}, HttpStatus.unauthorized);
-          return;
-        }
-        _json(response, {
-          'accounts': [
-            {
-              'mid': TvAccountFacade.mid,
-              'uname': TvAccountFacade.uname,
-              'face': TvAccountFacade.face,
-              'isVip': TvAccountFacade.isVip,
-              'active': TvAccountFacade.isLoggedIn,
-            },
-          ],
-        });
+      } else if (request.uri.path == '/api/accounts') {
+        await _accounts(request);
       } else if (request.uri.path == '/api/settings') {
         await _settings(request);
       } else if (request.uri.path == '/api/sponsor-block/config') {
@@ -138,6 +126,72 @@ class TvWebServer {
     } finally {
       await response.close();
     }
+  }
+
+  Future<void> _accounts(HttpRequest request) async {
+    if (!_authorized(request)) {
+      _json(request.response, {'error': 'Pairing required'}, HttpStatus.unauthorized);
+      return;
+    }
+    if (request.method == 'GET') {
+      final roles = <String, int>{
+        'main': Accounts.main.mid,
+        'video': Accounts.video.mid,
+        'history': Accounts.heartbeat.mid,
+        'heartbeat': Accounts.heartbeat.mid,
+        'recommend': Accounts.get(AccountType.recommend).mid,
+      };
+      _json(request.response, {
+        'accounts': [
+          for (final account in Accounts.account.values)
+            _accountSummary(account, roles),
+        ],
+        'roles': roles,
+      });
+      return;
+    }
+    if (request.method != 'POST') {
+      _json(request.response, {'error': 'Method not allowed'}, HttpStatus.methodNotAllowed);
+      return;
+    }
+    final body = await _readJson(request);
+    final role = body?['role']?.toString();
+    final mid = int.tryParse('${body?['mid'] ?? ''}');
+    final type = switch (role) {
+      'main' => AccountType.main,
+      'video' => AccountType.video,
+      'history' || 'heartbeat' => AccountType.heartbeat,
+      'recommend' => AccountType.recommend,
+      _ => null,
+    };
+    if (type == null || mid == null || mid <= 0) {
+      _json(request.response, {'error': 'Invalid role or mid'}, HttpStatus.badRequest);
+      return;
+    }
+    LoginAccount? selected;
+    for (final account in Accounts.account.values) {
+      if (account.mid == mid) {
+        selected = account;
+        break;
+      }
+    }
+    if (selected == null) {
+      _json(request.response, {'error': 'Account not found'}, HttpStatus.notFound);
+      return;
+    }
+    await Accounts.set(type, selected);
+    _json(request.response, {'success': true, 'role': role, 'mid': mid});
+  }
+
+  Map<String, dynamic> _accountSummary(LoginAccount account, Map<String, int> roles) {
+    final active = account.mid == TvAccountFacade.mid;
+    return {
+      'mid': account.mid,
+      'uname': active ? TvAccountFacade.uname : '',
+      'face': active ? TvAccountFacade.face : '',
+      'isVip': active && TvAccountFacade.isVip,
+      'roles': [for (final entry in roles.entries) if (entry.value == account.mid) entry.key],
+    };
   }
 
   Future<void> _settings(HttpRequest request) async {
