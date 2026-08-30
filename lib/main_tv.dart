@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/http/init.dart';
-import 'package:PiliPlus/pages_tv/tv_app.dart';
+import 'package:PiliPlus/tv/app/tv_app.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
@@ -96,10 +96,6 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
-  if (Pref.dynamicColor) {
-    await TVApp.initPlatformState();
-  }
-
   // 接收 Android 转发的 UP/DOWN 按键
   // 用独立 channel 'PiliPlus.tv'，与 PlPlayerController 共享的 'PiliPlus' channel 解耦，
   // 防止视频 dispose 时 Utils.channel.setMethodCallHandler(null) 把我们的 handler 清掉
@@ -129,11 +125,11 @@ void main() async {
     final fileHandler = await JsonFileHandler.init();
     Catcher2(
       [?fileHandler, const ConsoleHandler()],
-      const TVApp(),
+      const TvApp(),
       customParameters: customParameters,
     );
   } else {
-    runApp(const TVApp());
+    runApp(const TvApp());
   }
 }
 
