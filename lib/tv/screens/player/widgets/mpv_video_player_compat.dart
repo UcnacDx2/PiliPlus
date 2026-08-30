@@ -65,8 +65,17 @@ class VideoPlayerController {
   VideoPlayerController.networkUrl(
     Uri url, {
     Map<String, String>? httpHeaders,
+    String? audioUrl,
     VideoViewType viewType = VideoViewType.textureView,
-  }) : _media = Media(url.toString()), _httpHeaders = httpHeaders;
+  }) : _media = Media(_buildMediaUrl(url.toString(), audioUrl)),
+       _httpHeaders = httpHeaders;
+
+  static String _buildMediaUrl(String videoUrl, String? audioUrl) {
+    if (audioUrl == null || audioUrl.isEmpty) return videoUrl;
+    return 'edl://'
+        '!no_clip;!no_chapters;%${videoUrl.length}%$videoUrl;'
+        '!new_stream;!no_clip;!no_chapters;%${audioUrl.length}%$audioUrl';
+  }
 
   final Media _media;
   final Map<String, String>? _httpHeaders;
@@ -78,6 +87,7 @@ class VideoPlayerController {
 
   VideoPlayerValue get value => _value;
   Player get player => _player;
+  Stream<Duration> get positionStream => _player.stream.position;
 
   Future<void> initialize() async {
     _player = await Player.create(
@@ -87,7 +97,8 @@ class VideoPlayerController {
       _player,
       configuration: const mk.VideoControllerConfiguration(
         vo: 'gpu',
-        hwdec: 'mediacodec-copy',
+        hwdec: 'mediacodec,auto-safe',
+        enableHardwareAcceleration: true,
       ),
     );
     _subscriptions.addAll([

@@ -1,14 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:PiliPlus/tv/adapters/tv_live_facade.dart';
-import 'package:PiliPlus/tv/adapters/tv_live_facade.dart';
 import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
+import 'package:PiliPlus/tv/screens/player/widgets/mpv_video_player_compat.dart';
 import '../../widgets/time_display.dart';
 import 'widgets/live_settings_panel.dart';
 
@@ -67,6 +66,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
   final List<Map<String, dynamic>> _lines = [];
   int _currentLineIndex = 0;
   int _realRoomId = 0;
+  int _playerGeneration = 0;
 
   // Quality State
   List<Map<String, dynamic>> _qualities = [];
@@ -166,6 +166,8 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
   }
 
   Future<void> _initializePlayer({int? qn, int? lineIndex}) async {
+    final generation = ++_playerGeneration;
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -331,22 +333,29 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
       }
 
       // 4. 初始化播放器
-      final oldController = _controller;
-
-      _controller = VideoPlayerController.networkUrl(
+      final nextController = VideoPlayerController.networkUrl(
         Uri.parse(url),
         httpHeaders: {
           'User-Agent':
               'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
           'Referer': 'https://live.bilibili.com/',
         },
-        viewType: VideoViewType.platformView,
+        // Keep live playback on the same texture path as VOD so the video
+        // surface cannot take ownership of the TV DPAD focus.
+        viewType: VideoViewType.textureView,
       );
 
-      await _controller!.initialize();
-      oldController?.dispose();
-      await _controller!.play();
+      await nextController.initialize();
+      if (!mounted || generation != _playerGeneration) {
+        await nextController.dispose();
+        return;
+      }
+      final oldController = _controller;
+      _controller = nextController;
+      await oldController?.dispose();
+      await nextController.play();
 
+      if (!mounted || generation != _playerGeneration) return;
       setState(() {
         _isLoading = false;
       });
@@ -366,7 +375,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
       // 4. Start API polling for popularity (fallback for socket)
       _startPopularityTimer();
     } catch (e) {
-      if (mounted) {
+      if (mounted && generation == _playerGeneration) {
         setState(() {
           _isLoading = false;
           _errorMessage = e.toString();

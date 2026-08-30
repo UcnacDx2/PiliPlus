@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
-import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 import 'package:PiliPlus/tv/adapters/image_url_utils.dart';
 import 'base_tv_card.dart';
 import 'conditional_marquee.dart';

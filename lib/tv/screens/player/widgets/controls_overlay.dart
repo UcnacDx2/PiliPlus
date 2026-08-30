@@ -5,18 +5,20 @@ import '../../../widgets/time_display.dart';
 import '../../../widgets/conditional_marquee.dart';
 import 'tv_progress_bar.dart';
 
+class TvPlayerControlItem {
+  const TvPlayerControlItem({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+}
+
 class ControlsOverlay extends StatelessWidget {
   final TvVideoItem video;
   final VideoPlayerController controller;
   final bool showControls;
   final int focusedIndex;
-  final VoidCallback onPlayPause;
-  final VoidCallback onSettings;
-  final VoidCallback onEpisodes;
-  final bool isDanmakuEnabled;
-  final VoidCallback onToggleDanmaku;
+  final List<TvPlayerControlItem> controls;
   final String currentQuality;
-  final VoidCallback onQualityClick;
   final bool isProgressBarFocused; // 进度条是否获得焦点
   final Duration? previewPosition; // 预览位置（快进快退时）
   final String? onlineCount; // 在线观看人数
@@ -28,13 +30,8 @@ class ControlsOverlay extends StatelessWidget {
     required this.controller,
     required this.showControls,
     required this.focusedIndex,
-    required this.onPlayPause,
-    required this.onSettings,
-    required this.onEpisodes,
-    required this.isDanmakuEnabled,
-    required this.onToggleDanmaku,
+    required this.controls,
     required this.currentQuality,
-    required this.onQualityClick,
     this.isProgressBarFocused = false,
     this.previewPosition,
     this.alwaysShowPlayerTime = false,
@@ -192,40 +189,15 @@ class ControlsOverlay extends StatelessWidget {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    // 选集 (原 index 1 → 现 index 0)
-                    _buildControlButton(
-                      index: 0,
-                      icon: Icons.playlist_play,
-                      onTap: onEpisodes,
-                    ),
-                    const SizedBox(width: 24),
-                    // UP主 (原 index 2 → 现 index 1)
-                    _buildControlButton(
-                      index: 1,
-                      icon: Icons.person,
-                      onTap: () {},
-                    ),
-                    const SizedBox(width: 24),
-                    // 更多视频 (原 index 3 → 现 index 2)
-                    _buildControlButton(
-                      index: 2,
-                      icon: Icons.expand_more,
-                      onTap: () {},
-                    ),
-                    const SizedBox(width: 24),
-                    // 设置 (原 index 4 → 现 index 3)
-                    _buildControlButton(
-                      index: 3,
-                      icon: Icons.tune,
-                      onTap: onSettings,
-                    ),
-                    const SizedBox(width: 24),
-                    // 点赞/投币/收藏 (原 index 5 → 现 index 4)
-                    _buildControlButton(
-                      index: 4,
-                      icon: Icons.thumb_up_outlined,
-                      onTap: () {},
-                    ),
+                    for (var index = 0; index < controls.length; index++) ...[
+                      _buildControlButton(
+                        index: index,
+                        icon: controls[index].icon,
+                        onTap: controls[index].onTap,
+                      ),
+                      if (index < controls.length - 1)
+                        const SizedBox(width: 24),
+                    ],
                     const Spacer(),
                     // 在线人数 (纯文字)
                     if (onlineCount != null && onlineCount!.isNotEmpty)
@@ -240,13 +212,11 @@ class ControlsOverlay extends StatelessWidget {
                       const SizedBox(width: 16),
                     // 弹幕数 (纯文字)
                     Text(
-                      isDanmakuEnabled && danmakuCount > 0
+                      danmakuCount > 0
                           ? '弹幕:${_formatDanmakuCount(danmakuCount)}'
-                          : (isDanmakuEnabled ? '弹幕' : '弹幕关'),
+                          : '弹幕',
                       style: TextStyle(
-                        color: isDanmakuEnabled
-                            ? Colors.white.withValues(alpha: 0.8)
-                            : Colors.white.withValues(alpha: 0.5),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 14,
                       ),
                     ),

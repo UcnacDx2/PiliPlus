@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -88,7 +87,6 @@ class _FirstFrameOrCoverState extends State<FirstFrameOrCover> {
     if (!TvSettingsFacade.useFirstFrameAsCover) return;
 
     var firstFrame = widget.firstFrameUrl;
-    var resolvedCid = widget.cid;
     if (widget.resolveMissingFirstFrame &&
         (firstFrame == null || firstFrame.isEmpty) &&
         widget.bvid?.isNotEmpty == true) {

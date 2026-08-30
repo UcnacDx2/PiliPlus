@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
-import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 import '../core/focus/focus_navigation.dart';
 import 'vip_avatar_badge.dart';
 

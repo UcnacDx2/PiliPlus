@@ -8,6 +8,12 @@ import 'package:PiliPlus/utils/login_utils.dart';
 import 'package:PiliPlus/models/common/search/search_type.dart';
 import 'package:PiliPlus/models/search/result.dart';
 import 'package:PiliPlus/http/dynamics.dart';
+import 'package:PiliPlus/http/video.dart';
+import 'package:PiliPlus/http/member.dart';
+import 'package:PiliPlus/models/common/member/archive_order_type_app.dart';
+import 'package:PiliPlus/models/common/member/contribute_type.dart';
+import 'package:PiliPlus/models/common/member/archive_sort_type_app.dart';
+import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 
@@ -73,8 +79,30 @@ abstract final class TvBilibiliFacade {
     }
     return DynamicFeed(videos: videos, offset: data.offset ?? '', hasMore: data.hasMore ?? false);
   }
-  static Future<List<TvVideoItem>> getRelatedVideos(String bvid) async => const [];
-  static Future<List<TvVideoItem>> getSpaceVideos({required int mid, int page = 1, String order = 'pubdate'}) async => const [];
+  static Future<List<TvVideoItem>> getRelatedVideos(String bvid) async {
+    final state = await VideoHttp.relatedVideoList(bvid: bvid);
+    return state.dataOrNull?.map((item) => TvVideoItem(
+      bvid: item.bvid ?? '', title: item.title, pic: item.cover ?? '',
+      firstFrame: item.firstFrame, ownerName: item.owner.name ?? '', ownerMid: item.owner.mid ?? 0,
+      view: item.stat.view ?? 0, danmaku: item.stat.danmu ?? 0, duration: item.duration,
+      pubdate: item.pubdate ?? 0, cid: item.cid ?? 0,
+    )).toList() ?? const [];
+  }
+  static Future<List<TvVideoItem>> getSpaceVideos({required int mid, int page = 1, String order = 'pubdate'}) async {
+    final state = await MemberHttp.spaceArchive(
+      type: ContributeType.video,
+      mid: mid,
+      pn: page,
+      order: order == 'click' ? ArchiveOrderTypeApp.click : ArchiveOrderTypeApp.pubdate,
+      sort: ArchiveSortTypeApp.desc,
+    );
+    return state.dataOrNull?.item?.map((item) => TvVideoItem(
+      bvid: item.bvid ?? '', title: item.title, pic: item.cover ?? '',
+      ownerName: item.owner.name ?? '', ownerMid: item.owner.mid ?? mid,
+      view: item.stat.view ?? 0, danmaku: item.stat.danmu ?? 0,
+      duration: item.duration < 0 ? 0 : item.duration, cid: item.cid ?? 0,
+    )).where((item) => item.bvid.isNotEmpty).toList() ?? const [];
+  }
   static Future<Map<String, String>?> generateTvQrCode() async {
     final state = await LoginHttp.getHDcode();
     final data = state.dataOrNull;
@@ -97,13 +125,36 @@ abstract final class TvBilibiliFacade {
     };
   }
   static Future<void> fetchAndSaveUserInfo() => LoginUtils.onLoginMain();
-  static Future<Map<String, dynamic>?> getVideoInfo(String bvid, {AccountRole role = AccountRole.video}) async => null;
-  static Future<int?> getVideoCid(String bvid) async => null;
-  static Future<Map<String, dynamic>?> getVideoPlayUrl({required String bvid, required int cid, int qn = 80, VideoCodec? forceCodec}) async => null;
+  static Future<Map<String, dynamic>?> getVideoInfo(String bvid, {AccountRole role = AccountRole.video}) async {
+    final state = await VideoHttp.videoIntro(bvid: bvid);
+    final data = state.dataOrNull;
+    return data == null ? null : {'bvid': data.bvid, 'aid': data.aid, 'cid': data.cid, 'title': data.title, 'pic': data.pic, 'duration': data.duration, 'pages': data.pages};
+  }
+  static Future<int?> getVideoCid(String bvid) async => (await VideoHttp.videoIntro(bvid: bvid)).dataOrNull?.cid;
+  static Future<Map<String, dynamic>?> getVideoPlayUrl({required String bvid, required int cid, int qn = 80, VideoCodec? forceCodec}) async {
+    final state = await VideoHttp.videoUrl(bvid: bvid, cid: cid, qn: qn, tryLook: true, videoType: VideoType.ugc);
+    final data = state.dataOrNull;
+    return data == null ? null : {'play_url': data.durl?.firstOrNull?.url, 'last_play_time': data.lastPlayTime};
+  }
   static Future<List<Map<String, dynamic>>> getDanmaku(int cid) async => const [];
   static Future<bool> reportProgress({required String bvid, required int cid, required int progress}) async => true;
   static Future<Map<String, String>?> getOnlineCount({required int aid, required int cid}) async => null;
-  static Future<VideoshotData?> getVideoshot({required String bvid, int? cid}) async => null;
+  static Future<VideoshotData?> getVideoshot({required String bvid, int? cid}) async {
+    final resolvedCid = cid ?? await getVideoCid(bvid);
+    if (resolvedCid == null || resolvedCid == 0) return null;
+    final state = await VideoHttp.videoshot(bvid: bvid, cid: resolvedCid);
+    final data = state.dataOrNull;
+    if (data == null || data.image.isEmpty) return null;
+    final result = VideoshotData(
+      images: data.image,
+      imgXLen: data.imgXLen,
+      imgYLen: data.imgYLen,
+      imgXSize: data.imgXSize.round(),
+      imgYSize: data.imgYSize.round(),
+    );
+    result.setTimestamps(data.index);
+    return result;
+  }
   static Future<bool> likeVideo({required int aid, required bool like}) async => false;
   static Future<bool> checkLikeStatus(int aid) async => false;
   static Future<String?> coinVideo({required int aid, int count = 1}) async => null;

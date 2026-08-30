@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:PiliPlus/http/live.dart';
+import 'package:PiliPlus/http/user.dart';
+import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models_new/live/live_feed_index/card_data_list_item.dart';
 import 'package:PiliPlus/models_new/live/live_follow/item.dart';
 
@@ -54,8 +56,14 @@ abstract final class TvLiveFacade {
       }).toList()}).toList(),
     }).toList()}}};
   }
-  static Future<Map<String, dynamic>?> getRelation(int mid) async => null;
-  static Future<bool> modifyRelation(int mid, int action) async => false;
+  static Future<Map<String, dynamic>?> getRelation(int mid) async {
+    final state = await UserHttp.userRelation(mid);
+    final data = state.dataOrNull;
+    return data == null ? null : {'attribute': data.attribute ?? 0};
+  }
+
+  static Future<bool> modifyRelation(int mid, int action) async =>
+      (await VideoHttp.relationMod(mid: mid, act: action, reSrc: 11)).isSuccess;
 }
 
 abstract final class TvLiveValueFacade {

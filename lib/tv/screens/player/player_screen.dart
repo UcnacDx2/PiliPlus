@@ -9,6 +9,7 @@ import 'package:PiliPlus/plugin/pl_player/utils/watermark_filter.dart';
 import 'package:PiliPlus/models/common/watermark_mode.dart';
 import 'package:PiliPlus/tv/adapters/tv_video_item.dart';
 import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
+import 'package:PiliPlus/tv/adapters/tv_sponsor_block_controller.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/controls_overlay.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/mpv_video_player_compat.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/video_layer.dart';
@@ -32,6 +33,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
   int _focusedIndex = 0;
   bool _progressFocused = false;
   Timer? _heartbeat;
+  TvSponsorBlockController? _sponsorBlock;
+  int _playbackGeneration = 0;
+
+  List<TvPlayerControlItem> get _controls => [
+        TvPlayerControlItem(
+          icon: _controller?.value.isPlaying == true
+              ? Icons.pause
+              : Icons.play_arrow,
+          onTap: _togglePlayback,
+        ),
+        TvPlayerControlItem(
+          icon: _danmaku ? Icons.subtitles : Icons.subtitles_off,
+          onTap: () => setState(() => _danmaku = !_danmaku),
+        ),
+      ];
 
   @override
   void initState() {
@@ -40,6 +56,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   Future<void> _openVideo() async {
+    final generation = ++_playbackGeneration;
     try {
       final cid = widget.video.cid == 0
           ? await _resolveCid()
@@ -53,34 +70,44 @@ class _PlayerScreenState extends State<PlayerScreen> {
         videoType: VideoType.ugc,
       );
       final playInfo = state.dataOrNull;
-      final urls = <String>[
-        ...?playInfo?.durl?.expand((item) => item.playUrls),
-        ...?playInfo?.dash?.video?.expand((item) => item.playUrls),
-      ];
-      if (playInfo == null || urls.isEmpty) {
+      if (playInfo == null) {
         throw StateError('无法获取播放地址');
       }
+      final dashUrls = playInfo.dash?.video
+          ?.expand((item) => item.playUrls)
+          .toList();
+      final durlUrls = playInfo.durl
+          ?.expand((item) => item.playUrls)
+          .toList();
+      final urls = dashUrls?.isNotEmpty == true ? dashUrls! : (durlUrls ?? const []);
+      if (urls.isEmpty) throw StateError('无法获取播放地址');
+      final audioUrls = dashUrls?.isNotEmpty == true
+          ? playInfo.dash?.audio?.expand((item) => item.playUrls).toList()
+          : null;
+      final audioUrl = audioUrls?.firstOrNull;
       final controller = VideoPlayerController.networkUrl(
         Uri.parse(VideoUtils.getCdnUrl(urls)),
+        audioUrl: audioUrl == null || audioUrl.isEmpty
+            ? null
+            : VideoUtils.getCdnUrl([audioUrl]),
       );
       await controller.initialize();
-      if (!mounted) {
+      if (!mounted || generation != _playbackGeneration) {
         await controller.dispose();
         return;
       }
+      controller.addListener(_onControllerChanged);
       setState(() {
         _controller = controller;
         _loading = false;
       });
+      final sponsorBlock = TvSponsorBlockController(controller.seekTo);
+      _sponsorBlock = sponsorBlock;
+      sponsorBlock.bindPosition(controller.positionStream);
+      unawaited(sponsorBlock.load(bvid: widget.video.bvid, cid: cid));
       final resume = playInfo.lastPlayTime;
       if (resume > 0) {
         await controller.seekTo(Duration(seconds: resume));
-      }
-      if (TvSettingsFacade.watermarkMode != WatermarkMode.disabled) {
-        final region = await FirstFrameWatermarkService.detect(widget.video.bvid);
-        if (region != null) {
-          await WatermarkFilter.apply(controller.player, [region]);
-        }
       }
       _heartbeat = Timer.periodic(const Duration(seconds: 15), (_) {
         final position = controller.value.position.inSeconds;
@@ -92,8 +119,26 @@ class _PlayerScreenState extends State<PlayerScreen> {
         );
       });
       await controller.play();
+      unawaited(_applyWatermark(controller, generation));
     } catch (error) {
       if (mounted) setState(() { _loading = false; _error = error.toString(); });
+    }
+  }
+
+  Future<void> _applyWatermark(
+    VideoPlayerController controller,
+    int generation,
+  ) async {
+    try {
+      if (TvSettingsFacade.watermarkMode == WatermarkMode.disabled) return;
+      final region = await FirstFrameWatermarkService.detect(widget.video.bvid);
+      if (!mounted || generation != _playbackGeneration || _controller != controller) {
+        return;
+      }
+      if (region != null) await WatermarkFilter.apply(controller.player, [region]);
+    } catch (error) {
+      // Watermark is best-effort and must never prevent or interrupt playback.
+      debugPrint('TV watermark unavailable: $error');
     }
   }
 
@@ -105,10 +150,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void dispose() {
     _heartbeat?.cancel();
+    ++_playbackGeneration;
+    unawaited(_sponsorBlock?.dispose() ?? Future<void>.value());
     final player = _controller?.player;
     if (player != null) {
       WatermarkFilter.clear(player);
     }
+    _controller?.removeListener(_onControllerChanged);
     _controller?.dispose();
     super.dispose();
   }
@@ -117,22 +165,28 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (event is! KeyDownEvent) return;
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.arrowLeft) {
-      _controller?.seekTo(_controller!.value.position - const Duration(seconds: 10));
+      final controller = _controller;
+      if (controller != null) {
+        controller.seekTo(controller.value.position - const Duration(seconds: 10));
+      }
       setState(() { _showControls = true; _focusedIndex = 0; });
     } else if (key == LogicalKeyboardKey.arrowRight) {
-      _controller?.seekTo(_controller!.value.position + const Duration(seconds: 10));
+      final controller = _controller;
+      if (controller != null) {
+        controller.seekTo(controller.value.position + const Duration(seconds: 10));
+      }
       setState(() { _showControls = true; _focusedIndex = 0; });
     } else if (key == LogicalKeyboardKey.arrowUp) {
       setState(() {
         _showControls = true;
         _progressFocused = false;
-        _focusedIndex = (_focusedIndex - 1 + 5) % 5;
+        _focusedIndex = (_focusedIndex - 1 + _controls.length) % _controls.length;
       });
     } else if (key == LogicalKeyboardKey.arrowDown) {
       setState(() {
         _showControls = true;
         _progressFocused = false;
-        _focusedIndex = (_focusedIndex + 1) % 5;
+        _focusedIndex = (_focusedIndex + 1) % _controls.length;
       });
     } else if (key == LogicalKeyboardKey.space) {
       if (_controller != null) {
@@ -141,20 +195,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
       }
     } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
       if (_controller == null) return;
-      switch (_focusedIndex) {
-        case 0:
-          setState(() => _showControls = true);
-          break;
-        case 3:
-          setState(() => _showControls = true);
-          break;
-        case 4:
-          setState(() { _danmaku = !_danmaku; _showControls = true; });
-          break;
-        default:
-          _controller!.value.isPlaying ? _controller!.pause() : _controller!.play();
-          setState(() => _showControls = true);
-      }
+      if (_focusedIndex < _controls.length) _controls[_focusedIndex].onTap();
+      setState(() => _showControls = true);
     } else if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.goBack) {
       Navigator.of(context).maybePop();
     }
@@ -179,13 +221,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 showControls: true,
                 focusedIndex: _focusedIndex,
                 isProgressBarFocused: _progressFocused,
-                onPlayPause: () => controller.value.isPlaying ? controller.pause() : controller.play(),
-                onSettings: () {},
-                onEpisodes: () {},
-                isDanmakuEnabled: _danmaku,
-                onToggleDanmaku: () => setState(() => _danmaku = !_danmaku),
+                controls: _controls,
                 currentQuality: '1080P',
-                onQualityClick: () {},
                 alwaysShowPlayerTime: TvSettingsFacade.alwaysShowPlayerTime,
                 danmakuCount: widget.video.danmaku,
               ),
@@ -193,5 +230,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
         ),
       ),
     );
+  }
+
+  void _togglePlayback() {
+    final controller = _controller;
+    if (controller == null) return;
+    controller.value.isPlaying ? controller.pause() : controller.play();
+  }
+
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
   }
 }

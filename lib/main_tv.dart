@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/tv/app/tv_app.dart';
+import 'package:PiliPlus/tv/services/tv_web_server.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
@@ -76,6 +77,10 @@ void main() async {
   HttpOverrides.global = _TVHttpOverrides();
 
   await setupServiceLocator();
+
+  // BiliTV-compatible LAN management page. A bind failure is intentionally
+  // non-fatal and must never prevent the TV app from starting.
+  await TvWebServer.instance.start();
 
   Request();
   Request.setCookie();
