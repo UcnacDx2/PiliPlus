@@ -4,6 +4,7 @@ import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
+import 'package:PiliPlus/http/video.dart';
 
 /// Displays a normal cover immediately, then replaces it with a meaningful
 /// first frame. Black/flat first frames fall back to a videoshot frame.
@@ -90,7 +91,7 @@ class _FirstFrameOrCoverState extends State<FirstFrameOrCover> {
     if (widget.resolveMissingFirstFrame &&
         (firstFrame == null || firstFrame.isEmpty) &&
         widget.bvid?.isNotEmpty == true) {
-      return;
+      firstFrame = (await VideoHttp.getVideoFirstFrameInfo(widget.bvid))?.url;
     }
     if (firstFrame == null || firstFrame.isEmpty) return;
 

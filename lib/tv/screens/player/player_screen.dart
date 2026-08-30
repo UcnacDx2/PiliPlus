@@ -31,7 +31,10 @@ class PlayerScreen extends StatefulWidget {
   State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
+enum _PlayerControlRegion { actions, progress }
+
 class _PlayerScreenState extends State<PlayerScreen> {
+  final FocusNode _rootFocusNode = FocusNode(debugLabel: 'tv-player-root');
   VideoPlayerController? _controller;
   bool _loading = true;
   String? _error;
@@ -39,6 +42,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _danmaku = true;
   int _focusedIndex = 0;
   bool _progressFocused = false;
+  _PlayerControlRegion _controlRegion = _PlayerControlRegion.actions;
   bool _showEpisodePanel = false;
   bool _showSettingsPanel = false;
   bool _showActionButtons = false;
@@ -240,9 +244,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   Future<int?> _resolveCid() async {
     if (widget.video.cid != 0) return widget.video.cid;
-    final introCid = (await VideoHttp.videoIntro(bvid: widget.video.bvid))
-        .dataOrNull
-        ?.cid;
+    final introCid = await TvBilibiliFacade.getVideoCid(
+      widget.video.bvid,
+      aid: widget.video.aid,
+    );
     if (introCid != null && introCid != 0) return introCid;
     return (await VideoHttp.getVideoFirstFrameInfo(widget.video.bvid))?.cid;
   }
@@ -266,6 +271,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _showActionButtons = false;
       _settingsMenuType = SettingsMenuType.main;
       _settingsFocusedIndex = 0;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _rootFocusNode.requestFocus();
     });
   }
 
@@ -297,6 +305,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (selected != null && selected != _currentQuality) {
       await _openVideo(qn: selected);
     }
+    if (mounted) _rootFocusNode.requestFocus();
   }
 
   void _closeMenus() {
@@ -319,6 +328,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
     _controller?.removeListener(_onControllerChanged);
     _controller?.dispose();
+    _rootFocusNode.dispose();
     super.dispose();
   }
 
@@ -340,13 +350,23 @@ class _PlayerScreenState extends State<PlayerScreen> {
         return;
       }
       if (key == LogicalKeyboardKey.arrowUp) {
+        final maxIndex = _settingsMenuType == SettingsMenuType.main
+            ? 2
+            : _settingsMenuType == SettingsMenuType.danmaku
+                ? 6
+                : 3;
         setState(() => _settingsFocusedIndex =
-            (_settingsFocusedIndex - 1).clamp(0, 2));
+            (_settingsFocusedIndex - 1).clamp(0, maxIndex));
         return;
       }
       if (key == LogicalKeyboardKey.arrowDown) {
+        final maxIndex = _settingsMenuType == SettingsMenuType.main
+            ? 2
+            : _settingsMenuType == SettingsMenuType.danmaku
+                ? 6
+                : 3;
         setState(() => _settingsFocusedIndex =
-            (_settingsFocusedIndex + 1).clamp(0, 2));
+            (_settingsFocusedIndex + 1).clamp(0, maxIndex));
         return;
       }
       if (key == LogicalKeyboardKey.arrowLeft) {
@@ -359,9 +379,20 @@ class _PlayerScreenState extends State<PlayerScreen> {
       }
       if ((key == LogicalKeyboardKey.enter ||
               key == LogicalKeyboardKey.select) &&
-          _settingsMenuType == SettingsMenuType.main &&
-          _settingsFocusedIndex == 0) {
-        unawaited(_showQualityPicker());
+          _settingsMenuType == SettingsMenuType.main) {
+        if (_settingsFocusedIndex == 0) {
+          unawaited(_showQualityPicker());
+        } else if (_settingsFocusedIndex == 1) {
+          setState(() {
+            _settingsMenuType = SettingsMenuType.danmaku;
+            _settingsFocusedIndex = 0;
+          });
+        } else if (_settingsFocusedIndex == 2) {
+          setState(() {
+            _settingsMenuType = SettingsMenuType.speed;
+            _settingsFocusedIndex = 0;
+          });
+        }
         return;
       }
       return;
@@ -402,9 +433,30 @@ class _PlayerScreenState extends State<PlayerScreen> {
       }
       return;
     }
+    if (_showControls && _controlRegion == _PlayerControlRegion.progress) {
+      if (key == LogicalKeyboardKey.arrowLeft ||
+          key == LogicalKeyboardKey.arrowRight) {
+        final controller = _controller;
+        if (controller != null) {
+          final delta = key == LogicalKeyboardKey.arrowLeft ? -10 : 10;
+          controller.seekTo(
+            controller.value.position + Duration(seconds: delta),
+          );
+        }
+        return;
+      }
+      if (key == LogicalKeyboardKey.arrowUp) {
+        setState(() {
+          _controlRegion = _PlayerControlRegion.actions;
+          _progressFocused = false;
+        });
+        return;
+      }
+    }
     if ((key == LogicalKeyboardKey.arrowLeft ||
             key == LogicalKeyboardKey.arrowRight) &&
-        _showControls) {
+        _showControls &&
+        _controlRegion == _PlayerControlRegion.actions) {
       final delta = key == LogicalKeyboardKey.arrowLeft ? -1 : 1;
       setState(() {
         _focusedIndex = (_focusedIndex + delta + _controls.length) %
@@ -429,7 +481,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
       if (!_showControls) {
         setState(() => _showControls = true);
       } else {
-        setState(() => _showControls = false);
+        setState(() {
+          _controlRegion = _PlayerControlRegion.progress;
+          _progressFocused = true;
+        });
       }
     } else if (key == LogicalKeyboardKey.arrowDown) {
       if (!_showControls) {
@@ -457,6 +512,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Focus(
+        focusNode: _rootFocusNode,
         autofocus: true,
         onKeyEvent: (node, event) { _handleKey(event); return KeyEventResult.handled; },
         child: Stack(

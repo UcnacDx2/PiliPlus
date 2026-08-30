@@ -15,7 +15,7 @@ enum VideoCodec {
 
 abstract final class TvSettingsFacade {
   static final useFirstFrameAsCoverNotifier = ValueNotifier<bool>(false);
-  static bool useFirstFrameAsCover = false;
+  static bool useFirstFrameAsCover = Pref.useFirstFrameAsCover;
   static bool splashAnimationEnabled = false;
   static bool alwaysShowPlayerTime = false;
   static bool get autoPlay => Pref.autoPlayEnable;
@@ -43,7 +43,11 @@ abstract final class TvSettingsFacade {
   static Future<void> setMinimumRecommendDuration(int value) async => minimumRecommendDuration = value;
   static Future<void> setSplashAnimationEnabled(bool value) async => splashAnimationEnabled = value;
   static Future<void> setAlwaysShowPlayerTime(bool value) async => alwaysShowPlayerTime = value;
-  static Future<void> setUseFirstFrameAsCover(bool value) async { useFirstFrameAsCover = value; useFirstFrameAsCoverNotifier.value = value; }
+  static Future<void> setUseFirstFrameAsCover(bool value) async {
+    await GStorage.setting.put(SettingBoxKey.useFirstFrameAsCover, value);
+    useFirstFrameAsCover = value;
+    useFirstFrameAsCoverNotifier.value = value;
+  }
   static Future<void> setCategoryOrder(List<String> value) async => categoryOrder = value;
   static Future<void> setLiveCategoryOrder(List<String> value) async => liveCategoryOrder = value;
   static Future<void> toggleCategory(String name, bool value) async { if (value && !enabledCategories.contains(name)) enabledCategories = [...enabledCategories, name]; if (!value) enabledCategories = enabledCategories.where((e) => e != name).toList(); }

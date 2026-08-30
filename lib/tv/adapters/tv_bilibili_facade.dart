@@ -43,7 +43,7 @@ abstract final class TvBilibiliFacade {
       onSuccess: (_) {},
     );
     return state.dataOrNull?.list?.map((item) => TvVideoItem(
-      bvid: item.bvid ?? '', title: item.title, pic: item.cover ?? '',
+      bvid: item.bvid ?? '', aid: item.aid ?? 0, title: item.title, pic: item.cover ?? '',
       ownerName: item.owner.name ?? '', ownerMid: item.owner.mid ?? 0,
       view: item.stat.view ?? 0, danmaku: item.stat.danmu ?? 0,
       duration: item.duration < 0 ? 0 : item.duration, pubdate: item.pubdate ?? 0,
@@ -133,7 +133,13 @@ abstract final class TvBilibiliFacade {
     final data = state.dataOrNull;
     return data == null ? null : {'bvid': data.bvid, 'aid': data.aid, 'cid': data.cid, 'title': data.title, 'pic': data.pic, 'duration': data.duration, 'pages': data.pages};
   }
-  static Future<int?> getVideoCid(String bvid) async => (await VideoHttp.videoIntro(bvid: bvid)).dataOrNull?.cid;
+  static Future<int?> getVideoCid(String bvid, {int aid = 0}) async {
+    if (aid > 0) {
+      final cid = await SearchHttp.ab2c(aid: aid, bvid: bvid);
+      if (cid != null && cid > 0) return cid;
+    }
+    return (await VideoHttp.videoIntro(bvid: bvid)).dataOrNull?.cid;
+  }
   static Future<Map<String, dynamic>?> getVideoPlayUrl({required String bvid, required int cid, int qn = 80, VideoCodec? forceCodec}) async {
     final state = await VideoHttp.videoUrl(bvid: bvid, cid: cid, qn: qn, tryLook: true, videoType: VideoType.ugc);
     final data = state.dataOrNull;

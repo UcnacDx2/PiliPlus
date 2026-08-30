@@ -101,9 +101,10 @@ abstract final class VideoHttp {
           final list = res.data['data'] as List?;
           if (list != null && list.isNotEmpty) {
             final page = list.first as Map<String, dynamic>;
-            final url = page['first_frame'] as String?;
-            if (url != null && url.isNotEmpty) {
-              return VideoFirstFrameInfo(url: url, cid: page['cid'] as int?);
+            final url = page['first_frame'] as String? ?? '';
+            final cid = page['cid'] is num ? (page['cid'] as num).toInt() : null;
+            if (url.isNotEmpty || cid != null) {
+              return VideoFirstFrameInfo(url: url, cid: cid);
             }
           }
         }

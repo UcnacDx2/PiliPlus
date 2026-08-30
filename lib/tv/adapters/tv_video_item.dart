@@ -1,6 +1,7 @@
 /// 视频数据模型
 class TvVideoItem {
   final String bvid;
+  final int aid;
   final String title;
   final String pic; // 封面图 URL
   final String? firstFrame; // 视频首帧 URL（可选）
@@ -22,6 +23,7 @@ class TvVideoItem {
 
   TvVideoItem({
     required this.bvid,
+    this.aid = 0,
     required this.title,
     required this.pic,
     this.firstFrame,
@@ -54,6 +56,7 @@ class TvVideoItem {
 
     return TvVideoItem(
       bvid: json['bvid'] ?? '',
+      aid: _toInt(json['aid']),
       title: json['title'] ?? '',
       pic: _fixPicUrl(json['pic'] ?? ''),
       firstFrame: _nullableUrl(json['first_frame']),
@@ -82,6 +85,7 @@ class TvVideoItem {
 
     return TvVideoItem(
       bvid: history['bvid'] ?? '',
+      aid: _toInt(history['aid'] ?? json['aid']),
       title: json['title'] ?? '',
       pic: _fixPicUrl(cover),
       firstFrame: _nullableUrl(json['first_frame']),
@@ -116,6 +120,7 @@ class TvVideoItem {
 
     return TvVideoItem(
       bvid: json['bvid'] ?? '',
+      aid: _toInt(json['aid']),
       title: title,
       pic: _fixPicUrl(json['pic'] ?? ''),
       firstFrame: _nullableUrl(json['first_frame']),
@@ -132,6 +137,7 @@ class TvVideoItem {
   factory TvVideoItem.fromSpaceVideo(Map<String, dynamic> json) {
     return TvVideoItem(
       bvid: json['bvid'] ?? '',
+      aid: _toInt(json['aid']),
       title: json['title'] ?? '',
       pic: _fixPicUrl(json['pic'] ?? ''),
       firstFrame: _nullableUrl(json['first_frame']),
