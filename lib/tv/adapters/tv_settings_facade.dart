@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:PiliPlus/utils/storage.dart';
+import 'package:PiliPlus/utils/storage_key.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 
 enum VideoCodec {
   auto('自动'),
@@ -14,7 +17,7 @@ abstract final class TvSettingsFacade {
   static bool useFirstFrameAsCover = false;
   static bool splashAnimationEnabled = false;
   static bool alwaysShowPlayerTime = false;
-  static bool autoPlay = true;
+  static bool get autoPlay => Pref.autoPlayEnable;
   static bool hideControlsOnStart = false;
   static bool hideLiveControlsOnStart = false;
   static bool showMiniProgress = true;
@@ -28,7 +31,7 @@ abstract final class TvSettingsFacade {
   static const liveCategoryIds = <String, int>{};
   static bool isCategoryEnabled(String name) => enabledCategories.contains(name);
   static bool isLiveCategoryEnabled(String name) => liveCategoryOrder.contains(name);
-  static Future<void> setAutoPlay(bool value) async => autoPlay = value;
+  static Future<void> setAutoPlay(bool value) async => GStorage.setting.put(SettingBoxKey.autoPlayEnable, value);
   static Future<void> setHideControlsOnStart(bool value) async => hideControlsOnStart = value;
   static Future<void> setShowMiniProgress(bool value) async => showMiniProgress = value;
   static Future<void> setSeekPreviewMode(bool value) async => seekPreviewMode = value;

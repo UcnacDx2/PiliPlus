@@ -3,6 +3,9 @@ import 'package:PiliPlus/tv/adapters/tv_videoshot.dart';
 import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/http/user.dart';
+import 'package:PiliPlus/http/login.dart';
+import 'package:PiliPlus/http/loading_state.dart';
+import 'package:PiliPlus/utils/login_utils.dart';
 import 'package:PiliPlus/models/common/search/search_type.dart';
 import 'package:PiliPlus/models/search/result.dart';
 
@@ -43,9 +46,28 @@ abstract final class TvBilibiliFacade {
   static Future<DynamicFeed> getDynamicFeed({String offset = ''}) async => const DynamicFeed();
   static Future<List<TvVideoItem>> getRelatedVideos(String bvid) async => const [];
   static Future<List<TvVideoItem>> getSpaceVideos({required int mid, int page = 1, String order = 'pubdate'}) async => const [];
-  static Future<Map<String, String>?> generateTvQrCode() async => null;
-  static Future<Map<String, dynamic>> pollTvLogin(String code) async => {};
-  static Future<void> fetchAndSaveUserInfo() async {}
+  static Future<Map<String, String>?> generateTvQrCode() async {
+    final state = await LoginHttp.getHDcode();
+    final data = state.dataOrNull;
+    return data == null ? null : {'auth_code': data.authCode, 'url': data.url};
+  }
+  static Future<Map<String, dynamic>> pollTvLogin(String code) async {
+    final result = await LoginHttp.codePoll(code);
+    if (result['status'] != true) {
+      return {'status': result['code'] == 86090 ? 'scanned' : 'waiting', 'code': result['code']};
+    }
+    final data = result['data'] as Map?;
+    final token = data?['token_info'] as Map?;
+    final cookies = data?['cookie_info'];
+    return {
+      'status': 'success',
+      'access_token': token?['access_token'] ?? '',
+      'refresh_token': token?['refresh_token'] ?? '',
+      'mid': token?['mid'] ?? 0,
+      'cookie_info': cookies,
+    };
+  }
+  static Future<void> fetchAndSaveUserInfo() => LoginUtils.onLoginMain();
   static Future<Map<String, dynamic>?> getVideoInfo(String bvid, {AccountRole role = AccountRole.video}) async => null;
   static Future<int?> getVideoCid(String bvid) async => null;
   static Future<Map<String, dynamic>?> getVideoPlayUrl({required String bvid, required int cid, int qn = 80, VideoCodec? forceCodec}) async => null;
