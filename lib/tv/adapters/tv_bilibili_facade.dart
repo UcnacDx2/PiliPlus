@@ -4,7 +4,6 @@ import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/login.dart';
-import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/utils/login_utils.dart';
 import 'package:PiliPlus/models/common/search/search_type.dart';
 import 'package:PiliPlus/models/search/result.dart';

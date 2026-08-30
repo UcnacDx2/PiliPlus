@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:PiliPlus/http/video.dart';
@@ -5,9 +6,9 @@ import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
 import 'package:PiliPlus/tv/adapters/tv_video_item.dart';
 import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
-import 'widgets/controls_overlay.dart';
-import 'widgets/mpv_video_player_compat.dart';
-import 'widgets/video_layer.dart';
+import 'package:PiliPlus/tv/screens/player/widgets/controls_overlay.dart';
+import 'package:PiliPlus/tv/screens/player/widgets/mpv_video_player_compat.dart';
+import 'package:PiliPlus/tv/screens/player/widgets/video_layer.dart';
 
 /// BiliTV 的播放器界面和焦点语义；播放数据由 PiliPlus VideoHttp 提供。
 /// 这里不依赖旧的 PiliPlus TV 播放器控制器。
@@ -26,6 +27,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _showControls = true;
   bool _danmaku = true;
   int _focusedIndex = 0;
+  Timer? _heartbeat;
 
   @override
   void initState() {
@@ -66,6 +68,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
         _controller = controller;
         _loading = false;
       });
+      final resume = playInfo.lastPlayTime;
+      if (resume > 0) {
+        await controller.seekTo(Duration(seconds: resume));
+      }
+      _heartbeat = Timer.periodic(const Duration(seconds: 15), (_) {
+        final position = controller.value.position.inSeconds;
+        VideoHttp.heartBeat(
+          bvid: widget.video.bvid,
+          cid: cid,
+          progress: position,
+          videoType: VideoType.ugc,
+        );
+      });
       await controller.play();
     } catch (error) {
       if (mounted) setState(() { _loading = false; _error = error.toString(); });
@@ -73,11 +88,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   Future<int?> _resolveCid() async {
-    return widget.video.cid == 0 ? null : widget.video.cid;
+    if (widget.video.cid != 0) return widget.video.cid;
+    return (await VideoHttp.getVideoFirstFrameInfo(widget.video.bvid))?.cid;
   }
 
   @override
   void dispose() {
+    _heartbeat?.cancel();
     _controller?.dispose();
     super.dispose();
   }
