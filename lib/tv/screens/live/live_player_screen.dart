@@ -213,30 +213,38 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
 
           // Helper to add lines from a specific protocol
           void addLinesFromProtocol(String protocol) {
-            final stream = streams.firstWhere(
-              (s) => s['protocol_name'] == protocol,
-              orElse: () => null,
-            );
+            Map<String, dynamic>? stream;
+            for (final candidate in streams) {
+              if (candidate is Map && candidate['protocol_name'] == protocol) {
+                stream = Map<String, dynamic>.from(candidate);
+                break;
+              }
+            }
 
             if (stream != null) {
               final formats = stream['format'] as List?;
               if (formats != null) {
                 for (var format in formats) {
+                  if (format is! Map) continue;
                   final codecs = format['codec'] as List?;
                   if (codecs != null) {
                     for (var codec in codecs) {
-                      final baseUrl = codec['base_url'] as String;
+                      if (codec is! Map) continue;
+                      final baseUrl = codec['base_url'] as String?;
+                      if (baseUrl == null || baseUrl.isEmpty) continue;
                       final urlInfo = codec['url_info'] as List?;
                       // final codecName = codec['codec_name'] ?? 'avc'; // avc or hevc
 
                       if (urlInfo != null) {
                         for (var info in urlInfo) {
-                          final host = info['host'] as String;
+                          if (info is! Map) continue;
+                          final host = info['host'] as String?;
+                          if (host == null || host.isEmpty) continue;
 
                           _lines.add({
                             'name': '线路$lineCounter',
                             'host': host,
-                            'extra': info['extra'],
+                            'extra': info['extra'] as String? ?? '',
                             'base_url': baseUrl,
                           });
                           lineCounter++;
