@@ -46,8 +46,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   int _settingsFocusedIndex = 0;
   int _focusedEpisodeIndex = 0;
   int? _activeCid;
-  int _focusedEpisodeIndex = 0;
-  int? _activeCid;
   List<dynamic> _episodes = const [];
   List<Map<String, dynamic>> _qualities = const [];
   int _currentQuality = 80;
