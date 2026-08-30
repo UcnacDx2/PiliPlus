@@ -60,6 +60,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Future<void> _openVideo() async {
     final generation = ++_playbackGeneration;
     try {
+      debugPrint(
+        'TV VOD open bvid=${widget.video.bvid} suppliedCid=${widget.video.cid}',
+      );
       final cid = widget.video.cid == 0
           ? await _resolveCid()
           : widget.video.cid;
@@ -157,6 +160,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   Future<int?> _resolveCid() async {
     if (widget.video.cid != 0) return widget.video.cid;
+    final introCid = (await VideoHttp.videoIntro(bvid: widget.video.bvid))
+        .dataOrNull
+        ?.cid;
+    if (introCid != null && introCid != 0) return introCid;
     return (await VideoHttp.getVideoFirstFrameInfo(widget.video.bvid))?.cid;
   }
 
