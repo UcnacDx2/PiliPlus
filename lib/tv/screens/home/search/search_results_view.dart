@@ -200,10 +200,14 @@ class _SearchResultsViewState extends State<SearchResultsView> {
     _getFocusNode(targetIndex).requestFocus();
   }
 
-  void _onVideoTap(TvVideoItem video) {
-    Navigator.of(
+  Future<void> _onVideoTap(TvVideoItem video, int index) async {
+    await Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => PlayerScreen(video: video)));
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _getFocusNode(index).requestFocus();
+    });
   }
 
   @override
@@ -273,7 +277,7 @@ class _SearchResultsViewState extends State<SearchResultsView> {
                       focusNode: _getFocusNode(index),
                       autofocus: index == 0,
                       disableCache: false,
-                      onTap: () => _onVideoTap(video),
+                      onTap: () => _onVideoTap(video, index),
                       // 最左列按左键跳到侧边栏
                       onMoveLeft: (index % 4 == 0)
                           ? () => widget.sidebarFocusNode?.requestFocus()

@@ -253,10 +253,14 @@ class HomeTabState extends State<HomeTab> {
     _loadVideosForCategory(_selectedCategoryIndex, refresh: true);
   }
 
-  void _onVideoTap(TvVideoItem video) {
-    Navigator.of(
+  Future<void> _onVideoTap(TvVideoItem video, int index) async {
+    await Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => PlayerScreen(video: video)));
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _getFocusNode(index).requestFocus();
+    });
   }
 
   @override
@@ -312,7 +316,7 @@ class HomeTabState extends State<HomeTab> {
                                   autofocus: isInitialLoad && index == 0,
                                   disableCache: false,
                                   staggerIndex: staggerIdx,
-                                  onTap: () => _onVideoTap(video),
+                                  onTap: () => _onVideoTap(video, index),
                                   onMoveLeft: (index % 4 == 0)
                                       ? () => widget.sidebarFocusNode
                                             ?.requestFocus()

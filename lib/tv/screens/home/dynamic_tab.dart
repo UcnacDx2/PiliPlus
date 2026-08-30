@@ -142,10 +142,14 @@ class DynamicTabState extends State<DynamicTab> {
     await _loadDynamic(refresh: false);
   }
 
-  void _onVideoTap(TvVideoItem video) {
-    Navigator.of(
+  Future<void> _onVideoTap(TvVideoItem video, int index) async {
+    await Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => PlayerScreen(video: video)));
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _getFocusNode(index).requestFocus();
+    });
   }
 
   @override
@@ -239,7 +243,7 @@ class DynamicTabState extends State<DynamicTab> {
                                 video: video,
                                 focusNode: _getFocusNode(index),
                                 disableCache: false,
-                                onTap: () => _onVideoTap(video),
+                                onTap: () => _onVideoTap(video, index),
                                 // 最左列按左键跳到侧边栏
                                 onMoveLeft: (index % 4 == 0)
                                     ? () => widget.sidebarFocusNode
