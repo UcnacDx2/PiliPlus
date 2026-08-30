@@ -21,6 +21,9 @@ class TvWebServer {
   static const int port = 3322;
 
   HttpServer? _server;
+  Timer? _retryTimer;
+  bool _starting = false;
+  bool _shouldRun = false;
   String? _localIp;
   late final String _pairingToken = _newToken();
 
@@ -28,10 +31,18 @@ class TvWebServer {
   String? get address => _localIp == null ? null : 'http://$_localIp:$port';
 
   Future<void> start() async {
-    if (_server != null) return;
+    _shouldRun = true;
+    if (_server != null || _starting) return;
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    _starting = true;
     try {
       _localIp = await _findLocalIp();
       final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
+      if (!_shouldRun) {
+        await server.close(force: true);
+        return;
+      }
       _server = server;
       unawaited(server.forEach(_handleRequest));
       debugPrint('TV Web server started at ${address ?? 'port $port'}');
@@ -40,10 +51,22 @@ class TvWebServer {
       // unavailable on the TV.
       debugPrint('TV Web server unavailable: $error');
       _server = null;
+      // A previous TV build may still own 3322 briefly during an upgrade.
+      // Retry once the old process releases it, without requiring a reboot.
+      if (_shouldRun) {
+        _retryTimer = Timer(const Duration(seconds: 5), () {
+          if (_shouldRun && _server == null) unawaited(start());
+        });
+      }
+    } finally {
+      _starting = false;
     }
   }
 
   Future<void> stop() async {
+    _shouldRun = false;
+    _retryTimer?.cancel();
+    _retryTimer = null;
     final server = _server;
     _server = null;
     await server?.close(force: true);
@@ -71,7 +94,7 @@ class TvWebServer {
     response.headers
       ..set('Access-Control-Allow-Origin', '*')
       ..set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-      ..set('Access-Control-Allow-Headers', 'Content-Type');
+      ..set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     try {
       if (request.method == 'OPTIONS') {
         response.statusCode = HttpStatus.noContent;

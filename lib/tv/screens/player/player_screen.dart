@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:PiliPlus/http/video.dart';
+import 'package:PiliPlus/http/browser_ua.dart';
+import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
 import 'package:PiliPlus/services/first_frame_watermark_service.dart';
@@ -85,13 +87,24 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ? playInfo.dash?.audio?.expand((item) => item.playUrls).toList()
           : null;
       final audioUrl = audioUrls?.firstOrNull;
+      debugPrint(
+        'TV VOD source bvid=${widget.video.bvid} cid=$cid '
+        'dashVideo=${dashUrls?.length ?? 0} dashAudio=${audioUrls?.length ?? 0} '
+        'durl=${durlUrls?.length ?? 0} videoHost=${Uri.parse(VideoUtils.getCdnUrl(urls)).host} '
+        'audioHost=${audioUrl == null || audioUrl.isEmpty ? '-' : Uri.parse(VideoUtils.getCdnUrl([audioUrl])).host}',
+      );
       final controller = VideoPlayerController.networkUrl(
         Uri.parse(VideoUtils.getCdnUrl(urls)),
+        httpHeaders: {
+          'User-Agent': BrowserUa.pc,
+          'Referer': HttpString.baseUrl,
+        },
         audioUrl: audioUrl == null || audioUrl.isEmpty
             ? null
             : VideoUtils.getCdnUrl([audioUrl]),
       );
       await controller.initialize();
+      debugPrint('TV VOD initialized bvid=${widget.video.bvid}');
       if (!mounted || generation != _playbackGeneration) {
         await controller.dispose();
         return;

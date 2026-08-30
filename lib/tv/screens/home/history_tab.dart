@@ -30,6 +30,7 @@ class HistoryTabState extends State<HistoryTab> {
   final ScrollController _scrollController = ScrollController();
   bool _hasLoaded = false;
   bool _isRefreshing = false; // 标记是否正在刷新中（用于控制分帧渲染）
+  String? _loadError;
   // 每个视频卡片的 FocusNode
   final Map<int, FocusNode> _videoFocusNodes = {};
 
@@ -98,41 +99,53 @@ class HistoryTabState extends State<HistoryTab> {
       setState(() => _isLoadingMore = true);
     }
 
-    final result = await TvBilibiliFacade.getHistory(
-      ps: 30,
-      viewAt: reset ? 0 : _viewAt,
-      max: reset ? 0 : _max,
-    );
+    try {
+      final result = await TvBilibiliFacade.getHistory(
+        ps: 30,
+        viewAt: reset ? 0 : _viewAt,
+        max: reset ? 0 : _max,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    final newVideos = result['list'] as List<TvVideoItem>;
-    final nextViewAt = result['viewAt'] as int;
-    final nextMax = result['max'] as int;
-    final hasMore = result['hasMore'] as bool;
+      final newVideos = (result['list'] as List<TvVideoItem>?) ?? const [];
+      final nextViewAt = result['viewAt'] as int? ?? 0;
+      final nextMax = result['max'] as int? ?? 0;
+      final hasMore = result['hasMore'] as bool? ?? false;
 
-    setState(() {
-      if (reset) {
-        _videos = newVideos;
+      setState(() {
+        _loadError = null;
+        if (reset) {
+          _videos = newVideos;
+          _isLoading = false;
+          _isRefreshing = false; // 刷新完成
+        } else {
+          // 去重：过滤掉已存在的视频
+          final existingBvids = _videos.map((v) => v.bvid).toSet();
+          final uniqueNewVideos = newVideos
+              .where((v) => !existingBvids.contains(v.bvid))
+              .toList();
+          _videos.addAll(uniqueNewVideos);
+          _isLoadingMore = false;
+        }
+
+        _viewAt = nextViewAt;
+        _max = nextMax;
+
+        if (!hasMore || newVideos.isEmpty) {
+          _hasMore = false;
+        }
+      });
+    } catch (error) {
+      debugPrint('TV history load failed: $error');
+      if (!mounted) return;
+      setState(() {
         _isLoading = false;
-        _isRefreshing = false; // 刷新完成
-      } else {
-        // 去重：过滤掉已存在的视频
-        final existingBvids = _videos.map((v) => v.bvid).toSet();
-        final uniqueNewVideos = newVideos
-            .where((v) => !existingBvids.contains(v.bvid))
-            .toList();
-        _videos.addAll(uniqueNewVideos);
         _isLoadingMore = false;
-      }
-
-      _viewAt = nextViewAt;
-      _max = nextMax;
-
-      if (!hasMore || newVideos.isEmpty) {
-        _hasMore = false;
-      }
-    });
+        _isRefreshing = false;
+        _loadError = error.toString();
+      });
+    }
   }
 
   void _onVideoTap(TvVideoItem video) {
@@ -165,6 +178,16 @@ class HistoryTabState extends State<HistoryTab> {
 
     if (_isLoading && _videos.isEmpty) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_loadError != null && _videos.isEmpty) {
+      return Center(
+        child: Text(
+          '历史加载失败\n请稍后重试',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white70, fontSize: 20),
+        ),
+      );
     }
 
     if (_videos.isEmpty) {

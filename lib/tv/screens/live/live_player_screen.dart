@@ -411,7 +411,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
           }
         } else if (msg['type'] == 'popularity') {
           setState(() {
-            final count = msg['count'] as int;
+            final count = TvLiveValueFacade.toInt(msg['count']);
             // Hotfix: Bilibili heartbeat sometimes returns 1 (invalid).
             // If we have a valid count, ignore 1 to avoid UI flicker.
             if (count <= 1) return;
@@ -460,8 +460,8 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
         }
         final info = await TvLiveFacade.getRoomInfo(_realRoomId);
         if (info != null && mounted) {
-          final online = info['online'] as int?;
-          if (online != null && online > 1) {
+          final online = TvLiveValueFacade.toInt(info['online']);
+          if (online > 1) {
             setState(() {
               if (online >= 10000) {
                 _onlineCount = '${(online / 10000).toStringAsFixed(1)}万';
@@ -798,7 +798,7 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
             children: [
               // TvVideoItem Player
               Center(
-                child: _isLoading
+                child: _isLoading || _controller == null
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -812,6 +812,11 @@ class _LivePlayerScreenState extends State<LivePlayerScreen>
                               style: const TextStyle(color: Colors.white),
                             ),
                           ],
+                          if (!_isLoading && _errorMessage == null)
+                            const Text(
+                              '直播播放器未就绪',
+                              style: TextStyle(color: Colors.white70),
+                            ),
                         ],
                       )
                     : AspectRatio(

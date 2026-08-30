@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:PiliPlus/tv/adapters/image_url_utils.dart';
+import 'package:PiliPlus/tv/adapters/tv_live_facade.dart';
 import 'base_tv_card.dart';
 import 'conditional_marquee.dart';
 
@@ -40,7 +41,7 @@ class TvLiveCard extends StatelessWidget {
         room['user_cover'] ??
         room['keyframe'];
     final uname = room['uname'] ?? '';
-    final online = room['online'] ?? 0;
+    final online = TvLiveValueFacade.toInt(room['online']);
 
     String onlineText = '$online';
     if (online >= 10000) {

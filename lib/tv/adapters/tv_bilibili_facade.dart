@@ -57,7 +57,10 @@ abstract final class TvBilibiliFacade {
       progress: item.progress ?? -1, viewAt: item.viewAt ?? 0,
       duration: item.duration ?? 0, cid: item.history.cid ?? 0, badge: item.badge ?? '',
     )).toList() ?? const <TvVideoItem>[];
-    return {'list': list};
+    // The current history endpoint does not expose cursor metadata. Return
+    // safe defaults so the TV screen can render the first page instead of
+    // remaining in its loading state on null casts.
+    return {'list': list, 'viewAt': 0, 'max': 0, 'hasMore': false};
   }
   static Future<DynamicFeed> getDynamicFeed({String offset = ''}) async {
     final state = await DynamicsHttp.followDynamic(offset: offset);
