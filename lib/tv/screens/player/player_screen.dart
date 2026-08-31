@@ -59,6 +59,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   TvSponsorBlockController? _sponsorBlock;
   int _playbackGeneration = 0;
   bool _seeking = false;
+  bool _qualityPickerOpen = false;
   Duration? _seekOrigin;
   Duration? _seekPreview;
 
@@ -102,10 +103,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
         key == LogicalKeyboardKey.space ||
         key == LogicalKeyboardKey.goBack ||
         key == LogicalKeyboardKey.escape;
-    if (!isPlayerKey || !routeCurrent) return KeyEventResult.ignored;
+    if (!isPlayerKey || _qualityPickerOpen) return KeyEventResult.ignored;
     debugPrint(
       'TV PLAYER hardware key=${key.keyLabel} type=${event.runtimeType} '
-      'controls=$_showControls primary=${FocusManager.instance.primaryFocus?.debugLabel}',
+      'controls=$_showControls routeCurrent=$routeCurrent '
+      'primary=${FocusManager.instance.primaryFocus?.debugLabel}',
     );
     _handleKey(event);
     return KeyEventResult.handled;
@@ -330,6 +332,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   Future<void> _showQualityPicker() async {
     if (_qualities.isEmpty) return;
+    _qualityPickerOpen = true;
     final selected = await showModalBottomSheet<int>(
       context: context,
       backgroundColor: const Color(0xFF1F1F1F),
@@ -340,12 +343,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
         onSelect: (quality) => Navigator.of(context).pop(quality),
       ),
     );
-    if (selected != null && selected != _currentQuality) {
-      await _openVideo(qn: selected);
-    }
-    if (mounted) {
-      _requestPlayerFocus();
-      if (_showSettingsPanel) _startHideTimer();
+    try {
+      if (selected != null && selected != _currentQuality) {
+        await _openVideo(qn: selected);
+      }
+      if (mounted) {
+        _requestPlayerFocus();
+        if (_showSettingsPanel) _startHideTimer();
+      }
+    } finally {
+      _qualityPickerOpen = false;
     }
   }
 
