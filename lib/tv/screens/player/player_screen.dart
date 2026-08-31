@@ -191,7 +191,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && generation == _playbackGeneration) {
-          _rootFocusNode.requestFocus();
+          _requestPlayerFocus();
         }
       });
       if (previousController != null && previousController != controller) {
@@ -286,7 +286,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _settingsFocusedIndex = 0;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _rootFocusNode.requestFocus();
+      if (mounted) _requestPlayerFocus();
     });
   }
 
@@ -320,7 +320,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       await _openVideo(qn: selected);
     }
     if (mounted) {
-      _rootFocusNode.requestFocus();
+      _requestPlayerFocus();
       if (_showSettingsPanel) _startHideTimer();
     }
   }
@@ -332,7 +332,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _showActionButtons = false;
       _showControls = true;
     });
-    _rootFocusNode.requestFocus();
+    _requestPlayerFocus();
     _startHideTimer();
   }
 
@@ -368,8 +368,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _showControlsAndResetTimer() {
     if (!_showControls) setState(() => _showControls = true);
-    _rootFocusNode.requestFocus();
+    _requestPlayerFocus();
     _startHideTimer();
+  }
+
+  void _requestPlayerFocus() {
+    if (!mounted) return;
+    final scope = FocusScope.of(context);
+    scope.setFirstFocus(_rootFocusNode);
+    _rootFocusNode.requestFocus();
   }
 
   void _handleKey(KeyEvent event) {
@@ -421,7 +428,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 : 3;
         setState(() => _settingsFocusedIndex =
             (_settingsFocusedIndex - 1).clamp(0, maxIndex));
-        _rootFocusNode.requestFocus();
+        _requestPlayerFocus();
         return;
       }
       if (key == LogicalKeyboardKey.arrowDown) {
@@ -432,7 +439,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 : 3;
         setState(() => _settingsFocusedIndex =
             (_settingsFocusedIndex + 1).clamp(0, maxIndex));
-        _rootFocusNode.requestFocus();
+        _requestPlayerFocus();
         return;
       }
       if (key == LogicalKeyboardKey.arrowLeft) {
