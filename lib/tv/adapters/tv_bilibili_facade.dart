@@ -74,7 +74,7 @@ abstract final class TvBilibiliFacade {
       if (archive == null || bvid == null || bvid.isEmpty) continue;
       final author = item.modules.moduleAuthor;
       videos.add(TvVideoItem(
-        bvid: bvid, title: archive.title ?? '', pic: archive.cover ?? '',
+        bvid: bvid, aid: archive.aid ?? 0, title: archive.title ?? '', pic: archive.cover ?? '',
         firstFrame: archive.firstFrame, ownerName: author?.name ?? '',
         ownerMid: author?.mid ?? 0,
         duration: DurationUtils.parseDuration(archive.durationText ?? ''),

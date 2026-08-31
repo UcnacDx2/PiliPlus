@@ -433,26 +433,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
       }
       return;
     }
-    if (_showControls && _controlRegion == _PlayerControlRegion.progress) {
-      if (key == LogicalKeyboardKey.arrowLeft ||
-          key == LogicalKeyboardKey.arrowRight) {
-        final controller = _controller;
-        if (controller != null) {
-          final delta = key == LogicalKeyboardKey.arrowLeft ? -10 : 10;
-          controller.seekTo(
-            controller.value.position + Duration(seconds: delta),
-          );
-        }
-        return;
-      }
-      if (key == LogicalKeyboardKey.arrowUp) {
-        setState(() {
-          _controlRegion = _PlayerControlRegion.actions;
-          _progressFocused = false;
-        });
-        return;
-      }
-    }
     if ((key == LogicalKeyboardKey.arrowLeft ||
             key == LogicalKeyboardKey.arrowRight) &&
         _showControls &&
@@ -481,10 +461,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       if (!_showControls) {
         setState(() => _showControls = true);
       } else {
-        setState(() {
-          _controlRegion = _PlayerControlRegion.progress;
-          _progressFocused = true;
-        });
+        setState(() => _showControls = false);
       }
     } else if (key == LogicalKeyboardKey.arrowDown) {
       if (!_showControls) {

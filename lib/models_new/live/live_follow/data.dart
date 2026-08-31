@@ -23,7 +23,9 @@ class LiveFollowData {
     totalPage = json['totalPage'] as int?;
     list = (json['list'] as List<dynamic>?)
         ?.cast<Map<String, dynamic>>()
-        .where((i) => i['live_status'] == 1)
+        // Some API/CDN variants serialize live_status as a string.
+        // Accept both forms so the TV "我的关注" tab does not appear empty.
+        .where((i) => i['live_status'] == 1 || i['live_status'] == '1')
         .map(LiveFollowItem.fromJson)
         .toList();
     count = json['count'] as int?;
