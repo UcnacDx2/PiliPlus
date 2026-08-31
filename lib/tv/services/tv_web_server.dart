@@ -111,7 +111,8 @@ class TvWebServer {
           'port': port,
           'address': address,
         });
-      } else if (request.uri.path == '/api/accounts') {
+      } else if (request.uri.path == '/api/accounts' ||
+          request.uri.path == '/api/accounts/role') {
         await _accounts(request);
       } else if (request.uri.path == '/api/settings') {
         await _settings(request);
