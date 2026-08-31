@@ -84,13 +84,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
-    HardwareKeyboard.instance.addHandler(_handleHardwareKey);
+    FocusManager.instance.addEarlyKeyEventHandler(_handleEarlyKey);
     unawaited(_loadVideoDetails());
     _openVideo();
   }
 
-  bool _handleHardwareKey(KeyEvent event) {
-    if (!mounted) return false;
+  KeyEventResult _handleEarlyKey(KeyEvent event) {
+    if (!mounted) return KeyEventResult.ignored;
     final routeCurrent = ModalRoute.of(context)?.isCurrent == true;
     final key = event.logicalKey;
     final isPlayerKey = key == LogicalKeyboardKey.arrowUp ||
@@ -102,13 +102,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
         key == LogicalKeyboardKey.space ||
         key == LogicalKeyboardKey.goBack ||
         key == LogicalKeyboardKey.escape;
-    if (!isPlayerKey || !routeCurrent) return false;
+    if (!isPlayerKey || !routeCurrent) return KeyEventResult.ignored;
     debugPrint(
       'TV PLAYER hardware key=${key.keyLabel} type=${event.runtimeType} '
       'controls=$_showControls primary=${FocusManager.instance.primaryFocus?.debugLabel}',
     );
     _handleKey(event);
-    return true;
+    return KeyEventResult.handled;
   }
 
   Future<void> _loadVideoDetails() async {
@@ -362,7 +362,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
-    HardwareKeyboard.instance.removeHandler(_handleHardwareKey);
+    FocusManager.instance.removeEarlyKeyEventHandler(_handleEarlyKey);
     _heartbeat?.cancel();
     _hideTimer?.cancel();
     ++_playbackGeneration;
