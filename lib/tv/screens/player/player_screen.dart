@@ -96,10 +96,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
       RawKeyUpEvent() => KeyUpEvent(
           physicalKey: rawEvent.physicalKey,
           logicalKey: rawEvent.logicalKey,
+          timeStamp: rawEvent.timeStamp,
         ),
       _ => KeyDownEvent(
           physicalKey: rawEvent.physicalKey,
           logicalKey: rawEvent.logicalKey,
+          timeStamp: rawEvent.timeStamp,
         ),
     };
     final routeCurrent = ModalRoute.of(context)?.isCurrent == true;
