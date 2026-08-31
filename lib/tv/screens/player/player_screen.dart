@@ -85,13 +85,23 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
-    FocusManager.instance.addEarlyKeyEventHandler(_handleEarlyKey);
+    RawKeyboard.instance.addListener(_handleRawKey);
     unawaited(_loadVideoDetails());
     _openVideo();
   }
 
-  KeyEventResult _handleEarlyKey(KeyEvent event) {
-    if (!mounted) return KeyEventResult.ignored;
+  void _handleRawKey(RawKeyEvent rawEvent) {
+    if (!mounted) return;
+    final event = switch (rawEvent) {
+      RawKeyUpEvent() => KeyUpEvent(
+          physicalKey: rawEvent.physicalKey,
+          logicalKey: rawEvent.logicalKey,
+        ),
+      _ => KeyDownEvent(
+          physicalKey: rawEvent.physicalKey,
+          logicalKey: rawEvent.logicalKey,
+        ),
+    };
     final routeCurrent = ModalRoute.of(context)?.isCurrent == true;
     final key = event.logicalKey;
     final isPlayerKey = key == LogicalKeyboardKey.arrowUp ||
@@ -103,14 +113,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
         key == LogicalKeyboardKey.space ||
         key == LogicalKeyboardKey.goBack ||
         key == LogicalKeyboardKey.escape;
-    if (!isPlayerKey || _qualityPickerOpen) return KeyEventResult.ignored;
+    if (!isPlayerKey || _qualityPickerOpen) return;
     debugPrint(
       'TV PLAYER hardware key=${key.keyLabel} type=${event.runtimeType} '
       'controls=$_showControls routeCurrent=$routeCurrent '
       'primary=${FocusManager.instance.primaryFocus?.debugLabel}',
     );
     _handleKey(event);
-    return KeyEventResult.handled;
+    return;
   }
 
   Future<void> _loadVideoDetails() async {
@@ -369,7 +379,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
-    FocusManager.instance.removeEarlyKeyEventHandler(_handleEarlyKey);
+    RawKeyboard.instance.removeListener(_handleRawKey);
     _heartbeat?.cancel();
     _hideTimer?.cancel();
     ++_playbackGeneration;
@@ -655,7 +665,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         canRequestFocus: true,
         descendantsAreFocusable: false,
         autofocus: true,
-        onKeyEvent: (node, event) { _handleKey(event); return KeyEventResult.handled; },
+        onKeyEvent: null,
         child: Stack(
           fit: StackFit.expand,
           children: [
