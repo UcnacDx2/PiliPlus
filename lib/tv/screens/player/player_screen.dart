@@ -90,7 +90,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   bool _handleHardwareKey(KeyEvent event) {
-    if (!mounted || ModalRoute.of(context)?.isCurrent != true) return false;
+    if (!mounted) return false;
+    final routeCurrent = ModalRoute.of(context)?.isCurrent == true;
     final key = event.logicalKey;
     final isPlayerKey = key == LogicalKeyboardKey.arrowUp ||
         key == LogicalKeyboardKey.arrowDown ||
@@ -101,7 +102,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
         key == LogicalKeyboardKey.space ||
         key == LogicalKeyboardKey.goBack ||
         key == LogicalKeyboardKey.escape;
-    if (!isPlayerKey) return false;
+    if (!isPlayerKey || !routeCurrent) return false;
+    debugPrint(
+      'TV PLAYER hardware key=${key.keyLabel} type=${event.runtimeType} '
+      'controls=$_showControls primary=${FocusManager.instance.primaryFocus?.debugLabel}',
+    );
     _handleKey(event);
     return true;
   }
