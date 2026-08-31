@@ -156,6 +156,18 @@ class TvWebServer {
       return;
     }
     final body = await _readJson(request);
+    // Pairing-protected account import is used by the TV console to restore
+    // an existing PiliPlus account without exposing credentials in the UI.
+    if (body?['cookies'] is Map && body?['accessKey'] != null) {
+      try {
+        final imported = LoginAccount.fromJson(body!);
+        await imported.onChange();
+        _json(request.response, {'success': true, 'mid': imported.mid});
+      } catch (error) {
+        _json(request.response, {'error': 'Invalid account'}, HttpStatus.badRequest);
+      }
+      return;
+    }
     final role = body?['role']?.toString();
     final mid = int.tryParse('${body?['mid'] ?? ''}');
     final type = switch (role) {
