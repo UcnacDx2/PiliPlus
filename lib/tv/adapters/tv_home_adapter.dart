@@ -4,7 +4,7 @@ import 'package:PiliPlus/tv/adapters/tv_video_item.dart';
 
 abstract final class TvVideoMapper {
   static TvVideoItem fromPili(BaseVideoItemModel item) => TvVideoItem(
-    bvid: item.bvid ?? '', title: item.title, pic: item.cover ?? '',
+    bvid: item.bvid ?? '', aid: item.aid ?? 0, title: item.title, pic: item.cover ?? '',
     firstFrame: item.firstFrame, ownerName: item.owner.name ?? '',
     ownerMid: item.owner.mid ?? 0, view: item.stat.view ?? 0,
     danmaku: item.stat.danmu ?? 0, duration: item.duration < 0 ? 0 : item.duration,
