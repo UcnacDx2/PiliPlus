@@ -19,6 +19,7 @@ class QualityPickerSheet extends StatefulWidget {
 
 class _QualityPickerSheetState extends State<QualityPickerSheet> {
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _focusNode = FocusNode(debugLabel: 'tv-quality-picker');
   late int _focusedIndex;
 
   @override
@@ -32,6 +33,7 @@ class _QualityPickerSheetState extends State<QualityPickerSheet> {
 
     // Scroll to focused item after layout
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
       _scrollToFocused();
     });
   }
@@ -39,6 +41,7 @@ class _QualityPickerSheetState extends State<QualityPickerSheet> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -60,29 +63,41 @@ class _QualityPickerSheetState extends State<QualityPickerSheet> {
   @override
   Widget build(BuildContext context) {
     return Focus(
+      focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: (node, event) {
-        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+          if (event is KeyUpEvent &&
+              (event.logicalKey == LogicalKeyboardKey.arrowUp ||
+                  event.logicalKey == LogicalKeyboardKey.arrowDown)) {
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.handled;
+        }
 
         if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
           if (_focusedIndex > 0) {
             setState(() => _focusedIndex--);
             _scrollToFocused();
-            return KeyEventResult.handled;
           }
+          return KeyEventResult.handled;
         } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
           if (_focusedIndex < widget.qualities.length - 1) {
             setState(() => _focusedIndex++);
             _scrollToFocused();
-            return KeyEventResult.handled;
           }
+          return KeyEventResult.handled;
         } else if (event.logicalKey == LogicalKeyboardKey.select ||
             event.logicalKey == LogicalKeyboardKey.enter) {
           widget.onSelect(widget.qualities[_focusedIndex]['qn']);
           return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.goBack ||
+            event.logicalKey == LogicalKeyboardKey.escape) {
+          Navigator.of(context).pop();
+          return KeyEventResult.handled;
         }
 
-        return KeyEventResult.ignored;
+        return KeyEventResult.handled;
       },
       child: SafeArea(
         child: Column(

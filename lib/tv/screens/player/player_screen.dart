@@ -55,6 +55,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   int _currentQuality = 80;
   String _currentQualityDesc = '自动';
   Timer? _heartbeat;
+  Timer? _hideTimer;
   TvSponsorBlockController? _sponsorBlock;
   int _playbackGeneration = 0;
   bool _seeking = false;
@@ -222,6 +223,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         );
       });
       await controller.play();
+      _startHideTimer();
       unawaited(_applyWatermark(controller, generation));
     } catch (error) {
       if (mounted) setState(() { _loading = false; _error = error.toString(); });
@@ -257,6 +259,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _openEpisodes() {
     if (_episodes.isEmpty) return;
+    _hideTimer?.cancel();
     setState(() {
       final currentCid = _activeCid ?? widget.video.cid;
       final index = _episodes.indexWhere((episode) => episode['cid'] == currentCid);
@@ -268,6 +271,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _openSettings() {
+    _hideTimer?.cancel();
     setState(() {
       _showSettingsPanel = true;
       _showEpisodePanel = false;
@@ -281,6 +285,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _openActionButtons() {
+    _hideTimer?.cancel();
     setState(() {
       _showActionButtons = true;
       _showEpisodePanel = false;
@@ -308,7 +313,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (selected != null && selected != _currentQuality) {
       await _openVideo(qn: selected);
     }
-    if (mounted) _rootFocusNode.requestFocus();
+    if (mounted) {
+      _rootFocusNode.requestFocus();
+      if (_showSettingsPanel) _startHideTimer();
+    }
   }
 
   void _closeMenus() {
@@ -318,11 +326,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _showActionButtons = false;
       _showControls = true;
     });
+    _rootFocusNode.requestFocus();
+    _startHideTimer();
   }
 
   @override
   void dispose() {
     _heartbeat?.cancel();
+    _hideTimer?.cancel();
     ++_playbackGeneration;
     unawaited(_sponsorBlock?.dispose() ?? Future<void>.value());
     final player = _controller?.player;
@@ -333,6 +344,26 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _controller?.dispose();
     _rootFocusNode.dispose();
     super.dispose();
+  }
+
+  void _startHideTimer() {
+    _hideTimer?.cancel();
+    final controller = _controller;
+    if (!mounted || controller == null || !controller.value.isPlaying) return;
+    if (!_showControls || _showSettingsPanel || _showEpisodePanel ||
+        _showActionButtons || _seeking) return;
+    _hideTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted || !_showControls || _showSettingsPanel ||
+          _showEpisodePanel || _showActionButtons || _seeking ||
+          _controller?.value.isPlaying != true) return;
+      setState(() => _showControls = false);
+    });
+  }
+
+  void _showControlsAndResetTimer() {
+    if (!_showControls) setState(() => _showControls = true);
+    _rootFocusNode.requestFocus();
+    _startHideTimer();
   }
 
   void _handleKey(KeyEvent event) {
@@ -384,6 +415,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 : 3;
         setState(() => _settingsFocusedIndex =
             (_settingsFocusedIndex - 1).clamp(0, maxIndex));
+        _rootFocusNode.requestFocus();
         return;
       }
       if (key == LogicalKeyboardKey.arrowDown) {
@@ -394,6 +426,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 : 3;
         setState(() => _settingsFocusedIndex =
             (_settingsFocusedIndex + 1).clamp(0, maxIndex));
+        _rootFocusNode.requestFocus();
         return;
       }
       if (key == LogicalKeyboardKey.arrowLeft) {
@@ -478,25 +511,27 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _adjustSeek(key == LogicalKeyboardKey.arrowRight ? 10 : -10);
     } else if (key == LogicalKeyboardKey.arrowUp) {
       if (!_showControls) {
-        setState(() => _showControls = true);
+        _showControlsAndResetTimer();
       } else {
+        _hideTimer?.cancel();
         setState(() => _showControls = false);
       }
     } else if (key == LogicalKeyboardKey.arrowDown) {
       if (!_showControls) {
-        setState(() => _showControls = true);
+        _showControlsAndResetTimer();
       } else {
+        _hideTimer?.cancel();
         setState(() => _showControls = false);
       }
     } else if (key == LogicalKeyboardKey.space) {
       if (_controller != null) {
-        _controller!.value.isPlaying ? _controller!.pause() : _controller!.play();
-        setState(() => _showControls = true);
+        _togglePlayback();
+        _showControlsAndResetTimer();
       }
     } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
       if (_controller == null) return;
       if (_focusedIndex < _controls.length) _controls[_focusedIndex].onTap();
-      setState(() => _showControls = true);
+      _showControlsAndResetTimer();
     } else if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.goBack) {
       Navigator.of(context).maybePop();
     }
@@ -512,6 +547,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _seekOrigin = origin;
       _seekPreview = origin;
     });
+    _hideTimer?.cancel();
   }
 
   void _adjustSeek(int seconds) {
@@ -628,7 +664,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void _togglePlayback() {
     final controller = _controller;
     if (controller == null) return;
-    controller.value.isPlaying ? controller.pause() : controller.play();
+    if (controller.value.isPlaying) {
+      controller.pause();
+      _hideTimer?.cancel();
+    } else {
+      unawaited(() async {
+        await controller.play();
+        if (mounted) _startHideTimer();
+      }());
+    }
   }
 
   void _onControllerChanged() {
