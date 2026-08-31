@@ -84,8 +84,26 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
+    HardwareKeyboard.instance.addHandler(_handleHardwareKey);
     unawaited(_loadVideoDetails());
     _openVideo();
+  }
+
+  bool _handleHardwareKey(KeyEvent event) {
+    if (!mounted || ModalRoute.of(context)?.isCurrent != true) return false;
+    final key = event.logicalKey;
+    final isPlayerKey = key == LogicalKeyboardKey.arrowUp ||
+        key == LogicalKeyboardKey.arrowDown ||
+        key == LogicalKeyboardKey.arrowLeft ||
+        key == LogicalKeyboardKey.arrowRight ||
+        key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.select ||
+        key == LogicalKeyboardKey.space ||
+        key == LogicalKeyboardKey.goBack ||
+        key == LogicalKeyboardKey.escape;
+    if (!isPlayerKey) return false;
+    _handleKey(event);
+    return true;
   }
 
   Future<void> _loadVideoDetails() async {
@@ -339,6 +357,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleHardwareKey);
     _heartbeat?.cancel();
     _hideTimer?.cancel();
     ++_playbackGeneration;
