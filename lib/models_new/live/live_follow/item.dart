@@ -16,11 +16,15 @@ class LiveFollowItem {
   });
 
   factory LiveFollowItem.fromJson(Map<String, dynamic> json) => LiveFollowItem(
-    roomid: json['roomid'] as int?,
+    roomid: _toInt(json['roomid']),
     uname: json['uname'] as String?,
     title: json['title'] as String?,
     areaName: json['area_name'] as String?,
-    textSmall: json['text_small'] as String?,
+    textSmall: json['text_small']?.toString(),
     roomCover: json['room_cover'] as String?,
   );
+
+  static int? _toInt(dynamic value) => value is num
+      ? value.toInt()
+      : int.tryParse(value?.toString() ?? '');
 }

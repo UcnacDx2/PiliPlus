@@ -19,8 +19,8 @@ class LiveFollowData {
 
   LiveFollowData.fromJson(Map<String, dynamic> json) {
     title = json['title'] as String?;
-    pageSize = json['pageSize'] as int?;
-    totalPage = json['totalPage'] as int?;
+    pageSize = _toInt(json['pageSize']);
+    totalPage = _toInt(json['totalPage']);
     list = (json['list'] as List<dynamic>?)
         ?.cast<Map<String, dynamic>>()
         // Some API/CDN variants serialize live_status as a string.
@@ -28,7 +28,11 @@ class LiveFollowData {
         .where((i) => i['live_status'] == 1 || i['live_status'] == '1')
         .map(LiveFollowItem.fromJson)
         .toList();
-    count = json['count'] as int?;
-    liveCount = json['live_count'] as int?;
+    count = _toInt(json['count']);
+    liveCount = _toInt(json['live_count']);
   }
+
+  static int? _toInt(dynamic value) => value is num
+      ? value.toInt()
+      : int.tryParse(value?.toString() ?? '');
 }
