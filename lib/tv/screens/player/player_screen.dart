@@ -601,6 +601,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
       backgroundColor: Colors.black,
       body: Focus(
         focusNode: _rootFocusNode,
+        canRequestFocus: true,
+        descendantsAreFocusable: false,
         autofocus: true,
         onKeyEvent: (node, event) { _handleKey(event); return KeyEventResult.handled; },
         child: Stack(
