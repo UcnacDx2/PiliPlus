@@ -375,8 +375,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void _requestPlayerFocus() {
     if (!mounted) return;
     final scope = FocusScope.of(context);
-    scope.setFirstFocus(_rootFocusNode);
-    _rootFocusNode.requestFocus();
+    scope.requestFocus(_rootFocusNode);
   }
 
   void _handleKey(KeyEvent event) {
