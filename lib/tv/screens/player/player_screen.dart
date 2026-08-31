@@ -57,6 +57,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Timer? _heartbeat;
   TvSponsorBlockController? _sponsorBlock;
   int _playbackGeneration = 0;
+  bool _seeking = false;
+  Duration? _seekOrigin;
+  Duration? _seekPreview;
 
   List<TvPlayerControlItem> get _controls => [
         TvPlayerControlItem(icon: Icons.playlist_play, onTap: _openEpisodes),
@@ -333,8 +336,32 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _handleKey(KeyEvent event) {
+    if (event is KeyUpEvent && _seeking) {
+      _commitSeek();
+      return;
+    }
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) return;
     final key = event.logicalKey;
+
+    if (_seeking) {
+      if (key == LogicalKeyboardKey.arrowLeft ||
+          key == LogicalKeyboardKey.arrowRight) {
+        _adjustSeek(key == LogicalKeyboardKey.arrowRight ? 10 : -10);
+        return;
+      }
+      if (key == LogicalKeyboardKey.enter ||
+          key == LogicalKeyboardKey.select) {
+        _commitSeek();
+        return;
+      }
+      if (key == LogicalKeyboardKey.arrowUp ||
+          key == LogicalKeyboardKey.arrowDown ||
+          key == LogicalKeyboardKey.goBack ||
+          key == LogicalKeyboardKey.escape) {
+        _cancelSeek();
+        return;
+      }
+    }
 
     if (_showSettingsPanel) {
       if (key == LogicalKeyboardKey.goBack ||
@@ -445,18 +472,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
       });
       return;
     }
-    if (key == LogicalKeyboardKey.arrowLeft) {
-      final controller = _controller;
-      if (controller != null) {
-        controller.seekTo(controller.value.position - const Duration(seconds: 10));
-      }
-      setState(() { _showControls = true; _focusedIndex = 0; });
-    } else if (key == LogicalKeyboardKey.arrowRight) {
-      final controller = _controller;
-      if (controller != null) {
-        controller.seekTo(controller.value.position + const Duration(seconds: 10));
-      }
-      setState(() { _showControls = true; _focusedIndex = 0; });
+    if (key == LogicalKeyboardKey.arrowLeft ||
+        key == LogicalKeyboardKey.arrowRight) {
+      _beginSeek();
+      _adjustSeek(key == LogicalKeyboardKey.arrowRight ? 10 : -10);
     } else if (key == LogicalKeyboardKey.arrowUp) {
       if (!_showControls) {
         setState(() => _showControls = true);
@@ -481,6 +500,56 @@ class _PlayerScreenState extends State<PlayerScreen> {
     } else if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.goBack) {
       Navigator.of(context).maybePop();
     }
+  }
+
+  void _beginSeek() {
+    final controller = _controller;
+    if (_seeking || controller == null || !controller.value.isInitialized) return;
+    final origin = controller.value.position;
+    if (controller.value.duration <= Duration.zero) return;
+    setState(() {
+      _seeking = true;
+      _seekOrigin = origin;
+      _seekPreview = origin;
+    });
+  }
+
+  void _adjustSeek(int seconds) {
+    if (!_seeking) return;
+    final controller = _controller;
+    final preview = _seekPreview;
+    if (controller == null || preview == null) return;
+    final duration = controller.value.duration;
+    final target = preview + Duration(seconds: seconds);
+    setState(() => _seekPreview = target < Duration.zero
+        ? Duration.zero
+        : target > duration
+            ? duration
+            : target);
+  }
+
+  void _commitSeek() {
+    if (!_seeking) return;
+    final target = _seekPreview;
+    final controller = _controller;
+    setState(() {
+      _seeking = false;
+      _seekOrigin = null;
+      _seekPreview = null;
+    });
+    if (controller != null && target != null) unawaited(controller.seekTo(target));
+  }
+
+  void _cancelSeek() {
+    if (!_seeking) return;
+    final origin = _seekOrigin;
+    final controller = _controller;
+    setState(() {
+      _seeking = false;
+      _seekOrigin = null;
+      _seekPreview = null;
+    });
+    if (controller != null && origin != null) unawaited(controller.seekTo(origin));
   }
 
   @override
