@@ -103,6 +103,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final generation = ++_playbackGeneration;
     final previousController = _controller;
     _heartbeat?.cancel();
+    _hideTimer?.cancel();
     if (qn != null) {
       setState(() {
         _currentQuality = qn;
