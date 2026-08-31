@@ -189,6 +189,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
         _controller = controller;
         _loading = false;
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && generation == _playbackGeneration) {
+          _rootFocusNode.requestFocus();
+        }
+      });
       if (previousController != null && previousController != controller) {
         await previousController.dispose();
       }
