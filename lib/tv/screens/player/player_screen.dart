@@ -229,6 +229,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         );
       });
       await controller.play();
+      _reclaimPlayerFocus();
       _startHideTimer();
       unawaited(_applyWatermark(controller, generation));
     } catch (error) {
@@ -376,6 +377,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (!mounted) return;
     final scope = FocusScope.of(context);
     scope.requestFocus(_rootFocusNode);
+  }
+
+  // The Android TV video surface can reclaim focus while the native player is
+  // being attached. Re-assert the Flutter player focus after that hand-off so
+  // D-pad events keep reaching the TV control state machine.
+  void _reclaimPlayerFocus() {
+    _requestPlayerFocus();
+    Future<void>.delayed(const Duration(milliseconds: 250), () {
+      if (mounted) _requestPlayerFocus();
+    });
+    Future<void>.delayed(const Duration(milliseconds: 1000), () {
+      if (mounted) _requestPlayerFocus();
+    });
   }
 
   void _handleKey(KeyEvent event) {
@@ -614,7 +628,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            VideoLayer(controller: controller, isLoading: _loading, errorMessage: _error),
+            ExcludeFocus(
+              child: VideoLayer(
+                controller: controller,
+                isLoading: _loading,
+                errorMessage: _error,
+              ),
+            ),
             if (controller != null && !_loading && _showControls)
               ControlsOverlay(
                 video: widget.video,
