@@ -131,7 +131,25 @@ abstract final class TvBilibiliFacade {
   static Future<Map<String, dynamic>?> getVideoInfo(String bvid, {AccountRole role = AccountRole.video}) async {
     final state = await VideoHttp.videoIntro(bvid: bvid);
     final data = state.dataOrNull;
-    return data == null ? null : {'bvid': data.bvid, 'aid': data.aid, 'cid': data.cid, 'title': data.title, 'pic': data.pic, 'duration': data.duration, 'pages': data.pages};
+    if (data == null) return null;
+    final pages = data.pages
+        ?.map((page) => <String, dynamic>{
+              'cid': page.cid ?? 0,
+              'page': page.page ?? 0,
+              'part': page.part ?? '',
+              'duration': page.duration ?? 0,
+              'first_frame': page.firstFrame,
+            })
+        .toList();
+    return {
+      'bvid': data.bvid,
+      'aid': data.aid,
+      'cid': data.cid,
+      'title': data.title,
+      'pic': data.pic,
+      'duration': data.duration,
+      'pages': pages,
+    };
   }
   static Future<int?> getVideoCid(String bvid, {int aid = 0}) async {
     if (aid > 0) {

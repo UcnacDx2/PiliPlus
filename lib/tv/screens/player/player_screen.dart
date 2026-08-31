@@ -31,8 +31,6 @@ class PlayerScreen extends StatefulWidget {
   State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
-enum _PlayerControlRegion { actions, progress }
-
 class _PlayerScreenState extends State<PlayerScreen> {
   final FocusNode _rootFocusNode = FocusNode(debugLabel: 'tv-player-root');
   VideoPlayerController? _controller;
@@ -42,7 +40,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _danmaku = true;
   int _focusedIndex = 0;
   bool _progressFocused = false;
-  _PlayerControlRegion _controlRegion = _PlayerControlRegion.actions;
   bool _showEpisodePanel = false;
   bool _showSettingsPanel = false;
   bool _showActionButtons = false;
@@ -92,6 +89,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _handleRawKey(RawKeyEvent rawEvent) {
     if (!mounted) return;
+    // Focus is the normal input path. Keep RawKeyboard only as a fallback
+    // while Android's native video surface owns focus during attachment.
+    if (FocusManager.instance.primaryFocus == _rootFocusNode) return;
     final event = switch (rawEvent) {
       RawKeyUpEvent() => KeyUpEvent(
           physicalKey: rawEvent.physicalKey,
@@ -105,6 +105,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         ),
     };
     final routeCurrent = ModalRoute.of(context)?.isCurrent == true;
+    if (!routeCurrent) return;
     final key = event.logicalKey;
     final isPlayerKey = key == LogicalKeyboardKey.arrowUp ||
         key == LogicalKeyboardKey.arrowDown ||
@@ -564,8 +565,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
     if ((key == LogicalKeyboardKey.arrowLeft ||
             key == LogicalKeyboardKey.arrowRight) &&
-        _showControls &&
-        _controlRegion == _PlayerControlRegion.actions) {
+        _showControls) {
       final delta = key == LogicalKeyboardKey.arrowLeft ? -1 : 1;
       setState(() {
         _focusedIndex = (_focusedIndex + delta + _controls.length) %
@@ -613,6 +613,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (controller.value.duration <= Duration.zero) return;
     setState(() {
       _seeking = true;
+      _progressFocused = true;
       _seekOrigin = origin;
       _seekPreview = origin;
     });
@@ -639,6 +640,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final controller = _controller;
     setState(() {
       _seeking = false;
+      _progressFocused = false;
       _seekOrigin = null;
       _seekPreview = null;
     });
@@ -651,10 +653,28 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final controller = _controller;
     setState(() {
       _seeking = false;
+      _progressFocused = false;
       _seekOrigin = null;
       _seekPreview = null;
     });
     if (controller != null && origin != null) unawaited(controller.seekTo(origin));
+  }
+
+  KeyEventResult _handleFocusKey(FocusNode node, KeyEvent event) {
+    if (_qualityPickerOpen) return KeyEventResult.ignored;
+    final key = event.logicalKey;
+    final isPlayerKey = key == LogicalKeyboardKey.arrowUp ||
+        key == LogicalKeyboardKey.arrowDown ||
+        key == LogicalKeyboardKey.arrowLeft ||
+        key == LogicalKeyboardKey.arrowRight ||
+        key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.select ||
+        key == LogicalKeyboardKey.space ||
+        key == LogicalKeyboardKey.goBack ||
+        key == LogicalKeyboardKey.escape;
+    if (!isPlayerKey) return KeyEventResult.ignored;
+    _handleKey(event);
+    return KeyEventResult.handled;
   }
 
   @override
@@ -667,7 +687,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         canRequestFocus: true,
         descendantsAreFocusable: false,
         autofocus: true,
-        onKeyEvent: null,
+        onKeyEvent: _handleFocusKey,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -678,13 +698,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 errorMessage: _error,
               ),
             ),
-            if (controller != null && !_loading && _showControls)
+            if (controller != null && !_loading && (_showControls || _seeking))
               ControlsOverlay(
                 video: widget.video,
                 controller: controller,
                 showControls: true,
                 focusedIndex: _focusedIndex,
                 isProgressBarFocused: _progressFocused,
+                previewPosition: _seekPreview,
                 controls: _controls,
                 currentQuality: _currentQualityDesc,
                 alwaysShowPlayerTime: TvSettingsFacade.alwaysShowPlayerTime,
