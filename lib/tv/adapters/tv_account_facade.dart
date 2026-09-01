@@ -8,8 +8,10 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:get/get.dart';
 
 abstract final class TvAccountFacade {
-  static bool get isLoggedIn => Get.isRegistered<AccountService>() &&
-      Get.find<AccountService>().isLogin.value;
+  // TV data requests use the account slots from Accounts (history uses the
+  // dedicated history slot), so the UI must not rely on AccountService's
+  // separately cached observable login flag.
+  static bool get isLoggedIn => Accounts.main.isLogin;
   static String? get face => Get.isRegistered<AccountService>()
       ? Get.find<AccountService>().face.value
       : null;

@@ -19,7 +19,6 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:media_kit/media_kit.dart';
@@ -100,24 +99,6 @@ void main() async {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
-
-  // 接收 Android 转发的 UP/DOWN 按键
-  // 用独立 channel 'PiliPlus.tv'，与 PlPlayerController 共享的 'PiliPlus' channel 解耦，
-  // 防止视频 dispose 时 Utils.channel.setMethodCallHandler(null) 把我们的 handler 清掉
-  const MethodChannel('PiliPlus.tv').setMethodCallHandler((call) async {
-    if (call.method == 'tvKey') {
-      final args = call.arguments as Map;
-      final key = args['key'] as String;
-      final action = args['action'] as String;
-      final isRepeat = args['isRepeat'] as bool;
-      if (action == 'down' && !isRepeat) {
-        final direction = key == 'arrowUp'
-            ? TraversalDirection.up
-            : TraversalDirection.down;
-        FocusManager.instance.primaryFocus?.focusInDirection(direction);
-      }
-    }
-  });
 
   if (Pref.enableLog) {
     final customParameters = {

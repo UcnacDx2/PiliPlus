@@ -112,6 +112,16 @@ class HistoryTabState extends State<HistoryTab> {
 
       if (!mounted) return;
 
+      if (result['succeeded'] != true) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+          _isRefreshing = false;
+          _loadError = result['error']?.toString() ?? '历史加载失败，请再次刷新';
+        });
+        return;
+      }
+
       final newVideos = (result['list'] as List<TvVideoItem>?) ?? const [];
       final nextViewAt = result['viewAt'] as int? ?? 0;
       final nextMax = result['max'] as int? ?? 0;

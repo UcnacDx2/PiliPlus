@@ -20,6 +20,8 @@ import 'package:PiliPlus/tv/screens/player/widgets/action_buttons.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/episode_panel.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/quality_picker_sheet.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/settings_panel.dart';
+import 'package:PiliPlus/tv/screens/player/widgets/up_panel.dart';
+import 'package:PiliPlus/tv/screens/player/widgets/related_panel.dart';
 
 /// BiliTV 的播放器界面和焦点语义；播放数据由 PiliPlus VideoHttp 提供。
 /// 这里不依赖旧的 PiliPlus TV 播放器控制器。
@@ -38,11 +40,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
   String? _error;
   bool _showControls = true;
   bool _danmaku = true;
+  double _playbackSpeed = 1;
+  double _danmakuOpacity = 0.6;
+  double _danmakuFontSize = 17;
+  double _danmakuArea = 0.25;
+  double _danmakuSpeed = 10;
+  bool _hideTopDanmaku = false;
+  bool _hideBottomDanmaku = false;
+  static const _availableSpeeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
   int _focusedIndex = 0;
   bool _progressFocused = false;
   bool _showEpisodePanel = false;
   bool _showSettingsPanel = false;
   bool _showActionButtons = false;
+  bool _showUpPanel = false;
+  bool _showRelatedPanel = false;
   SettingsMenuType _settingsMenuType = SettingsMenuType.main;
   int _settingsFocusedIndex = 0;
   int _focusedEpisodeIndex = 0;
@@ -62,20 +74,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   List<TvPlayerControlItem> get _controls => [
         TvPlayerControlItem(icon: Icons.playlist_play, onTap: _openEpisodes),
+        TvPlayerControlItem(icon: Icons.person_outline, onTap: _openUpPanel),
+        TvPlayerControlItem(icon: Icons.video_library_outlined, onTap: _openRelatedPanel),
         TvPlayerControlItem(icon: Icons.tune, onTap: _openSettings),
         TvPlayerControlItem(
           icon: Icons.thumb_up_outlined,
           onTap: _openActionButtons,
-        ),
-        TvPlayerControlItem(
-          icon: _controller?.value.isPlaying == true
-              ? Icons.pause
-              : Icons.play_arrow,
-          onTap: _togglePlayback,
-        ),
-        TvPlayerControlItem(
-          icon: _danmaku ? Icons.subtitles : Icons.subtitles_off,
-          onTap: () => setState(() => _danmaku = !_danmaku),
         ),
       ];
 
@@ -312,6 +316,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _showEpisodePanel = true;
       _showSettingsPanel = false;
       _showActionButtons = false;
+      _showUpPanel = false;
+      _showRelatedPanel = false;
     });
   }
 
@@ -321,6 +327,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _showSettingsPanel = true;
       _showEpisodePanel = false;
       _showActionButtons = false;
+      _showUpPanel = false;
+      _showRelatedPanel = false;
       _settingsMenuType = SettingsMenuType.main;
       _settingsFocusedIndex = 0;
     });
@@ -335,12 +343,42 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _showActionButtons = true;
       _showEpisodePanel = false;
       _showSettingsPanel = false;
+      _showUpPanel = false;
+      _showRelatedPanel = false;
+    });
+  }
+
+  void _openUpPanel() {
+    _hideTimer?.cancel();
+    setState(() {
+      _showUpPanel = true;
+      _showRelatedPanel = false;
+      _showEpisodePanel = false;
+      _showSettingsPanel = false;
+      _showActionButtons = false;
+    });
+  }
+
+  void _openRelatedPanel() {
+    _hideTimer?.cancel();
+    setState(() {
+      _showRelatedPanel = true;
+      _showUpPanel = false;
+      _showEpisodePanel = false;
+      _showSettingsPanel = false;
+      _showActionButtons = false;
     });
   }
 
   void _switchEpisode(int cid) {
     _closeMenus();
     unawaited(_openVideo(cid: cid));
+  }
+
+  void _openSelectedVideo(TvVideoItem video) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => PlayerScreen(video: video)),
+    );
   }
 
   Future<void> _showQualityPicker() async {
@@ -374,6 +412,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _showEpisodePanel = false;
       _showSettingsPanel = false;
       _showActionButtons = false;
+      _showUpPanel = false;
+      _showRelatedPanel = false;
       _showControls = true;
     });
     _requestPlayerFocus();
@@ -402,10 +442,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final controller = _controller;
     if (!mounted || controller == null || !controller.value.isPlaying) return;
     if (!_showControls || _showSettingsPanel || _showEpisodePanel ||
-        _showActionButtons || _seeking) return;
+        _showActionButtons || _showUpPanel || _showRelatedPanel || _seeking) return;
     _hideTimer = Timer(const Duration(seconds: 4), () {
       if (!mounted || !_showControls || _showSettingsPanel ||
-          _showEpisodePanel || _showActionButtons || _seeking ||
+          _showEpisodePanel || _showActionButtons || _showUpPanel ||
+          _showRelatedPanel || _seeking ||
           _controller?.value.isPlaying != true) return;
       setState(() => _showControls = false);
     });
@@ -502,14 +543,44 @@ class _PlayerScreenState extends State<PlayerScreen> {
       if (key == LogicalKeyboardKey.arrowLeft) {
         if (_settingsMenuType == SettingsMenuType.main) {
           _closeMenus();
+        } else if (_settingsMenuType == SettingsMenuType.danmaku) {
+          _adjustDanmakuSetting(-1);
         } else {
           setState(() => _settingsMenuType = SettingsMenuType.main);
         }
         return;
       }
-      if ((key == LogicalKeyboardKey.enter ||
-              key == LogicalKeyboardKey.select) &&
-          _settingsMenuType == SettingsMenuType.main) {
+      if (key == LogicalKeyboardKey.arrowRight) {
+        if (_settingsMenuType == SettingsMenuType.main) {
+          if (_settingsFocusedIndex == 1) {
+            setState(() {
+              _settingsMenuType = SettingsMenuType.danmaku;
+              _settingsFocusedIndex = 0;
+            });
+          } else if (_settingsFocusedIndex == 2) {
+            setState(() {
+              _settingsMenuType = SettingsMenuType.speed;
+              _settingsFocusedIndex = 0;
+            });
+          }
+        } else if (_settingsMenuType == SettingsMenuType.danmaku) {
+          _adjustDanmakuSetting(1);
+        }
+        return;
+      }
+      if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.select) {
+        if (_settingsMenuType == SettingsMenuType.danmaku) {
+          _activateDanmakuSetting();
+          return;
+        }
+        if (_settingsMenuType == SettingsMenuType.speed) {
+          if (_settingsFocusedIndex < _availableSpeeds.length) {
+            final speed = _availableSpeeds[_settingsFocusedIndex];
+            setState(() => _playbackSpeed = speed);
+            unawaited(_controller?.setPlaybackSpeed(speed));
+          }
+          return;
+        }
         if (_settingsFocusedIndex == 0) {
           unawaited(_showQualityPicker());
         } else if (_settingsFocusedIndex == 1) {
@@ -551,6 +622,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
           if (episodeCid is int && episodeCid > 0) _switchEpisode(episodeCid);
         }
         return;
+      }
+      return;
+    }
+    if (_showUpPanel || _showRelatedPanel) {
+      if (key == LogicalKeyboardKey.goBack ||
+          key == LogicalKeyboardKey.escape ||
+          key == LogicalKeyboardKey.arrowLeft) {
+        _closeMenus();
       }
       return;
     }
@@ -620,6 +699,36 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _hideTimer?.cancel();
   }
 
+  void _adjustDanmakuSetting(int direction) {
+    final index = _settingsFocusedIndex;
+    setState(() {
+      switch (index) {
+        case 1:
+          _danmakuOpacity = (_danmakuOpacity + direction * 0.1).clamp(0.1, 1.0);
+          break;
+        case 2:
+          _danmakuFontSize = (_danmakuFontSize + direction * 2).clamp(10, 40);
+          break;
+        case 3:
+          _danmakuArea = (_danmakuArea + direction * 0.25).clamp(0.25, 1.0);
+          break;
+        case 4:
+          _danmakuSpeed = (_danmakuSpeed + direction).clamp(1, 20);
+          break;
+      }
+    });
+  }
+
+  void _activateDanmakuSetting() {
+    if (_settingsFocusedIndex == 0) {
+      setState(() => _danmaku = !_danmaku);
+    } else if (_settingsFocusedIndex == 5) {
+      setState(() => _hideTopDanmaku = !_hideTopDanmaku);
+    } else if (_settingsFocusedIndex == 6) {
+      setState(() => _hideBottomDanmaku = !_hideBottomDanmaku);
+    }
+  }
+
   void _adjustSeek(int seconds) {
     if (!_seeking) return;
     final controller = _controller;
@@ -685,7 +794,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
       body: Focus(
         focusNode: _rootFocusNode,
         canRequestFocus: true,
-        descendantsAreFocusable: false,
         autofocus: true,
         onKeyEvent: _handleFocusKey,
         child: Stack(
@@ -719,20 +827,34 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 onEpisodeSave: _switchEpisode,
                 onClose: _closeMenus,
               ),
+            if (_showUpPanel)
+              UpPanel(
+                upName: widget.video.ownerName,
+                upFace: widget.video.ownerFace,
+                upMid: widget.video.ownerMid,
+                onVideoSelect: _openSelectedVideo,
+                onClose: _closeMenus,
+              ),
+            if (_showRelatedPanel)
+              RelatedPanel(
+                bvid: widget.video.bvid,
+                onVideoSelect: _openSelectedVideo,
+                onClose: _closeMenus,
+              ),
             if (_showSettingsPanel)
               SettingsPanel(
                 menuType: _settingsMenuType,
                 focusedIndex: _settingsFocusedIndex,
                 qualityDesc: _currentQualityDesc,
-                playbackSpeed: 1,
-                availableSpeeds: const [0.5, 1, 1.5, 2],
+                playbackSpeed: _playbackSpeed,
+                availableSpeeds: _availableSpeeds,
                 danmakuEnabled: _danmaku,
-                danmakuOpacity: 1,
-                danmakuFontSize: 25,
-                danmakuArea: 1,
-                danmakuSpeed: 1,
-                hideTopDanmaku: false,
-                hideBottomDanmaku: false,
+                danmakuOpacity: _danmakuOpacity,
+                danmakuFontSize: _danmakuFontSize,
+                danmakuArea: _danmakuArea,
+                danmakuSpeed: _danmakuSpeed,
+                hideTopDanmaku: _hideTopDanmaku,
+                hideBottomDanmaku: _hideBottomDanmaku,
                 onNavigate: (type, index) => setState(() {
                   _settingsMenuType = type;
                   _settingsFocusedIndex = index;

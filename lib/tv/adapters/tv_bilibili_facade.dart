@@ -14,6 +14,7 @@ import 'package:PiliPlus/models/common/member/archive_order_type_app.dart';
 import 'package:PiliPlus/models/common/member/contribute_type.dart';
 import 'package:PiliPlus/models/common/member/archive_sort_type_app.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
+import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 
@@ -50,20 +51,40 @@ abstract final class TvBilibiliFacade {
     )).toList() ?? const [];
   }
   static Future<Map<String, dynamic>> getHistory({int ps = 30, int viewAt = 0, int max = 0}) async {
-    final state = await UserHttp.historyList(type: 'archive', max: max, viewAt: viewAt);
-    final list = state.dataOrNull?.list?.map((item) => TvVideoItem(
+    final state = await UserHttp.historyList(type: 'archive', ps: ps, max: max, viewAt: viewAt);
+    final data = state.dataOrNull;
+    if (data == null) {
+      return {
+        'list': const <TvVideoItem>[],
+        'viewAt': viewAt,
+        'max': max,
+        'hasMore': false,
+        'succeeded': false,
+        'error': state.toString(),
+      };
+    }
+    final list = data.list?.map((item) => TvVideoItem(
       bvid: item.history.bvid ?? '', title: item.title ?? '', pic: item.cover ?? '',
       ownerName: item.authorName ?? '', ownerMid: item.authorMid ?? 0,
       progress: item.progress ?? -1, viewAt: item.viewAt ?? 0,
-      duration: item.duration ?? 0, cid: item.history.cid ?? 0, badge: item.badge ?? '',
+      duration: item.duration ?? 0, cid: item.history.cid ?? item.history.oid ?? 0,
+      aid: item.history.oid ?? 0, historyPage: item.history.page ?? 0,
+      historyVideos: item.videos ?? 0,
+      badge: item.badge ?? '',
     )).toList() ?? const <TvVideoItem>[];
-    // The current history endpoint does not expose cursor metadata. Return
-    // safe defaults so the TV screen can render the first page instead of
-    // remaining in its loading state on null casts.
-    return {'list': list, 'viewAt': 0, 'max': 0, 'hasMore': false};
+    return {
+      'list': list,
+      'viewAt': data.viewAt,
+      'max': data.max,
+      'hasMore': list.isNotEmpty && (data.viewAt > 0 || data.max > 0),
+      'succeeded': true,
+    };
   }
   static Future<DynamicFeed> getDynamicFeed({String offset = ''}) async {
-    final state = await DynamicsHttp.followDynamic(offset: offset);
+    final state = await DynamicsHttp.followDynamic(
+      offset: offset,
+      type: DynamicsTabType.video,
+    );
     final data = state.dataOrNull;
     if (data == null) return const DynamicFeed(succeeded: false);
     final videos = <TvVideoItem>[];
