@@ -2,7 +2,6 @@ import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/models/common/account_type.dart';
-import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:get/get.dart';
 
@@ -52,8 +51,7 @@ abstract final class TvAccountFacade {
     // Hive.  The old TV-only path mutated accountMode in memory, which left
     // roles=[] after a cold restart and made history/video appear logged out.
     await AnonymousAccount().delete();
-    await Accounts.set(AccountType.main, account);
     await Accounts.set(AccountType.video, account);
-    Request.setCookie();
+    await Accounts.set(AccountType.main, account);
   }
 }

@@ -56,6 +56,7 @@ class _PlaybackSettingsState extends State<PlaybackSettings> {
           value: TvSettingsFacade.defaultVideoQa,
           items: VideoQuality.values.map((quality) => quality.code).toList(),
           itemLabel: (code) => VideoQuality.fromCode(code).shortDesc,
+          sidebarFocusNode: widget.sidebarFocusNode,
           onChanged: (quality) async {
             if (quality != null) {
               await TvSettingsFacade.setDefaultVideoQa(quality);

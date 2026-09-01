@@ -346,9 +346,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     required List<int> availableQns,
   }) {
     if (availableQns.isEmpty) return responseQn ?? requestedQn;
-    if (responseQn != null && availableQns.contains(responseQn)) {
-      return responseQn;
-    }
     if (requestedQn <= 0) return availableQns.last;
     final atMost = availableQns.where((qn) => qn <= requestedQn).toList();
     // If the API ignored the cap and only returned higher renditions, use the
