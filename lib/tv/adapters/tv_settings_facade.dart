@@ -19,6 +19,7 @@ abstract final class TvSettingsFacade {
   static bool splashAnimationEnabled = false;
   static bool alwaysShowPlayerTime = false;
   static bool get autoPlay => Pref.autoPlayEnable;
+  static int get defaultVideoQa => Pref.defaultVideoQa;
   static bool hideControlsOnStart = false;
   static bool hideLiveControlsOnStart = false;
   static bool showMiniProgress = true;
@@ -35,6 +36,9 @@ abstract final class TvSettingsFacade {
   static bool isLiveCategoryEnabled(String name) => liveCategoryOrder.contains(name);
   static Future<void> setAutoPlay(bool value) async {
     await GStorage.setting.put(SettingBoxKey.autoPlayEnable, value);
+  }
+  static Future<void> setDefaultVideoQa(int value) async {
+    await GStorage.setting.put(SettingBoxKey.defaultVideoQa, value);
   }
   static Future<void> setHideControlsOnStart(bool value) async => hideControlsOnStart = value;
   static Future<void> setShowMiniProgress(bool value) async => showMiniProgress = value;

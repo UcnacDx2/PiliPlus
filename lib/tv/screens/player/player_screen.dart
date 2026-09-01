@@ -5,7 +5,10 @@ import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/http/browser_ua.dart';
 import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
+import 'package:PiliPlus/models/common/video/audio_quality.dart';
+import 'package:PiliPlus/models/video/play/url.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
+import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/services/first_frame_watermark_service.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/watermark_filter.dart';
 import 'package:PiliPlus/models/common/watermark_mode.dart';
@@ -59,6 +62,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _showRelatedPanel = false;
   SettingsMenuType _settingsMenuType = SettingsMenuType.main;
   int _settingsFocusedIndex = 0;
+  int _settingsParentFocusIndex = 0;
   int _focusedEpisodeIndex = 0;
   int? _activeCid;
   List<dynamic> _episodes = const [];
@@ -74,6 +78,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Duration? _seekOrigin;
   Duration? _seekPreview;
   int _menuReturnFocusIndex = 0;
+  bool _backKeyJustHandled = false;
 
   List<TvPlayerControlItem> get _controls => [
         TvPlayerControlItem(icon: Icons.playlist_play, onTap: _openEpisodes),
@@ -97,8 +102,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void _handleRawKey(RawKeyEvent rawEvent) {
     if (!mounted) return;
     // Focus is the normal input path. Keep RawKeyboard only as a fallback
-    // while Android's native video surface owns focus during attachment.
-    if (FocusManager.instance.primaryFocus == _rootFocusNode) return;
+    // while Android's native video surface owns focus during attachment. If
+    // any descendant panel already owns focus, its event will bubble to the
+    // root Focus; handling it here as well would execute Back/Enter twice.
+    final primaryContext = FocusManager.instance.primaryFocus?.context;
+    if (primaryContext != null &&
+        primaryContext.findAncestorStateOfType<_PlayerScreenState>() == this) {
+      return;
+    }
     final event = switch (rawEvent) {
       RawKeyUpEvent() => KeyUpEvent(
           physicalKey: rawEvent.physicalKey,
@@ -178,28 +189,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
         throw StateError('无法获取播放地址');
       }
       final requestedQn = _currentQuality;
-      final videoItems = playInfo.dash?.video ?? const [];
-      final effectiveQn = playInfo.quality ??
-          videoItems
-              .map((item) => item.quality.code)
-              .where((qn) => qn <= requestedQn)
-              .fold<int?>(null, (best, qn) => best == null || qn > best ? qn : best) ??
-          requestedQn;
+      final videoItems = playInfo.dash?.video ?? const <VideoItem>[];
+      final availableQns = videoItems.map((item) => item.quality.code).toSet().toList();
+      availableQns.sort();
+      final effectiveQn = _selectVideoQuality(
+        requestedQn: requestedQn,
+        responseQn: playInfo.quality,
+        availableQns: availableQns,
+      );
       final matchingVideos = videoItems
           .where((item) => item.quality.code == effectiveQn)
           .toList();
-      matchingVideos.sort((a, b) {
-        int score(dynamic item) {
-          final codecs = '${item.codecs ?? ''}'.toLowerCase();
-          if (codecs.contains('avc')) return 0;
-          if (codecs.contains('hev') || codecs.contains('hvc')) return 1;
-          return 2;
-        }
-        return score(a).compareTo(score(b));
-      });
-      final selectedVideo = matchingVideos.isNotEmpty
-          ? matchingVideos.first
-          : (videoItems.isNotEmpty ? videoItems.first : null);
+      final selectedVideo = _selectVideoRendition(matchingVideos);
       final dashUrls = selectedVideo?.playUrls.toList();
       final durlUrls = playInfo.durl
           ?.expand((item) => item.playUrls)
@@ -245,9 +246,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           _currentQualityDesc = '${_qualities[currentIndex]['desc']}';
         }
       }
-      final selectedAudio = playInfo.dash?.audio?.isNotEmpty == true
-          ? playInfo.dash!.audio!.first
-          : null;
+      final selectedAudio = _selectAudioRendition(playInfo.dash?.audio);
       final audioUrls = dashUrls?.isNotEmpty == true
           ? selectedAudio?.playUrls.toList()
           : null;
@@ -259,7 +258,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
         'audioHost=${audioUrl == null || audioUrl.isEmpty ? '-' : Uri.parse(VideoUtils.getCdnUrl([audioUrl])).host} '
         'requestedQn=$requestedQn effectiveQn=$effectiveQn '
         'videoAccount=${Accounts.video.mid}/${Accounts.video.isLogin} '
-        'rendition=${selectedVideo?.width}x${selectedVideo?.height}/${selectedVideo?.codecs}',
+        'rendition=${selectedVideo?.width}x${selectedVideo?.height}/${selectedVideo?.codecs} '
+        'audioQn=${selectedAudio?.id}',
       );
       final controller = VideoPlayerController.networkUrl(
         Uri.parse(VideoUtils.getCdnUrl(urls)),
@@ -333,6 +333,70 @@ class _PlayerScreenState extends State<PlayerScreen> {
     } catch (error) {
       if (mounted) setState(() { _loading = false; _error = error.toString(); });
     }
+  }
+
+  /// Pick the highest rendition that does not exceed the user's preferred
+  /// quality cap. If the server reports an actual quality that exists in the
+  /// DASH list, trust that value; otherwise fall back to the available list.
+  /// This mirrors the shared PiliPlus player rule instead of assuming that
+  /// the first DASH item is the requested quality.
+  int _selectVideoQuality({
+    required int requestedQn,
+    required int? responseQn,
+    required List<int> availableQns,
+  }) {
+    if (availableQns.isEmpty) return responseQn ?? requestedQn;
+    if (responseQn != null && availableQns.contains(responseQn)) {
+      return responseQn;
+    }
+    if (requestedQn <= 0) return availableQns.last;
+    final atMost = availableQns.where((qn) => qn <= requestedQn).toList();
+    // If the API ignored the cap and only returned higher renditions, use the
+    // lowest one rather than silently jumping to the highest stream.
+    return atMost.isNotEmpty ? atMost.last : availableQns.first;
+  }
+
+  VideoItem? _selectVideoRendition(List<VideoItem> candidates) {
+    if (candidates.isEmpty) return null;
+    final codecNames = candidates
+        .map((item) => item.codecs)
+        .whereType<String>()
+        .where((codec) => codec.isNotEmpty)
+        .toList();
+    if (codecNames.isNotEmpty) {
+      try {
+        final preferred = VideoUtils.selectCodec(codecNames, Pref.preferCodecs);
+        final matching = candidates.where(
+          (item) => preferred.codes.any(
+            (code) => item.codecs?.startsWith(code) == true,
+          ),
+        );
+        if (matching.isNotEmpty) return matching.first;
+      } catch (_) {
+        // Unknown codec strings are kept as a safe first-item fallback.
+      }
+    }
+    return candidates.first;
+  }
+
+  AudioItem? _selectAudioRendition(List<AudioItem>? candidates) {
+    if (candidates == null || candidates.isEmpty) return null;
+    final ids = candidates.map((item) => item.id).whereType<int>().toList();
+    if (ids.isEmpty) return candidates.first;
+    var target = ids.findClosestTarget(
+      (id) => id <= Pref.defaultAudioQa,
+      (a, b) => a > b ? a : b,
+    );
+    // Keep the shared player's compatibility rule: when a requested lossless
+    // tier is absent but a higher 192K stream exists, prefer 192K over Dolby.
+    if (!ids.contains(Pref.defaultAudioQa) &&
+        ids.any((id) => id > Pref.defaultAudioQa)) {
+      target = AudioQuality.k192.code;
+    }
+    return candidates.firstWhere(
+      (item) => item.id == target,
+      orElse: () => candidates.first,
+    );
   }
 
   Future<bool> _seekAndConfirmResume(
@@ -581,6 +645,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) return;
     final key = event.logicalKey;
+    // Confirm/select is an action, not a repeatable navigation key. This
+    // prevents a long press from toggling playback and opening a panel again.
+    if ((key == LogicalKeyboardKey.enter ||
+            key == LogicalKeyboardKey.select) &&
+        event is! KeyDownEvent) {
+      return;
+    }
 
     if (_seeking) {
       if (key == LogicalKeyboardKey.arrowLeft ||
@@ -608,7 +679,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         if (_settingsMenuType != SettingsMenuType.main) {
           setState(() {
             _settingsMenuType = SettingsMenuType.main;
-            _settingsFocusedIndex = 0;
+            _settingsFocusedIndex = _settingsParentFocusIndex;
           });
         } else {
           _closeMenus();
@@ -643,7 +714,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
         } else if (_settingsMenuType == SettingsMenuType.danmaku) {
           _adjustDanmakuSetting(-1);
         } else {
-          setState(() => _settingsMenuType = SettingsMenuType.main);
+          setState(() {
+            _settingsMenuType = SettingsMenuType.main;
+            _settingsFocusedIndex = _settingsParentFocusIndex;
+          });
         }
         return;
       }
@@ -651,11 +725,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
         if (_settingsMenuType == SettingsMenuType.main) {
           if (_settingsFocusedIndex == 1) {
             setState(() {
+              _settingsParentFocusIndex = _settingsFocusedIndex;
               _settingsMenuType = SettingsMenuType.danmaku;
               _settingsFocusedIndex = 0;
             });
           } else if (_settingsFocusedIndex == 2) {
             setState(() {
+              _settingsParentFocusIndex = _settingsFocusedIndex;
               _settingsMenuType = SettingsMenuType.speed;
               _settingsFocusedIndex = 0;
             });
@@ -682,11 +758,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
           unawaited(_showQualityPicker());
         } else if (_settingsFocusedIndex == 1) {
           setState(() {
+            _settingsParentFocusIndex = _settingsFocusedIndex;
             _settingsMenuType = SettingsMenuType.danmaku;
             _settingsFocusedIndex = 0;
           });
         } else if (_settingsFocusedIndex == 2) {
           setState(() {
+            _settingsParentFocusIndex = _settingsFocusedIndex;
             _settingsMenuType = SettingsMenuType.speed;
             _settingsFocusedIndex = 0;
           });
@@ -784,8 +862,57 @@ class _PlayerScreenState extends State<PlayerScreen> {
         _showControlsAndResetTimer();
       }
     } else if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.goBack) {
-      Navigator.of(context).maybePop();
+      _markBackKeyHandled();
+      _handleBack();
     }
+  }
+
+  void _markBackKeyHandled() {
+    _backKeyJustHandled = true;
+    Future<void>.delayed(const Duration(milliseconds: 250), () {
+      if (mounted) _backKeyJustHandled = false;
+    });
+  }
+
+  void _handleBack() {
+    if (_qualityPickerOpen) return;
+    if (_seeking) {
+      _cancelSeek();
+      return;
+    }
+    if (_showSettingsPanel) {
+      if (_settingsMenuType != SettingsMenuType.main) {
+        setState(() {
+          _settingsMenuType = SettingsMenuType.main;
+          _settingsFocusedIndex = 0;
+        });
+      } else {
+        _closeMenus();
+      }
+      return;
+    }
+    if (_showEpisodePanel ||
+        _showActionButtons ||
+        _showUpPanel ||
+        _showRelatedPanel) {
+      _closeMenus();
+      return;
+    }
+    if (_showControls) {
+      _hideTimer?.cancel();
+      setState(() => _showControls = false);
+      return;
+    }
+    Navigator.of(context).pop();
+  }
+
+  void _onPopInvokedWithResult(bool didPop, Object? result) {
+    if (didPop) return;
+    if (_backKeyJustHandled) {
+      _backKeyJustHandled = false;
+      return;
+    }
+    _handleBack();
   }
 
   void _beginSeek() {
@@ -892,14 +1019,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = _controller;
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Focus(
-        focusNode: _rootFocusNode,
-        canRequestFocus: true,
-        autofocus: true,
-        onKeyEvent: _handleFocusKey,
-        child: Stack(
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: _onPopInvokedWithResult,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Focus(
+          focusNode: _rootFocusNode,
+          canRequestFocus: true,
+          autofocus: true,
+          onKeyEvent: _handleFocusKey,
+          child: Stack(
           fit: StackFit.expand,
           children: [
             ExcludeFocus(
@@ -979,6 +1109,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ),
               ),
           ],
+          ),
         ),
       ),
     );

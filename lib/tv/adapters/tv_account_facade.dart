@@ -3,7 +3,6 @@ import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/models/common/account_type.dart';
 import 'package:PiliPlus/http/init.dart';
-import 'package:PiliPlus/utils/login_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:get/get.dart';
 
@@ -49,14 +48,12 @@ abstract final class TvAccountFacade {
     final cookies = cookieInfo?['cookies'];
     if (cookies is! List || cookies.isEmpty) return;
     final account = LoginAccount(BiliCookieJar.fromList(cookies), accessToken, refreshToken);
-    await Future.wait([account.onChange(), AnonymousAccount().delete()]);
-    for (final type in AccountType.values) {
-      if (Accounts.accountMode[type.index].mid == account.mid) {
-        Accounts.accountMode[type.index] = account;
-      }
-    }
-    if (!Accounts.main.isLogin) Accounts.accountMode[AccountType.main.index] = account;
+    // Use the shared role setter so the account's type list is persisted in
+    // Hive.  The old TV-only path mutated accountMode in memory, which left
+    // roles=[] after a cold restart and made history/video appear logged out.
+    await AnonymousAccount().delete();
+    await Accounts.set(AccountType.main, account);
+    await Accounts.set(AccountType.video, account);
     Request.setCookie();
-    await LoginUtils.onLoginMain();
   }
 }

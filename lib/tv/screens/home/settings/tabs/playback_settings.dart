@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
+import 'package:PiliPlus/models/common/video/video_quality.dart';
 import '../widgets/setting_toggle_row.dart';
 import '../widgets/setting_dropdown_row.dart';
 
@@ -46,6 +47,20 @@ class _PlaybackSettingsState extends State<PlaybackSettings> {
           onChanged: (value) async {
             await TvSettingsFacade.setAutoPlay(value);
             setState(() {});
+          },
+        ),
+        const SizedBox(height: 16),
+        SettingDropdownRow<int>(
+          label: '默认画质上限',
+          subtitle: '按可用资源选择不高于此档位的最高画质；4K 视频请选 4K 或更高',
+          value: TvSettingsFacade.defaultVideoQa,
+          items: VideoQuality.values.map((quality) => quality.code).toList(),
+          itemLabel: (code) => VideoQuality.fromCode(code).shortDesc,
+          onChanged: (quality) async {
+            if (quality != null) {
+              await TvSettingsFacade.setDefaultVideoQa(quality);
+              setState(() {});
+            }
           },
         ),
         const SizedBox(height: 16),
