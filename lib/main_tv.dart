@@ -88,6 +88,9 @@ void main() async {
   // Wait for persisted account roles to be restored before AccountService
   // and the TV tabs read the login state.
   await Accounts.refresh();
+  // Materialize the service only after roles are restored so its initial
+  // isLogin value cannot capture the pre-refresh anonymous account.
+  Get.find<AccountService>();
   RequestUtils.syncHistoryStatus();
 
   SmartDialog.config.toast = SmartConfigToast(displayType: .onlyRefresh);
