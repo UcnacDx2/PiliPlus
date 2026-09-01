@@ -60,10 +60,8 @@ void main() async {
     exit(0);
   }
 
-  // TV 默认画质 1080P，默认关闭硬件解码（如果用户没有手动设置过）
-  if (!GStorage.setting.containsKey(SettingBoxKey.defaultVideoQa)) {
-    GStorage.setting.put(SettingBoxKey.defaultVideoQa, 80); // 1080P
-  }
+  // Keep PiliPlus's shared preferred-quality default (highest available).
+  // Do not silently downgrade a fresh TV install to 1080P.
   if (!GStorage.setting.containsKey(SettingBoxKey.enableHA)) {
     GStorage.setting.put(SettingBoxKey.enableHA, false);
   }

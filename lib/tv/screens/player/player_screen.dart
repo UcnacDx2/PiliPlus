@@ -14,6 +14,7 @@ import 'package:PiliPlus/tv/adapters/tv_bilibili_facade.dart';
 import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 import 'package:PiliPlus/tv/adapters/tv_sponsor_block_controller.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/controls_overlay.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/mpv_video_player_compat.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/video_layer.dart';
@@ -176,9 +177,30 @@ class _PlayerScreenState extends State<PlayerScreen> {
       if (playInfo == null) {
         throw StateError('无法获取播放地址');
       }
-      final dashUrls = playInfo.dash?.video
-          ?.expand((item) => item.playUrls)
+      final requestedQn = _currentQuality;
+      final videoItems = playInfo.dash?.video ?? const [];
+      final effectiveQn = playInfo.quality ??
+          videoItems
+              .map((item) => item.quality.code)
+              .where((qn) => qn <= requestedQn)
+              .fold<int?>(null, (best, qn) => best == null || qn > best ? qn : best) ??
+          requestedQn;
+      final matchingVideos = videoItems
+          .where((item) => item.quality.code == effectiveQn)
           .toList();
+      matchingVideos.sort((a, b) {
+        int score(dynamic item) {
+          final codecs = '${item.codecs ?? ''}'.toLowerCase();
+          if (codecs.contains('avc')) return 0;
+          if (codecs.contains('hev') || codecs.contains('hvc')) return 1;
+          return 2;
+        }
+        return score(a).compareTo(score(b));
+      });
+      final selectedVideo = matchingVideos.isNotEmpty
+          ? matchingVideos.first
+          : (videoItems.isNotEmpty ? videoItems.first : null);
+      final dashUrls = selectedVideo?.playUrls.toList();
       final durlUrls = playInfo.durl
           ?.expand((item) => item.playUrls)
           .toList();
@@ -223,15 +245,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
           _currentQualityDesc = '${_qualities[currentIndex]['desc']}';
         }
       }
+      final selectedAudio = playInfo.dash?.audio?.isNotEmpty == true
+          ? playInfo.dash!.audio!.first
+          : null;
       final audioUrls = dashUrls?.isNotEmpty == true
-          ? playInfo.dash?.audio?.expand((item) => item.playUrls).toList()
+          ? selectedAudio?.playUrls.toList()
           : null;
       final audioUrl = audioUrls?.firstOrNull;
       debugPrint(
         'TV VOD source bvid=${widget.video.bvid} cid=$resolvedCid '
         'dashVideo=${dashUrls?.length ?? 0} dashAudio=${audioUrls?.length ?? 0} '
         'durl=${durlUrls?.length ?? 0} videoHost=${Uri.parse(VideoUtils.getCdnUrl(urls)).host} '
-        'audioHost=${audioUrl == null || audioUrl.isEmpty ? '-' : Uri.parse(VideoUtils.getCdnUrl([audioUrl])).host}',
+        'audioHost=${audioUrl == null || audioUrl.isEmpty ? '-' : Uri.parse(VideoUtils.getCdnUrl([audioUrl])).host} '
+        'requestedQn=$requestedQn effectiveQn=$effectiveQn '
+        'videoAccount=${Accounts.video.mid}/${Accounts.video.isLogin} '
+        'rendition=${selectedVideo?.width}x${selectedVideo?.height}/${selectedVideo?.codecs}',
       );
       final controller = VideoPlayerController.networkUrl(
         Uri.parse(VideoUtils.getCdnUrl(urls)),

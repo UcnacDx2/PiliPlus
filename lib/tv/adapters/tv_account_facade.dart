@@ -14,7 +14,7 @@ abstract final class TvAccountFacade {
   /// Restore the cached user (or the only available account) as main on TV
   /// startup, keeping the shared account/login implementation untouched.
   static Future<void> restorePersistedMainRole() async {
-    if (Accounts.main.isLogin) return;
+    if (Accounts.main.isLogin && Accounts.video.isLogin) return;
     final cachedMid = Pref.userInfoCache?.mid;
     final accounts = Accounts.account.values.toList(growable: false);
     LoginAccount? candidate;
@@ -29,7 +29,12 @@ abstract final class TvAccountFacade {
       }
     }
     if (candidate != null) {
-      await Accounts.set(AccountType.main, candidate);
+      if (!Accounts.main.isLogin) {
+        await Accounts.set(AccountType.main, candidate);
+      }
+      if (!Accounts.video.isLogin) {
+        await Accounts.set(AccountType.video, candidate);
+      }
     }
   }
 
