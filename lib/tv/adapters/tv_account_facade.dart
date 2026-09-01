@@ -9,6 +9,26 @@ import 'package:get/get.dart';
 
 abstract final class TvAccountFacade {
   static bool get isLoggedIn => Accounts.main.isLogin;
+
+  /// Older TV login imports persisted credentials without assigning a role.
+  /// Restore the cached user (or the only available account) as main on TV
+  /// startup, keeping the shared account/login implementation untouched.
+  static Future<void> restorePersistedMainRole() async {
+    if (Accounts.main.isLogin) return;
+    final cachedMid = Pref.userInfoCache?.mid;
+    LoginAccount? candidate;
+    for (final account in Accounts.account.values) {
+      if (cachedMid != null && account.mid == cachedMid) {
+        candidate = account;
+        break;
+      }
+      candidate ??= account;
+    }
+    if (candidate != null) {
+      await Accounts.set(AccountType.main, candidate);
+    }
+  }
+
   static String? get face => Get.isRegistered<AccountService>()
       ? Get.find<AccountService>().face.value
       : null;
