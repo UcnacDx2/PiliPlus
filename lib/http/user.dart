@@ -84,7 +84,6 @@ abstract final class UserHttp {
   // 观看历史
   static Future<LoadingState<HistoryData>> historyList({
     required String type,
-    int ps = 20,
     int? max,
     int? viewAt,
     Account? account,
@@ -93,7 +92,7 @@ abstract final class UserHttp {
       Api.historyList,
       queryParameters: {
         'type': type,
-        'ps': ps,
+        'ps': 20,
         'max': max ?? 0,
         'view_at': viewAt ?? 0,
       },

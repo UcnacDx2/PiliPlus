@@ -8,13 +8,7 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:get/get.dart';
 
 abstract final class TvAccountFacade {
-  // AccountService is initialized before the TV tabs are built, while the
-  // account slots may be synchronized a frame later. Keep the UI compatible
-  // with both states during that hand-off.
-  static bool get isLoggedIn =>
-      (Get.isRegistered<AccountService>() &&
-          Get.find<AccountService>().isLogin.value) ||
-      Accounts.main.isLogin;
+  static bool get isLoggedIn => Accounts.main.isLogin;
   static String? get face => Get.isRegistered<AccountService>()
       ? Get.find<AccountService>().face.value
       : null;
@@ -32,8 +26,7 @@ abstract final class TvAccountFacade {
         Accounts.accountMode[type.index] = account;
       }
     }
-    if (!Accounts.main.isLogin) Accounts.accountMode[AccountType.main.index] = account;
-    Request.setCookie();
+    await Accounts.set(AccountType.main, account);
     await LoginUtils.onLoginMain();
   }
 }

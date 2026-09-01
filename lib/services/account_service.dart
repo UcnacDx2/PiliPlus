@@ -12,8 +12,13 @@ class AccountService extends GetxService {
   void onInit() {
     super.onInit();
     UserInfoData? userInfo = Pref.userInfoCache;
-    face.value = userInfo?.face ?? '';
-    isLogin.value = userInfo != null;
+    if (userInfo != null) {
+      face.value = userInfo.face ?? '';
+      isLogin.value = true;
+    } else {
+      face.value = '';
+      isLogin.value = false;
+    }
   }
 }
 

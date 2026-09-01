@@ -2,7 +2,8 @@ import 'package:PiliPlus/tv/adapters/tv_video_item.dart';
 import 'package:PiliPlus/tv/adapters/tv_videoshot.dart';
 import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 import 'package:PiliPlus/http/search.dart';
-import 'package:PiliPlus/http/user.dart';
+import 'package:PiliPlus/http/api.dart';
+import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/http/login.dart';
 import 'package:PiliPlus/utils/login_utils.dart';
 import 'package:PiliPlus/models/common/search/search_type.dart';
@@ -17,6 +18,8 @@ import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
+import 'package:PiliPlus/utils/accounts.dart';
+import 'package:dio/dio.dart';
 
 enum AccountRole { main, video, history }
 
@@ -51,32 +54,38 @@ abstract final class TvBilibiliFacade {
     )).toList() ?? const [];
   }
   static Future<Map<String, dynamic>> getHistory({int ps = 30, int viewAt = 0, int max = 0}) async {
-    final state = await UserHttp.historyList(type: 'archive', ps: ps, max: max, viewAt: viewAt);
-    final data = state.dataOrNull;
-    if (data == null) {
+    final response = await Request().get(
+      Api.historyList,
+      queryParameters: {'type': 'archive', 'ps': ps, 'max': max, 'view_at': viewAt},
+      options: Options(extra: {'account': Accounts.history}),
+    );
+    final body = response.data;
+    if (body is! Map || body['code'] != 0 || body['data'] is! Map) {
       return {
         'list': const <TvVideoItem>[],
         'viewAt': viewAt,
         'max': max,
         'hasMore': false,
         'succeeded': false,
-        'error': state.toString(),
+        'error': body is Map ? body['message']?.toString() : '历史响应格式错误',
       };
     }
-    final list = data.list?.map((item) => TvVideoItem(
-      bvid: item.history.bvid ?? '', title: item.title ?? '', pic: item.cover ?? '',
-      ownerName: item.authorName ?? '', ownerMid: item.authorMid ?? 0,
-      progress: item.progress ?? -1, viewAt: item.viewAt ?? 0,
-      duration: item.duration ?? 0, cid: item.history.cid ?? item.history.oid ?? 0,
-      aid: item.history.oid ?? 0, historyPage: item.history.page ?? 0,
-      historyVideos: item.videos ?? 0,
-      badge: item.badge ?? '',
-    )).toList() ?? const <TvVideoItem>[];
+    final data = Map<String, dynamic>.from(body['data'] as Map);
+    final list = (data['list'] as List? ?? const [])
+        .whereType<Map>()
+        .map((item) => TvVideoItem.fromHistory(Map<String, dynamic>.from(item)))
+        .where((item) => item.bvid.isNotEmpty)
+        .toList();
+    final cursor = data['cursor'] is Map
+        ? Map<String, dynamic>.from(data['cursor'] as Map)
+        : const <String, dynamic>{};
+    final nextViewAt = (cursor['view_at'] as num?)?.toInt() ?? 0;
+    final nextMax = (cursor['max'] as num?)?.toInt() ?? 0;
     return {
       'list': list,
-      'viewAt': data.viewAt,
-      'max': data.max,
-      'hasMore': list.isNotEmpty && (data.viewAt > 0 || data.max > 0),
+      'viewAt': nextViewAt,
+      'max': nextMax,
+      'hasMore': list.isNotEmpty && (nextViewAt > 0 || nextMax > 0),
       'succeeded': true,
     };
   }
