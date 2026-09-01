@@ -71,6 +71,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _qualityPickerOpen = false;
   Duration? _seekOrigin;
   Duration? _seekPreview;
+  int _menuReturnFocusIndex = 0;
 
   List<TvPlayerControlItem> get _controls => [
         TvPlayerControlItem(icon: Icons.playlist_play, onTap: _openEpisodes),
@@ -369,6 +370,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _openEpisodes() {
     if (_episodes.isEmpty) return;
+    _menuReturnFocusIndex = _focusedIndex;
     _hideTimer?.cancel();
     setState(() {
       final currentCid = _activeCid ?? widget.video.cid;
@@ -384,6 +386,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _openSettings() {
     _hideTimer?.cancel();
+    _menuReturnFocusIndex = _focusedIndex;
     setState(() {
       _showSettingsPanel = true;
       _showEpisodePanel = false;
@@ -400,6 +403,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _openActionButtons() {
     _hideTimer?.cancel();
+    _menuReturnFocusIndex = _focusedIndex;
     setState(() {
       _showActionButtons = true;
       _showEpisodePanel = false;
@@ -411,6 +415,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _openUpPanel() {
     _hideTimer?.cancel();
+    _menuReturnFocusIndex = _focusedIndex;
     setState(() {
       _showUpPanel = true;
       _showRelatedPanel = false;
@@ -422,6 +427,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _openRelatedPanel() {
     _hideTimer?.cancel();
+    _menuReturnFocusIndex = _focusedIndex;
     setState(() {
       _showRelatedPanel = true;
       _showUpPanel = false;
@@ -476,6 +482,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _showUpPanel = false;
       _showRelatedPanel = false;
       _showControls = true;
+      _focusedIndex = _menuReturnFocusIndex.clamp(0, _controls.length - 1);
     });
     _requestPlayerFocus();
     _startHideTimer();
@@ -739,8 +746,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
       }
     } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
       if (_controller == null) return;
-      if (_focusedIndex < _controls.length) _controls[_focusedIndex].onTap();
-      _showControlsAndResetTimer();
+      if (!_showControls) {
+        // With hidden controls, confirm is the play/pause command. Do not
+        // reveal the bar or dispatch to the last visible button focus.
+        _togglePlayback();
+      } else {
+        if (_focusedIndex < _controls.length) _controls[_focusedIndex].onTap();
+        _showControlsAndResetTimer();
+      }
     } else if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.goBack) {
       Navigator.of(context).maybePop();
     }
