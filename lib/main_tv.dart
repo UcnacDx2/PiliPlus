@@ -65,6 +65,10 @@ void main() async {
   if (!GStorage.setting.containsKey(SettingBoxKey.enableHA)) {
     GStorage.setting.put(SettingBoxKey.enableHA, false);
   }
+  // Rehydrate the shared PiliPlus recommendation filter state before any TV
+  // feed is requested.  This keeps duration/keyword filters identical to the
+  // mobile player and to persisted settings from an existing installation.
+  TvSettingsFacade.syncRecommendFilters();
 
   await Future.wait([
     _initDownPath(),

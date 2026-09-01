@@ -3,6 +3,7 @@ import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 import 'package:PiliPlus/models/common/video/video_quality.dart';
 import '../widgets/setting_toggle_row.dart';
 import '../widgets/setting_dropdown_row.dart';
+import '../widgets/setting_text_row.dart';
 
 class PlaybackSettings extends StatefulWidget {
   final VoidCallback onMoveUp;
@@ -29,6 +30,47 @@ class _PlaybackSettingsState extends State<PlaybackSettings> {
 
   void _loadHardwareDecoders() async {
     if (mounted) setState(() => _hardwareDecoders = const []);
+  }
+
+  Future<void> _editRecommendKeyword() async {
+    final controller = TextEditingController(
+      text: TvSettingsFacade.recommendKeyword,
+    );
+    final value = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('推荐标题关键词过滤'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: '用 | 分隔，例如：广告|抽奖',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (value == null || !mounted) return;
+    try {
+      await TvSettingsFacade.setRecommendKeyword(value);
+      if (mounted) setState(() {});
+    } on FormatException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('关键词格式无效，请检查正则表达式')),
+      );
+    }
   }
 
   @override
@@ -78,6 +120,14 @@ class _PlaybackSettingsState extends State<PlaybackSettings> {
               setState(() {});
             }
           },
+        ),
+        const SizedBox(height: 16),
+        SettingTextRow(
+          label: '推荐标题关键词过滤',
+          subtitle: '标题命中关键词的推荐视频会被过滤；用 | 分隔多个关键词',
+          value: TvSettingsFacade.recommendKeyword,
+          onSelect: _editRecommendKeyword,
+          sidebarFocusNode: widget.sidebarFocusNode,
         ),
         const SizedBox(height: 16),
         SettingToggleRow(

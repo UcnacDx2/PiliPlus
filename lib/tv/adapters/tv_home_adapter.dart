@@ -1,6 +1,8 @@
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/model_video.dart';
 import 'package:PiliPlus/tv/adapters/tv_video_item.dart';
+import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
+import 'package:flutter/foundation.dart';
 
 abstract final class TvVideoMapper {
   static TvVideoItem fromPili(BaseVideoItemModel item) => TvVideoItem(
@@ -14,7 +16,15 @@ abstract final class TvVideoMapper {
 
 abstract final class TvHomeAdapter {
   static Future<List<TvVideoItem>> loadRecommend({int refreshIndex = 0}) async {
+    // Re-read shared persisted values so settings changed by the TV page or
+    // LAN console are applied before VideoHttp performs its mature filter.
+    TvSettingsFacade.syncRecommendFilters();
     final state = await VideoHttp.rcmdVideoListApp(freshIdx: refreshIndex);
+    debugPrint(
+      'TV recommend filters duration=${TvSettingsFacade.minimumRecommendDuration} '
+      'keyword=${TvSettingsFacade.recommendKeyword.isEmpty ? "-" : "set"} '
+      'returned=${state.dataOrNull?.length ?? 0}',
+    );
     return state.dataOrNull?.map(TvVideoMapper.fromPili).toList() ?? const [];
   }
   static Future<List<TvVideoItem>> loadPopular({int page = 1}) async {

@@ -60,6 +60,23 @@ class _QualityPickerSheetState extends State<QualityPickerSheet> {
     }
   }
 
+  bool _isAvailable(int index) =>
+      widget.qualities[index]['available'] != false;
+
+  void _moveFocus(int direction) {
+    var index = _focusedIndex;
+    while (true) {
+      final next = index + direction;
+      if (next < 0 || next >= widget.qualities.length) return;
+      index = next;
+      if (_isAvailable(index)) {
+        setState(() => _focusedIndex = index);
+        _scrollToFocused();
+        return;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Focus(
@@ -76,20 +93,16 @@ class _QualityPickerSheetState extends State<QualityPickerSheet> {
         }
 
         if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-          if (_focusedIndex > 0) {
-            setState(() => _focusedIndex--);
-            _scrollToFocused();
-          }
+          _moveFocus(-1);
           return KeyEventResult.handled;
         } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-          if (_focusedIndex < widget.qualities.length - 1) {
-            setState(() => _focusedIndex++);
-            _scrollToFocused();
-          }
+          _moveFocus(1);
           return KeyEventResult.handled;
         } else if (event.logicalKey == LogicalKeyboardKey.select ||
             event.logicalKey == LogicalKeyboardKey.enter) {
-          widget.onSelect(widget.qualities[_focusedIndex]['qn']);
+          if (_isAvailable(_focusedIndex)) {
+            widget.onSelect(widget.qualities[_focusedIndex]['qn']);
+          }
           return KeyEventResult.handled;
         } else if (event.logicalKey == LogicalKeyboardKey.goBack ||
             event.logicalKey == LogicalKeyboardKey.escape) {
@@ -132,7 +145,9 @@ class _QualityPickerSheetState extends State<QualityPickerSheet> {
                       title: Text(
                         q['desc'] ?? '${q['qn']}P',
                         style: TextStyle(
-                          color: isCurrent
+                          color: q['available'] == false
+                              ? Colors.white38
+                              : isCurrent
                               ? const Color(0xFFfb7299)
                               : Colors.white,
                           fontWeight: isCurrent || isFocused
@@ -142,8 +157,15 @@ class _QualityPickerSheetState extends State<QualityPickerSheet> {
                       ),
                       trailing: isCurrent
                           ? const Icon(Icons.check, color: Color(0xFFfb7299))
+                          : q['available'] == false
+                              ? const Text(
+                                  '不可用',
+                                  style: TextStyle(color: Colors.white38),
+                                )
                           : null,
-                      onTap: () => widget.onSelect(q['qn']),
+                      onTap: q['available'] == false
+                          ? null
+                          : () => widget.onSelect(q['qn']),
                     ),
                   );
                 },

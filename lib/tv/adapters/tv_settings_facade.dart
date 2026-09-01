@@ -3,6 +3,7 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/models/common/watermark_mode.dart';
+import 'package:PiliPlus/utils/recommend_filter.dart';
 
 enum VideoCodec {
   auto('自动'),
@@ -24,7 +25,10 @@ abstract final class TvSettingsFacade {
   static bool hideLiveControlsOnStart = false;
   static bool showMiniProgress = true;
   static bool seekPreviewMode = false;
-  static int minimumRecommendDuration = 0;
+  /// Recommendation filters are owned by PiliPlus.  Keep the TV facade as a
+  /// thin persisted bridge instead of maintaining a second in-memory value.
+  static int get minimumRecommendDuration => Pref.minDurationForRcmd;
+  static String get recommendKeyword => Pref.banWordForRecommend;
   static VideoCodec preferredCodec = VideoCodec.auto;
   static WatermarkMode get watermarkMode => Pref.watermarkMode;
   static List<String> categoryOrder = ['recommend', 'popular'];
@@ -44,7 +48,38 @@ abstract final class TvSettingsFacade {
   static Future<void> setShowMiniProgress(bool value) async => showMiniProgress = value;
   static Future<void> setSeekPreviewMode(bool value) async => seekPreviewMode = value;
   static Future<void> setPreferredCodec(VideoCodec value) async => preferredCodec = value;
-  static Future<void> setMinimumRecommendDuration(int value) async => minimumRecommendDuration = value;
+  static Future<void> setMinimumRecommendDuration(int value) async {
+    await GStorage.setting.put(SettingBoxKey.minDurationForRcmd, value);
+    RecommendFilter.minDurationForRcmd = value;
+  }
+  static Future<void> setRecommendKeyword(String value) async {
+    final normalized = value.trim();
+    // Match the mobile setting semantics: terms are a case-insensitive
+    // regular expression (normally written as `foo|bar`).
+    final pattern = RegExp(normalized, caseSensitive: false);
+    await GStorage.setting.put(SettingBoxKey.banWordForRecommend, normalized);
+    RecommendFilter.rcmdRegExp = pattern;
+    RecommendFilter.enableFilter = normalized.isNotEmpty;
+  }
+  static void syncRecommendFilters() {
+    RecommendFilter.minDurationForRcmd = Pref.minDurationForRcmd;
+    RecommendFilter.minPlayForRcmd = Pref.minPlayForRcmd;
+    RecommendFilter.minLikeRatioForRecommend =
+        Pref.minLikeRatioForRecommend;
+    RecommendFilter.exemptFilterForFollowed = Pref.exemptFilterForFollowed;
+    RecommendFilter.applyFilterToRelatedVideos =
+        Pref.applyFilterToRelatedVideos;
+    final keyword = Pref.banWordForRecommend;
+    try {
+      RecommendFilter.rcmdRegExp = RegExp(keyword, caseSensitive: false);
+      RecommendFilter.enableFilter = keyword.isNotEmpty;
+    } on FormatException {
+      // A malformed value imported from an older installation must not stop
+      // the TV app from booting; disable only this filter until corrected.
+      RecommendFilter.rcmdRegExp = RegExp(r'(?!)');
+      RecommendFilter.enableFilter = false;
+    }
+  }
   static Future<void> setSplashAnimationEnabled(bool value) async => splashAnimationEnabled = value;
   static Future<void> setAlwaysShowPlayerTime(bool value) async => alwaysShowPlayerTime = value;
   static Future<void> setUseFirstFrameAsCover(bool value) async {

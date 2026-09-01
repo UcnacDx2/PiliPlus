@@ -19,6 +19,7 @@ import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/accounts.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:dio/dio.dart';
 
 enum AccountRole { main, video, history }
@@ -189,7 +190,13 @@ abstract final class TvBilibiliFacade {
     return (await VideoHttp.videoIntro(bvid: bvid)).dataOrNull?.cid;
   }
   static Future<Map<String, dynamic>?> getVideoPlayUrl({required String bvid, required int cid, int qn = 80, VideoCodec? forceCodec}) async {
-    final state = await VideoHttp.videoUrl(bvid: bvid, cid: cid, qn: qn, tryLook: true, videoType: VideoType.ugc);
+    final state = await VideoHttp.videoUrl(
+      bvid: bvid,
+      cid: cid,
+      qn: qn,
+      tryLook: !Accounts.video.isLogin && Pref.p1080,
+      videoType: VideoType.ugc,
+    );
     final data = state.dataOrNull;
     return data == null ? null : {'play_url': data.durl?.firstOrNull?.url, 'last_play_time': data.lastPlayTime};
   }

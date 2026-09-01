@@ -177,11 +177,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
         throw StateError('无法获取视频 CID');
       }
       _activeCid = resolvedCid;
+      final tryLook = !Accounts.video.isLogin && Pref.p1080;
       final state = await VideoHttp.videoUrl(
         bvid: widget.video.bvid,
         cid: resolvedCid,
         qn: _currentQuality,
-        tryLook: true,
+        // Match PiliPlus's shared player rule: only anonymous 1080P
+        // playback uses the preview/try-look parameter.  A logged-in video
+        // account must request its real entitlement (including 4K).
+        tryLook: tryLook,
         videoType: VideoType.ugc,
       );
       final playInfo = state.dataOrNull;
@@ -209,42 +213,46 @@ class _PlayerScreenState extends State<PlayerScreen> {
       if (urls.isEmpty) throw StateError('无法获取播放地址');
       final acceptedQuality = playInfo.acceptQuality ?? const <int>[];
       final acceptedDesc = playInfo.acceptDesc ?? const <dynamic>[];
-      if (acceptedQuality.isNotEmpty) {
-        _qualities = [
-          for (var index = 0; index < acceptedQuality.length; index++)
-            {
-              'qn': acceptedQuality[index],
-              'desc': index < acceptedDesc.length
-                  ? '${acceptedDesc[index]}'
-                  : '${acceptedQuality[index]}P',
-            },
-        ];
-        final currentIndex = acceptedQuality.indexOf(playInfo.quality ?? _currentQuality);
-        if (currentIndex >= 0) {
-          _currentQuality = acceptedQuality[currentIndex];
-          _currentQualityDesc = '${_qualities[currentIndex]['desc']}';
-        }
-      } else if (playInfo.supportFormats?.isNotEmpty == true) {
-        // Some API responses omit accept_quality but still expose the same
-        // choices through support_formats. Keep the TV quality sheet usable
-        // without introducing a second quality source.
-        _qualities = [
-          for (final format in playInfo.supportFormats!)
-            if (format.quality != null)
-              {
-                'qn': format.quality,
-                'desc': format.newDesc ??
-                    format.displayDesc ??
-                    '${format.quality}P',
-              },
-        ];
-        final currentIndex = _qualities.indexWhere(
-          (quality) => quality['qn'] == (playInfo.quality ?? _currentQuality),
-        );
-        if (currentIndex >= 0) {
-          _currentQuality = _qualities[currentIndex]['qn'] as int;
-          _currentQualityDesc = '${_qualities[currentIndex]['desc']}';
-        }
+      final qualityLabels = <int, String>{};
+      final qualityOrder = <int>[];
+      // support_formats is the shared PiliPlus source for human-readable
+      // quality names.  Keep accept_quality as a compatibility fallback for
+      // older responses that omit support_formats.
+      for (final format in playInfo.supportFormats ?? const []) {
+        final qn = format.quality;
+        if (qn == null || qualityLabels.containsKey(qn)) continue;
+        qualityOrder.add(qn);
+        qualityLabels[qn] = format.newDesc ??
+            format.displayDesc ??
+            '${qn}P';
+      }
+      for (var index = 0; index < acceptedQuality.length; index++) {
+        final qn = acceptedQuality[index];
+        if (qualityLabels.containsKey(qn)) continue;
+        qualityOrder.add(qn);
+        qualityLabels[qn] = index < acceptedDesc.length
+            ? '${acceptedDesc[index]}'
+            : '${qn}P';
+      }
+      _qualities = [
+        for (final qn in qualityOrder)
+          {
+            'qn': qn,
+            'desc': qualityLabels[qn],
+            // A declared tier is not necessarily present in dash.video.
+            // Expose it, but make the sheet refuse an unavailable resource.
+            'available': videoItems.any((item) => item.quality.code == qn) ||
+                (videoItems.isEmpty && qn == effectiveQn),
+          },
+      ];
+      final currentIndex = _qualities.indexWhere(
+        (quality) => quality['qn'] == effectiveQn,
+      );
+      _currentQuality = effectiveQn;
+      if (currentIndex >= 0) {
+        _currentQualityDesc = '${_qualities[currentIndex]['desc']}';
+      } else {
+        _currentQualityDesc = '${effectiveQn}P';
       }
       final selectedAudio = _selectAudioRendition(playInfo.dash?.audio);
       final audioUrls = dashUrls?.isNotEmpty == true
@@ -257,6 +265,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         'durl=${durlUrls?.length ?? 0} videoHost=${Uri.parse(VideoUtils.getCdnUrl(urls)).host} '
         'audioHost=${audioUrl == null || audioUrl.isEmpty ? '-' : Uri.parse(VideoUtils.getCdnUrl([audioUrl])).host} '
         'requestedQn=$requestedQn effectiveQn=$effectiveQn '
+        'tryLook=$tryLook '
         'videoAccount=${Accounts.video.mid}/${Accounts.video.isLogin} '
         'rendition=${selectedVideo?.width}x${selectedVideo?.height}/${selectedVideo?.codecs} '
         'audioQn=${selectedAudio?.id}',
