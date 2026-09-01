@@ -8,7 +8,8 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:get/get.dart';
 
 abstract final class TvAccountFacade {
-  static bool get isLoggedIn => Accounts.main.isLogin;
+  static bool get isLoggedIn => Get.isRegistered<AccountService>() &&
+      Get.find<AccountService>().isLogin.value;
   static String? get face => Get.isRegistered<AccountService>()
       ? Get.find<AccountService>().face.value
       : null;
@@ -26,7 +27,8 @@ abstract final class TvAccountFacade {
         Accounts.accountMode[type.index] = account;
       }
     }
-    await Accounts.set(AccountType.main, account);
+    if (!Accounts.main.isLogin) Accounts.accountMode[AccountType.main.index] = account;
+    Request.setCookie();
     await LoginUtils.onLoginMain();
   }
 }
