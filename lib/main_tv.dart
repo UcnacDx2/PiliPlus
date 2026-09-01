@@ -7,6 +7,7 @@ import 'package:PiliPlus/tv/services/tv_web_server.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
+import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/json_file_handler.dart';
 import 'package:PiliPlus/utils/path_utils.dart';
@@ -84,6 +85,9 @@ void main() async {
 
   Request();
   Request.setCookie();
+  // Wait for persisted account roles to be restored before AccountService
+  // and the TV tabs read the login state.
+  await Accounts.refresh();
   RequestUtils.syncHistoryStatus();
 
   SmartDialog.config.toast = SmartConfigToast(displayType: .onlyRefresh);
