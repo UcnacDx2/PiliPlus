@@ -67,6 +67,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   int? _activeCid;
   List<dynamic> _episodes = const [];
   List<Map<String, dynamic>> _qualities = const [];
+  int _requestedQuality = Pref.defaultVideoQa;
   int _currentQuality = Pref.defaultVideoQa;
   String _currentQualityDesc = '自动';
   Timer? _heartbeat;
@@ -135,11 +136,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
         key == LogicalKeyboardKey.goBack ||
         key == LogicalKeyboardKey.escape;
     if (!isPlayerKey || _qualityPickerOpen) return;
-    debugPrint(
-      'TV PLAYER hardware key=${key.keyLabel} type=${event.runtimeType} '
-      'controls=$_showControls routeCurrent=$routeCurrent '
-      'primary=${FocusManager.instance.primaryFocus?.debugLabel}',
-    );
     _handleKey(event);
     return;
   }
@@ -162,6 +158,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _hideTimer?.cancel();
     if (qn != null) {
       setState(() {
+        _requestedQuality = qn;
         _currentQuality = qn;
         _loading = true;
       });
@@ -181,7 +178,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       final state = await VideoHttp.videoUrl(
         bvid: widget.video.bvid,
         cid: resolvedCid,
-        qn: _currentQuality,
+        qn: _requestedQuality,
         // Match PiliPlus's shared player rule: only anonymous 1080P
         // playback uses the preview/try-look parameter.  A logged-in video
         // account must request its real entitlement (including 4K).
@@ -192,7 +189,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       if (playInfo == null) {
         throw StateError('无法获取播放地址');
       }
-      final requestedQn = _currentQuality;
+      final requestedQn = _requestedQuality;
       final videoItems = playInfo.dash?.video ?? const <VideoItem>[];
       final availableQns = videoItems.map((item) => item.quality.code).toSet().toList();
       availableQns.sort();
@@ -248,6 +245,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
       final currentIndex = _qualities.indexWhere(
         (quality) => quality['qn'] == effectiveQn,
       );
+      // Keep the user's requested cap separate from the rendition actually
+      // returned by DASH.  A later episode/P part must continue probing the
+      // requested quality instead of inheriting a previous fallback (e.g.
+      // 1080P after a 4K request was unavailable on one part).
       _currentQuality = effectiveQn;
       if (currentIndex >= 0) {
         _currentQualityDesc = '${_qualities[currentIndex]['desc']}';
@@ -561,7 +562,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       ),
     );
     try {
-      if (selected != null && selected != _currentQuality) {
+      if (selected != null && selected != _requestedQuality) {
         await _openVideo(qn: selected);
       }
       if (mounted) {
@@ -645,11 +646,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _handleKey(KeyEvent event) {
-    debugPrint(
-      'TV PLAYER dispatch key=${event.logicalKey.keyLabel} '
-      'type=${event.runtimeType} controls=$_showControls '
-      'primary=${FocusManager.instance.primaryFocus?.debugLabel}',
-    );
     if (event is KeyUpEvent && _seeking) {
       _commitSeek();
       return;
@@ -1021,11 +1017,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   KeyEventResult _handleFocusKey(FocusNode node, KeyEvent event) {
-    debugPrint(
-      'TV PLAYER focus key=${event.logicalKey.keyLabel} '
-      'type=${event.runtimeType} controls=$_showControls '
-      'node=${node.debugLabel}',
-    );
     if (_qualityPickerOpen) return KeyEventResult.ignored;
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.goBack) return KeyEventResult.ignored;
