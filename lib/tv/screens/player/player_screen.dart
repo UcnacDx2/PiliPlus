@@ -13,6 +13,7 @@ import 'package:PiliPlus/tv/adapters/tv_video_item.dart';
 import 'package:PiliPlus/tv/adapters/tv_bilibili_facade.dart';
 import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 import 'package:PiliPlus/tv/adapters/tv_sponsor_block_controller.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/controls_overlay.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/mpv_video_player_compat.dart';
 import 'package:PiliPlus/tv/screens/player/widgets/video_layer.dart';
@@ -61,7 +62,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   int? _activeCid;
   List<dynamic> _episodes = const [];
   List<Map<String, dynamic>> _qualities = const [];
-  int _currentQuality = 80;
+  int _currentQuality = Pref.defaultVideoQa;
   String _currentQualityDesc = '自动';
   Timer? _heartbeat;
   Timer? _hideTimer;
