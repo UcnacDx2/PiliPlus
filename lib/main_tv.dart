@@ -90,7 +90,8 @@ void main() async {
   await Accounts.refresh();
   // Materialize the service only after roles are restored so its initial
   // isLogin value cannot capture the pre-refresh anonymous account.
-  Get.find<AccountService>();
+  final accountService = Get.find<AccountService>();
+  accountService.isLogin.value = Accounts.main.isLogin;
   RequestUtils.syncHistoryStatus();
 
   SmartDialog.config.toast = SmartConfigToast(displayType: .onlyRefresh);

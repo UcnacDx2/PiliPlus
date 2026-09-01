@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:PiliPlus/models/user/info.dart';
-import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:get/get.dart';
 
@@ -14,9 +13,7 @@ class AccountService extends GetxService {
     super.onInit();
     UserInfoData? userInfo = Pref.userInfoCache;
     face.value = userInfo?.face ?? '';
-    // The account box is authoritative for persisted sessions. The profile
-    // cache may be missing after an import/migration while cookies remain.
-    isLogin.value = Accounts.main.isLogin;
+    isLogin.value = userInfo != null;
   }
 }
 
