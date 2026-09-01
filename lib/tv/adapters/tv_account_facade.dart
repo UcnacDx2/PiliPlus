@@ -16,13 +16,17 @@ abstract final class TvAccountFacade {
   static Future<void> restorePersistedMainRole() async {
     if (Accounts.main.isLogin) return;
     final cachedMid = Pref.userInfoCache?.mid;
+    final accounts = Accounts.account.values.toList(growable: false);
     LoginAccount? candidate;
-    for (final account in Accounts.account.values) {
-      if (cachedMid != null && account.mid == cachedMid) {
-        candidate = account;
-        break;
+    if (cachedMid == null) {
+      candidate = accounts.length == 1 ? accounts.single : null;
+    } else {
+      for (final account in accounts) {
+        if (account.mid == cachedMid) {
+          candidate = account;
+          break;
+        }
       }
-      candidate ??= account;
     }
     if (candidate != null) {
       await Accounts.set(AccountType.main, candidate);

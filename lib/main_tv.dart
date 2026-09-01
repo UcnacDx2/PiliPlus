@@ -86,12 +86,12 @@ void main() async {
 
   Request();
   await Accounts.refresh();
+  Request.setCookie();
   await TvAccountFacade.restorePersistedMainRole();
   debugPrint(
     'TV account startup: main=${Accounts.main.mid}/${Accounts.main.isLogin}, '
     'history=${Accounts.history.mid}/${Accounts.history.isLogin}',
   );
-  Request.setCookie();
   RequestUtils.syncHistoryStatus();
 
   SmartDialog.config.toast = SmartConfigToast(displayType: .onlyRefresh);
