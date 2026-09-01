@@ -212,6 +212,9 @@ class TvWebServer {
       _json(request.response, {
         'autoPlay': TvSettingsFacade.autoPlay,
         'watermarkMode': TvSettingsFacade.watermarkMode.name,
+        'minimumRecommendDuration':
+            TvSettingsFacade.minimumRecommendDuration,
+        'recommendKeyword': TvSettingsFacade.recommendKeyword,
       });
       return;
     }
@@ -226,6 +229,24 @@ class TvWebServer {
     final body = await _readJson(request);
     if (body?['autoPlay'] is bool) {
       await TvSettingsFacade.setAutoPlay(body!['autoPlay'] as bool);
+    }
+    if (body?['minimumRecommendDuration'] is num) {
+      final duration = (body!['minimumRecommendDuration'] as num).toInt();
+      if (duration < 0 || duration > 86400) {
+        _json(request.response, {'error': 'Invalid duration'}, HttpStatus.badRequest);
+        return;
+      }
+      await TvSettingsFacade.setMinimumRecommendDuration(duration);
+    }
+    if (body?['recommendKeyword'] is String) {
+      try {
+        await TvSettingsFacade.setRecommendKeyword(
+          body!['recommendKeyword'] as String,
+        );
+      } on FormatException {
+        _json(request.response, {'error': 'Invalid keyword pattern'}, HttpStatus.badRequest);
+        return;
+      }
     }
     _json(request.response, {'success': true});
   }
@@ -311,10 +332,15 @@ section{margin:16px 0;padding:20px;border:1px solid #35354b;border-radius:14px;b
 h1,h2{color:#fb7299}button{padding:10px 18px;border:0;border-radius:8px;background:#fb7299;color:#fff;font-size:16px}
 label{display:block;margin:12px 0}#state{white-space:pre-wrap;color:#ccc}
 </style><main><h1>BiliTV TV 控制台</h1><section><h2>设备</h2><div id="state">加载中…</div></section>
+<section><h2>推荐过滤</h2><label>最低时长（秒）<input id="minDuration" type="number" min="0" step="1"></label>
+<label>标题关键词（用 | 分隔）<input id="keyword" type="text" placeholder="广告|抽奖"></label>
+<button onclick="saveRecommend()">保存推荐过滤</button></section>
 <section><h2>空降助手</h2><label><input id="enabled" type="checkbox"> 启用 SponsorBlock 自动跳过</label>
 <label>最短片段（秒）<input id="limit" type="number" min="0" step="0.1"></label>
 <button onclick="save()">保存设置</button></section></main><script>
-async function load(){let s=await (await fetch('/api/status')).json();document.querySelector('#state').textContent=JSON.stringify(s,null,2);let b=await (await fetch('/api/sponsor-block/config')).json();enabled.checked=b.enabled;limit.value=b.blockLimit}
-async function save(){await fetch('/api/sponsor-block/config',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer __PAIRING_TOKEN__'},body:JSON.stringify({enabled:enabled.checked,blockLimit:Number(limit.value)||0})});alert('已保存')};load();
+const auth={'Authorization':'Bearer __PAIRING_TOKEN__','Content-Type':'application/json'};
+async function load(){let s=await (await fetch('/api/status')).json();document.querySelector('#state').textContent=JSON.stringify(s,null,2);let x=await (await fetch('/api/settings')).json();minDuration.value=x.minimumRecommendDuration;keyword.value=x.recommendKeyword;let b=await (await fetch('/api/sponsor-block/config')).json();enabled.checked=b.enabled;limit.value=b.blockLimit}
+async function saveRecommend(){let r=await fetch('/api/settings',{method:'POST',headers:auth,body:JSON.stringify({minimumRecommendDuration:Number(minDuration.value)||0,recommendKeyword:keyword.value})});alert(r.ok?'已保存':'保存失败')}
+async function save(){await fetch('/api/sponsor-block/config',{method:'POST',headers:auth,body:JSON.stringify({enabled:enabled.checked,blockLimit:Number(limit.value)||0})});alert('已保存')};load();
 </script>''';
 }
