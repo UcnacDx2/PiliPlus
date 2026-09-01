@@ -85,6 +85,10 @@ void main() async {
 
   Request();
   await Accounts.refresh();
+  debugPrint(
+    'TV account startup: main=${Accounts.main.mid}/${Accounts.main.isLogin}, '
+    'history=${Accounts.history.mid}/${Accounts.history.isLogin}',
+  );
   Request.setCookie();
   RequestUtils.syncHistoryStatus();
 

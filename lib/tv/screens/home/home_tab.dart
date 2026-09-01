@@ -265,6 +265,9 @@ class HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint(
+      'TV home auth: main=${TvAccountFacade.mid}/${TvAccountFacade.isLoggedIn}',
+    );
     // ... (Auth check logic 保持不变) ...
     if (!TvAccountFacade.isLoggedIn) {
       return const Center(child: Text("请先登录")); // 简写，保持你原有的 UI
