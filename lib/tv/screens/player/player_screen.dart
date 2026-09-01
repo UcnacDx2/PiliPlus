@@ -199,6 +199,27 @@ class _PlayerScreenState extends State<PlayerScreen> {
           _currentQuality = acceptedQuality[currentIndex];
           _currentQualityDesc = '${_qualities[currentIndex]['desc']}';
         }
+      } else if (playInfo.supportFormats?.isNotEmpty == true) {
+        // Some API responses omit accept_quality but still expose the same
+        // choices through support_formats. Keep the TV quality sheet usable
+        // without introducing a second quality source.
+        _qualities = [
+          for (final format in playInfo.supportFormats!)
+            if (format.quality != null)
+              {
+                'qn': format.quality,
+                'desc': format.newDesc ??
+                    format.displayDesc ??
+                    '${format.quality}P',
+              },
+        ];
+        final currentIndex = _qualities.indexWhere(
+          (quality) => quality['qn'] == (playInfo.quality ?? _currentQuality),
+        );
+        if (currentIndex >= 0) {
+          _currentQuality = _qualities[currentIndex]['qn'] as int;
+          _currentQualityDesc = '${_qualities[currentIndex]['desc']}';
+        }
       }
       final audioUrls = dashUrls?.isNotEmpty == true
           ? playInfo.dash?.audio?.expand((item) => item.playUrls).toList()
