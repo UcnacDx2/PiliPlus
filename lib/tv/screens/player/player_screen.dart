@@ -295,22 +295,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       });
       await controller.play();
       if (resume > 0) {
-        // mpv's EDL timeline can discard a seek issued before the first play.
-        // Seek after playback starts and verify once, retrying briefly when
-        // the backend has not exposed the timeline position yet.
-        final target = Duration(seconds: resume);
-        await Future<void>.delayed(const Duration(milliseconds: 250));
-        await controller.seekTo(target);
-        await Future<void>.delayed(const Duration(milliseconds: 120));
-        final actual = controller.value.position;
-        if ((actual - target).abs() > const Duration(seconds: 3)) {
-          await Future<void>.delayed(const Duration(milliseconds: 400));
-          await controller.seekTo(target);
-          debugPrint(
-            'TV VOD resume retry target=${target.inSeconds}s '
-            'actual=${actual.inSeconds}s',
-          );
-        }
+        await _seekAndConfirmResume(Duration(seconds: resume), controller);
       }
       _reclaimPlayerFocus();
       _startHideTimer();
@@ -318,6 +303,41 @@ class _PlayerScreenState extends State<PlayerScreen> {
     } catch (error) {
       if (mounted) setState(() { _loading = false; _error = error.toString(); });
     }
+  }
+
+  Future<bool> _seekAndConfirmResume(
+    Duration target,
+    VideoPlayerController controller,
+  ) async {
+    // mpv's EDL timeline may accept a seek before stream parameters are
+    // published and then discard it when playback starts. Wait for readiness,
+    // then confirm the reported position after each of two attempts.
+    for (var i = 0; i < 20; i++) {
+      if (controller.value.duration > Duration.zero ||
+          controller.value.isPlaying) {
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    for (var attempt = 0; attempt < 2; attempt++) {
+      await controller.seekTo(target);
+      for (var i = 0; i < 10; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        final actual = controller.value.position;
+        if ((actual - target).abs() <= const Duration(seconds: 2)) {
+          debugPrint(
+            'TV VOD resume confirmed target=${target.inSeconds}s '
+            'actual=${actual.inSeconds}s attempt=${attempt + 1}',
+          );
+          return true;
+        }
+      }
+    }
+    debugPrint(
+      'TV VOD resume unconfirmed target=${target.inSeconds}s '
+      'actual=${controller.value.position.inSeconds}s',
+    );
+    return false;
   }
 
   Future<void> _applyWatermark(
