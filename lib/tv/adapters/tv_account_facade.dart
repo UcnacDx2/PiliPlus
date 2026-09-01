@@ -8,8 +8,7 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:get/get.dart';
 
 abstract final class TvAccountFacade {
-  static bool get isLoggedIn => Get.isRegistered<AccountService>() &&
-      Get.find<AccountService>().isLogin.value;
+  static bool get isLoggedIn => Accounts.main.isLogin;
   static String? get face => Get.isRegistered<AccountService>()
       ? Get.find<AccountService>().face.value
       : null;
