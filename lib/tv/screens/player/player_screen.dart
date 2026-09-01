@@ -243,24 +243,26 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _sponsorBlock = sponsorBlock;
       sponsorBlock.bindPosition(controller.positionStream);
       unawaited(sponsorBlock.load(bvid: widget.video.bvid, cid: resolvedCid));
-      // History cards carry the progress for the selected CID. Prefer it for
-      // the history entry, then fall back to PiliPlus's account-aware
-      // lastPlayTime returned by videoUrl. A completed item uses -1 and must
-      // start from the beginning.
-      final historyResume = widget.video.progress > 0
+      // History progress is expressed in seconds, while PlayUrlModel's
+      // lastPlayTime is milliseconds. Both are CID-specific; do not apply a
+      // progress value from another page of a multi-part video.
+      final historyMatchesCid =
+          widget.video.cid == 0 || widget.video.cid == resolvedCid;
+      final historyResume = historyMatchesCid && widget.video.progress > 0
           ? widget.video.progress
           : 0;
-      final resume = historyResume > 0
-          ? historyResume
-          : (playInfo.lastPlayTime > 0 ? playInfo.lastPlayTime : 0);
+      final serverMatchesCid =
+          playInfo.lastPlayCid == null || playInfo.lastPlayCid == resolvedCid;
+      final serverResume = serverMatchesCid && playInfo.lastPlayTime > 0
+          ? (playInfo.lastPlayTime / 1000).round()
+          : 0;
+      final resume = historyResume > 0 ? historyResume : serverResume;
       debugPrint(
         'TV VOD resume bvid=${widget.video.bvid} cid=$resolvedCid '
-        'historyProgress=${widget.video.progress} '
-        'serverProgress=${playInfo.lastPlayTime} selected=$resume',
+        'historyProgress=${widget.video.progress}s '
+        'serverProgress=${playInfo.lastPlayTime}ms '
+        'serverCid=${playInfo.lastPlayCid} selected=${resume}s',
       );
-      if (resume > 0) {
-        await controller.seekTo(Duration(seconds: resume));
-      }
       _heartbeat = Timer.periodic(const Duration(seconds: 15), (_) {
         final position = controller.value.position.inSeconds;
         VideoHttp.heartBeat(
@@ -271,6 +273,24 @@ class _PlayerScreenState extends State<PlayerScreen> {
         );
       });
       await controller.play();
+      if (resume > 0) {
+        // mpv's EDL timeline can discard a seek issued before the first play.
+        // Seek after playback starts and verify once, retrying briefly when
+        // the backend has not exposed the timeline position yet.
+        final target = Duration(seconds: resume);
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+        await controller.seekTo(target);
+        await Future<void>.delayed(const Duration(milliseconds: 120));
+        final actual = controller.value.position;
+        if ((actual - target).abs() > const Duration(seconds: 3)) {
+          await Future<void>.delayed(const Duration(milliseconds: 400));
+          await controller.seekTo(target);
+          debugPrint(
+            'TV VOD resume retry target=${target.inSeconds}s '
+            'actual=${actual.inSeconds}s',
+          );
+        }
+      }
       _reclaimPlayerFocus();
       _startHideTimer();
       unawaited(_applyWatermark(controller, generation));
