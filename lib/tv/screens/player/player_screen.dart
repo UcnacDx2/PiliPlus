@@ -636,6 +636,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _handleKey(KeyEvent event) {
+    debugPrint(
+      'TV PLAYER dispatch key=${event.logicalKey.keyLabel} '
+      'type=${event.runtimeType} controls=$_showControls '
+      'primary=${FocusManager.instance.primaryFocus?.debugLabel}',
+    );
     if (event is KeyUpEvent && _seeking) {
       _commitSeek();
       return;
@@ -1007,6 +1012,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   KeyEventResult _handleFocusKey(FocusNode node, KeyEvent event) {
+    debugPrint(
+      'TV PLAYER focus key=${event.logicalKey.keyLabel} '
+      'type=${event.runtimeType} controls=$_showControls '
+      'node=${node.debugLabel}',
+    );
     if (_qualityPickerOpen) return KeyEventResult.ignored;
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.goBack) return KeyEventResult.ignored;
