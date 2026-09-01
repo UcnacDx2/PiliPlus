@@ -4,6 +4,7 @@ import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/tv/app/tv_app.dart';
 import 'package:PiliPlus/tv/adapters/tv_account_facade.dart';
+import 'package:PiliPlus/tv/adapters/tv_settings_facade.dart';
 import 'package:PiliPlus/tv/services/tv_web_server.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/service_locator.dart';
