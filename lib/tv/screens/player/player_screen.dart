@@ -652,6 +652,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
         event is! KeyDownEvent) {
       return;
     }
+    if ((key == LogicalKeyboardKey.goBack ||
+            key == LogicalKeyboardKey.escape) &&
+        event is KeyDownEvent) {
+      // PopScope may receive the same Android Back after the Focus handler;
+      // mark every in-player Back branch so it is consumed exactly once.
+      _markBackKeyHandled();
+    }
 
     if (_seeking) {
       if (key == LogicalKeyboardKey.arrowLeft ||
@@ -862,7 +869,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
         _showControlsAndResetTimer();
       }
     } else if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.goBack) {
-      _markBackKeyHandled();
       _handleBack();
     }
   }
