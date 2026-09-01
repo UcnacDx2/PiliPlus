@@ -642,6 +642,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) return;
     final key = event.logicalKey;
+    // Android TV's system Back is delivered to PopScope. Do not also pop the
+    // Navigator from the Focus handler, otherwise the underlying HomeScreen
+    // can consume the same physical key and switch back to the home tab.
+    if (key == LogicalKeyboardKey.goBack) return;
     // Confirm/select is an action, not a repeatable navigation key. This
     // prevents a long press from toggling playback and opening a panel again.
     if ((key == LogicalKeyboardKey.enter ||
@@ -887,7 +891,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       if (_settingsMenuType != SettingsMenuType.main) {
         setState(() {
           _settingsMenuType = SettingsMenuType.main;
-          _settingsFocusedIndex = 0;
+          _settingsFocusedIndex = _settingsParentFocusIndex;
         });
       } else {
         _closeMenus();
@@ -1005,6 +1009,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   KeyEventResult _handleFocusKey(FocusNode node, KeyEvent event) {
     if (_qualityPickerOpen) return KeyEventResult.ignored;
     final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.goBack) return KeyEventResult.ignored;
     final isPlayerKey = key == LogicalKeyboardKey.arrowUp ||
         key == LogicalKeyboardKey.arrowDown ||
         key == LogicalKeyboardKey.arrowLeft ||
