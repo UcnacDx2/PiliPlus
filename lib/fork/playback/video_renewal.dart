@@ -20,7 +20,8 @@ extension ForkVideoRenewal on VideoDetailController {
 
     final quality = currentVideoQa.value?.code;
     final position = player.positionInMilliseconds;
-    final wasPlaying = player.playerStatus.isPlaying;
+    final wasPlaying = player.playerStatus.isPlaying ||
+        (!player.playerStatus.isCompleted && position > 0);
 
     final result = await ForkAccountPlayback.videoUrl(
       cid: cid.value,

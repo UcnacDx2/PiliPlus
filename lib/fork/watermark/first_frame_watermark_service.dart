@@ -5,6 +5,7 @@ import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/fork/http/fork_video_api.dart';
 import 'package:PiliPlus/fork/watermark/watermark_region.dart';
 import 'package:PiliPlus/fork/watermark/watermark_detector.dart';
+import 'package:PiliPlus/fork/watermark/watermark_input.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
@@ -54,7 +55,7 @@ abstract final class FirstFrameWatermarkService {
           targetWidth: 480,
         );
         image = (await codec.getNextFrame()).image;
-        final frame = await WatermarkFrame.fromImage(image, upscale: true);
+        final frame = await WatermarkInput.fromImage(image, upscale: true);
         if (frame == null) return null;
         return await WatermarkDetector.detectBilibiliAnchor(frame);
       } finally {

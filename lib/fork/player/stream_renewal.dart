@@ -145,7 +145,7 @@ final class ForkStreamRenewal {
   Future<void> _attemptRenew(String reason) async {
     final renew = this.renew;
     if (renew == null || _renewing) return;
-    if (!isPlaying()) {
+    if (!isPlaying() && reason == 'deadline') {
       _scheduleRetry(const Duration(seconds: 30), reason);
       return;
     }
