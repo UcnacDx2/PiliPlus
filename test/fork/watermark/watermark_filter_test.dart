@@ -1,8 +1,10 @@
 import 'package:PiliPlus/fork/watermark/watermark_position.dart';
 import 'package:PiliPlus/fork/watermark/watermark_region.dart';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:PiliPlus/fork/watermark/watermark_filter.dart';
+import 'package:PiliPlus/fork/watermark/watermark_shader.dart';
 import 'package:PiliPlus/fork/watermark/watermark_stroke_mask.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -16,7 +18,7 @@ void main() {
       confidence: 0.9,
     );
 
-    final shader = WatermarkFilter.shaderFor([region]);
+    final shader = utf8.decode(WatermarkShader.source([region]));
 
     expect(shader, contains('//!HOOK MAIN'));
     expect(shader, contains('//!BIND HOOKED'));
@@ -57,7 +59,7 @@ void main() {
 
     for (final entry in expected.entries) {
       final region = WatermarkRegion.fixed(entry.key);
-      final shader = WatermarkFilter.shaderFor([region]);
+      final shader = utf8.decode(WatermarkShader.source([region]));
 
       expect(region.left, closeTo(entry.value.left, 0.0001));
       expect(region.top, closeTo(entry.value.top, 0.0001));
@@ -87,7 +89,7 @@ void main() {
       ),
     );
 
-    final shader = WatermarkFilter.shaderFor(regions);
+    final shader = utf8.decode(WatermarkShader.source(regions));
 
     expect(RegExp(r'const vec4 region\d').allMatches(shader), hasLength(4));
     expect(shader, isNot(contains('region4')));
@@ -141,19 +143,26 @@ void main() {
     );
     final refinement = WatermarkRefinement(region: region, mask: mask);
 
-    final shader = WatermarkFilter.shaderFor(
-      [region, other],
-      refinement: refinement,
-    );
+    final bytes = WatermarkShader.source([region, other], refinement: refinement);
+    // Binary mask bytes precede the GLSL source, which starts at //!HOOK.
+    final hook = utf8.encode('//!HOOK MAIN');
+    final start = _indexOf(bytes, hook);
+    final shader = utf8.decode(bytes.sublist(start));
 
     expect(shader, contains('piliplus_refine'));
     expect(shader, contains('const int piliplus_cols = 64;'));
+    
     expect(shader, contains('const int piliplus_rows = 20;'));
-    expect(shader, contains('2147483648u'));
+    expect(shader, contains('//!TEXTURE piliplus_mask_tex'));
+    
     expect(shader, contains('piliplus_stroke'));
     // The second region keeps the whole-rectangle blend.
     expect(shader, contains('piliplus_fill(HOOKED_pos, region1)'));
     expect(shader, contains('piliplus_refine(HOOKED_pos, region0)'));
+    // GLSL ES 1.00 forbids const-array initializers.
+    expect(shader, isNot(contains('const vec2 dirs')));
+    expect(shader, isNot(contains('const float radii')));
+    expect(shader, isNot(contains('piliplus_mask[')));
   });
 
   test('shader without refinement keeps the plain fill only', () {
@@ -165,9 +174,24 @@ void main() {
       confidence: 1,
     );
 
-    final shader = WatermarkFilter.shaderFor([region]);
+    final shader = utf8.decode(WatermarkShader.source([region]));
 
     expect(shader, isNot(contains('piliplus_refine')));
     expect(shader, contains('piliplus_fill'));
   });
+}
+
+/// Returns the first index of [needle] in [haystack], or -1.
+int _indexOf(Uint8List haystack, List<int> needle) {
+  for (var i = 0; i <= haystack.length - needle.length; i++) {
+    var matched = true;
+    for (var j = 0; j < needle.length; j++) {
+      if (haystack[i + j] != needle[j]) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) return i;
+  }
+  return -1;
 }
