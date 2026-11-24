@@ -5,6 +5,7 @@ import 'dart:math' show max, min;
 import 'dart:ui' as ui;
 
 import 'package:PiliPlus/common/assets.dart';
+import 'package:PiliPlus/fork/player/pl_player_fork.dart';
 import 'package:PiliPlus/http/browser_ua.dart';
 import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/http/loading_state.dart';
@@ -129,6 +130,9 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
 
   final RxBool isFullScreen = false.obs;
   bool isLive = false;
+
+  // FORK: all fork player behaviour lives behind this bridge
+  late final fork = PlPlayerFork(this);
 
   bool _isVertical = false;
 
@@ -756,6 +760,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
         return;
       }
       // 配置Player 音轨、字幕等等
+      // FORK: drop the previous watermark shader before mpv loads a new media
+      await fork.beforeOpen();
       await _createVideoController(dataSource, seekTo, volume, rotate);
 
       if (_playerCount == 0) {
@@ -776,6 +782,14 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       }
 
       await _initializePlayer();
+      // FORK: let watermark detection start once the media is ready
+      fork.started(
+        isLive: isLive,
+        onlyPlayAudio: onlyPlayAudio.value,
+        cid: cid,
+        width: width,
+        height: height,
+      );
       onInit?.call();
     } catch (err, stackTrace) {
       dataStatus.value = DataStatus.error;
@@ -814,30 +828,34 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       }
     }
     pp ??= _videoPlayerController!;
-    switch (type) {
-      case SuperResolutionType.disable:
-        return pp.command(const ['change-list', 'glsl-shaders', 'clr', '']);
-      case SuperResolutionType.efficiency:
-        return pp.command([
-          'change-list',
-          'glsl-shaders',
-          'set',
-          PathUtils.buildShadersAbsolutePath(
-            await copyShadersToExternalDirectory,
-            Assets.mpvAnime4KShadersLite,
-          ),
-        ]);
-      case SuperResolutionType.quality:
-        return pp.command([
-          'change-list',
-          'glsl-shaders',
-          'set',
-          PathUtils.buildShadersAbsolutePath(
-            await copyShadersToExternalDirectory,
-            Assets.mpvAnime4KShaders,
-          ),
-        ]);
-    }
+    // FORK: changing the shader list drops the watermark filter, re-add it
+    await switch (type) {
+      SuperResolutionType.disable => pp.command(const [
+        'change-list',
+        'glsl-shaders',
+        'clr',
+        '',
+      ]),
+      SuperResolutionType.efficiency => pp.command([
+        'change-list',
+        'glsl-shaders',
+        'set',
+        PathUtils.buildShadersAbsolutePath(
+          await copyShadersToExternalDirectory,
+          Assets.mpvAnime4KShadersLite,
+        ),
+      ]),
+      SuperResolutionType.quality => pp.command([
+        'change-list',
+        'glsl-shaders',
+        'set',
+        PathUtils.buildShadersAbsolutePath(
+          await copyShadersToExternalDirectory,
+          Assets.mpvAnime4KShaders,
+        ),
+      ]),
+    };
+    await fork.afterShaderChanged(pp);
   }
 
   Future<Player> _initPlayer() async {
@@ -955,6 +973,10 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       ),
       play: false,
     );
+    // FORK: arm the stream-renewal guard with the signed source
+    if (dataSource is! FileSource) {
+      fork.afterOpen(video, isLive: isLive);
+    }
   }
 
   Future<void>? refreshPlayer() {
@@ -1118,6 +1140,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
           }
         })),
       stream.error.listen((String event) {
+        // FORK: an expired playurl is refreshed instead of retrying that URL
+        if (fork.onStreamError(event)) return;
         if (dataSource is FileSource &&
             event.startsWith("Failed to open file")) {
           return;
@@ -1642,6 +1666,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
   }
 
   void dispose() {
+    // FORK: stop the renewal watchdog and drop watermark state
+    fork.dispose();
     // 每次减1，最后销毁
     resetScreenRotation();
     cancelLongPressTimer();

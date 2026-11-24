@@ -1,7 +1,8 @@
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
-import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
+// FORK: first-frame cover
+import 'package:PiliPlus/fork/covers/first_frame_or_cover.dart';
 import 'package:PiliPlus/common/widgets/progress_bar/video_progress_indicator.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
@@ -66,8 +67,11 @@ class VideoCardH extends StatelessWidget {
                         return Stack(
                           clipBehavior: .none,
                           children: [
-                            NetworkImgLayer(
-                              src: videoItem.cover,
+                            FirstFrameOrCover(
+                              bvid: videoItem.bvid,
+                              cid: videoItem.cid,
+                              firstFrameUrl: videoItem.firstFrame,
+                              coverUrl: videoItem.cover,
                               width: maxWidth,
                               height: maxHeight,
                             ),

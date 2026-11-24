@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:PiliPlus/models/common/video/base_quality.dart';
+// FORK: fork feature settings
+import 'package:PiliPlus/fork/settings/fork_settings.dart';
 import 'package:PiliPlus/models/common/video/cdn_type.dart';
 import 'package:PiliPlus/models/common/video/video_decode_type.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
@@ -28,6 +30,8 @@ List<SettingsModel> get videoSettings => [
     setKey: SettingBoxKey.enableHA,
     defaultVal: true,
   ),
+  // FORK: fork feature settings (first-frame cover)
+  ...forkVideoSettings,
   const SwitchModel(
     title: '免登录1080P',
     subtitle: '免登录查看1080P视频',

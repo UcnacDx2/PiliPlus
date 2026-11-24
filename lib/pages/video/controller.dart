@@ -11,6 +11,9 @@ import 'package:PiliPlus/common/widgets/scaffold/mini_scaffold.dart';
 import 'package:PiliPlus/grpc/bilibili/app/listener/v1.pbenum.dart'
     show PlaylistSource;
 import 'package:PiliPlus/grpc/dm.dart';
+// FORK: fork layer (split-account playurl + in-place stream renewal)
+import 'package:PiliPlus/fork/playback/account_playback.dart';
+import 'package:PiliPlus/fork/playback/video_renewal.dart';
 import 'package:PiliPlus/http/browser_ua.dart';
 import 'package:PiliPlus/http/fav.dart';
 import 'package:PiliPlus/http/init.dart';
@@ -98,6 +101,8 @@ class VideoDetailController extends GetxController
   @override
   late final isUgc = videoType == VideoType.ugc;
   VideoType? _actualVideoType;
+  // FORK: playurl endpoint actually used (ugc fallback included)
+  VideoType get forkVideoType => _actualVideoType ?? videoType;
   late final ugcIntroCtr = Get.find<UgcIntroController>(tag: heroTag);
   late final pgcIntroCtr = Get.find<PgcIntroController>(tag: heroTag);
 
@@ -758,6 +763,8 @@ class VideoDetailController extends GetxController
     bool? autoplay,
     bool autoFullScreenFlag = false,
   }) async {
+    // FORK: let the player ask this page for a fresh playurl when links expire
+    plPlayerController.fork.bindRenewer(forkRenewStream);
     Duration? seek = defaultST ?? playedTime;
     if (seek == .zero) seek = null;
     seek ??= getFirstSegment();
@@ -831,7 +838,8 @@ class VideoDetailController extends GetxController
   }
 
   Future<LoadingState<PlayUrlModel>> _getVideoUrl(int quality) {
-    return VideoHttp.videoUrl(
+    // FORK: merge resume progress recorded by the history account
+    return ForkAccountPlayback.videoUrl(
       cid: cid.value,
       bvid: bvid,
       qn: quality,

@@ -4,6 +4,8 @@ import 'package:PiliPlus/common/widgets/fractionally_sized_box.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/gallery_viewer.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/hero_dialog_route.dart';
 import 'package:PiliPlus/grpc/im.dart';
+// FORK: split-account resume progress
+import 'package:PiliPlus/fork/playback/account_playback.dart';
 import 'package:PiliPlus/http/dynamics.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/search.dart';
@@ -625,6 +627,12 @@ abstract final class PageUtils {
         );
 
         if (episode != null) {
+          // FORK: restricted episodes have no progress in the stream account
+          progress = await ForkAccountPlayback.pgcProgress(
+            progress: progress,
+            epId: episode.epId,
+            title: episode.title ?? response.title ?? response.seasonTitle,
+          );
           toVideoPage(
             videoType: .pgc,
             bvid: episode.bvid!,

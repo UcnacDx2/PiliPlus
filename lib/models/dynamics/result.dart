@@ -1116,6 +1116,8 @@ class DynamicArchiveModel {
   Badge? badge;
   String? bvid;
   String? cover;
+  // FORK: seed for the first-frame cover
+  String? firstFrame;
   String? durationText;
   String? jumpUrl;
   Stat? stat;

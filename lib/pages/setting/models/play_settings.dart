@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
+// FORK: fork feature settings
+import 'package:PiliPlus/fork/settings/fork_settings.dart';
 import 'package:PiliPlus/common/widgets/image_grid/image_grid_view.dart';
 import 'package:PiliPlus/models/common/audio_normalization.dart';
 import 'package:PiliPlus/models/common/super_chat_type.dart';
@@ -75,6 +77,8 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.autoPlayEnable,
     defaultVal: false,
   ),
+  // FORK: fork feature settings (watermark)
+  ...forkPlaySettings,
   const SwitchModel(
     title: '全屏显示锁定按钮',
     leading: Icon(Icons.lock_outline),

@@ -3,6 +3,8 @@ abstract class BaseSimpleVideoItemModel {
   String? bvid;
   int? cid;
   String? cover;
+  // FORK: seed for the first-frame cover
+  String? firstFrame;
   int duration = -1;
   late BaseOwner owner;
   late BaseStat stat;

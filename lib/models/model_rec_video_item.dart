@@ -19,6 +19,7 @@ class RcmdVideoItemModel extends BaseRcmdVideoItemModel {
     goto = json["goto"];
     uri = json["uri"];
     cover = json["pic"];
+    firstFrame = json["first_frame"]; // FORK
     title = json["title"];
     duration = json["duration"];
     pubdate = json["pubdate"];

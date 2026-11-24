@@ -1,7 +1,8 @@
 // 视频or合集
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
-import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
+// FORK: first-frame cover
+import 'package:PiliPlus/fork/covers/first_frame_or_cover.dart';
 import 'package:PiliPlus/common/widgets/svg/play_icon.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
@@ -50,11 +51,12 @@ Widget videoSeasonWidget(
             clipBehavior: Clip.none,
             children: [
               LayoutBuilder(
-                builder: (context, constraints) => NetworkImgLayer(
+                builder: (context, constraints) => FirstFrameOrCover(
+                  bvid: video.bvid,
+                  firstFrameUrl: video.firstFrame,
+                  coverUrl: cover,
                   width: constraints.maxWidth,
                   height: constraints.maxWidth / Style.aspectRatio,
-                  src: cover,
-                  quality: 40,
                 ),
               ),
               if (video.badge?.text case final badge?)

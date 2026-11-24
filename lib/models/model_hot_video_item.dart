@@ -12,7 +12,6 @@ class HotVideoItemModel extends HorizontalVideoModel with MultiSelectData {
   int? copyright;
   int? ctime;
   int? state;
-  String? firstFrame;
   String? pubLocation;
 
   HotVideoItemModel.fromJson(Map<String, dynamic> json) {
