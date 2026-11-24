@@ -36,6 +36,12 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rebase canonical/main
 
+      - name: Install Linux build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libx11-dev libxi-dev libasound2-dev libmpv-dev clang cmake ninja-build pkg-config elfutils
+        shell: bash
+
       - name: Install Java
         uses: actions/setup-java@v5
         with:
