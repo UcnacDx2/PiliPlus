@@ -43,7 +43,9 @@ void main() {
     test('is negative once the refresh window has passed', () {
       final deadline = now.add(const Duration(minutes: 1));
       final media = 'https://a/v.m4s?deadline=${deadline.millisecondsSinceEpoch ~/ 1000}';
-      expect(ForkStreamRenewal.timeUntilRefresh(media, now), isNegative);
+      final pending = ForkStreamRenewal.timeUntilRefresh(media, now);
+      expect(pending, isNotNull);
+      expect(pending!.isNegative, isTrue);
     });
 
     test('is null without a deadline', () {

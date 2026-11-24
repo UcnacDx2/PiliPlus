@@ -200,7 +200,8 @@ void main() {
       for (var frameIndex = 0; frameIndex < 8; frameIndex++) {
         final pixels = Uint8List(width * height)
           ..fillRange(0, width * height, 30 + frameIndex * 20);
-        _drawLogo(pixels, width, 435, 220, width, 245);
+        // 436 + 5*8 = 476 fills 476..479, the last encoded column
+        _drawLogo(pixels, width, 436, 220, width, 245);
         frames.add(WatermarkFrame(width: width, height: height, luma: pixels));
       }
 

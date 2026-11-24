@@ -110,14 +110,14 @@ void main() {
   });
 
   test('accepts APP videoshot metadata without explicit frame size', () {
-    final data = VideoShotData.fromJson({
+    final data = ForkVideoApi.parseVideoShot({
       'pvdata': 'https://example.com/index.bin',
       'img_x_len': 10,
       'img_y_len': 10,
       'img_x_size': 0,
       'img_y_size': 0,
       'image': ['https://example.com/sprite.webp'],
-    });
+    })!;
     data.index = const [0, 0, 3, 6, 9]; // ignore: cascade_invocations
 
     final locations = VideoShotPreviewService.candidateLocations(data);

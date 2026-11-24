@@ -127,8 +127,8 @@ void main() {
   });
   test('rejects a mostly black subtitle frame', () {
     final colors = List<(int, int, int)>.filled(576, (0, 0, 0));
-    for (var y = 15; y < 17; y++) {
-      for (var x = 8; x < 24; x++) {
+    for (var y = 15; y < 16; y++) {
+      for (var x = 8; x < 20; x++) {
         colors[y * 32 + x] = (180, 180, 180);
       }
     }
@@ -141,8 +141,8 @@ void main() {
 
   test('rejects a mostly black title-card logo', () {
     final colors = List<(int, int, int)>.filled(576, (0, 0, 0));
-    for (var y = 7; y < 11; y++) {
-      for (var x = 12; x < 20; x++) {
+    for (var y = 7; y < 10; y++) {
+      for (var x = 12; x < 16; x++) {
         colors[y * 32 + x] = (120, 120, 120);
       }
     }

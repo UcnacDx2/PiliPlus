@@ -107,7 +107,7 @@ abstract final class ForkVideoApi {
         ),
       );
       if (res.data['code'] != 0) return null;
-      final data = _parseVideoShot(res.data['data']);
+      final data = parseVideoShot(res.data['data']);
       if (data == null || data.image.isEmpty) return null;
       if (data.index.isEmpty && data.pvdata?.isNotEmpty == true) {
         data.index = await _indexFromPvData(data.pvdata!);
@@ -136,7 +136,7 @@ abstract final class ForkVideoApi {
         options: Options(headers: {'user-agent': BrowserUa.pc}),
       );
       if (res.data['code'] != 0) return null;
-      final data = _parseVideoShot(res.data['data']);
+      final data = parseVideoShot(res.data['data']);
       if (data == null || data.image.isEmpty) return null;
       if (data.index.isEmpty && data.pvdata?.isNotEmpty == true) {
         data.index = await _indexFromPvData(data.pvdata!);
@@ -148,7 +148,9 @@ abstract final class ForkVideoApi {
     }
   }
 
-  static VideoShotData? _parseVideoShot(dynamic json) {
+  /// Parses videoshot metadata leniently: the APP endpoint may omit
+  /// `index`, which the shared model requires.
+  static VideoShotData? parseVideoShot(dynamic json) {
     if (json is! Map) return null;
     // The APP endpoint may omit `index`, which the shared model requires.
     final map = Map<String, dynamic>.from(json);
