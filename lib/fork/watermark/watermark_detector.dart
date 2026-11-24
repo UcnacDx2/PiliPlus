@@ -388,11 +388,20 @@ abstract final class WatermarkDetector {
         // A real corner watermark is inset from the encoded frame. Components
         // touching the outer border are usually letterbox/content boundaries
         // or persistent sprite-page edges, especially on sharper web shots.
-        // A real corner watermark is inset from the encoded frame. The
-        // closing erosion (radius 4) also shaves border-flush components,
-        // so anything within that radius of the outer edge is treated as
-        // touching it.
-        if (outerGap <= 4 || outerGap > 0.085 * width) continue;
+        if (outerGap <= 0 || outerGap > 0.085 * width) continue;
+        // The closing erosion (radius 4) shaves a border-flush component by a
+        // few pixels, so its closed box looks identical to a legitimately
+        // inset one. Check the pre-closing mask inside the component's rows
+        // instead: there a frame-flush edge still reaches the outer border.
+        if (_touchesOuterBorder(
+          combined,
+          roi.width,
+          roi.height,
+          component,
+          corner,
+        )) {
+          continue;
+        }
 
         final x1 = roi.left + component.left;
         final y1 = roi.top + component.top;
@@ -479,6 +488,28 @@ abstract final class WatermarkDetector {
       );
     }
     return details.join(';');
+  }
+
+  static bool _touchesOuterBorder(
+    Uint8List mask,
+    int width,
+    int height,
+    _Component component,
+    _Corner corner,
+  ) {
+    // The two small dilations spread a frame-flush edge three pixels inward,
+    // so a watermark inset by anything more than that stays clear of the strip.
+    const border = 3;
+    final top = max(0, component.top - 2);
+    final bottom = min(height - 1, component.bottom + 2);
+    final leftSide = corner == _Corner.topLeft || corner == _Corner.bottomLeft;
+    for (var y = top; y <= bottom; y++) {
+      for (var offset = 0; offset < border; offset++) {
+        final x = leftSide ? offset : width - 1 - offset;
+        if (mask[y * width + x] != 0) return true;
+      }
+    }
+    return false;
   }
 
   static bool _sameSize(List<WatermarkFrame> frames) => frames.every(
