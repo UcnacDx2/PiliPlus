@@ -40,7 +40,9 @@ abstract final class ForkAccountPlayback {
     );
     if (result is! Success<PlayUrlModel>) return result;
     final history = Accounts.history;
-    if (history.mid == Accounts.video.mid) return result;
+    if (!history.isLogin || history.mid == Accounts.video.mid) {
+      return result;
+    }
 
     final progress = await VideoHttp.videoUrl(
       avid: avid,
@@ -75,7 +77,9 @@ abstract final class ForkAccountPlayback {
   }) async {
     if ((progress != null && progress > 0) || epId == null) return progress;
     final history = Accounts.history;
-    if (history.mid == Accounts.video.mid) return progress;
+    if (!history.isLogin || history.mid == Accounts.video.mid) {
+      return progress;
+    }
     final keyword = title?.trim();
     if (keyword == null || keyword.isEmpty) return progress;
 
