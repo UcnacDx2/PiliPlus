@@ -388,9 +388,11 @@ abstract final class WatermarkDetector {
         // A real corner watermark is inset from the encoded frame. Components
         // touching the outer border are usually letterbox/content boundaries
         // or persistent sprite-page edges, especially on sharper web shots.
-        // A real corner watermark is inset from the encoded frame; treat a
-        // gap of one pixel (morphology rounding) as touching the border.
-        if (outerGap <= 1 || outerGap > 0.085 * width) continue;
+        // A real corner watermark is inset from the encoded frame. The
+        // closing erosion (radius 4) also shaves border-flush components,
+        // so anything within that radius of the outer edge is treated as
+        // touching it.
+        if (outerGap <= 4 || outerGap > 0.085 * width) continue;
 
         final x1 = roi.left + component.left;
         final y1 = roi.top + component.top;
