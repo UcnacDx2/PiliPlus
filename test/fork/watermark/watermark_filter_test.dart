@@ -1,6 +1,9 @@
 import 'package:PiliPlus/fork/watermark/watermark_position.dart';
 import 'package:PiliPlus/fork/watermark/watermark_region.dart';
+import 'dart:typed_data';
+
 import 'package:PiliPlus/fork/watermark/watermark_filter.dart';
+import 'package:PiliPlus/fork/watermark/watermark_stroke_mask.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -113,5 +116,58 @@ void main() {
       WatermarkFilter.commandSequenceFor(shaderPath).join(' '),
       isNot(contains(' clr ')),
     );
+  });
+
+
+  test('refinement adds stroke helpers and keeps fallback regions', () {
+    const region = WatermarkRegion(
+      left: 0.8,
+      top: 0.01,
+      right: 0.99,
+      bottom: 0.12,
+      confidence: 1,
+    );
+    const other = WatermarkRegion(
+      left: 0.01,
+      top: 0.01,
+      right: 0.2,
+      bottom: 0.1,
+      confidence: 1,
+    );
+    final mask = WatermarkStrokeMask(
+      columns: 64,
+      rows: 20,
+      words: Uint32List.fromList([0x80000000, 0x00000001]),
+    );
+    final refinement = WatermarkRefinement(region: region, mask: mask);
+
+    final shader = WatermarkFilter.shaderFor(
+      [region, other],
+      refinement: refinement,
+    );
+
+    expect(shader, contains('piliplus_refine'));
+    expect(shader, contains('const int piliplus_cols = 64;'));
+    expect(shader, contains('const int piliplus_rows = 20;'));
+    expect(shader, contains('2147483648u'));
+    expect(shader, contains('piliplus_stroke'));
+    // The second region keeps the whole-rectangle blend.
+    expect(shader, contains('piliplus_fill(HOOKED_pos, region1)'));
+    expect(shader, contains('piliplus_refine(HOOKED_pos, region0)'));
+  });
+
+  test('shader without refinement keeps the plain fill only', () {
+    const region = WatermarkRegion(
+      left: 0.8,
+      top: 0.01,
+      right: 0.99,
+      bottom: 0.12,
+      confidence: 1,
+    );
+
+    final shader = WatermarkFilter.shaderFor([region]);
+
+    expect(shader, isNot(contains('piliplus_refine')));
+    expect(shader, contains('piliplus_fill'));
   });
 }

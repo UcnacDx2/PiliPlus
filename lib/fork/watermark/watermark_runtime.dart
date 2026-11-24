@@ -6,6 +6,7 @@ import 'package:PiliPlus/fork/fork_prefs.dart';
 import 'package:PiliPlus/fork/watermark/first_frame_watermark_service.dart';
 import 'package:PiliPlus/fork/watermark/watermark_detector.dart';
 import 'package:PiliPlus/fork/watermark/watermark_input.dart';
+import 'package:PiliPlus/fork/watermark/watermark_stroke_mask.dart';
 import 'package:PiliPlus/fork/watermark/watermark_filter.dart';
 import 'package:PiliPlus/fork/watermark/watermark_mode.dart';
 import 'package:PiliPlus/fork/watermark/watermark_position.dart';
@@ -117,16 +118,38 @@ final class ForkWatermarkRuntime {
     }
   }
 
-
   Future<void> _detectBilibili(int generation) async {
     final bvid = _bvid;
     final player = _player;
     if (bvid == null || player == null) return;
 
-    final region = await FirstFrameWatermarkService.detect(bvid);
+    final detail = await FirstFrameWatermarkService.detectDetail(bvid);
+    final region = detail.region;
     if (region == null || !_isCurrent(generation, player)) return;
-    if (await _applyDetected(generation, player, [region])) {
+    final refinement = await _buildRefinement(detail.frames, region);
+    if (await _applyDetected(generation, player, [region],
+        refinement: refinement)) {
       SmartDialog.showToast('已处理 bilibili 水印');
+    }
+  }
+
+  /// Builds the stroke mask for a detected region from the frames the
+  /// detection ran on. A failure here only downgrades the shader to the
+  /// whole-region blend, never blocks the filter.
+  Future<WatermarkRefinement?> _buildRefinement(
+    List<WatermarkFrame> frames,
+    WatermarkRegion region,
+  ) async {
+    if (frames.isEmpty) return null;
+    try {
+      final anchor = await WatermarkDetector.detectBilibiliAnchorInFrames(
+        frames,
+      );
+      if (anchor == null) return null;
+      return await WatermarkStrokeMaskBuilder.build(frames, anchor);
+    } catch (error, stackTrace) {
+      Utils.reportError('stroke mask build failed: $error', stackTrace);
+      return null;
     }
   }
 
@@ -160,6 +183,7 @@ final class ForkWatermarkRuntime {
     // Each branch publishes as soon as it completes: a slow first-frame
     // request must never delay an already-finished videoshot result.
     WatermarkRegion? firstFrameRegion;
+    WatermarkRefinement? firstFrameRefinement;
     var videoShotRegions = const <WatermarkRegion>[];
     var applyQueue = Future<void>.value();
 
@@ -171,13 +195,19 @@ final class ForkWatermarkRuntime {
       if (regions.isEmpty) return Future.value();
       applyQueue = applyQueue.then((_) async {
         if (!_isCurrent(generation, player)) return;
-        await _applyDetected(generation, player, regions);
+        await _applyDetected(generation, player, regions,
+          refinement: firstFrameRefinement);
       });
       return applyQueue;
     }
 
     final firstFrameTask = () async {
-      firstFrameRegion = await FirstFrameWatermarkService.detect(bvid);
+      final detail = await FirstFrameWatermarkService.detectDetail(bvid);
+      firstFrameRegion = detail.region;
+      final region = detail.region;
+      firstFrameRefinement = region == null
+          ? null
+          : await _buildRefinement(detail.frames, region);
       if (!_isCurrent(generation, player) || firstFrameRegion == null) {
         return;
       }
@@ -302,11 +332,12 @@ final class ForkWatermarkRuntime {
   Future<bool> _applyDetected(
     int generation,
     Player player,
-    List<WatermarkRegion> regions,
-  ) async {
+    List<WatermarkRegion> regions, {
+    WatermarkRefinement? refinement,
+  }) async {
     if (!_isCurrent(generation, player) || regions.isEmpty) return false;
     try {
-      await WatermarkFilter.apply(player, regions);
+      await WatermarkFilter.apply(player, regions, refinement: refinement);
       if (!_isCurrent(generation, player)) return false;
       _activeRegions = regions;
       return true;

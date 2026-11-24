@@ -17,10 +17,13 @@ import 'package:PiliPlus/utils/image_utils.dart';
 /// cached, so this path never needs to decode or seek the playing video.
 abstract final class FirstFrameWatermarkService {
   static const _maxEntries = 160;
-  static final LinkedHashMap<String, Future<WatermarkRegion?>> _cache =
+  static final LinkedHashMap<String, Future<FirstFrameDetail>> _cache =
       LinkedHashMap();
 
-  static Future<WatermarkRegion?> detect(String bvid) {
+  static Future<WatermarkRegion?> detect(String bvid) async =>
+      (await detectDetail(bvid)).region;
+
+  static Future<FirstFrameDetail> detectDetail(String bvid) {
     final cached = _cache.remove(bvid);
     if (cached != null) {
       _cache[bvid] = cached;
@@ -35,10 +38,12 @@ abstract final class FirstFrameWatermarkService {
     return request;
   }
 
-  static Future<WatermarkRegion?> _resolve(String bvid) async {
+  static Future<FirstFrameDetail> _resolve(String bvid) async {
     try {
       final firstFrame = await ForkVideoApi.getFirstFrame(bvid);
-      if (firstFrame == null || firstFrame.isEmpty) return null;
+      if (firstFrame == null || firstFrame.isEmpty) {
+        return const FirstFrameDetail(null, []);
+      }
 
       final displayUrl = ImageUtils.thumbnailUrl(firstFrame);
       var file = (await CacheManager.manager.getFileFromCache(displayUrl))?.file;
@@ -56,15 +61,17 @@ abstract final class FirstFrameWatermarkService {
         );
         image = (await codec.getNextFrame()).image;
         final frame = await WatermarkInput.fromImage(image, upscale: true);
-        if (frame == null) return null;
-        return await WatermarkDetector.detectBilibiliAnchor(frame);
+        if (frame == null) return const FirstFrameDetail(null, []);
+        final anchor =
+            await WatermarkDetector.detectBilibiliAnchorInFrames([frame]);
+        return FirstFrameDetail(anchor?.region, [frame]);
       } finally {
         image?.dispose();
         codec?.dispose();
       }
     } catch (_) {
       _cache.remove(bvid);
-      return null;
+      return const FirstFrameDetail(null, []);
     }
   }
 
@@ -79,4 +86,13 @@ abstract final class FirstFrameWatermarkService {
     final separator = uri.path.contains('@') ? '_' : '@';
     return uri.replace(path: '${uri.path}${separator}480w_85q.webp').toString();
   }
+}
+
+/// Detection result plus the frames it ran on, kept only while the video's
+/// watermark filter is being built.
+final class FirstFrameDetail {
+  const FirstFrameDetail(this.region, this.frames);
+
+  final WatermarkRegion? region;
+  final List<WatermarkFrame> frames;
 }
