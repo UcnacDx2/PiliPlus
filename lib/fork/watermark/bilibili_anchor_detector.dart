@@ -25,6 +25,10 @@ final class BilibiliAnchor {
     required this.score,
     required this.support,
     required this.frameCount,
+    required this.anchorX,
+    required this.anchorY,
+    required this.analysisWidth,
+    required this.analysisHeight,
   });
 
   final WatermarkCorner corner;
@@ -34,6 +38,12 @@ final class BilibiliAnchor {
   /// Number of analysed frames whose best candidate agreed with [corner].
   final int support;
   final int frameCount;
+
+  /// Top-left of the word mark in the analysis space whose short side is 270.
+  final int anchorX;
+  final int anchorY;
+  final int analysisWidth;
+  final int analysisHeight;
 }
 
 /// Edge template of the standard bilibili word mark, measured on a 480x270
@@ -163,6 +173,10 @@ abstract final class BilibiliAnchorDetector {
       score: best.score,
       support: best.support,
       frameCount: analyses.length,
+      anchorX: best.x,
+      anchorY: best.y,
+      analysisWidth: analysis.width,
+      analysisHeight: analysis.height,
     );
   }
 
