@@ -1,0 +1,87 @@
+name: Sync fork/mobile
+
+on:
+  schedule:
+    - cron: "23 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: sync-fork-mobile
+  cancel-in-progress: false
+
+jobs:
+  sync-and-build:
+    # 只在本人的 fork 仓库运行，避免上游仓库里误跑
+    if: github.repository == 'UcnacDx2/PiliPlus'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork branch
+        uses: actions/checkout@v7
+        with:
+          ref: fork/mobile
+          fetch-depth: 0
+
+      - name: Configure upstream
+        run: |
+          git remote add canonical https://github.com/bggRGjQaUbCoE/PiliPlus.git || true
+          git fetch canonical main
+
+      - name: Rebase onto upstream main
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rebase canonical/main
+
+      - name: Install Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            android/*.gradle*
+            android/**/gradle-wrapper.properties
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: pubspec.yaml
+          cache: true
+
+      # 分析需要打过补丁的 Flutter / material_ui，脚本内部会执行 flutter pub get
+      - name: Apply framework patches
+        shell: pwsh
+        run: lib/scripts/patch.ps1 android
+
+      - name: Analyze fork surface
+        run: >-
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          lib/fork
+          lib/plugin/pl_player/controller.dart
+          lib/pages/video/controller.dart
+          lib/pages/video/widgets/header_control.dart
+          lib/http/video.dart
+          lib/utils/page_utils.dart
+          lib/common/widgets/video_card
+          lib/pages/dynamics/widgets/video_panel.dart
+          lib/pages/setting/models
+          lib/models/model_video.dart
+          lib/models/model_hot_video_item.dart
+          lib/models/model_rec_video_item.dart
+          lib/models/home/rcmd/result.dart
+          lib/models/dynamics/result.dart
+
+      - name: Test fork layer
+        run: flutter test test/fork
+
+      - name: Build Android APKs
+        run: >-
+          flutter build apk --release --split-per-abi
+          --target-platform android-arm,android-arm64,android-x64 --no-pub
+
+      - name: Push rebased branch
+        run: git push --force-with-lease origin HEAD:fork/mobile
