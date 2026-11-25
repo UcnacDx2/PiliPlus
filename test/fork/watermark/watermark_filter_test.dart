@@ -140,7 +140,7 @@ void main() {
     expect(shader, isNot(contains('piliplus_mask[')));
   });
 
-  test('fragmented masks fall back to the whole-region fill', () {
+  test('a fragmented mask never produces an oversized shader', () {
     const region = WatermarkRegion(
       left: 0.8,
       top: 0.01,
@@ -148,7 +148,9 @@ void main() {
       bottom: 0.12,
       confidence: 1,
     );
-    // Checkerboard: every row has many runs, far beyond the rect budget.
+    // Checkerboard: every row has many runs. The rectangle ladder may compact
+    // it (merging slanted neighbours) or drop it for the whole-region fill;
+    // either way the shader has to stay small enough to compile on mobile.
     final words = Uint32List(64 * 20 ~/ 32 + 1);
     for (var index = 0; index < 64 * 20; index++) {
       if ((index ~/ 64 + index).isEven) {
@@ -160,12 +162,20 @@ void main() {
       mask: WatermarkStrokeMask(columns: 64, rows: 20, words: words),
     );
 
-    final shader = utf8.decode(
-      WatermarkShader.source([region], refinement: refinement),
-    );
+    final bytes = WatermarkShader.source([region], refinement: refinement);
+    final shader = utf8.decode(bytes);
 
-    expect(shader, isNot(contains('piliplus_refine')));
-    expect(shader, contains('piliplus_fill'));
+    expect(
+      shader.contains('piliplus_refine') || shader.contains('piliplus_fill'),
+      isTrue,
+    );
+    // WatermarkShader._maxMaskRects, the documented rectangle budget.
+    const maxMaskRects = 96;
+    expect(
+      RegExp(r'piliplus_cell\(uv, rect, vec4\(').allMatches(shader).length,
+      lessThanOrEqualTo(maxMaskRects),
+    );
+    expect(bytes.length, lessThan(96 * 1024));
   });
 
   test('shader without refinement keeps the plain fill only', () {
