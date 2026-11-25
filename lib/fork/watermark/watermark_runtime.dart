@@ -7,7 +7,6 @@ import 'package:PiliPlus/fork/watermark/watermark_stroke_mask.dart';
 import 'package:PiliPlus/fork/watermark/watermark_filter.dart';
 import 'package:PiliPlus/fork/watermark/watermark_mode.dart';
 import 'package:PiliPlus/fork/watermark/watermark_region.dart';
-import 'package:PiliPlus/fork/watermark/video_shot_frame_service.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, debugPrint;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -109,14 +108,10 @@ final class ForkWatermarkRuntime {
     // 整块覆盖不需要笔画 mask，直接用整框填充（fork.3 的纯文本 shader 路径）。
     WatermarkRefinement? refinement;
     if (ForkPref.watermarkMode == WatermarkMode.stroke) {
-      // 视频截图中再取几帧补充时域投票：单帧投票会让背景噪声
-      // 直接进入笔画 mask（细微白点扩散）。
-      final frames = await _analysisFrames(
-        bvid,
-        detail,
-        player,
-      );
-      refinement = await _buildRefinement(detail, frames, region);
+      // 笔画 mask 只用首帧缩略图：它最清晰，且必定带水印。视频截图的精灵格
+      // 是缩到 480 后裁出的小图，细笔画会丢、部分时间点甚至没有水印，用它
+      // 们投票会把首帧本已覆盖的昵称否决掉。
+      refinement = await _buildRefinement(detail, detail.frames);
     }
     if (await _applyDetected(generation, player, [region],
         refinement: refinement)) {
@@ -124,45 +119,14 @@ final class ForkWatermarkRuntime {
     }
   }
 
-  /// The first-frame thumbnail plus videoshot sprite cells, so the stroke
-  /// mask is voted on across timestamps instead of a single image.
-  Future<List<WatermarkFrame>> _analysisFrames(
-    String bvid,
-    FirstFrameDetail detail,
-    Player player,
-  ) async {
-    final frames = [...detail.frames];
-    if (frames.isEmpty) return frames;
-    try {
-      final shot = await VideoShotFrameService.frames(bvid: bvid, cid: null);
-      if (shot.isNotEmpty) {
-        // Only frames whose aspect matches the first-frame thumbnail can vote
-        // on the same grid, which `buildSync` enforces again per frame.
-        final reference = frames.first;
-        frames.addAll(
-          shot.where((frame) {
-            final ratio =
-                (frame.width / frame.height) /
-                (reference.width / reference.height);
-            return (ratio - 1).abs() < 0.03;
-          }),
-        );
-      }
-    } catch (error, stackTrace) {
-      Utils.reportError('videoshot frames failed: $error', stackTrace);
-    }
-    return frames;
-  }
-
-  /// Builds the stroke mask for a detected region from the frames the
-  /// detection ran on. The anchor is the one the region came from: re-detecting
-  /// on the (first frame + sprite frames) set can miss or drift, which silently
-  /// downgrades stroke mode to the whole-region fill. A failure here only
-  /// downgrades the shader to the whole-region blend, never blocks the filter.
+  /// Builds the stroke mask for a detected region. The anchor is the one the
+  /// region came from: re-detecting on a different frame set can miss or drift,
+  /// which silently downgrades stroke mode to the whole-region fill. A failure
+  /// here only downgrades the shader to the whole-region blend, never blocks
+  /// the filter.
   Future<WatermarkRefinement?> _buildRefinement(
     FirstFrameDetail detail,
     List<WatermarkFrame> frames,
-    WatermarkRegion region,
   ) async {
     if (frames.isEmpty || detail.anchor == null) return null;
     try {

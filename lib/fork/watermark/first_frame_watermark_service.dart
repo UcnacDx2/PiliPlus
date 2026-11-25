@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:PiliPlus/common/constants.dart';
@@ -46,22 +47,23 @@ abstract final class FirstFrameWatermarkService {
         return const FirstFrameDetail(null, []);
       }
 
-      final displayUrl = ImageUtils.thumbnailUrl(firstFrame);
-      var file = (await CacheManager.manager.getFileFromCache(displayUrl))?.file;
-      file ??= await CacheManager.manager.getSingleFile(
-        _analysisUrl(firstFrame),
-        headers: Constants.baseHeaders,
-      );
+      // Always analyse a 1280 px frame: at 480 px the glyph strokes are 1-2 px
+      // wide, so a stroke mask cannot separate them from the scene and falls
+      // back to covering the whole nickname block.
+      final analysisBytes =
+          await _downloadAnalysis(firstFrame) ?? await _cachedDisplay(firstFrame);
+      if (analysisBytes == null) return const FirstFrameDetail(null, []);
 
       ui.Codec? codec;
       ui.Image? image;
       try {
         codec = await ui.instantiateImageCodec(
-          await file.readAsBytes(),
-          targetWidth: 480,
+          analysisBytes,
+          targetWidth: 1280,
         );
         image = (await codec.getNextFrame()).image;
-        final frame = await WatermarkInput.fromImage(image, upscale: true);
+        final frame =
+            await WatermarkInput.fromImage(image, targetWidth: 1280);
         if (frame == null) return const FirstFrameDetail(null, []);
         final anchor =
             await WatermarkDetector.detectBilibiliAnchorInFrames([frame]);
@@ -76,6 +78,30 @@ abstract final class FirstFrameWatermarkService {
     }
   }
 
+  /// Downloads the high-resolution analysis frame; returns null when the CDN
+  /// request fails so the caller can fall back to an already cached thumbnail.
+  static Future<Uint8List?> _downloadAnalysis(String firstFrame) async {
+    try {
+      final file = await CacheManager.manager.getSingleFile(
+        _analysisUrl(firstFrame),
+        headers: Constants.baseHeaders,
+      );
+      return await file.readAsBytes();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<Uint8List?> _cachedDisplay(String firstFrame) async {
+    try {
+      final displayUrl = ImageUtils.thumbnailUrl(firstFrame);
+      final file = (await CacheManager.manager.getFileFromCache(displayUrl))?.file;
+      return await file?.readAsBytes();
+    } catch (_) {
+      return null;
+    }
+  }
+
   static String _analysisUrl(String url) {
     final uri = Uri.tryParse(url.http2https);
     if (uri == null || uri.host.isEmpty) return url.http2https;
@@ -85,7 +111,9 @@ abstract final class FirstFrameWatermarkService {
     if (!isBiliCdn) return uri.toString();
 
     final separator = uri.path.contains('@') ? '_' : '@';
-    return uri.replace(path: '${uri.path}${separator}480w_85q.webp').toString();
+    return uri
+        .replace(path: '${uri.path}${separator}1280w_85q.webp')
+        .toString();
   }
 }
 

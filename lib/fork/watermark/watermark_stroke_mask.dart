@@ -54,6 +54,18 @@ final class WatermarkRefinement {
 /// Runs on plain [WatermarkFrame] luma data so it can also be exercised
 /// offline, without `dart:ui`.
 abstract final class WatermarkStrokeMaskBuilder {
+  /// `min(r, g, b)` floor for a watermark stroke. The creator mark is white,
+  /// so on a coloured background (grass, foliage, stage lights) its whiteness
+  /// stays far above this while the scene's does not. A 480 px thumbnail
+  /// cannot separate the mark from a bright background at all; the mask is
+  /// built from the 1280 px first frame instead, where the glyph cores keep a
+  /// whiteness above this floor while even pale foliage stays below it.
+  static const _whiteGate = 170;
+
+  /// Minimum lit neighbours (3x3, self included) for a stroke cell. A real
+  /// glyph stroke is connected; isolated specular dots are not.
+  static const _density = 3;
+
   static Future<WatermarkRefinement?> build(
     List<WatermarkFrame> frames,
     BilibiliAnchor anchor,
@@ -96,48 +108,33 @@ abstract final class WatermarkStrokeMaskBuilder {
         .round()
         .clamp(12, 64);
     final votes = Uint8List(columns * rows);
-    // Faint nickname strokes sit close to the background; with only one frame
-    // there is no temporal vote to recover them, so the luminance gate is
-    // relaxed and noise is filtered by the neighbourhood density instead.
-    final glowGate = samples.length == 1 ? 14 : 20;
-    final shadowGate = samples.length == 1 ? 16 : 24;
-    for (final frame in samples) {
-      _voteFrame(votes, columns, rows, frame, anchor, glowGate, shadowGate);
-    }
-    final required = samples.length == 1
-        ? 1
-        : math.max(2, samples.length - 1);
+    // The first-frame thumbnail is the only input that reliably carries the
+    // creator watermark: sprite cells are downscaled crops, and some sprite
+    // timestamps do not show the mark at all, so they must never veto the
+    // nickname. A white-text gate keeps coloured scene edges (grass, foliage)
+    // and a neighbourhood filter keeps isolated bright dots out of the mask.
+    _voteFrame(
+      votes,
+      columns,
+      rows,
+      samples.first,
+      anchor,
+      _bandGlowGate(samples.first, anchor),
+      24,
+      _whiteGate,
+    );
 
     final mask = Uint8List(columns * rows);
     final template = _templateCells(anchor, columns, rows);
-    // A single frame cannot vote across time, so sparse background noise
-    // (fine dots on grass, glitter) passes the per-pixel test directly.
-    // Require a stroke-like neighbourhood instead: a real glyph stroke has
-    // adjacent lit cells, isolated hits do not.
-    final density = samples.length == 1
-        ? 3
-        : 1;
     for (var index = 0; index < mask.length; index++) {
-      final x = index % columns;
-      final y = index ~/ columns;
-      final inTemplate = template[y * columns + x] != 0;
-      if (inTemplate) {
+      if (template[index] != 0) {
         mask[index] = 1;
         continue;
       }
-      if (votes[index] < required) continue;
-      if (density > 1) {
-        var neighbours = 0;
-        for (var dy = -1; dy <= 1; dy++) {
-          for (var dx = -1; dx <= 1; dx++) {
-            final nx = x + dx;
-            final ny = y + dy;
-            if (nx < 0 || ny < 0 || nx >= columns || ny >= rows) continue;
-            if (votes[ny * columns + nx] >= required) neighbours++;
-          }
-        }
-        if (neighbours < density) continue;
-      }
+      if (votes[index] == 0) continue;
+      final x = index % columns;
+      final y = index ~/ columns;
+      if (_neighbours(votes, columns, rows, x, y) < _density) continue;
       mask[index] = 1;
     }
     // Grow by one cell to cover antialiased edges, then pack.
@@ -160,8 +157,81 @@ abstract final class WatermarkStrokeMaskBuilder {
     );
   }
 
+  /// Counts lit cells in the 3x3 neighbourhood of ([x], [y]).
+  static int _neighbours(
+    Uint8List votes,
+    int columns,
+    int rows,
+    int x,
+    int y,
+  ) {
+    var count = 0;
+    for (var dy = -1; dy <= 1; dy++) {
+      for (var dx = -1; dx <= 1; dx++) {
+        final nx = x + dx;
+        final ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= columns || ny >= rows) continue;
+        if (votes[ny * columns + nx] != 0) count++;
+      }
+    }
+    return count;
+  }
+
+  /// Glow gate for the mark's band, chosen from how white the band already is.
+  ///
+  /// A band that is almost entirely white (a wall, a bright sky, a white
+  /// curtain) cannot be told apart by whiteness at all, and filling it flat
+  /// leaves no visible trace, so weak glyph edges are accepted there. On a
+  /// textured band the gate must stay strict or the fill smears the scene.
+  static int _bandGlowGate(WatermarkFrame frame, BilibiliAnchor anchor) {
+    // Without a colour plane nothing is known about the band; stay strict.
+    if (frame.whiteness == null) return 20;
+    final width = frame.width;
+    final height = frame.height;
+    final scale = height / anchor.analysisHeight;
+    final region = anchor.region;
+    final x0 = (region.left * width).floor().clamp(0, width - 1);
+    final x1 = math
+        .min(((anchor.anchorX - 1) * scale).ceil(), width)
+        .clamp(x0 + 1, width);
+    final y0 = math.max(0, ((anchor.anchorY - 1) * scale).floor());
+    final y1 = math
+        .min(height, ((anchor.anchorY + 19) * scale).ceil())
+        .clamp(y0 + 1, height);
+    var total = 0;
+    var white = 0;
+    for (var y = y0; y < y1; y++) {
+      final row = y * width;
+      for (var x = x0; x < x1; x++) {
+        total++;
+        if (frame.whitenessAt(row + x) >= _whiteGate) white++;
+      }
+    }
+    if (total == 0) return 20;
+    return white * 10 >= total * 8 ? 8 : 20;
+  }
+
   /// Adds one frame's vote to every grid cell whose centre looks like a glyph
   /// stroke: brighter than the local opening or darker than the local closing.
+  /// Exposed for diagnostics and tests; [columns] and [rows] must match the
+  /// grid the caller expects.
+  static void vote(
+    Uint8List votes,
+    BilibiliAnchor anchor,
+    WatermarkFrame frame,
+    {
+      int columns = 96,
+      int rows = 32,
+      int glowGate = 20,
+      int shadowGate = 24,
+      int whiteGate = 0,
+    }
+  ) {
+    _voteFrame(
+      votes, columns, rows, frame, anchor, glowGate, shadowGate, whiteGate,
+    );
+  }
+
   static void _voteFrame(
     Uint8List votes,
     int columns,
@@ -170,6 +240,7 @@ abstract final class WatermarkStrokeMaskBuilder {
     BilibiliAnchor anchor,
     int glowGate,
     int shadowGate,
+    int whiteGate,
   ) {
     final width = frame.width;
     final height = frame.height;
@@ -187,25 +258,48 @@ abstract final class WatermarkStrokeMaskBuilder {
     final bandTop = math.max(0, ((anchor.anchorY - 1) * scale).floor());
     final bandBottom =
         math.min(height, ((anchor.anchorY + 19) * scale).ceil());
+    // The logo half of the mark is known exactly and is filled from the
+    // template; the nickname is text of unknown width, so only its zone is
+    // voted.
     final nicknameRight =
         math.min(width, ((anchor.anchorX - 1) * scale).ceil());
 
     for (var y = 0; y < rows; y++) {
-      final py = (top + (y + 0.5) * regionHeight / rows)
-          .round()
-          .clamp(0, height - 1);
-      if (py < bandTop || py >= bandBottom) continue;
+      final y0 = (top + y * regionHeight / rows).floor();
+      final y1 = (top + (y + 1) * regionHeight / rows).ceil();
+      if (y1 <= bandTop || y0 >= bandBottom) continue;
+      final sy0 = y0.clamp(0, height - 1);
+      final sy1 = math.min(y1, bandBottom).clamp(sy0 + 1, height);
       for (var x = 0; x < columns; x++) {
-        final px = (left + (x + 0.5) * regionWidth / columns)
-            .round()
-            .clamp(0, width - 1);
-        if (px >= nicknameRight) continue;
-        final index = py * width + px;
-        final glow = luma[index] - opened[index];
-        final shadow = closed[index] - luma[index];
-        if (glow > glowGate || shadow > shadowGate) {
-          votes[y * columns + x]++;
+        final x0 = (left + x * regionWidth / columns).floor();
+        final x1 = (left + (x + 1) * regionWidth / columns).ceil();
+        if (x0 >= nicknameRight) continue;
+        final sx0 = x0.clamp(0, width - 1);
+        final sx1 = math.min(x1, nicknameRight).clamp(sx0 + 1, width);
+        // A cell is a box of pixels, not one sample: at 1280 px the glyph
+        // strokes are 2-3 px wide and a centre sample drops whole characters
+        // ("ArYu" stayed legible while the bold "令宇" was covered). A cell
+        // votes when at least a quarter of its pixels look like a stroke.
+        var hits = 0;
+        var total = 0;
+        for (var py = sy0; py < sy1; py++) {
+          final rowOffset = py * width;
+          for (var px = sx0; px < sx1; px++) {
+            total++;
+            final index = rowOffset + px;
+            final glow = luma[index] - opened[index];
+            final shadow = closed[index] - luma[index];
+            if (glow <= glowGate && shadow <= shadowGate) continue;
+            // The mark is white: a bright green edge has a strong luma
+            // gradient but a low whiteness and must stay out of the mask.
+            if (whiteGate > 0 && frame.whitenessAt(index) < whiteGate) {
+              continue;
+            }
+            hits++;
+          }
         }
+        if (total == 0 || hits * 4 < total) continue;
+        votes[y * columns + x]++;
       }
     }
   }

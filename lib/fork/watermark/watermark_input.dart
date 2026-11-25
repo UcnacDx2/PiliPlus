@@ -43,12 +43,23 @@ abstract final class WatermarkInput {
     // The video frame is letterboxed when the aspect differs from the sprite
     // frame, so the transparent border must not bleed into the luma.
     final luma = Uint8List(width * height);
+    final whiteness = Uint8List(width * height);
     for (var pixel = 0, offset = 0; pixel < luma.length; pixel++, offset += 4) {
       if (rgba[offset + 3] < 16) continue;
-      luma[pixel] =
-          (rgba[offset] * 77 + rgba[offset + 1] * 150 + rgba[offset + 2] * 29) >>
-          8;
+      final r = rgba[offset];
+      final g = rgba[offset + 1];
+      final b = rgba[offset + 2];
+      luma[pixel] = (r * 77 + g * 150 + b * 29) >> 8;
+      // min(r, g, b) is high only for desaturated bright pixels: the white
+      // watermark keeps it high on colored backgrounds, where a luma edge
+      // alone cannot tell the mark from the scene.
+      whiteness[pixel] = r < g ? (r < b ? r : b) : (g < b ? g : b);
     }
-    return WatermarkFrame(width: width, height: height, luma: luma);
+    return WatermarkFrame(
+      width: width,
+      height: height,
+      luma: luma,
+      whiteness: whiteness,
+    );
   }
 }

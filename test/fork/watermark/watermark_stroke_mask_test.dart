@@ -6,26 +6,46 @@ import 'package:PiliPlus/fork/watermark/watermark_region.dart';
 import 'package:PiliPlus/fork/watermark/watermark_stroke_mask.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+const _region = WatermarkRegion(
+  left: 0.08,
+  top: 0.01,
+  right: 0.44,
+  bottom: 0.13,
+  confidence: 1,
+);
+
 /// Luma plane with a white "word mark" drawn at the anchor position plus a
 /// nickname to its left, over a dark background.
+///
+/// [whiteness] mirrors [luma] (the mark is drawn white) so the white-text gate
+/// behaves as it does on a real frame; `null` keeps the frame colourless, which
+/// the builder treats as fully white.
 WatermarkFrame _frame(
   int width,
   int height,
   int anchorX,
   int anchorY, {
   int nicknameWidth = 60,
+  bool withWhiteness = true,
 }) {
   final luma = Uint8List(width * height);
+  final whiteness = withWhiteness ? Uint8List(width * height) : null;
   for (var y = 0; y < height; y++) {
     for (var x = 0; x < width; x++) {
       luma[y * width + x] = 30;
+      if (whiteness != null) whiteness[y * width + x] = 24;
     }
   }
+  void paint(int x, int y) {
+    luma[y * width + x] = 235;
+    if (whiteness != null) whiteness[y * width + x] = 232;
+  }
+
   const template = bilibiliWatermarkTemplate;
   for (var ty = 0; ty < template.length; ty++) {
     for (var tx = 0; tx < template[ty].length; tx++) {
       if (template[ty][tx] == '#') {
-        luma[(anchorY + ty) * width + anchorX + tx] = 235;
+        paint(anchorX + tx, anchorY + ty);
       }
     }
   }
@@ -33,11 +53,16 @@ WatermarkFrame _frame(
     for (var x = 0; x < nicknameWidth; x++) {
       final on = (x ~/ 7 + y ~/ 7).isEven;
       if (on) {
-        luma[(anchorY + 2 + y) * width + anchorX - 8 - nicknameWidth + x] = 235;
+        paint(anchorX - 8 - nicknameWidth + x, anchorY + 2 + y);
       }
     }
   }
-  return WatermarkFrame(width: width, height: height, luma: luma);
+  return WatermarkFrame(
+    width: width,
+    height: height,
+    luma: luma,
+    whiteness: whiteness,
+  );
 }
 
 BilibiliAnchor _anchor(
@@ -45,11 +70,10 @@ BilibiliAnchor _anchor(
   int y,
   int analysisWidth,
   int analysisHeight,
-  WatermarkRegion region,
 ) {
   return BilibiliAnchor(
     corner: WatermarkCorner.topLeft,
-    region: region,
+    region: _region,
     score: 1,
     support: 1,
     frameCount: 1,
@@ -60,6 +84,19 @@ BilibiliAnchor _anchor(
   );
 }
 
+/// Grid cell holding frame pixel ([px], [py]).
+(int, int) _cell(int px, int py, int columns, int rows) => (
+      ((px - _region.left * 1280) /
+                  (_region.right - _region.left) /
+                  1280 *
+                  columns)
+              .floor()
+              .clamp(0, columns - 1),
+      ((py / 720 - _region.top) / (_region.bottom - _region.top) * rows)
+          .floor()
+          .clamp(0, rows - 1),
+    );
+
 void main() {
   test('builds a mask covering the strokes and skipping background', () {
     const width = 480;
@@ -67,16 +104,9 @@ void main() {
     const ax = 120;
     const ay = 8;
     final frame = _frame(width, height, ax, ay);
-    const region = WatermarkRegion(
-      left: 0.08,
-      top: 0.01,
-      right: 0.44,
-      bottom: 0.13,
-      confidence: 1,
-    );
     final refinement = WatermarkStrokeMaskBuilder.buildSync(
       [frame],
-      _anchor(ax, ay, width, height, region),
+      _anchor(ax, ay, width, height),
     );
 
     expect(refinement, isNotNull);
@@ -85,14 +115,14 @@ void main() {
     expect(mask.rows, inInclusiveRange(12, 64));
 
     // The template's own cell must be covered.
-    final templateX = ((ax / width - region.left) /
-            (region.right - region.left) *
-            mask.columns)
-        .floor();
-    final templateY = ((ay / height - region.top) /
-            (region.bottom - region.top) *
-            mask.rows)
-        .floor();
+    final templateX =
+        ((ax / width - _region.left) / (_region.right - _region.left) *
+                mask.columns)
+            .floor();
+    final templateY =
+        ((ay / height - _region.top) / (_region.bottom - _region.top) *
+                mask.rows)
+            .floor();
     expect(mask.bitAt(templateX, templateY), isTrue);
 
     // Far corners of the region are plain background.
@@ -104,51 +134,103 @@ void main() {
     expect(mask.coverage, greaterThan(0.02));
   });
 
-  test('background motion between frames does not enter the mask', () {
-    const width = 480;
-    const height = 270;
+  test('coloured background glow stays out of the mask', () {
+    // At 1280 px the glyph strokes are only a few pixels wide, so cells are
+    // wider than one pixel and the vote aggregates a cell's pixels.
+    const width = 1280;
+    const height = 720;
     const ax = 120;
-    const ay = 8;
-    const region = WatermarkRegion(
-      left: 0.08,
-      top: 0.01,
-      right: 0.44,
-      bottom: 0.13,
-      confidence: 1,
-    );
-    final anchor = _anchor(ax, ay, width, height, region);
-    final frames = [
-      _frame(width, height, ax, ay),
-      _frame(width, height, ax, ay),
-    ];
-    // A bright moving scene object inside the region that overlaps the text
-    // band but is present in one frame only.
-    for (var y = 0; y < 18; y++) {
-      for (var x = 0; x < 40; x++) {
-        frames[1].luma[(ay + y) * width + x + 10] = 220;
+    const ay = 20;
+    // No synthetic nickname: two patches sit side by side in the nickname
+    // zone, one white (letters) and one saturated green (foliage).
+    final base = _frame(width, height, ax, ay, nicknameWidth: 0);
+    final luma = Uint8List.fromList(base.luma);
+    final whiteness = Uint8List.fromList(base.whiteness!);
+
+    void patch(int x0, int x1, int y0, int y1, int l, int w) {
+      for (var y = y0; y < y1; y++) {
+        for (var x = x0; x < x1; x++) {
+          luma[y * width + x] = l;
+          whiteness[y * width + x] = w;
+        }
       }
     }
 
-    final refinement = WatermarkStrokeMaskBuilder.buildSync(frames, anchor);
+    // Bars narrower than the opening kernel's 2 * 11 px, so they register as a
+    // glow like a glyph stroke does; only whiteness can tell them apart.
+    patch(140, 148, 58, 82, 235, 232); // white letters
+    patch(220, 228, 58, 82, 225, 40); // green foliage: bright, not white
+    final frame = WatermarkFrame(
+      width: width,
+      height: height,
+      luma: luma,
+      whiteness: whiteness,
+    );
+
+    final anchor = _anchor(ax, ay, 480, 270);
+    final refinement = WatermarkStrokeMaskBuilder.buildSync([frame], anchor);
     expect(refinement, isNotNull);
-    // The flicker must not be masked: with one vote of two frames, the
-    // required count is max(2, 1) = 1, so template strokes still survive but
-    // the flicker got a single vote which is below the requirement of 2.
     final mask = refinement!.mask;
-    expect(mask.coverage, lessThan(0.9));
+
+    int maskedInside(int x0, int x1, int y0, int y1) {
+      var count = 0;
+      for (var y = y0; y < y1; y++) {
+        for (var x = x0; x < x1; x++) {
+          final (cx, cy) = _cell(x, y, mask.columns, mask.rows);
+          if (mask.bitAt(cx, cy)) count++;
+        }
+      }
+      return count;
+    }
+
+    expect(maskedInside(140, 148, 60, 80), greaterThan(0));
+    expect(maskedInside(220, 228, 60, 80), 0);
+  });
+
+  test('a two pixel stroke between cell centres is still voted in', () {
+    const width = 1280;
+    const height = 720;
+    const ax = 300;
+    const ay = 20;
+    final base = _frame(width, height, ax, ay, nicknameWidth: 0);
+    final luma = Uint8List.fromList(base.luma);
+    final whiteness = Uint8List.fromList(base.whiteness!);
+    // A single 2 px wide white stroke, narrower than one grid cell.
+    const strokeX = 190;
+    for (var y = 58; y < 82; y++) {
+      for (var x = strokeX; x < strokeX + 2; x++) {
+        luma[y * width + x] = 240;
+        whiteness[y * width + x] = 236;
+      }
+    }
+    final frame = WatermarkFrame(
+      width: width,
+      height: height,
+      luma: luma,
+      whiteness: whiteness,
+    );
+
+    const columns = 172;
+    const rows = 32;
+    final votes = Uint8List(columns * rows);
+    WatermarkStrokeMaskBuilder.vote(
+      votes,
+      _anchor(ax, ay, 480, 270),
+      frame,
+      columns: columns,
+      rows: rows,
+      glowGate: 20,
+      shadowGate: 24,
+      whiteGate: 170,
+    );
+    final (cx, cy) = _cell(strokeX, 70, columns, rows);
+    expect(votes[cy * columns + cx], greaterThan(0));
   });
 
   test('returns null for a region without usable frames', () {
-    const region = WatermarkRegion(
-      left: 0.1,
-      top: 0.05,
-      right: 0.4,
-      bottom: 0.12,
-      confidence: 1,
-    );
     final refinement = WatermarkStrokeMaskBuilder.buildSync(
       const [],
-      _anchor(120, 8, 480, 270, region),
+      _anchor(120, 8, 480, 270),
     );
     expect(refinement, isNull);
   });
