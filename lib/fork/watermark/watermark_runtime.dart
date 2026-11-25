@@ -116,7 +116,7 @@ final class ForkWatermarkRuntime {
         detail,
         player,
       );
-      refinement = await _buildRefinement(frames, region);
+      refinement = await _buildRefinement(detail, frames, region);
     }
     if (await _applyDetected(generation, player, [region],
         refinement: refinement)) {
@@ -155,19 +155,18 @@ final class ForkWatermarkRuntime {
   }
 
   /// Builds the stroke mask for a detected region from the frames the
-  /// detection ran on. A failure here only downgrades the shader to the
-  /// whole-region blend, never blocks the filter.
+  /// detection ran on. The anchor is the one the region came from: re-detecting
+  /// on the (first frame + sprite frames) set can miss or drift, which silently
+  /// downgrades stroke mode to the whole-region fill. A failure here only
+  /// downgrades the shader to the whole-region blend, never blocks the filter.
   Future<WatermarkRefinement?> _buildRefinement(
+    FirstFrameDetail detail,
     List<WatermarkFrame> frames,
     WatermarkRegion region,
   ) async {
-    if (frames.isEmpty) return null;
+    if (frames.isEmpty || detail.anchor == null) return null;
     try {
-      final anchor = await WatermarkDetector.detectBilibiliAnchorInFrames(
-        frames,
-      );
-      if (anchor == null) return null;
-      return await WatermarkStrokeMaskBuilder.build(frames, anchor);
+      return await WatermarkStrokeMaskBuilder.build(frames, detail.anchor!);
     } catch (error, stackTrace) {
       Utils.reportError('stroke mask build failed: $error', stackTrace);
       return null;

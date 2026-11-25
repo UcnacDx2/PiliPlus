@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/fork/http/fork_video_api.dart';
+import 'package:PiliPlus/fork/watermark/bilibili_anchor_detector.dart';
 import 'package:PiliPlus/fork/watermark/watermark_region.dart';
 import 'package:PiliPlus/fork/watermark/watermark_detector.dart';
 import 'package:PiliPlus/fork/watermark/watermark_input.dart';
@@ -64,7 +65,7 @@ abstract final class FirstFrameWatermarkService {
         if (frame == null) return const FirstFrameDetail(null, []);
         final anchor =
             await WatermarkDetector.detectBilibiliAnchorInFrames([frame]);
-        return FirstFrameDetail(anchor?.region, [frame]);
+        return FirstFrameDetail(anchor?.region, [frame], anchor: anchor);
       } finally {
         image?.dispose();
         codec?.dispose();
@@ -89,10 +90,16 @@ abstract final class FirstFrameWatermarkService {
 }
 
 /// Detection result plus the frames it ran on, kept only while the video's
-/// watermark filter is being built.
+/// watermark filter is being built. The anchor is carried over so the stroke
+/// mask is built against the very same location the region came from.
 final class FirstFrameDetail {
-  const FirstFrameDetail(this.region, this.frames);
+  const FirstFrameDetail(
+    this.region,
+    this.frames, {
+    this.anchor,
+  });
 
   final WatermarkRegion? region;
   final List<WatermarkFrame> frames;
+  final BilibiliAnchor? anchor;
 }
