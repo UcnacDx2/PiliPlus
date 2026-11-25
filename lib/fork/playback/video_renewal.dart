@@ -1,18 +1,18 @@
-import 'package:PiliPlus/fork/playback/account_playback.dart';
 import 'package:PiliPlus/http/loading_state.dart';
+import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/video/base_quality.dart';
 import 'package:PiliPlus/models/video/play/url.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, debugPrint;
 
-/// Refetches the playurl and reopens the current media in place.
+/// Refetches the playurl and reopens the current media seamlessly in place.
 ///
 /// This is what `PlPlayerFork.renewal` calls when a signed link expires or the
-/// player stops advancing. Quality, codec and resume position are preserved,
-/// so the viewer sees a short stall at most.
+/// player stops advancing. Quality, codec, and resume position are preserved,
+/// while playback continues without pausing, clearing danmaku, or displaying toasts.
 extension ForkVideoRenewal on VideoDetailController {
-  /// Returns true when the media was reopened with a fresh playurl.
+  /// Returns true when the media was refreshed with a fresh playurl.
   Future<bool> forkRenewStream({bool showToast = false}) async {
     if (isClosed || isFileSource) return false;
     final player = plPlayerController;
@@ -23,7 +23,10 @@ extension ForkVideoRenewal on VideoDetailController {
     final wasPlaying = player.playerStatus.isPlaying ||
         (!player.playerStatus.isCompleted && position > 0);
 
-    final result = await ForkAccountPlayback.videoUrl(
+    // Refresh stream URLs directly using the stream account (Accounts.video).
+    // We intentionally bypass ForkAccountPlayback here because the current playback
+    // position is already known in-memory and history account progress is not needed.
+    final result = await VideoHttp.videoUrl(
       cid: cid.value,
       bvid: bvid,
       qn: quality ?? VideoQuality.hdrVivid.code,
@@ -84,16 +87,29 @@ extension ForkVideoRenewal on VideoDetailController {
       audioUrl = VideoUtils.getCdnUrl(firstAudio.playUrls, isAudio: true);
     }
 
+    final currentPosition = player.positionInMilliseconds;
+    final resumePosition = currentPosition > 0 ? currentPosition : position;
+
     if (kDebugMode) {
       debugPrint(
         'fork renew: qa=${firstVideo.id} codec=${firstVideo.codecid} '
-        'position=${position}ms playing=$wasPlaying',
+        'position=${resumePosition}ms playing=$wasPlaying',
       );
     }
 
-    // Reopen from the current position instead of the remembered progress.
-    defaultST = Duration(milliseconds: position);
-    await playerInit(autoplay: wasPlaying);
+    final native = player.videoPlayerController;
+    if (native != null) {
+      await player.fork.reloadMedia(
+        videoUrl: videoUrl!,
+        audioUrl: audioUrl,
+        seekTo: Duration(milliseconds: resumePosition),
+        play: wasPlaying,
+        volume: volume,
+      );
+    } else {
+      defaultST = Duration(milliseconds: resumePosition);
+      await playerInit(autoplay: wasPlaying);
+    }
     return true;
   }
 }

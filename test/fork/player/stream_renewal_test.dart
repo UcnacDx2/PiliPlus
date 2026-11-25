@@ -60,7 +60,6 @@ void main() {
       renewal = ForkStreamRenewal(
         isPlaying: () => true,
         positionMs: () => 0,
-        toast: (_) {},
       );
     });
 

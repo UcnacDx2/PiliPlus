@@ -16,7 +16,6 @@ final class ForkStreamRenewal {
   ForkStreamRenewal({
     required this.isPlaying,
     required this.positionMs,
-    required this.toast,
     DateTime Function()? clock,
   }) : _clock = clock ?? DateTime.now;
 
@@ -25,7 +24,6 @@ final class ForkStreamRenewal {
 
   final bool Function() isPlaying;
   final int Function() positionMs;
-  final void Function(String message) toast;
   final DateTime Function() _clock;
 
   static final _deadlinePattern = RegExp(r'deadline[=%3D]+(\d{9,})');
@@ -97,7 +95,7 @@ final class ForkStreamRenewal {
         event.contains('HTTP error 403') ||
         event.contains('HTTP error 404');
     if (!deadLink) return false;
-    _scheduleRetry(const Duration(seconds: 2), 'error');
+    _scheduleRetry(const Duration(milliseconds: 300), 'error');
     return true;
   }
 
@@ -171,7 +169,6 @@ final class ForkStreamRenewal {
         return;
       }
       _failures = 0;
-      if (reason != 'deadline') toast('播放地址已刷新');
     } catch (error) {
       if (kDebugMode) debugPrint('stream renewal threw: $error');
       _failures++;

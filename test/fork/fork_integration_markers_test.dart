@@ -47,10 +47,6 @@ void main() {
       '// FORK:',
       'FirstFrameOrCover(',
     ],
-    'lib/pages/video/widgets/header_control.dart': [
-      '// FORK:',
-      'watermark.position.value',
-    ],
     'lib/pages/setting/models/play_settings.dart': [
       '// FORK:',
       '...forkPlaySettings',
