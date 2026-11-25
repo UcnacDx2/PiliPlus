@@ -153,7 +153,10 @@ void main() {
     expect(shader, contains('const int piliplus_cols = 64;'));
     
     expect(shader, contains('const int piliplus_rows = 20;'));
-    expect(shader, contains('//!TEXTURE piliplus_mask_tex'));
+expect(shader, contains('//!TEXTURE piliplus_mask_tex'));
+    // TEXTURE must be sampled with native texture(), not the BIND macros.
+    expect(shader, contains('texture(piliplus_mask_tex,'));
+    expect(shader, isNot(contains('piliplus_mask_tex_tex')));
     
     expect(shader, contains('piliplus_stroke'));
     // The second region keeps the whole-rectangle blend.

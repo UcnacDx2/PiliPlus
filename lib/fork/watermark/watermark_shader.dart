@@ -56,9 +56,11 @@ abstract final class WatermarkShader {
 
     var maskBytes = Uint8List(0);
     var textureHeader = '';
+    var refineSource = '';
     if (usesRefine) {
       final mask = refinement!.mask;
       maskBytes = _maskBytes(mask);
+      refineSource = _refineHelpers(mask.columns, mask.rows);
       textureHeader = '''
 
 //!TEXTURE piliplus_mask_tex
@@ -99,7 +101,7 @@ vec4 piliplus_fill(vec2 uv, vec4 rect) {
   float verticalWeight = edgeX / max(edgeX + edgeY, 0.000001);
   return mix(horizontal, vertical, verticalWeight);
 }
-${usesRefine ? _refineHelpers : ''}
+$refineSource
 vec4 hook() {
   vec4 color = HOOKED_tex(HOOKED_pos);
 ${regionSource.toString()}  return color;
@@ -113,17 +115,22 @@ ${regionSource.toString()}  return color;
     ]);
   }
 
-  static String get _refineHelpers => '''
+  static String _refineHelpers(int columns, int rows) => '''
+// Grid dimensions of the embedded mask texture, in cells.
+const vec2 piliplus_grid = vec2(float($columns), float($rows));
+
 float piliplus_stroke(vec2 uv, vec4 rect) {
   vec2 size = max(rect.zw - rect.xy, vec2(0.000001));
-  return piliplus_mask_tex_tex((uv - rect.xy) / size).r;
+  // A //!TEXTURE is sampled with plain texture(); the _tex()/NAME_size
+  // macros only exist for //!BIND hooks.
+  return texture(piliplus_mask_tex, (uv - rect.xy) / size).r;
 }
 
 vec4 piliplus_refine(vec2 uv, vec4 rect) {
   float alpha = smoothstep(0.10, 0.70, piliplus_stroke(uv, rect));
   if (alpha <= 0.001) return HOOKED_tex(uv);
   vec2 size = max(rect.zw - rect.xy, vec2(0.000001));
-  vec2 step = size / piliplus_mask_tex_size;
+  vec2 step = size / piliplus_grid;
   vec4 sum = vec4(0.0);
   float total = 0.0;
   // GLSL ES 1.00 has no const-array initializers, so the eight directions
