@@ -11,18 +11,21 @@ abstract final class WatermarkInput {
     ui.Image source, {
     int targetWidth = 480,
     bool upscale = false,
+    ui.Rect? sourceRect,
   }) async {
-    final width = upscale ? targetWidth : min(targetWidth, source.width);
-    final height = max(1, (source.height * width / source.width).round());
+    final src = sourceRect ??
+        ui.Rect.fromLTWH(
+          0,
+          0,
+          source.width.toDouble(),
+          source.height.toDouble(),
+        );
+    final width = upscale ? targetWidth : min(targetWidth, src.width.round());
+    final height = max(1, (src.height * width / src.width).round());
     final recorder = ui.PictureRecorder();
     ui.Canvas(recorder).drawImageRect(
       source,
-      ui.Rect.fromLTWH(
-        0,
-        0,
-        source.width.toDouble(),
-        source.height.toDouble(),
-      ),
+      src,
       ui.Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()),
       ui.Paint()..filterQuality = ui.FilterQuality.low,
     );
@@ -37,8 +40,11 @@ abstract final class WatermarkInput {
       bytes.offsetInBytes,
       bytes.lengthInBytes,
     );
+    // The video frame is letterboxed when the aspect differs from the sprite
+    // frame, so the transparent border must not bleed into the luma.
     final luma = Uint8List(width * height);
     for (var pixel = 0, offset = 0; pixel < luma.length; pixel++, offset += 4) {
+      if (rgba[offset + 3] < 16) continue;
       luma[pixel] =
           (rgba[offset] * 77 + rgba[offset + 1] * 150 + rgba[offset + 2] * 29) >>
           8;

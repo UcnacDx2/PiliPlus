@@ -9,6 +9,8 @@ import 'package:PiliPlus/common/widgets/dialog/report.dart';
 import 'package:PiliPlus/common/widgets/dialog/simple_dialog_option.dart';
 import 'package:PiliPlus/common/widgets/marquee.dart';
 import 'package:PiliPlus/common/widgets/player_bar.dart';
+import 'package:PiliPlus/fork/fork_prefs.dart';
+import 'package:PiliPlus/fork/watermark/watermark_mode.dart';
 import 'package:PiliPlus/http/danmaku.dart';
 import 'package:PiliPlus/http/danmaku_block.dart';
 import 'package:PiliPlus/http/live.dart';
@@ -464,6 +466,33 @@ class HeaderControlState extends State<HeaderControl>
                     title: const Text('重载视频', style: titleStyle),
                   ),
                 ],
+                // FORK: in-player watermark mode switch
+                PopupListTile<WatermarkMode>(
+                  dense: true,
+                  leading: const Icon(
+                    Icons.branding_watermark_outlined,
+                    size: 20,
+                  ),
+                  title: const Text('水印处理', style: titleStyle),
+                  titleStyle: theme.textTheme.bodyLarge,
+                  value: () {
+                    final value = ForkPref.watermarkMode;
+                    return (value, value.label);
+                  },
+                  itemBuilder: (_) => enumItemBuilder(
+                    WatermarkMode.selectableValues,
+                  ),
+                  onSelected: (value, setState) {
+                    GStorage.setting
+                        .put(ForkPref.watermarkModeKey, value.index)
+                        .whenComplete(() {
+                          plPlayerController.fork.watermark.reload();
+                          setState();
+                        });
+                  },
+                  descPosType: .subtitle,
+                  descStyle: subTitleStyle,
+                ),
                 PopupListTile<SuperResolutionType>(
                   dense: true,
                   leading: const Icon(

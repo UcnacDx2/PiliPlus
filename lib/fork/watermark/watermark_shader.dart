@@ -147,8 +147,10 @@ vec4 piliplus_refine(vec2 uv, vec4 rect) {
   vec4 sum = vec4(0.0);
   float total = 0.0;
   // GLSL ES 1.00 has no const-array initializers, so the eight directions
-  // and eight radii are selected with ternaries. Each ray stops at its
-  // first clear sample.
+  // and eight radii are selected with ternaries. All samples contribute,
+  // weighted by 1/radius: an early `break` makes the sampling pattern
+  // content-dependent, which some mobile drivers mis-schedule at high frame
+  // rates (visible flicker at 1080p60).
   for (int d = 0; d < 8; d++) {
     vec2 dir = d == 0 ? vec2(1.0, 0.0)
       : d == 1 ? vec2(-1.0, 0.0)
@@ -168,11 +170,10 @@ vec4 piliplus_refine(vec2 uv, vec4 rect) {
         : r == 6 ? 11.0
         : 15.0;
       vec2 tap = clamp(uv + dir * step * radius, vec2(0.0), vec2(1.0));
-      // First ray sample that clears the strokes carries the direction.
+      // Clear samples carry the direction; masked ones fade with radius.
       float hit = (1.0 - piliplus_stroke(tap, rect)) > 0.5 ? 1.0 / radius : 0.0;
       sum += HOOKED_tex(tap) * hit;
       total += hit;
-      if (hit > 0.0) break;
     }
   }
   vec4 filled = total > 0.02

@@ -96,8 +96,13 @@ abstract final class WatermarkStrokeMaskBuilder {
         .round()
         .clamp(12, 64);
     final votes = Uint8List(columns * rows);
+    // Faint nickname strokes sit close to the background; with only one frame
+    // there is no temporal vote to recover them, so the luminance gate is
+    // relaxed and noise is filtered by the neighbourhood density instead.
+    final glowGate = samples.length == 1 ? 14 : 20;
+    final shadowGate = samples.length == 1 ? 16 : 24;
     for (final frame in samples) {
-      _voteFrame(votes, columns, rows, frame, anchor);
+      _voteFrame(votes, columns, rows, frame, anchor, glowGate, shadowGate);
     }
     final required = samples.length == 1
         ? 1
@@ -105,11 +110,35 @@ abstract final class WatermarkStrokeMaskBuilder {
 
     final mask = Uint8List(columns * rows);
     final template = _templateCells(anchor, columns, rows);
+    // A single frame cannot vote across time, so sparse background noise
+    // (fine dots on grass, glitter) passes the per-pixel test directly.
+    // Require a stroke-like neighbourhood instead: a real glyph stroke has
+    // adjacent lit cells, isolated hits do not.
+    final density = samples.length == 1
+        ? 3
+        : 1;
     for (var index = 0; index < mask.length; index++) {
       final x = index % columns;
       final y = index ~/ columns;
       final inTemplate = template[y * columns + x] != 0;
-      if (inTemplate || votes[index] >= required) mask[index] = 1;
+      if (inTemplate) {
+        mask[index] = 1;
+        continue;
+      }
+      if (votes[index] < required) continue;
+      if (density > 1) {
+        var neighbours = 0;
+        for (var dy = -1; dy <= 1; dy++) {
+          for (var dx = -1; dx <= 1; dx++) {
+            final nx = x + dx;
+            final ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= columns || ny >= rows) continue;
+            if (votes[ny * columns + nx] >= required) neighbours++;
+          }
+        }
+        if (neighbours < density) continue;
+      }
+      mask[index] = 1;
     }
     // Grow by one cell to cover antialiased edges, then pack.
     final grown = _grow(mask, columns, rows);
@@ -139,6 +168,8 @@ abstract final class WatermarkStrokeMaskBuilder {
     int rows,
     WatermarkFrame frame,
     BilibiliAnchor anchor,
+    int glowGate,
+    int shadowGate,
   ) {
     final width = frame.width;
     final height = frame.height;
@@ -172,7 +203,7 @@ abstract final class WatermarkStrokeMaskBuilder {
         final index = py * width + px;
         final glow = luma[index] - opened[index];
         final shadow = closed[index] - luma[index];
-        if (glow > 20 || shadow > 24) {
+        if (glow > glowGate || shadow > shadowGate) {
           votes[y * columns + x]++;
         }
       }
