@@ -1,4 +1,3 @@
-import 'package:PiliPlus/fork/watermark/watermark_position.dart';
 import 'package:PiliPlus/fork/watermark/watermark_region.dart';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -47,34 +46,6 @@ void main() {
     expect(rect.y, greaterThanOrEqualTo(0));
     expect(rect.x + rect.width, lessThan(1920));
     expect(rect.y + rect.height, lessThan(1080));
-  });
-
-  test('maps fixed watermark regions to all four corners', () {
-    const expected = <WatermarkPosition, ({double left, double top})>{
-      WatermarkPosition.topLeft: (left: 0.012, top: 0.012),
-      WatermarkPosition.topRight: (left: 0.548, top: 0.012),
-      WatermarkPosition.bottomLeft: (left: 0.012, top: 0.878),
-      WatermarkPosition.bottomRight: (left: 0.548, top: 0.878),
-    };
-
-    for (final entry in expected.entries) {
-      final region = WatermarkRegion.fixed(entry.key);
-      final shader = utf8.decode(WatermarkShader.source([region]));
-
-      expect(region.left, closeTo(entry.value.left, 0.0001));
-      expect(region.top, closeTo(entry.value.top, 0.0001));
-      expect(region.right - region.left, closeTo(0.44, 0.0001));
-      expect(region.bottom - region.top, closeTo(0.11, 0.0001));
-      expect(
-        shader,
-        contains(
-          'vec4(${region.left.toStringAsFixed(6)}, '
-          '${region.top.toStringAsFixed(6)}, '
-          '${region.right.toStringAsFixed(6)}, '
-          '${region.bottom.toStringAsFixed(6)})',
-        ),
-      );
-    }
   });
 
   test('limits generated shader regions to four', () {

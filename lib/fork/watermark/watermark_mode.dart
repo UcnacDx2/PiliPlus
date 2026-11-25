@@ -1,20 +1,25 @@
 import 'package:PiliPlus/models/common/enum_with_label.dart';
 
+/// How the creator watermark is removed.
+///
+/// Migration from the pre-fork.6 enum: index 0 stays disabled, the old
+/// "bilibili" (1), "advanced" (2) and "bilibiliAuto" (3) all map to [stroke].
 enum WatermarkMode with EnumWithLabel {
   disabled('关闭'),
-  bilibili('普通（bilibili）'),
-  advanced('进阶（全部水印）'),
-  // Keep this value appended so persisted index 2 continues to mean the
-  // existing advanced mode after upgrading.
-  bilibiliAuto('进阶（仅 bilibili）'),
+  stroke('精细（笔画级修复）'),
+  box('整块覆盖'),
   ;
 
-  static const selectableValues = [
-    disabled,
-    bilibili,
-    bilibiliAuto,
-    advanced,
-  ];
+  static const selectableValues = [disabled, stroke, box];
+
+  static WatermarkMode fromStoredIndex(int? index) {
+    return switch (index) {
+      null => disabled,
+      1 || 2 || 3 => stroke,
+      4 => box,
+      _ => disabled,
+    };
+  }
 
   @override
   final String label;

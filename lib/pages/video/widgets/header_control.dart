@@ -14,10 +14,6 @@ import 'package:PiliPlus/http/danmaku_block.dart';
 import 'package:PiliPlus/http/live.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/video.dart';
-// FORK: watermark modes/positions
-import 'package:PiliPlus/fork/fork_prefs.dart';
-import 'package:PiliPlus/fork/watermark/watermark_mode.dart';
-import 'package:PiliPlus/fork/watermark/watermark_position.dart';
 import 'package:PiliPlus/models/common/super_resolution_type.dart';
 import 'package:PiliPlus/models/common/video/base_quality.dart';
 import 'package:PiliPlus/models/common/video/cdn_type.dart';
@@ -490,29 +486,6 @@ class HeaderControlState extends State<HeaderControl>
                   descPosType: .subtitle,
                   descStyle: subTitleStyle,
                 ),
-                // FORK: fixed bilibili watermark position
-                if (ForkPref.watermarkMode == WatermarkMode.bilibili)
-                  PopupListTile<WatermarkPosition>(
-                    dense: true,
-                    leading: const Icon(
-                      Icons.branding_watermark_outlined,
-                      size: 20,
-                    ),
-                    title: const Text('水印位置', style: titleStyle),
-                    value: () {
-                      final value =
-                          plPlayerController.fork.watermark.position.value;
-                      return (value, value.label);
-                    },
-                    itemBuilder: (_) =>
-                        enumItemBuilder(WatermarkPosition.values),
-                    onSelected: (value, setState) {
-                      plPlayerController.fork.watermark.setPosition(value);
-                      setState();
-                    },
-                    descPosType: .subtitle,
-                    descStyle: subTitleStyle,
-                  ),
                 if (PlatformUtils.isMobile)
                   if (plPlayerController.videoPlayerController
                       case final player?)

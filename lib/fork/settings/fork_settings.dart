@@ -1,6 +1,5 @@
 import 'package:PiliPlus/fork/fork_prefs.dart';
 import 'package:PiliPlus/fork/watermark/watermark_mode.dart';
-import 'package:PiliPlus/fork/watermark/watermark_position.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -21,17 +20,6 @@ List<SettingsModel> get forkPlaySettings => [
           .put(ForkPref.watermarkModeKey, value.index)
           .whenComplete(setState);
       SmartDialog.showToast('重新播放后生效');
-    },
-  ),
-  PopupModel(
-    title: '水印位置',
-    leading: const Icon(Icons.pin_drop_outlined),
-    value: () => ForkPref.watermarkPosition,
-    items: WatermarkPosition.values,
-    onSelected: (value, setState) {
-      GStorage.setting
-          .put(ForkPref.watermarkPositionKey, value.index)
-          .whenComplete(setState);
     },
   ),
 ];
