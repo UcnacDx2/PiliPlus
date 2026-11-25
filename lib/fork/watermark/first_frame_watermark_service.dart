@@ -15,10 +15,14 @@ import 'package:PiliPlus/utils/image_utils.dart';
 /// Resolves the standard creator watermark from Bilibili's first-frame image.
 ///
 /// A first frame already displayed by [ImageUtils] is read from the shared
-/// image file cache. Otherwise only a 480 px CDN thumbnail is downloaded and
+/// image file cache. Otherwise a 1280 px CDN thumbnail is downloaded and
 /// cached, so this path never needs to decode or seek the playing video.
+/// Detection results plus the frame each one ran on. The frame is kept so the
+/// stroke mask can be rebuilt when the mode is switched in-player, but at
+/// 1280 px it costs ~2 MB, so only the most recently detected videos stay
+/// resident.
 abstract final class FirstFrameWatermarkService {
-  static const _maxEntries = 160;
+  static const _maxEntries = 16;
   static final LinkedHashMap<String, Future<FirstFrameDetail>> _cache =
       LinkedHashMap();
 
