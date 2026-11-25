@@ -13,14 +13,20 @@ import 'package:PiliPlus/fork/watermark/watermark_stroke_mask.dart';
 /// the corner intact; any other region falls back to a four-side blend of the
 /// whole rectangle.
 ///
-/// The stroke mask is embedded as an r8 `//!TEXTURE` instead of a GLSL const
-/// array: dynamic array indexing, `uint` and bit operations are all
-/// unavailable on GLES2-era mobile drivers, and a texture is portable across
-/// every GLSL version mpv can compile. The output is the shader source
-/// followed by the raw mask bytes.
+/// The stroke mask is baked into the GLSL as a list of merged rectangles,
+/// unrolled into plain if-statements. An earlier fork tried embedding the mask
+/// as a `//!TEXTURE` binary blob, but mpv silently drops the whole shader when
+/// it fails to parse the blob, which broke both removal modes on mobile. Plain
+/// text with no textures compiles everywhere, like the fork.3 fill shader.
 abstract final class WatermarkShader {
   static const maxRegions = 4;
   static const shaderFileName = 'piliplus_watermark.glsl';
+
+  /// Upper bound on mask rectangles; beyond this the refinement is dropped
+  /// and the region falls back to the whole-rectangle blend. Glyph strokes
+  /// fragment into a few hundred runs, which stays a compact plain-text
+  /// shader, so the budget only guards against pathological masks.
+  static const _maxMaskRects = 1400;
 
   static Uint8List source(
     List<WatermarkRegion> regions, {
@@ -28,6 +34,7 @@ abstract final class WatermarkShader {
   }) {
     final selected = regions.take(maxRegions).toList(growable: false);
     final regionSource = StringBuffer();
+    var maskSource = '';
     var usesRefine = false;
     for (var index = 0; index < selected.length; index++) {
       final region = selected[index];
@@ -42,33 +49,27 @@ abstract final class WatermarkShader {
           _sameRegion(region, refinement.region);
       if (refined) {
         usesRefine = true;
-        regionSource
-          ..writeln('  if (piliplus_inside(HOOKED_pos, region$index)) {')
-          ..writeln('    color = piliplus_refine(HOOKED_pos, region$index);')
-          ..writeln('  }');
+        final rects = _maskRects(refinement.mask);
+        if (rects == null || rects.isEmpty) {
+          regionSource
+            ..writeln('  if (piliplus_inside(HOOKED_pos, region$index)) {')
+            ..writeln('    color = piliplus_fill(HOOKED_pos, region$index);')
+            ..writeln('  }');
+        } else {
+          maskSource = _maskHelpers(refinement.mask, rects);
+          regionSource
+            ..writeln('  if (piliplus_inside(HOOKED_pos, region$index)) {')
+            ..writeln(
+              '    color = piliplus_refine(HOOKED_pos, region$index);',
+            )
+            ..writeln('  }');
+        }
       } else {
         regionSource
           ..writeln('  if (piliplus_inside(HOOKED_pos, region$index)) {')
           ..writeln('    color = piliplus_fill(HOOKED_pos, region$index);')
           ..writeln('  }');
       }
-    }
-
-    var maskBytes = Uint8List(0);
-    var textureHeader = '';
-    var refineSource = '';
-    if (usesRefine) {
-      final mask = refinement!.mask;
-      maskBytes = _maskBytes(mask);
-      refineSource = _refineHelpers(mask.columns, mask.rows);
-      textureHeader = '''
-
-//!TEXTURE piliplus_mask_tex
-//!SIZE ${mask.columns} ${mask.rows}
-//!FORMAT rgba8
-//!FILTER LINEAR
-//!BORDER 0
-''';
     }
 
     final glsl = '''//!HOOK MAIN
@@ -101,33 +102,44 @@ vec4 piliplus_fill(vec2 uv, vec4 rect) {
   float verticalWeight = edgeX / max(edgeX + edgeY, 0.000001);
   return mix(horizontal, vertical, verticalWeight);
 }
-$refineSource
+$maskSource
 vec4 hook() {
   vec4 color = HOOKED_tex(HOOKED_pos);
 ${regionSource.toString()}  return color;
 }
 ''';
-    // The raw mask bytes must directly follow the //!TEXTURE header block.
-    return Uint8List.fromList([
-      ...utf8.encode(textureHeader),
-      ...maskBytes,
-      ...utf8.encode(glsl),
-    ]);
+    // Pure ASCII text: identical bytes to writeAsString, no binary blob.
+    return Uint8List.fromList(utf8.encode(glsl));
   }
 
-  static String _refineHelpers(int columns, int rows) => '''
-// Grid dimensions of the embedded mask texture, in cells.
-const vec2 piliplus_grid = vec2(float($columns), float($rows));
+  static String _maskHelpers(WatermarkStrokeMask mask, List<_Rect> rects) {
+    final buffer = StringBuffer('''
+// Grid dimensions of the baked stroke mask, in cells.
+const vec2 piliplus_grid = vec2(float(${mask.columns}), float(${mask.rows}));
 
-float piliplus_stroke(vec2 uv, vec4 rect) {
+// One mask rectangle in normalized region coordinates.
+bool piliplus_cell(vec2 uv, vec4 rect, vec4 cell) {
   vec2 size = max(rect.zw - rect.xy, vec2(0.000001));
-  // A //!TEXTURE is sampled with plain texture(); the _tex()/NAME_size
-  // macros only exist for //!BIND hooks.
-  return texture(piliplus_mask_tex, (uv - rect.xy) / size).r;
+  vec2 local = (uv - rect.xy) / size;
+  return local.x >= cell.x && local.x < cell.z &&
+      local.y >= cell.y && local.y < cell.w;
 }
 
+float piliplus_stroke(vec2 uv, vec4 rect) {
+''');
+    for (final rect in rects) {
+      buffer.writeln(
+        '  if (piliplus_cell(uv, rect, vec4('
+        '${_number(rect.x0)}, ${_number(rect.y0)}, '
+        '${_number(rect.x1)}, ${_number(rect.y1)}))) return 1.0;',
+      );
+    }
+    buffer
+      ..writeln('  return 0.0;')
+      ..writeln('}')
+      ..writeln('''
 vec4 piliplus_refine(vec2 uv, vec4 rect) {
-  float alpha = smoothstep(0.10, 0.70, piliplus_stroke(uv, rect));
+  float alpha = piliplus_stroke(uv, rect);
   if (alpha <= 0.001) return HOOKED_tex(uv);
   vec2 size = max(rect.zw - rect.xy, vec2(0.000001));
   vec2 step = size / piliplus_grid;
@@ -163,26 +175,80 @@ vec4 piliplus_refine(vec2 uv, vec4 rect) {
     }
   }
   vec4 filled = total > 0.02
-      ? (sum / total)
-      : piliplus_fill(uv, rect);
+    ? (sum / total)
+    : piliplus_fill(uv, rect);
   return mix(HOOKED_tex(uv), filled, alpha);
 }
-''';
-
-  static Uint8List _maskBytes(WatermarkStrokeMask mask) {
-    // rgba8 is the one pixel format every mpv build accepts for embedded
-    // shader textures.
-    final bytes = Uint8List(mask.bitCount * 4);
-    for (var index = 0; index < mask.bitCount; index++) {
-      final value =
-          (mask.words[index >> 5] >> (index & 31)) & 1 == 1 ? 255 : 0;
-      bytes[index * 4] = value;
-      bytes[index * 4 + 1] = value;
-      bytes[index * 4 + 2] = value;
-      bytes[index * 4 + 3] = 255;
-    }
-    return bytes;
+''');
+    return buffer.toString();
   }
+
+  /// Converts the packed stroke mask into merged cell rectangles, or null
+  /// when the mask is too fragmented to embed compactly (the caller then
+  /// falls back to the whole-region fill).
+  static List<_Rect>? _maskRects(WatermarkStrokeMask mask) {
+    // Maximal horizontal runs per row.
+    final runsPerRow = <List<List<int>>>[];
+    for (var y = 0; y < mask.rows; y++) {
+      final runs = <List<int>>[];
+      var start = -1;
+      for (var x = 0; x <= mask.columns; x++) {
+        final set = x < mask.columns && mask.bitAt(x, y);
+        if (set && start < 0) {
+          start = x;
+        } else if (!set && start >= 0) {
+          runs.add([start, x]);
+          start = -1;
+        }
+      }
+      runsPerRow.add(runs);
+    }
+
+    // Vertically merge runs with identical columns on consecutive rows.
+    final rects = <_Rect>[];
+    // Open rects still extendable by the next row: [x0, x1, y0, y1].
+    final active = <List<int>>[];
+    for (var y = 0; y < mask.rows; y++) {
+      final runs = runsPerRow[y];
+      final next = <List<int>>[];
+      for (final run in runs) {
+        var merged = false;
+        for (var i = 0; i < active.length; i++) {
+          final candidate = active[i];
+          if (candidate.isEmpty) continue;
+          if (candidate[0] == run[0] &&
+              candidate[1] == run[1] &&
+              candidate[3] == y) {
+            candidate[3] = y + 1;
+            next.add(candidate);
+            active[i] = <int>[];
+            merged = true;
+            break;
+          }
+        }
+        if (!merged) next.add([run[0], run[1], y, y + 1]);
+      }
+      for (final candidate in active) {
+        if (candidate.isNotEmpty) rects.add(_cellsToRect(candidate, mask));
+      }
+      active
+        ..clear()
+        ..addAll(next.where((r) => r.isNotEmpty));
+      if (rects.length + active.length > _maxMaskRects) return null;
+    }
+    for (final candidate in active) {
+      rects.add(_cellsToRect(candidate, mask));
+    }
+    return rects;
+  }
+
+  static _Rect _cellsToRect(List<int> cells, WatermarkStrokeMask mask) =>
+      _Rect(
+        x0: cells[0] / mask.columns,
+        y0: cells[2] / mask.rows,
+        x1: cells[1] / mask.columns,
+        y1: cells[3] / mask.rows,
+      );
 
   static bool _sameRegion(WatermarkRegion first, WatermarkRegion second) =>
       (first.left - second.left).abs() < 0.004 &&
@@ -195,4 +261,18 @@ vec4 piliplus_refine(vec2 uv, vec4 rect) {
     if (value == 1) return '1.0';
     return value.toStringAsFixed(6);
   }
+}
+
+final class _Rect {
+  const _Rect({
+    required this.x0,
+    required this.y0,
+    required this.x1,
+    required this.y1,
+  });
+
+  final double x0;
+  final double y0;
+  final double x1;
+  final double y1;
 }

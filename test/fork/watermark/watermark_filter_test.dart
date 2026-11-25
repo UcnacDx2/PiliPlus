@@ -113,23 +113,19 @@ void main() {
       words: Uint32List.fromList([0x80000000, 0x00000001]),
     );
     final refinement = WatermarkRefinement(region: region, mask: mask);
-
-    final bytes = WatermarkShader.source([region, other], refinement: refinement);
-    // Binary mask bytes precede the GLSL source, which starts at //!HOOK.
-    final hook = utf8.encode('//!HOOK MAIN');
-    final start = _indexOf(bytes, hook);
-    final shader = utf8.decode(bytes.sublist(start));
+    final bytes = WatermarkShader.source([region, other],
+        refinement: refinement);
+    // Text-only output; the whole payload decodes as UTF-8 with no binary blob.
+    expect(() => utf8.decode(bytes), returnsNormally);
+    expect(bytes, everyElement(lessThanOrEqualTo(0x7f)));
+    final shader = utf8.decode(bytes);
 
     expect(shader, contains('piliplus_refine'));
-    expect(shader, contains('const int piliplus_cols = 64;'));
-    
-    expect(shader, contains('const int piliplus_rows = 20;'));
-expect(shader, contains('//!TEXTURE piliplus_mask_tex'));
-    // TEXTURE must be sampled with native texture(), not the BIND macros.
-    expect(shader, contains('texture(piliplus_mask_tex,'));
-    expect(shader, isNot(contains('piliplus_mask_tex_tex')));
-    
-    expect(shader, contains('piliplus_stroke'));
+    expect(shader, contains('const vec2 piliplus_grid = vec2(float(64), float(20));'));
+    // The stroke mask is unrolled into plain if-statements, not a texture.
+    expect(shader, isNot(contains('//!TEXTURE')));
+    expect(shader, isNot(contains('piliplus_mask_tex')));
+    expect(shader, contains('piliplus_cell(uv, rect, vec4('));
     // The second region keeps the whole-rectangle blend.
     expect(shader, contains('piliplus_fill(HOOKED_pos, region1)'));
     expect(shader, contains('piliplus_refine(HOOKED_pos, region0)'));
@@ -137,6 +133,34 @@ expect(shader, contains('//!TEXTURE piliplus_mask_tex'));
     expect(shader, isNot(contains('const vec2 dirs')));
     expect(shader, isNot(contains('const float radii')));
     expect(shader, isNot(contains('piliplus_mask[')));
+  });
+
+  test('fragmented masks fall back to the whole-region fill', () {
+    const region = WatermarkRegion(
+      left: 0.8,
+      top: 0.01,
+      right: 0.99,
+      bottom: 0.12,
+      confidence: 1,
+    );
+    // Checkerboard: every row has many runs, far beyond the rect budget.
+    final words = Uint32List(64 * 20 ~/ 32 + 1);
+    for (var index = 0; index < 64 * 20; index++) {
+      if ((index ~/ 64 + index).isEven) {
+        words[index >> 5] |= 1 << (index & 31);
+      }
+    }
+    final refinement = WatermarkRefinement(
+      region: region,
+      mask: WatermarkStrokeMask(columns: 64, rows: 20, words: words),
+    );
+
+    final shader = utf8.decode(
+      WatermarkShader.source([region], refinement: refinement),
+    );
+
+    expect(shader, isNot(contains('piliplus_refine')));
+    expect(shader, contains('piliplus_fill'));
   });
 
   test('shader without refinement keeps the plain fill only', () {
@@ -153,19 +177,4 @@ expect(shader, contains('//!TEXTURE piliplus_mask_tex'));
     expect(shader, isNot(contains('piliplus_refine')));
     expect(shader, contains('piliplus_fill'));
   });
-}
-
-/// Returns the first index of [needle] in [haystack], or -1.
-int _indexOf(Uint8List haystack, List<int> needle) {
-  for (var i = 0; i <= haystack.length - needle.length; i++) {
-    var matched = true;
-    for (var j = 0; j < needle.length; j++) {
-      if (haystack[i + j] != needle[j]) {
-        matched = false;
-        break;
-      }
-    }
-    if (matched) return i;
-  }
-  return -1;
 }

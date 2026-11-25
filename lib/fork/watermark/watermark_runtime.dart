@@ -89,7 +89,10 @@ final class ForkWatermarkRuntime {
     final detail = await FirstFrameWatermarkService.detectDetail(bvid);
     final region = detail.region;
     if (region == null || !_isCurrent(generation, player)) return;
-    final refinement = await _buildRefinement(detail.frames, region);
+    // 整块覆盖不需要笔画 mask，直接用整框填充（fork.3 的纯文本 shader 路径）。
+    final refinement = ForkPref.watermarkMode == WatermarkMode.stroke
+        ? await _buildRefinement(detail.frames, region)
+        : null;
     if (await _applyDetected(generation, player, [region],
         refinement: refinement)) {
       SmartDialog.showToast('已处理 bilibili 水印');
