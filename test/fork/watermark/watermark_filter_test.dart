@@ -122,6 +122,11 @@ void main() {
 
     expect(shader, contains('piliplus_refine'));
     expect(shader, contains('const vec2 piliplus_grid = vec2(float(64), float(20));'));
+    // A two-cell mask must merge into a couple of rectangles, not 1280 ifs.
+    expect(
+      RegExp(r'piliplus_cell\(uv, rect, vec4\(').allMatches(shader).length,
+      lessThan(10),
+    );
     // The stroke mask is unrolled into plain if-statements, not a texture.
     expect(shader, isNot(contains('//!TEXTURE')));
     expect(shader, isNot(contains('piliplus_mask_tex')));

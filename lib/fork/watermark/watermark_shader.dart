@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:PiliPlus/fork/watermark/watermark_region.dart';
@@ -26,7 +27,7 @@ abstract final class WatermarkShader {
   /// and the region falls back to the whole-rectangle blend. Glyph strokes
   /// fragment into a few hundred runs, which stays a compact plain-text
   /// shader, so the budget only guards against pathological masks.
-  static const _maxMaskRects = 1400;
+  static const _maxMaskRects = 96;
 
   static Uint8List source(
     List<WatermarkRegion> regions, {
@@ -186,14 +187,51 @@ vec4 piliplus_refine(vec2 uv, vec4 rect) {
   /// Converts the packed stroke mask into merged cell rectangles, or null
   /// when the mask is too fragmented to embed compactly (the caller then
   /// falls back to the whole-region fill).
+  ///
+  /// Glyph strokes are thin and slanted, so the native grid yields well over a
+  /// thousand one-cell runs, and a shader with that many branches is both huge
+  /// and slow to compile on mobile drivers. Each coarser grid covers a block of
+  /// cells, which also absorbs the antialiased fringe, so the finest grid whose
+  /// rectangle count fits the budget wins.
   static List<_Rect>? _maskRects(WatermarkStrokeMask mask) {
+    for (final (factor, tolerance) in const [
+      (1, 0),
+      (1, 1),
+      (2, 0),
+      (2, 1),
+      (3, 1),
+    ]) {
+      final rects = _rectsAt(mask, factor, tolerance);
+      if (rects != null && rects.isNotEmpty) return rects;
+    }
+    return null;
+  }
+
+  static List<_Rect>? _rectsAt(
+    WatermarkStrokeMask mask,
+    int factor,
+    int tolerance,
+  ) {
+    final columns = (mask.columns + factor - 1) ~/ factor;
+    final rows = (mask.rows + factor - 1) ~/ factor;
+    bool filled(int x, int y) {
+      final endX = math.min((x + 1) * factor, mask.columns);
+      final endY = math.min((y + 1) * factor, mask.rows);
+      for (var sy = y * factor; sy < endY; sy++) {
+        for (var sx = x * factor; sx < endX; sx++) {
+          if (mask.bitAt(sx, sy)) return true;
+        }
+      }
+      return false;
+    }
+
     // Maximal horizontal runs per row.
     final runsPerRow = <List<List<int>>>[];
-    for (var y = 0; y < mask.rows; y++) {
+    for (var y = 0; y < rows; y++) {
       final runs = <List<int>>[];
       var start = -1;
-      for (var x = 0; x <= mask.columns; x++) {
-        final set = x < mask.columns && mask.bitAt(x, y);
+      for (var x = 0; x <= columns; x++) {
+        final set = x < columns && filled(x, y);
         if (set && start < 0) {
           start = x;
         } else if (!set && start >= 0) {
@@ -204,24 +242,23 @@ vec4 piliplus_refine(vec2 uv, vec4 rect) {
       runsPerRow.add(runs);
     }
 
-    // Vertically merge runs with identical columns on consecutive rows.
+    // Merge runs into the previous row's rect when their spans nearly match;
+    // the union keeps slanted strokes as one tall rectangle.
     final rects = <_Rect>[];
-    // Open rects still extendable by the next row: [x0, x1, y0, y1].
-    final active = <List<int>>[];
-    for (var y = 0; y < mask.rows; y++) {
-      final runs = runsPerRow[y];
+    var active = <List<int>>[];
+    for (var y = 0; y < rows; y++) {
       final next = <List<int>>[];
-      for (final run in runs) {
+      for (final run in runsPerRow[y]) {
         var merged = false;
-        for (var i = 0; i < active.length; i++) {
-          final candidate = active[i];
+        for (final candidate in active) {
           if (candidate.isEmpty) continue;
-          if (candidate[0] == run[0] &&
-              candidate[1] == run[1] &&
+          if ((candidate[0] - run[0]).abs() <= tolerance &&
+              (candidate[1] - run[1]).abs() <= tolerance &&
               candidate[3] == y) {
+            candidate[0] = math.min(candidate[0], run[0]);
+            candidate[1] = math.max(candidate[1], run[1]);
             candidate[3] = y + 1;
             next.add(candidate);
-            active[i] = <int>[];
             merged = true;
             break;
           }
@@ -229,26 +266,30 @@ vec4 piliplus_refine(vec2 uv, vec4 rect) {
         if (!merged) next.add([run[0], run[1], y, y + 1]);
       }
       for (final candidate in active) {
-        if (candidate.isNotEmpty) rects.add(_cellsToRect(candidate, mask));
+        if (candidate.isEmpty) continue;
+        // Only close rects that the current row did not extend.
+        if (candidate[3] <= y) {
+          rects.add(_cellsToRect(candidate, columns, rows));
+        } else {
+          next.add(candidate);
+        }
       }
-      active
-        ..clear()
-        ..addAll(next.where((r) => r.isNotEmpty));
+      active = next;
       if (rects.length + active.length > _maxMaskRects) return null;
     }
     for (final candidate in active) {
-      rects.add(_cellsToRect(candidate, mask));
+      rects.add(_cellsToRect(candidate, columns, rows));
     }
+    if (rects.length > _maxMaskRects) return null;
     return rects;
   }
 
-  static _Rect _cellsToRect(List<int> cells, WatermarkStrokeMask mask) =>
-      _Rect(
-        x0: cells[0] / mask.columns,
-        y0: cells[2] / mask.rows,
-        x1: cells[1] / mask.columns,
-        y1: cells[3] / mask.rows,
-      );
+  static _Rect _cellsToRect(List<int> cells, int columns, int rows) => _Rect(
+    x0: cells[0] / columns,
+    y0: cells[2] / rows,
+    x1: cells[1] / columns,
+    y1: cells[3] / rows,
+  );
 
   static bool _sameRegion(WatermarkRegion first, WatermarkRegion second) =>
       (first.left - second.left).abs() < 0.004 &&

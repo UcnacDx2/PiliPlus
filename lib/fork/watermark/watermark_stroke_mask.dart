@@ -27,7 +27,9 @@ final class WatermarkStrokeMask {
   bool bitAt(int x, int y) {
     if (x < 0 || y < 0 || x >= columns || y >= rows) return false;
     final index = y * columns + x;
-    return (words[index >> 5] >> (index & 31)) & 1 == 1;
+    final word = index >> 5;
+    if (word >= words.length) return false;
+    return (words[word] >> (index & 31)) & 1 == 1;
   }
 
   /// Share of the region the mask touches, for diagnostics.
