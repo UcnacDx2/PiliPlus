@@ -221,10 +221,62 @@ void main() {
       rows: rows,
       glowGate: 20,
       shadowGate: 24,
-      whiteGate: 170,
+      whiteGate: 150,
     );
     final (cx, cy) = _cell(strokeX, 70, columns, rows);
     expect(votes[cy * columns + cx], greaterThan(0));
+  });
+
+  test('a faint white nickname over a warm background is still masked', () {
+    // The nickname can be semi-transparent, so over a warm background its
+    // `min(r, g, b)` only reaches ~165 while a bright patch of scene colour
+    // stays far below.
+    const width = 1280;
+    const height = 720;
+    const ax = 120;
+    const ay = 20;
+
+    WatermarkStrokeMask build(int barLuma, int barWhiteness) {
+      final luma = Uint8List(width * height)
+        ..fillRange(0, width * height, 180);
+      final whiteness = Uint8List(width * height)
+        ..fillRange(0, width * height, 120);
+      const template = bilibiliWatermarkTemplate;
+      for (var ty = 0; ty < template.length; ty++) {
+        for (var tx = 0; tx < template[ty].length; tx++) {
+          if (template[ty][tx] == '#') {
+            luma[(ay + ty) * width + ax + tx] = 240;
+            whiteness[(ay + ty) * width + ax + tx] = 236;
+          }
+        }
+      }
+      for (var y = 55; y < 85; y++) {
+        for (var x = 180; x < 184; x++) {
+          luma[y * width + x] = barLuma;
+          whiteness[y * width + x] = barWhiteness;
+        }
+      }
+      final refinement = WatermarkStrokeMaskBuilder.buildSync(
+        [WatermarkFrame(
+          width: width,
+          height: height,
+          luma: luma,
+          whiteness: whiteness,
+        )],
+        _anchor(ax, ay, 480, 270),
+      );
+      expect(refinement, isNotNull);
+      return refinement!.mask;
+    }
+
+    final faint = build(228, 165);
+    final (fx, fy) = _cell(181, 70, faint.columns, faint.rows);
+    expect(faint.bitAt(fx, fy), isTrue);
+
+    // Same brightness, coloured instead of white: scene content stays clear.
+    final coloured = build(228, 120);
+    final (cx, cy) = _cell(181, 70, coloured.columns, coloured.rows);
+    expect(coloured.bitAt(cx, cy), isFalse);
   });
 
   test('a lone ink fragment on a dark band is masked without a vote', () {

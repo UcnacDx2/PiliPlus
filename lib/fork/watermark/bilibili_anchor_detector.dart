@@ -100,7 +100,12 @@ abstract final class BilibiliAnchorDetector {
   }
 
   /// Minimum score for a decision backed by one frame only.
-  static const _singleFrameMinimum = 0.50;
+  ///
+  /// A frame without the mark can still put a scattered white block near a
+  /// corner — a game menu scored 0.66 while every real mark so far measured
+  /// 0.86 or higher — and filling that block is far worse than leaving a
+  /// watermark in place, so a single frame has to earn a clear confidence.
+  static const _singleFrameMinimum = 0.72;
 
   /// Minimum score when the same location was seen in several frames.
   static const _multiFrameMinimum = 0.44;

@@ -60,7 +60,12 @@ abstract final class WatermarkStrokeMaskBuilder {
   /// cannot separate the mark from a bright background at all; the mask is
   /// built from the 1280 px first frame instead, where the glyph cores keep a
   /// whiteness above this floor while even pale foliage stays below it.
-  static const _whiteGate = 170;
+  ///
+  /// A semi-transparent nickname over a warm background mixes down to about
+  /// 160-170, which a 170 floor rejects outright (BV1DH4h6kEfn kept every
+  /// glyph), so the floor sits below that while a bright patch of scene colour
+  /// still stays far underneath it.
+  static const _whiteGate = 150;
 
   /// Minimum lit neighbours (3x3, self included) for a stroke cell. A real
   /// glyph stroke is connected; isolated specular dots are not.
@@ -71,6 +76,11 @@ abstract final class WatermarkStrokeMaskBuilder {
   /// whiteness range even when the scene behind it is bright.
   static const _pureLuma = 185;
   static const _pureWhite = 185;
+
+  /// Height of the nickname band below the mark's top edge, in analysis units.
+  /// The nickname sits lower than the logo and its glyphs can reach further
+  /// down, so the band follows the nickname rather than the template.
+  static const _bandHeight = 28;
 
   static Future<WatermarkRefinement?> build(
     List<WatermarkFrame> frames,
@@ -196,7 +206,7 @@ abstract final class WatermarkStrokeMaskBuilder {
     final regionHeight = (region.bottom - region.top) * height;
     final bandTop = math.max(0, ((anchor.anchorY - 1) * scale).floor());
     final bandBottom =
-        math.min(height, ((anchor.anchorY + 19) * scale).ceil());
+        math.min(height, ((anchor.anchorY + _bandHeight) * scale).ceil());
     final nicknameRight =
         math.min(width, ((anchor.anchorX - 1) * scale).ceil());
     for (var y = 0; y < rows; y++) {
@@ -277,7 +287,7 @@ abstract final class WatermarkStrokeMaskBuilder {
         .clamp(x0 + 1, width);
     final y0 = math.max(0, ((anchor.anchorY - 1) * scale).floor());
     final y1 = math
-        .min(height, ((anchor.anchorY + 19) * scale).ceil())
+        .min(height, ((anchor.anchorY + _bandHeight) * scale).ceil())
         .clamp(y0 + 1, height);
     var total = 0;
     var white = 0;
@@ -338,7 +348,7 @@ abstract final class WatermarkStrokeMaskBuilder {
     final regionHeight = (region.bottom - region.top) * height;
     final bandTop = math.max(0, ((anchor.anchorY - 1) * scale).floor());
     final bandBottom =
-        math.min(height, ((anchor.anchorY + 19) * scale).ceil());
+        math.min(height, ((anchor.anchorY + _bandHeight) * scale).ceil());
     // The logo half of the mark is known exactly and is filled from the
     // template; the nickname is text of unknown width, so only its zone is
     // voted.
