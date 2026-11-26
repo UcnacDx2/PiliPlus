@@ -66,6 +66,12 @@ abstract final class WatermarkStrokeMaskBuilder {
   /// glyph stroke is connected; isolated specular dots are not.
   static const _density = 3;
 
+  /// Saturated-white test for the mark's ink: the watermark is drawn pure
+  /// white, so its core sits at the very top of both the luma and the
+  /// whiteness range even when the scene behind it is bright.
+  static const _pureLuma = 185;
+  static const _pureWhite = 185;
+
   static Future<WatermarkRefinement?> build(
     List<WatermarkFrame> frames,
     BilibiliAnchor anchor,
@@ -124,10 +130,20 @@ abstract final class WatermarkStrokeMaskBuilder {
       _whiteGate,
     );
 
+    final pureWhite = _pureWhiteCells(samples.first, anchor, columns, rows);
     final mask = Uint8List(columns * rows);
     final template = _templateCells(anchor, columns, rows);
     for (var index = 0; index < mask.length; index++) {
       if (template[index] != 0) {
+        mask[index] = 1;
+        continue;
+      }
+      // A saturated white pixel inside the mark's band is the mark's core. It
+      // has to be masked even when it carries no gradient (it sits inside a
+      // bright area, so opening leaves it) and even when it stands alone (a
+      // thin stroke fragment) — otherwise it stays as a bright dot in the
+      // filled band, which is far more visible than the smear.
+      if (pureWhite[index] != 0) {
         mask[index] = 1;
         continue;
       }
@@ -155,6 +171,71 @@ abstract final class WatermarkStrokeMaskBuilder {
         words: words,
       ),
     );
+  }
+
+  /// Cells in the nickname band that are mostly saturated white, regardless
+  /// of any edge. Gradient voting alone drops two kinds of real ink: a stroke
+  /// pixel inside a bright patch (no local contrast left) and a lone thin
+  /// fragment (rejected by the density filter). Both stay behind as bright
+  /// dots in the filled band, which the eye picks up immediately.
+  static Uint8List _pureWhiteCells(
+    WatermarkFrame frame,
+    BilibiliAnchor anchor,
+    int columns,
+    int rows,
+  ) {
+    final cells = Uint8List(columns * rows);
+    if (frame.whiteness == null) return cells;
+    final width = frame.width;
+    final height = frame.height;
+    final scale = height / anchor.analysisHeight;
+    final region = anchor.region;
+    final left = region.left * width;
+    final top = region.top * height;
+    final regionWidth = (region.right - region.left) * width;
+    final regionHeight = (region.bottom - region.top) * height;
+    final bandTop = math.max(0, ((anchor.anchorY - 1) * scale).floor());
+    final bandBottom =
+        math.min(height, ((anchor.anchorY + 19) * scale).ceil());
+    final nicknameRight =
+        math.min(width, ((anchor.anchorX - 1) * scale).ceil());
+    for (var y = 0; y < rows; y++) {
+      final y0 = (top + y * regionHeight / rows).floor();
+      final y1 = (top + (y + 1) * regionHeight / rows).ceil();
+      if (y1 <= bandTop || y0 >= bandBottom) continue;
+      final sy0 = y0.clamp(0, height - 1);
+      final sy1 = math.min(y1, bandBottom).clamp(sy0 + 1, height);
+      for (var x = 0; x < columns; x++) {
+        final x0 = (left + x * regionWidth / columns).floor();
+        final x1 = (left + (x + 1) * regionWidth / columns).ceil();
+        if (x0 >= nicknameRight) continue;
+        final sx0 = x0.clamp(0, width - 1);
+        final sx1 = math.min(x1, nicknameRight).clamp(sx0 + 1, width);
+        var pure = 0;
+        var dark = 0;
+        var total = 0;
+        for (var py = sy0; py < sy1; py++) {
+          final rowOffset = py * width;
+          for (var px = sx0; px < sx1; px++) {
+            total++;
+            final index = rowOffset + px;
+            final value = frame.luma[index];
+            if (value >= _pureLuma && frame.whitenessAt(index) >= _pureWhite) {
+              pure++;
+            } else if (value + 20 <= _pureLuma) {
+              dark++;
+            }
+          }
+        }
+        if (total == 0) continue;
+        // Ink on a dark band: the cell is mostly background, yet its stroke
+        // pixels are at full white — that contrast survives voting as a bright
+        // speck, so the cell is masked as soon as it carries a couple of them.
+        final inkOnDark = pure >= 2 && dark * 2 >= total;
+        if (inkOnDark || pure * 4 >= total) cells[y * columns + x] = 1;
+      }
+    }
+    return cells;
   }
 
   /// Counts lit cells in the 3x3 neighbourhood of ([x], [y]).

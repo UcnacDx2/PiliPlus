@@ -227,6 +227,40 @@ void main() {
     expect(votes[cy * columns + cx], greaterThan(0));
   });
 
+  test('a lone ink fragment on a dark band is masked without a vote', () {
+    const width = 1280;
+    const height = 720;
+    const ax = 120;
+    const ay = 20;
+    final base = _frame(width, height, ax, ay, nicknameWidth: 0);
+    final luma = Uint8List.fromList(base.luma);
+    final whiteness = Uint8List.fromList(base.whiteness!);
+    // Two saturated white pixels: a thin stroke fragment standing alone. The
+    // density filter drops it, so only the ink test keeps it from surviving as
+    // a bright dot inside the filled band.
+    const fx = 190;
+    const fy = 70;
+    for (var x = fx; x < fx + 2; x++) {
+      luma[fy * width + x] = 236;
+      whiteness[fy * width + x] = 233;
+    }
+    final frame = WatermarkFrame(
+      width: width,
+      height: height,
+      luma: luma,
+      whiteness: whiteness,
+    );
+
+    final refinement = WatermarkStrokeMaskBuilder.buildSync(
+      [frame],
+      _anchor(ax, ay, 480, 270),
+    );
+    expect(refinement, isNotNull);
+    final mask = refinement!.mask;
+    final (cx, cy) = _cell(fx, fy, mask.columns, mask.rows);
+    expect(mask.bitAt(cx, cy), isTrue);
+  });
+
   test('returns null for a region without usable frames', () {
     final refinement = WatermarkStrokeMaskBuilder.buildSync(
       const [],
