@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:PiliPlus/fork/watermark/bilibili_anchor_detector.dart';
 import 'package:PiliPlus/fork/watermark/watermark_mode.dart';
 import 'package:PiliPlus/fork/watermark/watermark_region.dart';
 import 'package:PiliPlus/fork/watermark/watermark_detector.dart';
@@ -53,8 +54,56 @@ void main() {
     expect(region, isNull);
   });
 
-  test('independent detectors merge substantially overlapping regions', () {
-    final regions = WatermarkDetector.mergeRegions(const [
+  test('a mark-shaped block of coloured scene is not a watermark', () {
+    // The edges line up with the word mark, but nothing under them is white:
+    // a caption box or a game menu, not the mark.
+    const width = 480;
+    const height = 270;
+    final pixels = Uint8List(width * height)..fillRange(0, width * height, 96);
+    _drawLogo(pixels, width, 383, 8, 428, 26);
+    _drawBilibiliTemplate(pixels, width, 435, 8);
+    final whiteness = Uint8List(width * height)
+      ..fillRange(0, width * height, 60);
+
+    final anchor = BilibiliAnchorDetector.detectInFramesSync([
+      WatermarkFrame(
+        width: width,
+        height: height,
+        luma: pixels,
+        whiteness: whiteness,
+      ),
+    ]);
+
+    expect(anchor, isNull);
+  });
+
+  test('the same layout with white ink is still a watermark', () {
+    const width = 480;
+    const height = 270;
+    final pixels = Uint8List(width * height)..fillRange(0, width * height, 96);
+    _drawLogo(pixels, width, 383, 8, 428, 26);
+    _drawBilibiliTemplate(pixels, width, 435, 8);
+    final whiteness = Uint8List(width * height)..fillRange(0, width * height, 30);
+    for (var y = 0; y < height; y++) {
+      for (var x = 0; x < width; x++) {
+        if (pixels[y * width + x] != 96) whiteness[y * width + x] = 230;
+      }
+    }
+
+    final anchor = BilibiliAnchorDetector.detectInFramesSync([
+      WatermarkFrame(
+        width: width,
+        height: height,
+        luma: pixels,
+        whiteness: whiteness,
+      ),
+    ]);
+
+    expect(anchor, isNotNull);
+    expect(anchor!.corner, WatermarkCorner.topRight);
+  });
+
+  test('independent detectors merge substantially overlapping regions', () {    final regions = WatermarkDetector.mergeRegions(const [
       WatermarkRegion(
         left: 0.01,
         top: 0.01,

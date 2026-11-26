@@ -100,12 +100,16 @@ abstract final class BilibiliAnchorDetector {
   }
 
   /// Minimum score for a decision backed by one frame only.
-  ///
-  /// A frame without the mark can still put a scattered white block near a
-  /// corner — a game menu scored 0.66 while every real mark so far measured
-  /// 0.86 or higher — and filling that block is far worse than leaving a
-  /// watermark in place, so a single frame has to earn a clear confidence.
-  static const _singleFrameMinimum = 0.72;
+  static const _singleFrameMinimum = 0.50;
+
+  /// Whiteness floor and minimum share of the template box that must carry
+  /// white ink. A corner that only carries edges in the mark's shape — a game
+  /// menu, a caption box — measures well under a fifth (BV1RRx16pErH scored
+  /// 11%), while every real mark measures a quarter or more. The score alone
+  /// cannot separate them: a faint real mark scored 0.63 while the game menu
+  /// scored 0.67.
+  static const _inkWhiteness = 140;
+  static const _minimumInk = 134;
 
   /// Minimum score when the same location was seen in several frames.
   static const _multiFrameMinimum = 0.44;
@@ -226,6 +230,7 @@ abstract final class BilibiliAnchorDetector {
 
     final gradient = analysis.gradient;
     final luma = analysis.luma;
+    final whiteness = analysis.whiteness;
     final template = _template;
     final centered = _templateCentered;
     final templateCount = _templateCount;
@@ -248,6 +253,7 @@ abstract final class BilibiliAnchorDetector {
         var sum = 0.0;
         var squareSum = 0.0;
         var dot = 0.0;
+        var ink = 0;
         for (var ty = 0; ty < _templateHeight; ty++) {
           final offset = (y + ty) * width + x;
           final templateOffset = ty * _templateWidth;
@@ -256,6 +262,10 @@ abstract final class BilibiliAnchorDetector {
             sum += value;
             squareSum += value * value;
             dot += value * centered[templateOffset + tx];
+            if (whiteness != null &&
+                whiteness[offset + tx] >= _inkWhiteness) {
+              ink++;
+            }
             final level = gradient[offset + tx];
             if (template[templateOffset + tx] != 0) {
               if (level >= 8) edges8++;
@@ -281,6 +291,9 @@ abstract final class BilibiliAnchorDetector {
         if (net4 > net) net = net4;
         if (net2 > net) net = net2;
         if (net1 > net) net = net1;
+        // The mark is white ink: without saturated white underneath, a corner
+        // that scored on edges alone is scene content, not a watermark.
+        if (whiteness != null && ink < _minimumInk) continue;
         final variance = squareSum - sum * sum / samples;
         final correlation = variance <= 1
             ? 0.0
@@ -377,7 +390,10 @@ abstract final class BilibiliAnchorDetector {
         blankRun = 0;
       } else {
         blankRun++;
-        if (blankRun >= 8) {
+        // Large uploads set the nickname bigger and wider apart, so a gap of
+        // several pixels is still part of the line (BV1gfsU6sEmX stopped a
+        // character short and left 蕾 behind).
+        if (blankRun >= 16) {
           stopped = true;
           break;
         }
@@ -425,7 +441,13 @@ abstract final class BilibiliAnchorDetector {
 /// Alias used by [_median] over candidate scores.
 
 final class _FrameAnalysis {
-  const _FrameAnalysis(this.luma, this.gradient, this.width, this.height);
+  const _FrameAnalysis(
+    this.luma,
+    this.gradient,
+    this.width,
+    this.height, [
+    this.whiteness,
+  ]);
 
   factory _FrameAnalysis.prepare(WatermarkFrame frame) {
     final int width;
@@ -445,7 +467,22 @@ final class _FrameAnalysis {
             for (final value in frame.luma) value.toDouble(),
           ])
         : _resample(frame, width, height);
-    return _FrameAnalysis(luma, _gradient(luma, width, height), width, height);
+    final whiteness = frame.whiteness;
+    return _FrameAnalysis(
+      luma,
+      _gradient(luma, width, height),
+      width,
+      height,
+      whiteness == null
+          ? null
+          : _resamplePlane(
+              whiteness,
+              frame.width,
+              frame.height,
+              width,
+              height,
+            ),
+    );
   }
 
   final Float32List luma;
@@ -453,10 +490,28 @@ final class _FrameAnalysis {
   final int width;
   final int height;
 
+  /// Per-pixel `min(r, g, b)`, null for a luma-only frame. The mark is drawn
+  /// white, so a corner that only happens to carry edges in the template's
+  /// shape — a game menu, a caption — has no saturated white under it.
+  final Float32List? whiteness;
+
   static Float32List _resample(WatermarkFrame frame, int width, int height) {
-    final source = frame.luma;
-    final sourceWidth = frame.width;
-    final sourceHeight = frame.height;
+    return _resamplePlane(
+      frame.luma,
+      frame.width,
+      frame.height,
+      width,
+      height,
+    );
+  }
+
+  static Float32List _resamplePlane(
+    Uint8List source,
+    int sourceWidth,
+    int sourceHeight,
+    int width,
+    int height,
+  ) {
     final scaleX = sourceWidth / width;
     final scaleY = sourceHeight / height;
     final result = Float32List(width * height);
