@@ -100,7 +100,12 @@ abstract final class BilibiliAnchorDetector {
   }
 
   /// Minimum score for a decision backed by one frame only.
-  static const _singleFrameMinimum = 0.50;
+  ///
+  /// The ink test below rejects a corner with no white under it, but a
+  /// saturated white game icon answers it too (BV1pNTe6pE3i, 27%). The score
+  /// still separates those: the icon reached 0.53 while the faintest real
+  /// mark measured 0.63.
+  static const _singleFrameMinimum = 0.58;
 
   /// Whiteness floor and minimum share of the template box that must carry
   /// white ink. A corner that only carries edges in the mark's shape — a game
